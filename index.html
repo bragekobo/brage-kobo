@@ -190,6 +190,14 @@
           </span>
           <span class="game-go">あそぶ ▶</span>
         </a>
+        <a class="game" href="seven-narabe/">
+          <span class="game-art">🃏</span>
+          <span class="game-body">
+            <span class="game-title">七並べ</span>
+            <span class="game-desc">7から じゅんばんに ならべて、てふだを さきに なくそう！</span>
+          </span>
+          <span class="game-go">あそぶ ▶</span>
+        </a>
       </div>
     </noscript>
   </section>
@@ -236,12 +244,21 @@ const GAMES = [
     time:  '30びょう',
     tags:  ['トランプ', 'ひとりで あそべる'],
     path:  'blackjack/'
+  },
+  {
+    title: '七並べ',
+    emoji: '🃏',
+    card:  'ハート7',
+    desc:  '7から じゅんばんに ならべて、てふだを さきに なくそう！',
+    time:  '3〜5ふん',
+    tags:  ['トランプ', 'ロボットと たいせん'],
+    path:  'seven-narabe/'
   }
 ];
 
 /* 近日公開の枠（作るものが決まったら title を書き換える） */
 const COMING = [
-  { emoji: '🃏', title: 'つぎの トランプゲーム', desc: 'ルルが かんがえちゅう。すぐ おぼえられて、すぐ おわるやつ！' },
+  { emoji: '🃏', title: '3ばんめの ゲーム', desc: 'ルルが かんがえちゅう。すぐ おぼえられて、すぐ おわる トランプゲーム！' },
   { emoji: '🎲', title: 'ボードゲーム',        desc: 'ばんと コマで あそぶ、みじかい しょうぶ。' },
   { emoji: '✨', title: 'おたのしみ',          desc: '社長の ひらめき まち。ここに ならぶよ！' }
 ];
