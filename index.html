@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ブラゲ工房 ― ブラウザを ひらけば、そこが あそびば！</title>
+<meta name="description" content="インストール いらず。ブラウザを ひらくだけで あそべるゲームを つくっています。― ブラゲ工房">
+<meta name="theme-color" content="#9EE0FA">
+
+<!-- ============================================================
+     SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+     ------------------------------------------------------------
+     ⚠️【公開するときに かならず 直す 3か所】⚠️
+       og:url ／ og:image ／ twitter:image は、いま「相対パス」で 書いてある。
+       SNS の よみとり係（クローラー）は 相対パスを 読めないので、
+       公開先の ドメインが きまったら https:// から はじまる 絶対URL に 書きかえること。
+         og:url        → https://<公開先>/games/
+         og:image      → https://<公開先>/games/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png
+         twitter:image → og:image と おなじ
+       ※ 画像の ファイル名は 日本語なので URL エンコード ずみ（= ハートA.png）。
+       ※ いまの og:image は トランプ1枚（419×635・たてなが）。
+          twitter:card は たてながが つぶれない summary に している。
+          将来 1200×630 の よこながの 絵（ハッピー）を つくったら さしかえる。
+     ============================================================ -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ブラゲ工房">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="ブラゲ工房 ― ブラウザを ひらけば、そこが あそびば！">
+<meta property="og:description" content="インストールも 会員とうろくも いりません。リンクを ひらいたら すぐ あそべる、こどもむけの ブラウザゲームを つくっています。スマホでも パソコンでも あそべます。">
+<meta property="og:url" content="https://bragekobo.github.io/brage-kobo/"><!-- ✅ 公開先URLに設定ずみ -->
+<meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png"><!-- ✅ 公開先URLに設定ずみ -->
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="419">
+<meta property="og:image:height" content="635">
+<meta property="og:image:alt" content="トランプの ハートの エース">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ブラゲ工房 ― ブラウザを ひらけば、そこが あそびば！">
+<meta name="twitter:description" content="インストールも 会員とうろくも いりません。リンクを ひらいたら すぐ あそべる、こどもむけの ブラウザゲームを つくっています。">
+<meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png"><!-- ✅ 公開先URLに設定ずみ -->
+
+<!-- タブの アイコン（ファビコン）＝ ハッピーの かお。
+     外部ファイルを ふやさないよう、SVG を そのまま data URI で うめこんでいる。
+     （記号は %3C = <、%3E = >、%23 = # に エンコード ずみ） -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3C/svg%3E">
+
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+
+<!-- 飾りの もと（花）。外部画像は使えないので SVG で自作 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="flower" viewBox="0 0 40 40">
+      <g fill="#FFB3D0">
+        <circle cx="20" cy="8"  r="8"/>
+        <circle cx="33" cy="17" r="8"/>
+        <circle cx="28" cy="32" r="8"/>
+        <circle cx="12" cy="32" r="8"/>
+        <circle cx="7"  cy="17" r="8"/>
+      </g>
+      <circle cx="20" cy="21" r="6.5" fill="#FFD766"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="hero">
+
+  <div class="hero-sky">
+    <!-- 雲・花・キラキラ（飾り） -->
+    <div class="cloud c1" aria-hidden="true"></div>
+    <div class="cloud c2" aria-hidden="true"></div>
+    <div class="cloud c3" aria-hidden="true"></div>
+    <svg class="deco f1" aria-hidden="true" focusable="false"><use href="#flower"/></svg>
+    <svg class="deco f2" aria-hidden="true" focusable="false"><use href="#flower"/></svg>
+    <span class="twinkle t1" aria-hidden="true">✨</span>
+    <span class="twinkle t2" aria-hidden="true">⭐</span>
+
+    <div class="wrap">
+      <p class="brand">🏭 ブラゲ工房</p>
+
+      <h1>
+        <span class="line">ブラウザを ひらけば</span>
+        <span class="line">そこが あそびば！<span class="spade">♠</span></span>
+      </h1>
+
+      <p class="slogan"><span>インストール いらず。</span><span>ひらいたら すぐ あそべるよ！</span></p>
+
+      <!-- ねこ ＋ トランプ -->
+      <div class="stage">
+        <div class="mascot">
+          <p class="bubble" id="bubble">ハッピーだよ！</p>
+
+          <!-- マスコット：オレンジの トラねこ「ハッピー」（すべて自作SVG） -->
+          <svg class="cat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房の マスコット、ねこの ハッピー">
+            <!-- しっぽ -->
+            <g class="cat-tail">
+              <path d="M108 132 C142 132 140 96 120 96 C110 96 106 106 112 112"
+                    fill="none" stroke="#F09A44" stroke-width="13" stroke-linecap="round"/>
+            </g>
+            <!-- からだ -->
+            <path d="M42 158 C36 122 52 104 75 104 C98 104 114 122 108 158 Z" fill="#FBAE55"/>
+            <ellipse cx="75" cy="140" rx="21" ry="18" fill="#FFE9CE"/>
+            <ellipse cx="58" cy="154" rx="12" ry="8" fill="#FFE9CE"/>
+            <ellipse cx="92" cy="154" rx="12" ry="8" fill="#FFE9CE"/>
+            <!-- みみ -->
+            <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+            <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+            <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+            <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+            <!-- あたま -->
+            <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+            <!-- しましま -->
+            <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+              <path d="M63 32 L59 45"/>
+              <path d="M75 29 L75 43"/>
+              <path d="M87 32 L91 45"/>
+            </g>
+            <!-- ほっぺ -->
+            <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+            <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+            <!-- め -->
+            <g class="cat-eyes">
+              <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+              <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+              <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+              <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+            </g>
+            <!-- はな と くち -->
+            <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+            <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+                  stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+            <!-- ひげ -->
+            <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+              <path d="M31 68 L14 65"/>
+              <path d="M32 77 L16 82"/>
+              <path d="M119 68 L136 65"/>
+              <path d="M118 77 L134 82"/>
+            </g>
+          </svg>
+
+          <!-- 名ふだ（この子は だれ？を ひと目で） -->
+          <p class="cat-name">ハッピー</p>
+        </div>
+
+        <!-- 社長のトランプイラスト（飾りは3枚だけ。重いので増やさない） -->
+        <div class="fan" id="fan" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-ground">
+    <svg class="deco f3" aria-hidden="true" focusable="false"><use href="#flower"/></svg>
+    <svg class="deco f4" aria-hidden="true" focusable="false"><use href="#flower"/></svg>
+
+    <div class="wrap">
+      <p class="hello">
+        <span>🐱「こんにちは！ <b>ハッピー</b>だよ。</span><span>いっしょに あそぼう！」</span>
+      </p>
+
+      <div class="panel meter">
+        <div class="meter-top">
+          <span>あそべる ゲーム</span>
+          <b><span class="big" id="liveCount">0</span> / <span id="goalCount">20</span> ほん</b>
+        </div>
+        <div class="bar" role="img" aria-labelledby="meterText"><i id="meterBar" style="width:0%"></i></div>
+        <p class="meter-note" id="meterText">20ほん めざして つくってるよ。のこり <b id="restCount">20</b>ほん！</p>
+      </div>
+
+      <a class="btn-play" href="#games">ゲームを えらぶ ▶</a>
+    </div>
+  </div>
+
+</header>
+
+<main class="wrap">
+
+  <section class="section" id="games">
+    <div class="section-head">
+      <h2>🎮 いま あそべるよ！</h2>
+      <span class="count" id="liveBadge">0ほん</span>
+    </div>
+    <div class="grid" id="gameGrid"></div>
+    <noscript>
+      <div class="grid">
+        <a class="game" href="blackjack/">
+          <span class="game-art">🃏</span>
+          <span class="game-body">
+            <span class="game-title">ブラックジャック</span>
+            <span class="game-desc">21を こえないように カードを あつめよう！</span>
+          </span>
+          <span class="game-go">あそぶ ▶</span>
+        </a>
+      </div>
+    </noscript>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>🔨 もうすぐ あそべるよ！</h2>
+      <span class="count">いま つくってるよ</span>
+    </div>
+    <div class="grid" id="soonGrid"></div>
+    <p class="note" id="soonNote"></p>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p><b>🏭 ブラゲ工房</b> ― <span>ブラウザを ひらけば、</span><span>そこが あそびば！</span></p>
+    <p><span>ハッピーと いっしょに、</span><span>スマホでも パソコンでも すぐ あそべるよ 🐱</span></p>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   ゲームが増えたら、この GAMES 配列に1件足すだけ。
+   （HTMLもCSSも触らなくていい構造にしてあります）
+   ------------------------------------------------------------
+   title : ゲーム名
+   emoji : 画像を使わないときの絵柄
+   card  : office/games/cards/ の絵札名（拡張子なし・任意）
+   desc  : 1行紹介（ひらがな多めのやさしい言葉で）
+   time  : 遊ぶ時間の目安
+   tags  : 追加のラベル（0〜2個くらいが読みやすい）
+   path  : そのゲームのフォルダ
+   ============================================================ */
+const GOAL = 20;
+
+const GAMES = [
+  {
+    title: 'ブラックジャック',
+    emoji: '🃏',
+    card:  'スペードA',
+    desc:  '21を こえないように カードを あつめよう！',
+    time:  '30びょう',
+    tags:  ['トランプ', 'ひとりで あそべる'],
+    path:  'blackjack/'
+  }
+];
+
+/* 近日公開の枠（作るものが決まったら title を書き換える） */
+const COMING = [
+  { emoji: '🃏', title: 'つぎの トランプゲーム', desc: 'ルルが かんがえちゅう。すぐ おぼえられて、すぐ おわるやつ！' },
+  { emoji: '🎲', title: 'ボードゲーム',        desc: 'ばんと コマで あそぶ、みじかい しょうぶ。' },
+  { emoji: '✨', title: 'おたのしみ',          desc: '社長の ひらめき まち。ここに ならぶよ！' }
+];
+
+/* ハッピー（看板ねこ）の ふきだし。じゅんばんに かわる。
+   ふきだしは よこに のびない やくそくなので、1つ 7もじ までに おさえる。 */
+const CAT_WORDS = ['ハッピーだよ！', 'あそぼうよ！', 'どれに する？', 'まってたよ！', 'たのしいよ〜！'];
+
+/* 絵札のURL（日本語ファイル名なので必ずエンコードする） */
+function cardSrc(name) {
+  return 'cards/' + encodeURIComponent(name) + '.png';
+}
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+/* ---- ヒーローの扇（飾り。3枚だけ） ---- */
+['ハートA', 'スペードA', 'クローバーA'].forEach(function (name) {
+  const img = new Image();
+  img.src = cardSrc(name);
+  img.alt = '';
+  img.width = 419;
+  img.height = 635;
+  img.decoding = 'async';
+  document.getElementById('fan').appendChild(img);
+});
+
+/* ---- 遊べるゲーム ---- */
+const grid = document.getElementById('gameGrid');
+
+GAMES.forEach(function (g) {
+  const a = el('a', 'game');
+  a.href = g.path;
+  a.setAttribute('aria-label', g.title + 'で あそぶ');
+
+  const art = el('span', 'game-art');
+  if (g.card) {
+    const img = new Image();
+    img.src = cardSrc(g.card);
+    img.alt = '';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    art.appendChild(img);
+  } else {
+    art.textContent = g.emoji || '🎮';
+  }
+
+  const body = el('span', 'game-body');
+  /* 絵札を出しているときは、タイトル横の絵文字は付けない（要素を減らして締める） */
+  body.appendChild(el('span', 'game-title', (!g.card && g.emoji ? g.emoji + ' ' : '') + g.title));
+  body.appendChild(el('span', 'game-desc', g.desc));
+
+  const meta = el('span', 'game-meta');
+  if (g.time) meta.appendChild(el('span', 'tag time', '⏱ ' + g.time));
+  (g.tags || []).forEach(function (t) { meta.appendChild(el('span', 'tag', t)); });
+  body.appendChild(meta);
+
+  a.appendChild(art);
+  a.appendChild(body);
+  a.appendChild(el('span', 'game-go', 'あそぶ ▶'));
+  grid.appendChild(a);
+});
+
+/* ---- もうすぐ あそべるよ ---- */
+const soonGrid = document.getElementById('soonGrid');
+
+COMING.forEach(function (c) {
+  const box = el('div', 'soon');
+  box.appendChild(el('div', 'soon-art', c.emoji || '？'));
+
+  const body = el('div', 'soon-body');
+  body.appendChild(el('p', 'soon-title', c.title));
+  body.appendChild(el('p', 'soon-desc', c.desc));
+  body.appendChild(el('span', 'soon-badge', 'じゅんびちゅう'));
+
+  box.appendChild(body);
+  soonGrid.appendChild(box);
+});
+
+/* ---- 進み具合（今どうなっているか） ---- */
+const live = GAMES.length;
+const rest = Math.max(GOAL - live, 0);
+
+document.getElementById('liveCount').textContent = live;
+document.getElementById('goalCount').textContent = GOAL;
+document.getElementById('restCount').textContent = rest;
+document.getElementById('liveBadge').textContent = live + 'ほん';
+document.getElementById('meterBar').style.width = Math.round(live / GOAL * 100) + '%';
+document.getElementById('soonNote').textContent =
+  'あと ' + rest + 'ほん、これから こうぼうで つくるよ！';
+
+/* ---- ねこの ひとこと（動きが苦手な人には かえない） ---- */
+const bubble = document.getElementById('bubble');
+const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (bubble && !calm) {
+  let i = 0;
+  setInterval(function () {
+    i = (i + 1) % CAT_WORDS.length;
+    bubble.textContent = CAT_WORDS[i];
+  }, 3800);
+}
+</script>
+
+</body>
+</html>

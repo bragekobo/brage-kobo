@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ブラックジャック ― ブラゲ工房</title>
+<meta name="description" content="21を こえないように カードを あつめよう！ なんラウンドか あそんで、コインを ふやそう。ブラウザで すぐ あそべる ブラックジャック ― ブラゲ工房">
+<meta name="theme-color" content="#9EE0FA">
+
+<!-- ============================================================
+     SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+     ------------------------------------------------------------
+     ⚠️【公開するときに かならず 直す 3か所】⚠️
+       og:url ／ og:image ／ twitter:image は、いま「相対パス」で 書いてある。
+       SNS の よみとり係（クローラー）は 相対パスを 読めないので、
+       公開先の ドメインが きまったら https:// から はじまる 絶対URL に 書きかえること。
+         og:url        → https://<公開先>/games/blackjack/
+         og:image      → https://<公開先>/games/cards/%E3%82%B9%E3%83%9A%E3%83%BC%E3%83%89A.png
+         twitter:image → og:image と おなじ
+       ※ 画像の ファイル名は 日本語なので URL エンコード ずみ（= スペードA.png）。
+       ※ いまの og:image は トランプ1枚（419×635・たてなが）。
+          twitter:card は たてながが つぶれない summary に している。
+          将来 1200×630 の よこながの 絵（ハッピー＋トランプ）を つくったら、
+          そちらに さしかえて twitter:card を summary_large_image に すると もっと 目立つ。
+     ============================================================ -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ブラゲ工房">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="ブラックジャック ― ブラウザで すぐ あそべる｜ブラゲ工房">
+<meta property="og:description" content="21を こえないように カードを あつめる、トランプの ゲーム。ダウンロードは いりません。ひらいたら すぐ あそべます。3〜15ラウンドから えらべて、1かい 1〜5ふん くらい。">
+<meta property="og:url" content="https://bragekobo.github.io/brage-kobo/blackjack/"><!-- ✅ 公開先URLに設定ずみ -->
+<meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%B9%E3%83%9A%E3%83%BC%E3%83%89A.png"><!-- ✅ 公開先URLに設定ずみ -->
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="419">
+<meta property="og:image:height" content="635">
+<meta property="og:image:alt" content="トランプの スペードの エース">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ブラックジャック ― ブラウザで すぐ あそべる｜ブラゲ工房">
+<meta name="twitter:description" content="21を こえないように カードを あつめる、トランプの ゲーム。ダウンロードは いりません。ひらいたら すぐ あそべます。">
+<meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%B9%E3%83%9A%E3%83%BC%E3%83%89A.png"><!-- ✅ 公開先URLに設定ずみ -->
+
+<!-- タブの アイコン（ファビコン）＝ ハッピーの かお ＋ スペードの ふだ。
+     外部ファイルを ふやさないよう、SVG を そのまま data URI で うめこんでいる。
+     （記号は %3C = <、%3E = >、%23 = # に エンコード ずみ） -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 飾りの もと（花・コイン）。外部画像は使えないので SVG で自作 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="flower" viewBox="0 0 40 40">
+      <g fill="#FFB3D0">
+        <circle cx="20" cy="8"  r="8"/>
+        <circle cx="33" cy="17" r="8"/>
+        <circle cx="28" cy="32" r="8"/>
+        <circle cx="12" cy="32" r="8"/>
+        <circle cx="7"  cy="17" r="8"/>
+      </g>
+      <circle cx="20" cy="21" r="6.5" fill="#FFD766"/>
+    </symbol>
+
+    <symbol id="coin" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="#EFA331"/>
+      <circle cx="20" cy="18.4" r="15.6" fill="#FFD766"/>
+      <circle cx="20" cy="18.4" r="11" fill="none" stroke="#EFA331" stroke-width="2.4"/>
+      <path d="M20 10.5 l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z" fill="#EFA331"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- 空と飾り（さわれない・うしろがわ） -->
+<div class="sky" aria-hidden="true">
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+  <svg class="deco f1"><use href="#flower"/></svg>
+  <svg class="deco f2"><use href="#flower"/></svg>
+  <svg class="deco f3"><use href="#flower"/></svg>
+  <svg class="deco f4"><use href="#flower"/></svg>
+  <span class="twinkle t1">✨</span>
+  <span class="twinkle t2">⭐</span>
+
+  <!-- じめんの くさ（画面の した が さみしく ならないように。ぜんぶ うしろがわ） -->
+  <div class="grass g1"></div>
+  <div class="grass g2"></div>
+  <div class="grass g3"></div>
+</div>
+
+<div id="app">
+
+  <header class="topbar">
+    <a class="back" href="../">◀ ゲームを えらぶ</a>
+
+    <!-- いま なんラウンドめ か（あそんでいる あいだ だけ 出る） -->
+    <div class="round-box hidden" id="roundBox" role="status" aria-live="polite">
+      <span class="round-now" id="roundNow">1</span>
+      <span class="round-sep">/</span>
+      <span class="round-total" id="roundTotal">5</span>
+      <span class="round-unit">ラウンドめ</span>
+    </div>
+  </header>
+
+  <h1 class="title">ブラックジャック<span class="spade">♠</span></h1>
+
+  <main class="table">
+
+    <!-- ディーラー -->
+    <section class="side hidden" id="dealerSide">
+      <div class="side-head">
+        <span class="who">🎩 ディーラー</span>
+        <span class="score" id="dealerScore">-</span>
+      </div>
+      <div class="hand" id="dealerHand"></div>
+    </section>
+
+    <!-- ねこ ＋ おしらせ／けっか（ふきだし） -->
+    <div class="talk" id="talk" data-mood="bet">
+
+      <div class="cat-wrap">
+        <!-- マスコット：まとめサイトと同じ オレンジの トラねこ「ハッピー」（すべて自作SVG） -->
+        <svg class="cat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房の マスコット、ねこの ハッピー">
+          <!-- しっぽ -->
+          <g class="cat-tail">
+            <path d="M108 132 C142 132 140 96 120 96 C110 96 106 106 112 112"
+                  fill="none" stroke="#F09A44" stroke-width="13" stroke-linecap="round"/>
+          </g>
+          <!-- からだ -->
+          <path d="M42 158 C36 122 52 104 75 104 C98 104 114 122 108 158 Z" fill="#FBAE55"/>
+          <ellipse cx="75" cy="140" rx="21" ry="18" fill="#FFE9CE"/>
+          <ellipse cx="58" cy="154" rx="12" ry="8" fill="#FFE9CE"/>
+          <ellipse cx="92" cy="154" rx="12" ry="8" fill="#FFE9CE"/>
+          <!-- みみ -->
+          <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+          <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+          <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+          <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+          <!-- あたま -->
+          <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+          <!-- しましま -->
+          <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+            <path d="M63 32 L59 45"/>
+            <path d="M75 29 L75 43"/>
+            <path d="M87 32 L91 45"/>
+          </g>
+          <!-- ほっぺ -->
+          <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+          <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+          <!-- はな -->
+          <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+
+          <!-- かお：ふつう -->
+          <g class="face face-normal">
+            <g class="cat-eyes">
+              <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+              <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+              <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+              <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+            </g>
+            <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+                  stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- かお：うれしい（^ ^ と おおきい口） -->
+          <g class="face face-happy">
+            <g stroke="#4A3A2C" stroke-width="4.4" fill="none" stroke-linecap="round">
+              <path d="M51 67 q8 -12 16 0"/>
+              <path d="M83 67 q8 -12 16 0"/>
+            </g>
+            <path d="M62 79 Q75 97 88 79 Z" fill="#B4485F"/>
+            <path d="M69 90 q6 6 12 0 q-6 -3 -12 0 Z" fill="#FF9EB5"/>
+          </g>
+
+          <!-- かお：しょんぼり（>< と なみだ） -->
+          <g class="face face-sad">
+            <g stroke="#4A3A2C" stroke-width="4.4" fill="none" stroke-linecap="round">
+              <path d="M51 60 q8 8 16 0"/>
+              <path d="M83 60 q8 8 16 0"/>
+            </g>
+            <path d="M67 88 q8 -8 16 0" stroke="#4A3A2C" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+            <path d="M104 72 q5 8 0 11 q-5 -3 0 -11 Z" fill="#7FD3F2"/>
+          </g>
+
+          <!-- ひげ -->
+          <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+            <path d="M31 68 L14 65"/>
+            <path d="M32 77 L16 82"/>
+            <path d="M119 68 L136 65"/>
+            <path d="M118 77 L134 82"/>
+          </g>
+        </svg>
+
+        <span class="cat-spark s1" aria-hidden="true">✨</span>
+        <span class="cat-spark s2" aria-hidden="true">✨</span>
+
+        <!-- 名ふだ（まとめサイトと 同じ ハッピー だと わかるように） -->
+        <p class="cat-name">ハッピー</p>
+      </div>
+
+      <!-- ねこの ふきだし。上＝ねこの ひとこと／下＝くわしい けっか -->
+      <div class="banner" id="banner" role="status" aria-live="polite">
+        <b class="cat-line" id="catLine">なんかい あそぶ？</b>
+        <span id="bannerText">なんラウンド あそぶか えらんでね</span>
+      </div>
+    </div>
+
+    <!-- プレイヤー -->
+    <section class="side hidden" id="playerSide">
+      <div class="side-head">
+        <span class="who">🙂 あなた</span>
+        <span class="score" id="playerScore">-</span>
+      </div>
+      <div class="hand" id="playerHand"></div>
+    </section>
+
+  </main>
+
+  <footer class="controls">
+
+    <!-- ⓪ ラウンドえらび（いちばん さいしょ） ───────────── -->
+    <section class="setup-phase" id="setupPhase">
+      <span class="suit-deco d1" aria-hidden="true">♠</span>
+      <span class="suit-deco d2" aria-hidden="true">♥</span>
+
+      <p class="setup-title">なんラウンド あそぶ？</p>
+
+      <div class="round-row" id="roundRow">
+        <button class="round-btn" type="button" data-rounds="3" aria-label="3かい あそぶ。みじかい">
+          <b>3</b><small>かい</small><em>みじかい</em></button>
+        <button class="round-btn is-osusume" type="button" data-rounds="5" aria-label="5かい あそぶ。ふつう。おすすめ">
+          <span class="tag" aria-hidden="true">おすすめ</span>
+          <b>5</b><small>かい</small><em>ふつう</em></button>
+        <button class="round-btn" type="button" data-rounds="7" aria-label="7かい あそぶ。ふつう">
+          <b>7</b><small>かい</small><em>ふつう</em></button>
+        <button class="round-btn" type="button" data-rounds="10" aria-label="10かい あそぶ。ながい">
+          <b>10</b><small>かい</small><em>ながい</em></button>
+        <button class="round-btn" type="button" data-rounds="15" aria-label="15かい あそぶ。ながい">
+          <b>15</b><small>かい</small><em>ながい</em></button>
+      </div>
+
+      <p class="setup-note">
+        <svg class="coin" aria-hidden="true" focusable="false"><use href="#coin"/></svg>
+        コイン <b>100まい</b> から スタート！<br>
+        おわったとき ふえていたら きみの かち！</p>
+    </section>
+
+    <!-- ① かけるフェーズ ─────────────────────── -->
+    <section class="bet-phase hidden" id="betPhase">
+
+      <!-- 社長ご指摘：かける まえに いちばん 見たい 数字なので ここに 大きく 出す -->
+      <div class="have-box js-chip-box">
+        <svg class="coin" aria-hidden="true" focusable="false"><use href="#coin"/></svg>
+        <span class="have-label">もっているコイン</span>
+        <span class="have-count js-chips">100</span>
+        <span class="have-unit">まい</span>
+      </div>
+
+      <p class="bet-title">いくら かける？</p>
+
+      <div class="bet-row-btns">
+        <button class="bet-btn bet-minus" id="betMinus10" type="button">−10</button>
+        <button class="bet-btn bet-minus" id="betMinus1" type="button">−1</button>
+
+        <label class="bet-field">
+          <span class="visually-hidden">かけるコインのまいすう</span>
+          <input class="bet-input" id="betInput" type="number" inputmode="numeric"
+                 min="1" step="1" value="10">
+        </label>
+
+        <button class="bet-btn bet-plus" id="betPlus1" type="button">＋1</button>
+        <button class="bet-btn bet-plus" id="betPlus10" type="button">＋10</button>
+      </div>
+
+      <p class="bet-note" id="betNote">1まい 〜 100まい までかけられるよ</p>
+
+      <button class="btn btn-start" id="startBtn" type="button">
+        これでスタート！<small>カードを くばるよ</small>
+      </button>
+    </section>
+
+    <!-- ② あそぶフェーズ ─────────────────────── -->
+    <div class="play-info hidden" id="playInfo">
+      <span class="pi-coin js-chip-box">コイン <b class="js-chips">100</b>まい</span>
+      <span class="pi-bet">かけた <b id="betValue">10</b>まい</span>
+    </div>
+
+    <div class="btn-row hidden" id="playRow">
+      <button class="btn btn-hit" id="hitBtn" type="button">カードをひく<small>もう1まい</small></button>
+      <button class="btn btn-stand" id="standBtn" type="button">ここでストップ<small>これで しょうぶ</small></button>
+    </div>
+
+    <!-- ③ 1ラウンドの けっかのあと ────────────────── -->
+    <div class="btn-row hidden" id="nextRow">
+      <button class="btn btn-next" id="nextBtn" type="button">つぎの ラウンドへ<small>まだ つづくよ</small></button>
+    </div>
+
+    <!-- ④ ぜんぶ おわったとき ／ コインが なくなったとき ──── -->
+    <section class="final-phase hidden" id="finalPhase">
+
+      <!-- 紙ふぶき／キラキラ（コインが ふえたときだけ ふる。たての ばしょは 取らない） -->
+      <div class="fx" id="finalFx" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+
+      <p class="final-title" id="finalTitle">ぜんぶ おわり！</p>
+
+      <div class="final-coin">
+        <p class="final-was">
+          <span class="final-was-label">さいしょ</span>
+          <span class="final-from"><b id="finalFrom">100</b>まい</span>
+          <span class="final-arrow" aria-hidden="true">↓</span>
+        </p>
+        <p class="final-to">
+          <svg class="coin coin-big" aria-hidden="true" focusable="false"><use href="#coin"/></svg>
+          <b id="finalTo" class="js-chips">100</b><span class="final-unit">まい</span>
+        </p>
+      </div>
+
+      <p class="final-diff" id="finalDiff">±0まい</p>
+
+      <!-- コインが なくなった ときだけ 出る はげまし -->
+      <p class="over-cheer">コインが なくなっちゃった。<br>でも だいじょうぶ！ また あそべるよ🍀</p>
+
+      <!-- かち・まけ・ひきわけ。ふだ3つ（下の 1行を 見はり役が よみとって 作る） -->
+      <div class="record-chips" id="recordChips" aria-hidden="true">
+        <span class="rc rc-win"><small>かち</small><b id="rcWin">0</b></span>
+        <span class="rc rc-lose"><small>まけ</small><b id="rcLose">0</b></span>
+        <span class="rc rc-push"><small>ひきわけ</small><b id="rcPush">0</b></span>
+      </div>
+      <p class="final-record" id="finalRecord">かち 0かい・まけ 0かい・ひきわけ 0かい</p>
+
+      <p class="final-round" id="finalRound">5 / 5 ラウンド あそんだよ</p>
+
+      <button class="btn btn-start btn-again" id="againBtn" type="button">
+        もういちど あそぶ<small>ラウンドを えらびなおす</small>
+      </button>
+    </section>
+
+  </footer>
+
+  <div class="rule" id="ruleNote">
+    <b class="rule-head">あそびかた</b>
+    <ul class="rule-list">
+      <li><span class="ri">①</span>カードの ごうけいを <b>21</b>に ちかづける</li>
+      <li><span class="ri">②</span><b>21を こえたら</b> まけ。こえずに ディーラーより 大きければ かち</li>
+      <li><span class="ri">③</span>えふだ（J・Q・K）は <b>10</b>、A は <b>1か11</b>。ディーラーは 17いじょうで ストップ</li>
+    </ul>
+  </div>
+
+  <!-- ============================================================
+       ページの いちばん した：ルール説明（ぜんぶの ばめんで 出る・読みもの）
+       ------------------------------------------------------------
+       ・上の「あそびかた」3行ボックス（#ruleNote）は 遊ぶ前の チラ見。ここは 迷ったとき 戻る場所。
+       ・game.js には いっさい さわらない。#app の いちばん下に 置くだけ。
+       ・<details> で 畳んである ＝ 閉じている あいだは たてを ほとんど 使わない。
+         （ゲーム本体が 375px で 1画面に おさまる 状態を くずさないため）
+       ・文章は ルルの 納品どおり。ことばの あいだの スペースは 意図的なもの。詰めない。
+       ============================================================ -->
+  <details class="guide" id="guide">
+
+    <summary class="guide-head">
+      <!-- ハッピー（顔だけ）。ふきだしの ハッピーと おなじ かたち・おなじ色を そのまま 使う -->
+      <svg class="ghappy" viewBox="12 14 126 96" aria-hidden="true" focusable="false">
+        <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+        <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+        <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+        <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+        <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+        <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+          <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+        </g>
+        <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+        <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+        <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+        <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+        <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+        <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+              stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+          <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+          <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+        </g>
+      </svg>
+
+      <span class="guide-label">
+        <b class="guide-title">あそびかた・ルール</b>
+        <small class="guide-sub">わからなく なったら ここを ひらいてね</small>
+      </span>
+
+      <span class="guide-arrow" aria-hidden="true">▼</span>
+    </summary>
+
+    <div class="guide-body">
+
+      <section class="gsec">
+        <h2 class="gh">このゲームは？</h2>
+        <p class="gp">トランプで あそぶ、かんたんな しょうぶの ゲームだよ。<br>
+          カードの ごうけいを <b>21</b>に ちかづけて、ディーラーに かとう。</p>
+        <p class="gp">もう1まい ひくか、ここで やめるか ―― きめるのは きみ！</p>
+      </section>
+
+      <section class="gsec">
+        <h2 class="gh">あそびかた</h2>
+        <ol class="gsteps">
+          <li><b>なんラウンド あそぶか えらぶ</b> … 3・5・7・10・15かい。はじめては 5かいが おすすめ</li>
+          <li><b>コインを かける</b> … 100まい もって スタート。1まいから かけられるよ</li>
+          <li><b>カードが 2まい くばられる</b> … 「カードをひく」で もう1まい。「ここでストップ」で しょうぶ</li>
+          <li><b>けっかを みる</b> … かてば コインが ふえる。まけると へる</li>
+          <li><b>2〜4を くりかえす</b> … さいごに コインが 100まいより ふえていたら、きみの かち！</li>
+        </ol>
+        <p class="gnote">※ ちょうど 21に なったら、そこで じどうで ストップするよ。<br>
+          ※ とちゅうで コインが 0まいに なったら、そこで おしまい。</p>
+      </section>
+
+      <section class="gsec">
+        <h2 class="gh">カードの かぞえかた</h2>
+        <ul class="glist">
+          <li><span class="gm" aria-hidden="true"></span><b>2 〜 10</b> … かいてある かずの まま</li>
+          <li><span class="gm" aria-hidden="true"></span><b>えふだ（J・Q・K）</b> … ぜんぶ <b>10</b></li>
+          <li><span class="gm" aria-hidden="true"></span><b>A（エース）</b> … <b>1</b>か <b>11</b>。つごうの いい ほうで かぞえるよ（ゲームが えらんでくれる）</li>
+        </ul>
+      </section>
+
+      <section class="gsec">
+        <h2 class="gh">かち・まけ</h2>
+        <!-- ふだの 色は ゲーム中の ふきだしと おなじ やくそく（みどり＝かち／ピンク＝まけ／クリーム＝ひきわけ）。
+             文字は いじらず、まるの 色だけで 見わけを つける。 -->
+        <ul class="glist">
+          <li><span class="gm gm-lose" aria-hidden="true"></span><b>21を こえちゃった</b> … まけ。どんなに おおきい かずでも だめ</li>
+          <li><span class="gm gm-win" aria-hidden="true"></span><b>21を こえないで、ディーラーより 大きい</b> … かち！ かけた ぶんだけ コインが ふえる</li>
+          <li><span class="gm gm-win" aria-hidden="true"></span><b>ディーラーが 21を こえた</b> … きみの かち！</li>
+          <li><span class="gm gm-push" aria-hidden="true"></span><b>ディーラーと おなじ かず</b> … ひきわけ。コインは ふえも へりも しない</li>
+        </ul>
+
+        <!-- T15：ルルの 追記①（2026-08-13）。「あそびかた」の ※2行と まったく 同じ 見た目（.gnote）。
+             太字・新しい漢字・新しい 見出しは 足していない。分かち書きの スペースは そのまま。 -->
+        <p class="gnote">※ 21を こえちゃうことを「バースト」と いうよ。がめんにも そう でるからね。<br>
+          ※ ディーラーが さいしょの 2まいで 21だったら、ボタンを おす まえに きみの まけ。</p>
+
+        <div class="gbj">
+          <h3 class="gh3"><span class="gh3-mark" aria-hidden="true">♠</span>ブラックジャック（いちばん つよい かちかた）</h3>
+          <p class="gp">さいしょの 2まいで、ぴったり <b>21</b>に なること。<br>
+            <b>A</b> と、<b>10・J・Q・K の どれか</b> が そろうと できるよ。</p>
+          <p class="gp">このときだけ、コインが かけた ぶんの <b>1.5ばい</b> ふえる。<br>
+            うんと ツキが あれば、くばられた しゅんかんに かっちゃうかも。</p>
+        </div>
+      </section>
+
+      <section class="gsec">
+        <h2 class="gh">ディーラーの きまり</h2>
+        <p class="gp">ディーラーは じぶんで かんがえない。<br>
+          <b>17いじょうに なるまで カードを ひく。なったら とまる。</b> それだけ。</p>
+        <p class="gp">だから、ディーラーの 見えている カードを よく 見て きめると、だんだん つよくなれるよ。</p>
+      </section>
+
+    </div>
+  </details>
+
+</div>
+
+<script src="game.js"></script>
+
+<script>
+/* ============================================================
+   ハッピー（看板ねこ）の ひとこと ― 見た目だけの係
+   ------------------------------------------------------------
+   ゲームのロジック（game.js）には いっさい さわりません。
+   game.js が おしらせ（#banner）を 書きかえるのを 見はって、
+   ハッピーの セリフ（#catLine）と 顔（#talk の data-mood）を あわせるだけ。
+
+   セリフの きまり：ひらがな多め・あかるく・そばで おうえんする 相棒の口ぶり。
+   ふきだしを 2行に しないため、1つ 13もじ までに おさえる（375px で 1行に入る上限）。
+   ============================================================ */
+(function () {
+  'use strict';
+
+  var talk    = document.getElementById('talk');
+  var catLine = document.getElementById('catLine');
+  var banner  = document.getElementById('banner');
+  var bText   = document.getElementById('bannerText');
+  if (!talk || !catLine || !banner || !bText) return;
+
+  var finalPhase = document.getElementById('finalPhase');
+  var finalTo    = document.getElementById('finalTo');
+  var finalFrom  = document.getElementById('finalFrom');
+  var finalRec   = document.getElementById('finalRecord');
+  var rc = {
+    win:  document.getElementById('rcWin'),
+    lose: document.getElementById('rcLose'),
+    push: document.getElementById('rcPush')
+  };
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function phase() {
+    try { return window.BJ.state().phase; } catch (e) { return ''; }
+  }
+
+  /* いまの おしらせ から、ねこの きもち と セリフ を きめる */
+  function read() {
+    var cls  = banner.className;
+    var text = bText.textContent || '';
+    var p    = phase();
+
+    /* ── ラウンドえらび ── */
+    if (p === 'setup') return { mood: 'bet', say: 'なんかい あそぶ？' };
+
+    /* ── ぜんぶ おわった あと ／ コインぎれ ──
+       ここでは しょんぼり顔に しない。「また あそぼう」と はげます場面なので、
+       ふつうの顔（前むき）で 受けとめる。 */
+    if (p === 'gameover') return { mood: 'over', say: 'また あそぼうね！', fin: 'over' };
+    if (p === 'final') {
+      if (cls.indexOf('bj')   >= 0) return { mood: 'bj',   say: 'だいせいこう！ すごい！', fin: 'big'  };
+      if (cls.indexOf('win')  >= 0) return { mood: 'win',  say: 'コイン ふえたね！',       fin: 'win'  };
+      if (cls.indexOf('push') >= 0) return { mood: 'push', say: 'ぴったり おなじだ！',     fin: 'push' };
+      return { mood: 'soft', say: 'つぎは かてるよ！', fin: 'down' };
+    }
+
+    /* ── ラウンドの けっか ── */
+    if (cls.indexOf('bj')   >= 0) return { mood: 'bj',   say: 'すごい！ ブラックジャック！' };
+    if (cls.indexOf('win')  >= 0) return { mood: 'win',  say: 'やったね！ さすが！' };
+    if (cls.indexOf('push') >= 0) return { mood: 'push', say: 'おしい！ ひきわけ〜' };
+    if (cls.indexOf('lose') >= 0) {
+      if (text.indexOf('バースト') >= 0)  return { mood: 'lose', say: 'あー！ こえちゃった' };
+      if (text.indexOf('なくなっ') >= 0)  return { mood: 'lose', say: 'また あそぼうね！' };
+      return { mood: 'lose', say: 'ドンマイ！ つぎ いこう' };
+    }
+
+    if (p === 'dealer') return { mood: 'wait', say: 'どきどき…！' };
+    if (p === 'player') return { mood: 'play', say: 'ひく？ ストップする？' };
+    return { mood: 'bet', say: 'いくら かける？' };
+  }
+
+  /* ── さいごの けっか画面：かち／まけ／ひきわけ を 3つの ふだ に わけて 読みやすく ──
+     game.js が 書いた 1行（「かち 2かい・まけ 1かい・ひきわけ 0かい」）から
+     数字だけ よみとって うつす。よみとれなかったら 元の1行を そのまま 見せる（安全側）。 */
+  function fillRecord() {
+    if (!finalPhase || !finalRec || !rc.win) return;
+    var m = (finalRec.textContent || '').match(/(\d+)\D+(\d+)\D+(\d+)/);
+    if (!m) { finalPhase.classList.remove('has-chips'); return; }
+    rc.win.textContent  = m[1];
+    rc.lose.textContent = m[2];
+    rc.push.textContent = m[3];
+    finalPhase.classList.add('has-chips');
+  }
+
+  /* ── コインの まいすうを かぞえ上げる（ふえたときだけ） ──
+     さいごは かならず 本当の 数字を 書いて おわる。とちゅうで 中断しても ずれない。 */
+  var countTimer = null;
+  function stopCount() { if (countTimer) { cancelAnimationFrame(countTimer); countTimer = null; } }
+
+  function countUp(target) {
+    stopCount();
+    if (calm) return;
+    var start = parseInt((finalFrom && finalFrom.textContent) || '100', 10);
+    if (!isFinite(start) || !isFinite(target) || target <= start) return;
+    var t0 = 0, dur = 700;
+    function step(now) {
+      if (!t0) t0 = now;
+      var k = Math.min(1, (now - t0) / dur);
+      var e = 1 - Math.pow(1 - k, 3);                       // さいごは ゆっくり止まる
+      finalTo.textContent = Math.round(start + (target - start) * e);
+      if (k < 1) { countTimer = requestAnimationFrame(step); }
+      else { countTimer = null; finalTo.textContent = target; }
+    }
+    finalTo.textContent = start;
+    countTimer = requestAnimationFrame(step);
+  }
+
+  var lastFin = '';
+
+  function apply() {
+    var r = read();
+    if (talk.dataset.mood !== r.mood) talk.dataset.mood = r.mood;
+    if (catLine.textContent !== r.say) catLine.textContent = r.say;
+
+    /* さいごの けっか画面の えんしゅつの つよさ（big / win / push / down / over） */
+    var fin = r.fin || '';
+    if (finalPhase) {
+      if (fin) finalPhase.dataset.fin = fin;
+      if (fin && fin !== lastFin) {
+        fillRecord();
+        var target = parseInt(finalTo && finalTo.textContent, 10);
+        if (fin === 'big' || fin === 'win') countUp(target);
+        else stopCount();
+      }
+      if (!fin) stopCount();
+    }
+    lastFin = fin;
+  }
+
+  /* おしらせが 変わったら（文字も 色も）ついていく */
+  new MutationObserver(apply).observe(banner, {
+    attributes: true, attributeFilter: ['class'], childList: true, subtree: true
+  });
+
+  apply();   // 読みこみ直後の ぶんも あわせる
+})();
+</script>
+
+</body>
+</html>

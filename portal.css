@@ -1,0 +1,732 @@
+/* ============================================================
+   ブラゲ工房 ポータル（まとめサイト）
+   ねらい：小学生が見て「やってみたい！」と思う、かわいいポップな画面。
+   上＝水色の空／下＝クリーム色の地面。白い角丸パネル＋ピンクの丸ボタン。
+   外部フォント・外部画像・ライブラリは一切使わない（飾りは CSS と SVG で自作）。
+   ============================================================ */
+
+:root {
+  color-scheme: light;          /* 暗転させない。かわいい路線を優先（読めなくなる事故を防ぐ） */
+
+  /* 空とじめん */
+  --sky-1:   #9EE0FA;
+  --sky-2:   #D9F3FF;
+  --cream:   #FFF6DF;
+  --cream-2: #FFFBEF;
+  --white:   #ffffff;
+
+  /* 文字（こげ茶。黒より やわらかい） */
+  --ink:      #4A3A2C;
+  --ink-soft: #7C6754;
+
+  /* ピンク（押す色） */
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+
+  /* みどり（タイトル・すすみ具合） */
+  --green:      #4CC76A;
+  --green-dark: #2F9A52;
+
+  --yellow: #FFD766;
+
+  --shadow-1: 0 4px 0 rgba(196,155,110,.18), 0 10px 22px rgba(150,110,70,.14);
+  --shadow-2: 0 6px 0 rgba(196,155,110,.22), 0 18px 32px rgba(150,110,70,.20);
+
+  --r-xl: 28px;
+  --r-lg: 22px;
+  --r-md: 16px;
+
+  --font: "Hiragino Maru Gothic ProN", "ヒラギノ丸ゴ ProN W4", "M PLUS Rounded 1c",
+          "Rounded Mplus 1c", "BIZ UDPGothic", "Yu Gothic UI", "Hiragino Sans",
+          "Noto Sans JP", Meiryo, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 700;             /* 全体的に太め＝丸ゴシックっぽく見える */
+  line-height: 1.75;
+  overflow-x: hidden;           /* 横スクロールは絶対に出さない */
+}
+
+img { max-width: 100%; display: block; }
+
+.wrap {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ============================================================
+   ヒーロー（空 → じめん）
+   ============================================================ */
+
+.hero { position: relative; overflow: hidden; }
+
+.hero-sky {
+  position: relative;
+  background: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 78%);
+  padding: 16px 0 0;
+  text-align: center;
+}
+
+/* じめんの ふくらみ（空とクリームの さかいめ） */
+.hero-sky::after {
+  content: "";
+  position: absolute;
+  left: -8%; right: -8%; bottom: -1px;
+  height: 54px;
+  background: var(--cream);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  z-index: 1;
+}
+
+.hero-ground {
+  position: relative;
+  z-index: 2;
+  background: var(--cream);
+  padding: 8px 0 26px;
+  text-align: center;
+}
+
+/* ---- 雲（CSSだけで作る） ---- */
+
+.cloud {
+  position: absolute;
+  background: #fff;
+  border-radius: 999px;
+  opacity: .92;
+  pointer-events: none;
+}
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+}
+.cloud::before { width: 60%; height: 160%; left: 8%;  bottom: 40%; }
+.cloud::after  { width: 46%; height: 130%; right: 10%; bottom: 38%; }
+
+.c1 { width: 96px;  height: 26px; top: 26px;  left: -12px;  animation: float 9s ease-in-out infinite; }
+.c2 { width: 128px; height: 32px; top: 76px;  right: -22px; animation: float 11s ease-in-out infinite reverse; }
+.c3 { width: 72px;  height: 20px; top: 150px; left: 6%;     opacity: .7; animation: float 13s ease-in-out infinite; }
+
+@keyframes float {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(14px); }
+}
+
+/* ---- 会社の名ふだ ---- */
+
+.brand {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 6px 18px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--pink-dark);
+  background: var(--white);
+  border: 3px solid var(--pink-soft);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 rgba(196,155,110,.18);
+}
+
+/* ---- タイトル（緑の 立体的な 丸文字・白ふちどり） ---- */
+
+.hero h1 {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  font-size: clamp(27px, 8.4vw, 46px);
+  font-weight: 900;
+  line-height: 1.35;
+  letter-spacing: .01em;
+  color: var(--green);
+  text-shadow:
+    /* 白いふちどり（8方向） */
+    -3px -3px 0 #fff,  0 -3px 0 #fff,  3px -3px 0 #fff,
+    -3px  0   0 #fff,                  3px  0   0 #fff,
+    -3px  3px 0 #fff,  0  3px 0 #fff,  3px  3px 0 #fff,
+    /* 立体の あつみ */
+    0 8px 0 var(--green-dark),
+    0 11px 12px rgba(60,120,80,.28);
+}
+
+.hero h1 .line { display: block; }
+
+.hero h1 .spade {
+  color: var(--pink-deep);
+  font-size: .8em;
+  text-shadow:
+    -3px -3px 0 #fff, 0 -3px 0 #fff, 3px -3px 0 #fff,
+    -3px 0 0 #fff, 3px 0 0 #fff,
+    -3px 3px 0 #fff, 0 3px 0 #fff, 3px 3px 0 #fff,
+    0 8px 0 var(--pink-dark);
+}
+
+.slogan {
+  position: relative;
+  z-index: 2;
+  margin: 14px 0 0;
+  font-size: clamp(14px, 4.1vw, 18px);
+  font-weight: 800;
+  color: #3E6B7C;
+}
+
+/* 「よ！」だけ next 行に落ちないよう、意味のかたまりで折り返す */
+.slogan span { display: inline-block; }
+
+/* ============================================================
+   ステージ（ねこ ＋ トランプ）
+   ============================================================ */
+
+.stage {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(2px, 2vw, 24px);
+  margin-top: 10px;
+  padding-bottom: 6px;
+}
+
+/* ---- マスコット（オレンジのトラねこ「ハッピー」） ---- */
+
+.mascot {
+  position: relative;           /* 名ふだを 足もとに 置くため */
+  flex: 0 0 auto;
+  width: clamp(116px, 32vw, 160px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bubble {
+  position: relative;
+  align-self: stretch;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  font-size: clamp(13px, 3.6vw, 16px);
+  font-weight: 900;
+  color: var(--pink-dark);
+  background: var(--white);
+  border: 3px solid var(--pink);
+  border-radius: 18px;
+  line-height: 1.3;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 rgba(196,155,110,.18);
+}
+
+/* ふきだしの しっぽ（ねこの方を向く） */
+.bubble::before,
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 26px;
+  width: 0; height: 0;
+  border-style: solid;
+}
+.bubble::before {
+  bottom: -14px;
+  border-width: 14px 11px 0 0;
+  border-color: var(--pink) transparent transparent transparent;
+}
+.bubble::after {
+  bottom: -9px;
+  border-width: 10px 8px 0 0;
+  border-color: #fff transparent transparent transparent;
+}
+
+.cat {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  animation: bob 3s ease-in-out infinite;
+  filter: drop-shadow(0 6px 6px rgba(150,110,70,.22));
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0)    rotate(0deg); }
+  50%      { transform: translateY(-6px) rotate(-1.5deg); }
+}
+
+.cat-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 5s infinite;
+}
+
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95%           { transform: scaleY(.1); }
+}
+
+.cat-tail {
+  transform-box: fill-box;
+  transform-origin: 10% 90%;
+  animation: wag 2.4s ease-in-out infinite;
+}
+
+@keyframes wag {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-9deg); }
+}
+
+/* ---- 名ふだ「ハッピー」 ----
+   足もとに 置く（position:absolute）ので、まわりの ばしょを 1pxも 取らない。
+   ねこは うしろで ふわふわ 動き、名ふだだけ 止まって いるので 読める。
+   ブラックジャック側と 同じ見た目に そろえてある（＝同じ子だと わかる）。 */
+.cat-name {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  z-index: 2;
+  margin: 0;
+  padding: 1px 12px;
+  font-size: clamp(11px, 3vw, 13px);
+  font-weight: 900;
+  line-height: 1.5;
+  color: var(--pink-dark);
+  background: var(--white);
+  border: 3px solid var(--pink);
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 rgba(196,155,110,.18);
+  pointer-events: none;
+}
+
+/* ---- ハッピーの あいさつ（はじめて 来た子むけ） ---- */
+
+.hello {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 12px;
+  font-size: clamp(13.5px, 3.9vw, 16px);
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--pink-dark);
+}
+
+/* 「〜だよ。」の 途中で 折れないよう、意味の かたまりで 折り返す */
+.hello span { display: inline-block; }
+.hello b { color: var(--pink-deep); font-size: 1.12em; }
+
+/* ---- トランプの扇（社長のイラスト。比率2:3は絶対に崩さない） ---- */
+
+.fan {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 120px;            /* 読み込み前でも高さが跳ねない */
+}
+
+.fan img {
+  width: clamp(60px, 17vw, 92px);
+  aspect-ratio: 419 / 635;      /* 潰さない・伸ばさない */
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+  border: 3px solid #fff;
+  box-shadow: 0 5px 0 rgba(196,155,110,.20), 0 12px 20px rgba(150,110,70,.18);
+  transform-origin: bottom center;
+}
+
+.fan img:nth-child(1) { transform: rotate(-14deg) translate(16px, 8px); z-index: 1; }
+.fan img:nth-child(2) { transform: rotate(0deg)   translateY(-4px);     z-index: 3; }
+.fan img:nth-child(3) { transform: rotate(14deg)  translate(-16px, 8px); z-index: 2; }
+
+/* ============================================================
+   白い角丸パネル ＋ すすみ具合メーター
+   ============================================================ */
+
+.panel {
+  background: var(--white);
+  border: 4px solid var(--white);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-1);
+}
+
+.meter {
+  position: relative;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 14px 18px 16px;
+  text-align: left;
+}
+
+.meter-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+.meter-top b { color: var(--ink); font-size: 16px; }
+.meter-top .big { color: var(--pink-deep); font-size: 26px; }
+
+.bar {
+  margin-top: 8px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--cream);
+  border: 3px solid var(--cream);
+  box-shadow: inset 0 2px 4px rgba(150,110,70,.14);
+  overflow: hidden;
+}
+
+.bar > i {
+  display: block;
+  height: 100%;
+  min-width: 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #6EDB8A 0%, var(--green) 60%, var(--green-dark) 100%);
+  transition: width .8s ease;
+}
+
+.meter-note {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.meter-note b { color: var(--pink-deep); font-size: 16px; }
+
+/* ============================================================
+   ボタン（大きく・丸く・押したくなる）
+   ============================================================ */
+
+.btn-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px auto 0;
+  min-height: 62px;
+  padding: 0 34px;
+  font-size: clamp(18px, 5vw, 22px);
+  font-weight: 900;
+  color: #fff;
+  text-decoration: none;
+  background: linear-gradient(180deg, var(--pink) 0%, var(--pink-deep) 100%);
+  border: 4px solid #fff;
+  border-radius: 999px;
+  box-shadow: 0 7px 0 var(--pink-dark), 0 14px 20px rgba(196,58,115,.28);
+  transition: transform .12s ease, box-shadow .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-play:hover { transform: translateY(-2px); box-shadow: 0 9px 0 var(--pink-dark), 0 18px 24px rgba(196,58,115,.3); }
+.btn-play:active { transform: translateY(5px); box-shadow: 0 2px 0 var(--pink-dark); }
+.btn-play:focus-visible { outline: 4px solid var(--green); outline-offset: 3px; }
+
+/* ============================================================
+   セクション
+   ============================================================ */
+
+main { padding: 22px 0 8px; position: relative; z-index: 2; }
+
+.section + .section { margin-top: 34px; }
+
+.section-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: clamp(19px, 5.4vw, 24px);
+  font-weight: 900;
+  color: var(--ink);
+  text-shadow: 0 2px 0 #fff;
+}
+
+.section-head .count {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--pink-dark);
+  background: var(--white);
+  border: 3px solid var(--pink-soft);
+  border-radius: 999px;
+  padding: 2px 12px;
+}
+
+/* ============================================================
+   ゲーム一覧
+   ============================================================ */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 620px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); }
+}
+
+/* カード全体がリンク＝指で押せる面積を最大に。
+   上段＝絵札＋説明／下段＝ピンクの丸ボタン（狭い画面でも説明が読める） */
+.game {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "art body"
+    "go  go";
+  column-gap: 14px;
+  row-gap: 12px;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  background: var(--white);
+  border: 4px solid var(--white);
+  border-radius: var(--r-xl);
+  padding: 16px;
+  box-shadow: var(--shadow-1);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.game:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-2);
+  border-color: var(--pink-soft);
+}
+
+.game:active { transform: translateY(1px) scale(.99); }
+
+.game:focus-visible { outline: 4px solid var(--pink-deep); outline-offset: 3px; }
+
+.game-art {
+  grid-area: art;
+  width: 66px;
+  aspect-ratio: 419 / 635;      /* 絵札と同じ比率の枠 */
+  border-radius: 10px;
+  background: var(--cream-2);
+  border: 3px solid var(--cream);
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  overflow: hidden;
+}
+
+.game-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;          /* 比率を絶対に崩さない */
+  background: #fff;
+}
+
+.game-body { grid-area: body; min-width: 0; }
+
+/* span で組んでいるので、明示的にブロックにする（重なり防止） */
+.game-title,
+.game-desc { display: block; }
+
+.game-title {
+  font-size: clamp(17px, 4.6vw, 20px);
+  font-weight: 900;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.game-desc {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.game-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tag {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  background: var(--cream-2);
+  border: 2px solid var(--cream);
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.tag.time {
+  color: #1F7A45;
+  background: #E4F8E9;
+  border-color: #CBEFD5;
+}
+
+.game-go {
+  grid-area: go;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(180deg, var(--pink) 0%, var(--pink-deep) 100%);
+  border-radius: 999px;
+  box-shadow: 0 5px 0 var(--pink-dark);
+  white-space: nowrap;
+}
+
+.game:active .game-go { box-shadow: 0 2px 0 var(--pink-dark); }
+
+/* ============================================================
+   もうすぐ あそべるよ！
+   ============================================================ */
+
+.soon {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: var(--cream-2);
+  border: 4px dashed #F2DFB4;
+  border-radius: var(--r-xl);
+  padding: 16px;
+  min-height: 96px;
+  color: var(--ink-soft);
+}
+
+.soon-art {
+  flex: 0 0 auto;
+  width: 66px;
+  aspect-ratio: 419 / 635;
+  border-radius: 10px;
+  border: 3px dashed #EBD5A8;
+  background: rgba(255,255,255,.6);
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+}
+
+.soon-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.soon-desc { margin: 2px 0 0; font-size: 13.5px; font-weight: 700; line-height: 1.55; }
+
+.soon-badge {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #9A7B3F;
+  background: #FFF1CE;
+  border-radius: 999px;
+  padding: 2px 12px;
+}
+
+.note {
+  margin: 16px 0 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+/* ============================================================
+   飾り（花・キラキラ）
+   ============================================================ */
+
+.deco {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.deco.f1 { width: 26px; top: 18px;  right: 6%;  animation: spin 14s linear infinite; }
+.deco.f2 { width: 20px; top: 118px; left: 4%;   animation: spin 18s linear infinite reverse; }
+.deco.f3 { width: 30px; bottom: 16px; right: 8%; animation: spin 16s linear infinite; }
+.deco.f4 { width: 22px; bottom: 26px; left: 7%; animation: spin 20s linear infinite reverse; }
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.twinkle {
+  position: absolute;
+  font-size: 18px;
+  animation: twinkle 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+.t1 { top: 60px; left: 8%; }
+.t2 { top: 40px; right: 12%; animation-delay: .9s; }
+
+@keyframes twinkle {
+  0%, 100% { transform: scale(1);   opacity: .95; }
+  50%      { transform: scale(1.3); opacity: .5; }
+}
+
+/* ============================================================
+   フッター
+   ============================================================ */
+
+.foot {
+  position: relative;
+  margin-top: 34px;
+  padding: 22px 0 34px;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: var(--cream-2);
+  border-top: 4px dashed #F2DFB4;
+}
+
+.foot b { color: var(--pink-dark); }
+.foot p { margin: 2px 0; }
+.foot p span { display: inline-block; }   /* 「ば！」だけ次の行に落とさない */
+
+/* ============================================================
+   動きが苦手な人への配慮
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -1,0 +1,1654 @@
+/* ============================================================
+   ブラックジャック ― ブラゲ工房
+   ねらい：小学生が見て「やってみたい！」と思う、かわいいポップな画面。
+   まとめサイト（portal.css）と おなじ 世界観：
+     上＝水色の空／下＝クリーム色の じめん／白い角丸パネル／ピンクの丸ボタン。
+   外部フォント・外部画像・ライブラリは いっさい使わない（飾りは CSS と SVG で自作）。
+   トランプの絵札は 社長支給の画像のまま（比率 419:635 は絶対に崩さない）。
+   ============================================================ */
+
+:root {
+  color-scheme: light;          /* 暗転させない。読めなくなる事故を防ぐ */
+
+  /* 空とじめん */
+  --sky-1:   #9EE0FA;
+  --sky-2:   #D9F3FF;
+  --cream:   #FFF6DF;
+  --cream-2: #FFFBEF;
+  --white:   #ffffff;
+
+  /* 文字（こげ茶。黒より やわらかい） */
+  --ink:      #4A3A2C;
+  --ink-soft: #7C6754;
+
+  /* ピンク（押す色） */
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+
+  /* みどり（ストップ・すすむ） */
+  --green:      #5BD07C;
+  --green-deep: #3FB562;
+  --green-dark: #2F9A52;
+  --green-soft: #E4F8E9;
+
+  /* きいろ（コイン・カードをひく） */
+  --gold:      #FFD766;
+  --gold-deep: #F5B02E;
+  --gold-dark: #D18C12;
+  --gold-soft: #FFF3CF;
+
+  --shadow-1: 0 4px 0 rgba(196,155,110,.18), 0 10px 22px rgba(150,110,70,.14);
+  --shadow-2: 0 6px 0 rgba(196,155,110,.22), 0 18px 32px rgba(150,110,70,.20);
+
+  --r-xl: 26px;
+  --r-lg: 20px;
+  --r-md: 14px;
+
+  --font: "Hiragino Maru Gothic ProN", "ヒラギノ丸ゴ ProN W4", "M PLUS Rounded 1c",
+          "Rounded Mplus 1c", "BIZ UDPGothic", "Yu Gothic UI", "Hiragino Sans",
+          "Noto Sans JP", Meiryo, sans-serif;
+
+  /* カード画像は 419×635px。--card-w だけ調整すれば高さは比率で決まる */
+  --card-w: 66px;
+  --card-h: calc(var(--card-w) * 635 / 419);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+
+body {
+  min-height: 100%;
+  font-family: var(--font);
+  font-weight: 700;             /* 全体的に太め＝丸ゴシックっぽく見える */
+  line-height: 1.6;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg,
+      var(--sky-1) 0,
+      #BCE9FB 150px,
+      var(--sky-2) 300px,
+      var(--sky-2) 400px,
+      var(--cream) 400px) no-repeat fixed,
+    var(--cream);
+  overflow-x: hidden;           /* 横スクロールは絶対に出さない */
+  -webkit-tap-highlight-color: transparent;
+  /* 何度も タップしたときに 文字が 青く 選ばれてしまうのを 防ぐ
+     （子どもは 同じところを 連打するので、これが 出ると こわれたように 見える） */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 賭け金の 入力欄だけは えらべる・打てる ようにする */
+.bet-input {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+img { max-width: 100%; display: block; }
+
+/* 画面よみあげ用（見えないラベル） */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* game.js が付け外しする 表示スイッチ（1か所にまとめる） */
+.hidden { display: none !important; }
+
+/* ============================================================
+   空と飾り（うしろがわ・さわれない）
+   ============================================================ */
+
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 空と じめんの さかいめ を まるく ふくらませる（直線だと 事務的に見える） */
+.sky::after {
+  content: "";
+  position: absolute;
+  left: -8%; right: -8%;
+  top: 344px;
+  height: 110px;
+  background: var(--cream);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+.cloud {
+  position: absolute;
+  background: #fff;
+  border-radius: 999px;
+  opacity: .9;
+}
+.cloud::before,
+.cloud::after {
+  content: "";
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+}
+.cloud::before { width: 60%; height: 160%; left: 8%;  bottom: 40%; }
+.cloud::after  { width: 46%; height: 130%; right: 10%; bottom: 38%; }
+
+.c1 { width: 92px;  height: 24px; top: 92px;  left: -14px;  animation: float 9s ease-in-out infinite; }
+.c2 { width: 120px; height: 30px; top: 176px; right: -26px; animation: float 11s ease-in-out infinite reverse; }
+.c3 { width: 66px;  height: 18px; top: 264px; left: 4%;     opacity: .72; animation: float 13s ease-in-out infinite; }
+
+@keyframes float {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(14px); }
+}
+
+.deco { position: absolute; }
+.deco.f1 { width: 24px; top: 132px;   right: 4%;  animation: spin 15s linear infinite; }
+.deco.f2 { width: 30px; bottom: 5%;   left: 4%;   animation: spin 19s linear infinite reverse; }
+.deco.f3 { width: 20px; bottom: 15%;  right: 6%;  opacity: .85; animation: spin 23s linear infinite; }
+.deco.f4 { width: 16px; bottom: 3%;   right: 22%; opacity: .7;  animation: spin 17s linear infinite reverse; }
+
+/* じめんの くさ（まるい 3枚はっぱ）。画面の した が あいても
+   「そら と じめん」に 見えるように する。content は 持たない ＝ 読み上げ対象外。 */
+.grass {
+  position: absolute;
+  width: 26px; height: 16px;
+  background:
+    radial-gradient(circle at 50% 100%, #A8E6B8 0 52%, transparent 53%) 50% 100%/14px 16px no-repeat,
+    radial-gradient(circle at 50% 100%, #BFEDCB 0 52%, transparent 53%) 12% 100%/12px 12px no-repeat,
+    radial-gradient(circle at 50% 100%, #BFEDCB 0 52%, transparent 53%) 88% 100%/12px 12px no-repeat;
+  opacity: .8;
+}
+.g1 { bottom: 0; left: 12%;  }
+.g2 { bottom: 0; left: 46%; transform: scale(1.25); transform-origin: bottom center; }
+.g3 { bottom: 0; right: 9%; transform: scale(.85);  transform-origin: bottom center; }
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.twinkle {
+  position: absolute;
+  font-size: 17px;
+  animation: twinkle 2.6s ease-in-out infinite;
+}
+.t1 { top: 218px; left: 6%; }
+.t2 { top: 66px;  right: 9%; animation-delay: .9s; }
+
+@keyframes twinkle {
+  0%, 100% { transform: scale(1);   opacity: .95; }
+  50%      { transform: scale(1.3); opacity: .5; }
+}
+
+/* ============================================================
+   ぜんたいの わく
+   ============================================================ */
+
+#app {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 10px 14px calc(18px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── 上のバー（もどる ＋ コイン） ─────────────── */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 15px;
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--pink-dark);
+  text-decoration: none;
+  white-space: nowrap;
+  background: var(--white);
+  border: 3px solid var(--pink-soft);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 rgba(196,155,110,.18);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.back:hover  { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(196,155,110,.2); }
+.back:active { transform: translateY(2px);  box-shadow: 0 1px 0 rgba(196,155,110,.18); }
+.back:focus-visible { outline: 4px solid var(--pink-deep); outline-offset: 3px; }
+
+/* いま なんラウンドめ か（右上）。
+   ※ コインの まいすうは 右上では なく「かける パネルの中」に 出す（社長ご指摘・T10）。
+      かける しゅんかんに いちばん 見たい 数字なので、目線の 近くに 置く。 */
+.round-box {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  min-height: 42px;
+  padding: 0 14px;
+  background: var(--white);
+  border: 3px solid var(--green);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 rgba(196,155,110,.18);
+}
+.round-now {
+  font-size: 22px; font-weight: 900; color: var(--green-dark);
+  font-variant-numeric: tabular-nums; line-height: 42px;
+}
+.round-sep   { font-size: 14px; font-weight: 900; color: var(--ink-soft); }
+.round-total { font-size: 16px; font-weight: 900; color: var(--ink-soft);
+               font-variant-numeric: tabular-nums; }
+.round-unit  { font-size: 11.5px; font-weight: 800; color: var(--ink-soft); margin-left: 2px; }
+
+.coin { width: 24px; height: 24px; flex: 0 0 auto; }
+
+/* コインが ふえた／へった ときの ぴょこん */
+.bump { animation: bump .45s ease; }
+@keyframes bump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.14) rotate(-2deg); }
+  100% { transform: scale(1); }
+}
+
+/* ── タイトル（緑の 立体・白ふちどり。まとめサイトと おなじ作り） ── */
+
+.title {
+  text-align: center;
+  margin: 2px 0 4px;
+  font-size: clamp(24px, 7.4vw, 34px);
+  font-weight: 900;
+  line-height: 1.3;
+  color: var(--green);
+  text-shadow:
+    -3px -3px 0 #fff,  0 -3px 0 #fff,  3px -3px 0 #fff,
+    -3px  0   0 #fff,                  3px  0   0 #fff,
+    -3px  3px 0 #fff,  0  3px 0 #fff,  3px  3px 0 #fff,
+    0 7px 0 var(--green-dark),
+    0 10px 11px rgba(60,120,80,.26);
+}
+
+.title .spade {
+  color: var(--pink-deep);
+  font-size: .8em;
+  margin-left: 4px;
+  text-shadow:
+    -3px -3px 0 #fff, 0 -3px 0 #fff, 3px -3px 0 #fff,
+    -3px 0 0 #fff, 3px 0 0 #fff,
+    -3px 3px 0 #fff, 0 3px 0 #fff, 3px 3px 0 #fff,
+    0 7px 0 var(--pink-dark);
+}
+
+/* ============================================================
+   テーブル（ディーラー ／ ねこ ／ あなた）
+   ============================================================ */
+
+.table {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 白い角丸パネル */
+.side {
+  background: var(--white);
+  border: 4px solid var(--white);
+  border-radius: var(--r-xl);
+  padding: 10px 12px 12px;
+  box-shadow: var(--shadow-1);
+}
+
+.side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.who {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* 点数は まるい ふだ に入れる（数字が どこに出るか 迷わせない） */
+.score {
+  min-width: 54px;
+  padding: 2px 12px;
+  text-align: center;
+  font-size: 19px; font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--cream-2);
+  border: 3px solid var(--cream);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.score.bust { color: #fff; background: var(--pink-deep); border-color: var(--pink-deep); }
+.score.bj   { color: var(--gold-dark); background: var(--gold-soft); border-color: var(--gold); font-size: 15px; }
+
+/* 手札の マット（カードを ここに置く、が ひと目でわかる）
+   折り返さず、枚数が増えたら カードのほうが縮む（スマホでも1行に収める） */
+.hand {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: flex-start;
+  min-height: calc(var(--card-h) + 12px);
+  padding: 6px 8px;
+  background: var(--cream-2);
+  border: 3px dashed #F2DFB4;
+  border-radius: var(--r-md);
+}
+
+/* まだ カードが 1まいも 出ていない あいだ（＝かける画面）は マットを うすく つぶす。
+   「ここに カードが 来る」は のこしつつ、たてを 約50px 節約して
+   375px で かける画面が 1画面に おさまるようにする（T9）。 */
+.hand:empty { min-height: 44px; }
+
+/* ── カード（社長支給のトランプ画像） ───────────── */
+
+.card {
+  position: relative;
+  width: var(--card-w);
+  aspect-ratio: 419 / 635;      /* 画像の比率を保つ。潰さない・伸ばさない */
+  flex: 0 1 auto;
+  min-width: 0;                 /* 枚数が多いときに縮めるため */
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 0 rgba(196,155,110,.22), 0 8px 14px rgba(150,110,70,.2);
+  color: #1b1b1b;
+  animation: dealIn .24s ease-out;
+}
+.card.red { color: #d1273a; }
+
+.card .face {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;          /* 比率を絶対に崩さない */
+  background: #fff;
+  display: block;
+  user-select: none; -webkit-user-drag: none;
+}
+
+@keyframes dealIn {
+  from { transform: translateY(-16px) rotate(-4deg) scale(.9); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* 伏せ札を めくったとき */
+.card.reveal { animation: flipIn .3s ease-out; }
+@keyframes flipIn {
+  from { transform: rotateY(90deg) scale(.94); opacity: .3; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* ── フォールバック（画像が来るまで／読めなかったとき） ──
+   画像が読めたら .img-ok が付いて隠れる。画面が真っ白にならないための保険。 */
+.card .fallback { position: absolute; inset: 0; display: block; }
+.card.img-ok .fallback { display: none; }
+
+.card .corner {
+  position: absolute;
+  font-size: 13px; font-weight: 900; line-height: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.card .corner i { font-style: normal; font-size: 11px; }
+.card .corner.tl { top: 5px; left: 6px; }
+.card .corner.br { bottom: 5px; right: 6px; transform: rotate(180deg); }
+
+.card .pip {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px; line-height: 1;
+}
+
+/* 裏面も画像。読めなかったときだけ、この模様が見える */
+.card.back {
+  background: repeating-linear-gradient(45deg, #FF9EB5 0 6px, #F1748F 6px 12px);
+}
+
+/* ============================================================
+   ねこ ＋ ふきだし（＝おしらせ／けっか）
+   ============================================================ */
+
+.talk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.cat-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(62px, 18vw, 86px);
+}
+
+.cat {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  animation: bob 3s ease-in-out infinite;
+  filter: drop-shadow(0 5px 5px rgba(150,110,70,.22));
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0)    rotate(0deg); }
+  50%      { transform: translateY(-5px) rotate(-1.5deg); }
+}
+
+.cat-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 5s infinite;
+}
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95%           { transform: scaleY(.1); }
+}
+
+.cat-tail {
+  transform-box: fill-box;
+  transform-origin: 10% 90%;
+  animation: wag 2.4s ease-in-out infinite;
+}
+@keyframes wag {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(-9deg); }
+}
+
+/* ねこの かお（3しゅるい）。ふだんは「ふつう」だけ見せる */
+.face-happy,
+.face-sad { display: none; }
+
+.talk[data-mood="win"] .face-normal,
+.talk[data-mood="bj"]  .face-normal { display: none; }
+.talk[data-mood="win"] .face-happy,
+.talk[data-mood="bj"]  .face-happy  { display: block; }
+
+.talk[data-mood="lose"] .face-normal { display: none; }
+.talk[data-mood="lose"] .face-sad    { display: block; }
+
+/* かったときは よろこんで はねる ＋ キラキラ */
+.talk[data-mood="win"] .cat,
+.talk[data-mood="bj"]  .cat { animation: hop .5s ease-in-out 2; }
+@keyframes hop {
+  0%, 100% { transform: translateY(0)    rotate(0deg); }
+  30%      { transform: translateY(-12px) rotate(6deg); }
+  60%      { transform: translateY(0)     rotate(-4deg); }
+}
+
+/* まけたときは しょんぼり（動きを止める） */
+.talk[data-mood="lose"] .cat { animation: none; transform: translateY(3px); }
+
+.cat-spark {
+  position: absolute;
+  font-size: 15px;
+  opacity: 0;
+  pointer-events: none;
+}
+.s1 { top: -2px;  left: -6px; }
+.s2 { top: 14px;  right: -8px; }
+
+/* ── 名ふだ「ハッピー」 ──
+   足もとに 置く（position:absolute）ので、たての ばしょを 1pxも 取らない。
+   ＝375px で 画面が 1つに おさまる状態を くずさない。
+   まとめサイトの 名ふだと 同じ見た目（白い丸ピル＋ピンクのわく）に そろえてある。 */
+.cat-name {
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 0 7px;
+  font-size: 10.5px;
+  font-weight: 900;
+  line-height: 1.7;
+  letter-spacing: -.02em;
+  color: var(--pink-dark);
+  background: var(--white);
+  border: 2px solid var(--pink);
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 rgba(196,155,110,.18);
+  pointer-events: none;
+}
+
+.talk[data-mood="win"] .cat-spark,
+.talk[data-mood="bj"]  .cat-spark { animation: pop 1.1s ease-out 2; }
+.talk[data-mood="bj"]  .s2,
+.talk[data-mood="win"] .s2 { animation-delay: .25s; }
+
+@keyframes pop {
+  0%   { opacity: 0; transform: scale(.4); }
+  40%  { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(.8) translateY(-10px); }
+}
+
+/* ── ふきだし（けっかは ここに出る。読みやすさ 最優先） ── */
+
+.banner {
+  --bn-bg: var(--white);
+  --bn-border: var(--pink);
+  --bn-ink: var(--pink-dark);
+
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 62px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 9px 13px;
+  text-align: center;
+  background: var(--bn-bg);
+  border: 3px solid var(--bn-border);
+  border-radius: 18px;
+  box-shadow: 0 3px 0 rgba(196,155,110,.18);
+}
+
+/* ふきだしの しっぽ（ねこの ほうを向く） */
+.banner::before,
+.banner::after {
+  content: "";
+  position: absolute;
+  width: 0; height: 0;
+  border-style: solid;
+}
+.banner::before {
+  left: -17px; top: 20px;
+  border-width: 9px 17px 9px 0;
+  border-color: transparent var(--bn-border) transparent transparent;
+}
+.banner::after {
+  left: -11px; top: 23px;
+  border-width: 6px 12px 6px 0;
+  border-color: transparent var(--bn-bg) transparent transparent;
+}
+
+/* ねこの ひとこと（大きい・色つき） */
+.cat-line {
+  font-size: clamp(15px, 4.4vw, 18px);
+  font-weight: 900;
+  line-height: 1.25;
+  color: var(--bn-ink);
+}
+
+/* くわしい けっか（コインの ふえへり も ここ） */
+#bannerText {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.banner.win  { --bn-bg: var(--green-soft); --bn-border: var(--green-deep); --bn-ink: #1F7A45; }
+.banner.win  #bannerText { color: #2C6B45; }
+
+.banner.lose { --bn-bg: var(--pink-soft);  --bn-border: var(--pink-deep);  --bn-ink: var(--pink-dark); }
+.banner.lose #bannerText { color: #96486C; }
+
+.banner.push { --bn-bg: var(--cream-2);    --bn-border: #EBD5A8;          --bn-ink: var(--ink); }
+
+.banner.bj   { --bn-bg: var(--gold-soft);  --bn-border: var(--gold-deep); --bn-ink: var(--gold-dark); }
+.banner.bj   #bannerText { color: #8A6212; }
+
+.banner.flash { animation: popIn .28s ease-out; }
+@keyframes popIn {
+  from { transform: scale(.94); opacity: .4; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* ============================================================
+   そうさ（ボタン）
+   ============================================================ */
+
+.controls { display: flex; flex-direction: column; gap: 9px; }
+
+/* 白い角丸パネル（かける／ラウンドえらび／さいごのけっか で 共通） */
+.bet-phase,
+.setup-phase,
+.final-phase {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  background: var(--white);
+  border: 4px solid var(--white);
+  border-radius: var(--r-xl);
+  padding: 12px 12px 14px;
+  box-shadow: var(--shadow-1);
+}
+
+/* ── ⓪ ラウンドえらび（ゲームを ひらいて さいしょに 見る画面） ────
+   ねらい：「なんかい あそぶか」を、数字の 大きさ・色の こさ・ことばの3つで えらべるように。
+   数字だけだと「10と15、どっちが どれくらい？」が 子どもには わからない。 */
+
+.setup-phase { position: relative; gap: 11px; padding: 14px 12px 16px; }
+
+/* 角の かざり（さみしい 余白を うめる。うすい色なので 文字の じゃまを しない） */
+.suit-deco {
+  position: absolute;
+  font-size: 26px;
+  line-height: 1;
+  pointer-events: none;
+  opacity: .5;
+}
+.suit-deco.d1 { top: 10px;    left: 12px;  color: #BFE6F7; transform: rotate(-14deg); }
+.suit-deco.d2 { bottom: 12px; right: 13px; color: #FFD3E2; transform: rotate(12deg); }
+
+.setup-title {
+  text-align: center;
+  font-size: 21px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.round-row {
+  display: flex;
+  flex-wrap: nowrap;         /* 5つ 1行。おりかえすと 「ならび＝ながさ」が くずれる */
+  justify-content: center;
+  gap: 6px;
+  margin-top: 9px;           /* 「おすすめ」の ふだが はみ出す ぶん */
+}
+
+/* まるい ラウンド数ボタン。おすと すぐ その かいすうで はじまる */
+.round-btn {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0 1px;
+  border: 4px solid #fff;
+  border-radius: 20px;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(180deg, var(--rb-1) 0%, var(--rb-2) 100%);
+  box-shadow: 0 5px 0 var(--rb-3), 0 9px 14px rgba(47,154,82,.22);
+  cursor: pointer;
+  transition: transform .1s ease, box-shadow .1s ease;
+  touch-action: manipulation;
+  animation: rbIn .34s ease-out backwards;
+}
+.round-btn b     { font-size: 27px; font-weight: 900; line-height: 1.05;
+                   font-variant-numeric: tabular-nums;
+                   text-shadow: 0 2px 0 rgba(0,0,0,.12); }
+.round-btn small { font-size: 10.5px; font-weight: 800; opacity: .9; line-height: 1.2; }
+
+/* めやすの ことば。数字の したに、白い おびで 出す（読める コントラストを つくる） */
+.round-btn em {
+  margin-top: 3px;
+  padding: 1px 5px;
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: -.04em;
+  line-height: 1.5;
+  color: var(--rb-3);
+  background: #fff;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ながさで 色の こさを かえる（左＝うすい＝みじかい → 右＝こい＝ながい）。
+   ことばが 読めなくても、ならびで「右へ行くほど 長い」が つたわる。 */
+.round-btn                  { --rb-1: #7FE3A0; --rb-2: #5BD07C; --rb-3: #34A257; }
+.round-btn[data-rounds="5"],
+.round-btn[data-rounds="7"] { --rb-1: #5BD07C; --rb-2: #3FB562; --rb-3: #2F9A52; }
+.round-btn[data-rounds="10"],
+.round-btn[data-rounds="15"]{ --rb-1: #46C48F; --rb-2: #27A87A; --rb-3: #1B8B63; }
+
+/* 「おすすめ」の ふだ（5かい）。まよったら ここ、を ひと目で */
+.round-btn .tag {
+  position: absolute;
+  top: -13px; left: 50%;
+  transform: translateX(-50%);
+  padding: 0 6px;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1.7;
+  color: #fff;
+  background: var(--pink-deep);
+  border: 2px solid #fff;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 rgba(196,58,115,.35);
+}
+.round-btn.is-osusume { border-color: var(--gold); }
+
+.round-btn:hover  { transform: translateY(-2px); }
+.round-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--rb-3); }
+.round-btn:focus-visible { outline: 4px solid var(--pink-deep); outline-offset: 3px; }
+
+/* ひらいた ときに、左から じゅんばんに ぽんっと 出す（＝ここを えらぶ場所、が わかる） */
+@keyframes rbIn {
+  from { transform: translateY(10px) scale(.86); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.round-btn:nth-child(1) { animation-delay: .04s; }
+.round-btn:nth-child(2) { animation-delay: .10s; }
+.round-btn:nth-child(3) { animation-delay: .16s; }
+.round-btn:nth-child(4) { animation-delay: .22s; }
+.round-btn:nth-child(5) { animation-delay: .28s; }
+
+.setup-note {
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  background: var(--gold-soft);
+  border: 3px solid var(--gold);
+  border-radius: var(--r-lg);
+  padding: 5px 10px;
+}
+.setup-note b { color: var(--gold-dark); font-size: 15px; }
+.setup-note .coin {
+  display: inline-block;
+  vertical-align: -5px;
+  margin-right: 3px;
+  animation: coinSpin 4.5s ease-in-out infinite;
+}
+
+@keyframes coinSpin {
+  0%, 62%, 100% { transform: rotateY(0deg); }
+  78%           { transform: rotateY(180deg); }
+}
+
+/* ── ① かけるフェーズ ─────────────────── */
+
+/* もっているコイン（社長ご指摘・T10）。かける ボタンの すぐ上に 大きく 出す */
+.have-box {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 16px 3px 11px;
+  background: var(--gold-soft);
+  border: 3px solid var(--gold);
+  border-radius: 999px;
+}
+.have-label { font-size: 12px; font-weight: 800; color: var(--ink-soft); }
+.have-count {
+  font-size: 26px; font-weight: 900; color: var(--gold-dark);
+  font-variant-numeric: tabular-nums; line-height: 1.15;
+}
+.have-unit  { font-size: 12px; font-weight: 800; color: var(--ink-soft); }
+
+.bet-title {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.bet-row-btns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* まるい ＋／− ボタン */
+.bet-btn {
+  flex: 0 0 auto;
+  min-width: 54px; min-height: 54px;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 15px; font-weight: 900;
+  color: var(--ink);
+  background: var(--cream);
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(196,155,110,.35);
+  transition: transform .1s ease, box-shadow .1s ease;
+  touch-action: manipulation;
+}
+.bet-btn.bet-plus {
+  color: #7A4E06;
+  background: linear-gradient(180deg, var(--gold) 0%, var(--gold-deep) 100%);
+  box-shadow: 0 4px 0 var(--gold-dark);
+}
+.bet-btn:active   { transform: translateY(3px); box-shadow: 0 1px 0 rgba(196,155,110,.35); }
+.bet-btn.bet-plus:active { box-shadow: 0 1px 0 var(--gold-dark); }
+.bet-btn:disabled { opacity: .38; cursor: default; transform: none; }
+.bet-btn:focus-visible { outline: 4px solid var(--pink-deep); outline-offset: 3px; }
+
+.bet-field { flex: 1 1 auto; min-width: 0; display: block; }
+
+.bet-input {
+  width: 100%;
+  min-height: 54px;
+  border: 3px solid var(--cream);
+  border-radius: var(--r-md);
+  background: var(--cream-2);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 26px; font-weight: 900;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding: 0 4px;
+}
+.bet-input:focus {
+  outline: none;
+  border-color: var(--pink);
+  background: #fff;
+}
+/* スマホでも数字が読みやすいよう、増減の矢印は消す */
+.bet-input::-webkit-outer-spin-button,
+.bet-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.bet-input { -moz-appearance: textfield; appearance: textfield; }
+
+.bet-note {
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+/* ── ② あそぶフェーズの情報行 ───────────── */
+
+.play-info {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+.play-info span {
+  background: var(--white);
+  border: 3px solid var(--cream);
+  border-radius: 999px;
+  padding: 3px 14px;
+}
+.play-info b {
+  color: var(--pink-dark);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+/* あそんでいる あいだも 手もちの コインが 見えるように（きいろで めだたせる） */
+.play-info .pi-coin   { border-color: var(--gold); }
+.play-info .pi-coin b { color: var(--gold-dark); font-size: 16px; }
+
+/* ── 大きい 丸ボタン（立体 → 押すと しずむ） ── */
+
+.btn-row { display: flex; gap: 10px; }
+
+.btn {
+  flex: 1;
+  min-height: 64px;
+  padding: 0 10px;
+  border: 4px solid #fff;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 18px; font-weight: 900;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  transition: transform .1s ease, box-shadow .1s ease;
+  touch-action: manipulation;
+}
+.btn small { font-size: 11px; font-weight: 800; opacity: .78; }
+.btn:active { transform: translateY(4px); }
+.btn:disabled { opacity: .42; cursor: default; transform: none; }
+.btn:focus-visible { outline: 4px solid var(--pink-deep); outline-offset: 3px; }
+
+/* これでスタート！／もういちど＝ピンク（いちばん押してほしい） */
+.btn-start,
+.btn-next,
+.btn-reset {
+  width: 100%;
+  color: #fff;
+  background: linear-gradient(180deg, var(--pink) 0%, var(--pink-deep) 100%);
+  box-shadow: 0 7px 0 var(--pink-dark), 0 12px 18px rgba(196,58,115,.26);
+}
+.btn-start:active,
+.btn-next:active,
+.btn-reset:active { box-shadow: 0 2px 0 var(--pink-dark); }
+.btn-start:focus-visible,
+.btn-next:focus-visible,
+.btn-reset:focus-visible { outline-color: var(--green-dark); }
+
+/* カードをひく＝きいろ（もう1まい） */
+.btn-hit {
+  color: #6B4405;
+  background: linear-gradient(180deg, var(--gold) 0%, var(--gold-deep) 100%);
+  box-shadow: 0 7px 0 var(--gold-dark), 0 12px 18px rgba(209,140,18,.24);
+}
+.btn-hit:active { box-shadow: 0 2px 0 var(--gold-dark); }
+
+/* ここでストップ＝みどり（これで しょうぶ） */
+.btn-stand {
+  color: #fff;
+  background: linear-gradient(180deg, var(--green) 0%, var(--green-deep) 100%);
+  box-shadow: 0 7px 0 var(--green-dark), 0 12px 18px rgba(47,154,82,.24);
+}
+.btn-stand:active { box-shadow: 0 2px 0 var(--green-dark); }
+
+/* ============================================================
+   ④ さいごの けっか ／ ゲームオーバー
+   ------------------------------------------------------------
+   この画面が、あそび終わった しゅんかんの きもちを つくる場所。
+   ・ふえたとき  → しっかり よろこぶ（紙ふぶき・キラキラ・コインが はねる）
+   ・へったとき  → ぜったいに 責めない（動きを ひかえめに して、色も やさしく）
+   えんしゅつは 数字の じゃまを しない ことが 大前かなめ。
+   ============================================================ */
+
+.final-phase { position: relative; gap: 10px; padding: 14px 12px 16px; }
+
+.final-title {
+  text-align: center;
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1.25;
+  color: var(--green-dark);
+  text-shadow: 0 2px 0 #fff, 0 3px 0 rgba(47,154,82,.22);
+}
+.final-phase.is-over .final-title {
+  color: var(--pink-dark);
+  text-shadow: 0 2px 0 #fff, 0 3px 0 rgba(196,58,115,.2);
+}
+
+/* おおきく ふえたときは タイトルも おいわいモード */
+.final-phase[data-fin="big"] .final-title {
+  color: var(--gold-dark);
+  text-shadow: 0 2px 0 #fff, 0 3px 0 rgba(209,140,18,.3);
+  animation: titlePop .5s ease-out;
+}
+@keyframes titlePop {
+  0%   { transform: scale(.7) rotate(-4deg); opacity: 0; }
+  60%  { transform: scale(1.12) rotate(2deg); opacity: 1; }
+  100% { transform: none; }
+}
+
+/* ── 主役：さいごの コインの まいすう ───────────── */
+
+.final-coin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 6px 10px 10px;
+  background: var(--gold-soft);
+  border: 3px solid var(--gold);
+  border-radius: var(--r-lg);
+}
+
+/* 上段：「さいしょ 100まい ↓」＝ くらべる ための 小さい情報 */
+.final-was {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+.final-was-label {
+  padding: 0 7px;
+  font-size: 10.5px;
+  line-height: 1.6;
+  background: #fff;
+  border-radius: 999px;
+}
+.final-from {
+  text-decoration: line-through;
+  text-decoration-color: rgba(124,103,84,.45);
+}
+.final-from b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.final-arrow  { font-size: 13px; font-weight: 900; color: var(--gold-dark); }
+
+/* 下段：いちばん 大きい 数字。ここだけ 見れば けっかが わかる */
+.final-to {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  line-height: 1;
+}
+.final-to b {
+  font-size: 52px;
+  font-weight: 900;
+  color: var(--gold-dark);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 3px 0 #fff, 0 4px 0 rgba(209,140,18,.25);
+}
+.final-unit { align-self: flex-end; padding-bottom: 7px; }
+.coin-big   { width: 38px; height: 38px; }
+
+/* ふえたときだけ コインが はずむ（へったときは 動かさない） */
+.final-phase[data-fin="win"] .coin-big,
+.final-phase[data-fin="big"] .coin-big { animation: coinBounce .62s ease-out 2; }
+@keyframes coinBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  35%      { transform: translateY(-13px) rotate(-16deg); }
+  70%      { transform: translateY(0) rotate(8deg); }
+}
+
+.final-phase[data-fin="win"] .final-to b,
+.final-phase[data-fin="big"] .final-to b { animation: numPop .55s ease-out; }
+@keyframes numPop {
+  0%  { transform: scale(.55); opacity: 0; }
+  55% { transform: scale(1.16); opacity: 1; }
+  100%{ transform: none; }
+}
+
+/* だいせいこう（＋50まい いじょう）は わく じたいが 光る */
+.final-phase[data-fin="big"] .final-coin {
+  border-color: var(--gold-deep);
+  animation: boxGlow 1.5s ease-out 2;
+}
+@keyframes boxGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,176,46,0); }
+  40%      { box-shadow: 0 0 0 9px rgba(245,176,46,.24); }
+}
+
+/* ── ふえた／へった の ひとこと（ふだ にして 読みやすく） ── */
+
+.final-diff {
+  align-self: center;
+  padding: 3px 16px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--cream-2);
+  border: 3px solid var(--cream);
+  border-radius: 999px;
+}
+.final-diff.up {
+  color: #1F7A45;
+  background: var(--green-soft);
+  border-color: var(--green);
+  animation: diffIn .45s ease-out .18s backwards;
+}
+.final-diff.down {
+  color: var(--pink-dark);
+  background: var(--pink-soft);
+  border-color: var(--pink);
+}
+@keyframes diffIn {
+  from { transform: translateY(8px) scale(.9); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* ── コインが なくなった ときの はげまし（ゲームオーバーだけ 出る） ── */
+
+.over-cheer { display: none; }
+.final-phase.is-over .over-cheer {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--pink-dark);
+  background: var(--pink-soft);
+  border-radius: var(--r-md);
+  padding: 7px 10px;
+}
+
+/* ── かち・まけ・ひきわけ（ふだ 3つ） ───────────── */
+
+.record-chips { display: none; }
+.final-phase.has-chips .record-chips {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+/* ふだが 出せた ときは、もとの 1行は 画面よみあげ用に だけ のこす */
+.final-phase.has-chips .final-record {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.rc {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 3px 4px 4px;
+  border: 3px solid var(--cream);
+  border-radius: var(--r-md);
+  background: var(--cream-2);
+}
+.rc small { font-size: 10.5px; font-weight: 800; color: var(--ink-soft); line-height: 1.3; }
+.rc b     { font-size: 21px; font-weight: 900; line-height: 1.1;
+            font-variant-numeric: tabular-nums; }
+.rc b::after { content: "かい"; font-size: 10px; font-weight: 800; margin-left: 1px; }
+
+.rc-win  { background: var(--green-soft); border-color: var(--green); }
+.rc-win  b { color: #1F7A45; }
+.rc-lose { background: var(--pink-soft);  border-color: var(--pink); }
+.rc-lose b { color: var(--pink-dark); }
+.rc-push b { color: var(--ink); }
+
+.final-round,
+.final-record {
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* 紙ふぶきが うしろを 通っても 読めるように、白い おびを しく。
+   （えんしゅつで 数字や 文字が 読みにくく なるのは なし、が この画面の 線） */
+.final-round {
+  align-self: center;
+  padding: 1px 14px;
+  background: #fff;
+  border-radius: 999px;
+}
+
+/* ── 「もういちど あそぶ」＝ もう1回 やりたい きもちの 受け皿 ── */
+
+.btn-again { min-height: 68px; font-size: 19px; }
+.btn-again { animation: againBreath 2.6s ease-in-out 1.2s infinite; }
+@keyframes againBreath {
+  0%, 88%, 100% { transform: none; }
+  94%           { transform: scale(1.035); }
+}
+.btn-again:active { animation: none; }
+
+/* ── 紙ふぶき（ふえた ときだけ ふる） ──────────────
+   .fx は position:absolute なので、たての ばしょを 1pxも 取らない。
+   ＝ 375px で 1画面に おさまる 状態を くずさない。 */
+
+.fx {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  pointer-events: none;
+  z-index: 0;
+}
+.final-phase > *:not(.fx) { position: relative; z-index: 1; }
+
+.fx i {
+  position: absolute;
+  top: -22px;
+  width: 9px; height: 13px;
+  border-radius: 2px;
+  opacity: 0;
+}
+/* ふえた ときだけ ふらせる（へった ときは 1つも 出ない）。
+   ※ ここで animation の まとめ書きを 使うと、下の 1まいごとの おくれ（delay）が
+     リセットされて 全部 同時に 落ちてしまう。だから わざと 1つずつ 書いている。 */
+.final-phase[data-fin="win"] .fx i,
+.final-phase[data-fin="big"] .fx i {
+  animation-name: confetti;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+.final-phase[data-fin="win"] .fx i { animation-duration: 2.1s; }
+.final-phase[data-fin="big"] .fx i { animation-duration: 2.6s; animation-iteration-count: 2; }
+
+@keyframes confetti {
+  0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+  12%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(330px) rotate(520deg); }
+}
+
+.fx i:nth-child(1)  { left: 5%;  background: var(--pink);      animation-delay: .02s; }
+.fx i:nth-child(2)  { left: 13%; background: var(--gold);      animation-delay: .30s; }
+.fx i:nth-child(3)  { left: 21%; background: var(--green);     animation-delay: .58s; border-radius: 50%; }
+.fx i:nth-child(4)  { left: 29%; background: #8FD9F5;          animation-delay: .16s; }
+.fx i:nth-child(5)  { left: 37%; background: var(--pink-deep); animation-delay: .74s; }
+.fx i:nth-child(6)  { left: 45%; background: var(--gold-deep); animation-delay: .44s; border-radius: 50%; }
+.fx i:nth-child(7)  { left: 53%; background: var(--green);     animation-delay: .90s; }
+.fx i:nth-child(8)  { left: 61%; background: var(--pink);      animation-delay: .24s; }
+.fx i:nth-child(9)  { left: 69%; background: #8FD9F5;          animation-delay: .66s; border-radius: 50%; }
+.fx i:nth-child(10) { left: 77%; background: var(--gold);      animation-delay: .10s; }
+.fx i:nth-child(11) { left: 85%; background: var(--green-deep);animation-delay: .82s; }
+.fx i:nth-child(12) { left: 92%; background: var(--pink-deep); animation-delay: .38s; }
+.fx i:nth-child(13) { left: 33%; background: var(--gold);      animation-delay: 1.02s; border-radius: 50%; }
+.fx i:nth-child(14) { left: 65%; background: var(--pink);      animation-delay: 1.18s; }
+
+/* コインぎれ の ときは、やわらかい しゃぼん玉が ゆっくり のぼるだけ。
+   にぎやかに しない ＝ 責めない。でも 画面を 止めない（さみしくしない）。 */
+.final-phase.is-over .fx i:nth-child(-n+5) {
+  top: auto; bottom: -20px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: rgba(255,140,184,.3);
+  animation-name: bubbleUp;
+  animation-duration: 5.2s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.final-phase.is-over .fx i:nth-child(1) { animation-delay: 0s;   left: 8%;  }
+.final-phase.is-over .fx i:nth-child(2) { animation-delay: 1.1s; left: 26%; }
+.final-phase.is-over .fx i:nth-child(3) { animation-delay: 2.3s; left: 52%; }
+.final-phase.is-over .fx i:nth-child(4) { animation-delay: 3.1s; left: 74%; }
+.final-phase.is-over .fx i:nth-child(5) { animation-delay: 4.2s; left: 90%; }
+
+@keyframes bubbleUp {
+  0%   { opacity: 0; transform: translateY(0) scale(.6); }
+  20%  { opacity: .9; }
+  100% { opacity: 0; transform: translateY(-190px) scale(1.1); }
+}
+
+/* ── あそびかた（ラウンドえらび画面だけに 出る） ──
+   1行の ながい 説明は 子どもは 読まない。3つに 切って 番号を ふる。 */
+.rule {
+  background: rgba(255,255,255,.78);
+  border: 3px dashed #FFD3E2;
+  border-radius: var(--r-lg);
+  padding: 9px 12px 11px;
+}
+
+.rule-head {
+  display: block;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--pink-dark);
+  margin-bottom: 4px;
+}
+
+.rule-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.rule-list li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.rule-list b { color: var(--ink); }
+.rule-list .ri {
+  position: absolute;
+  left: 0; top: 0;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--pink);
+}
+
+/* ============================================================
+   ページの いちばん した：ルール説明（読みもの）
+   ------------------------------------------------------------
+   ねらい：ゲームで 手が 止まった子が「ここに 書いてある」と わかる場所。
+   ・<details> で 畳んである。閉じている あいだの たては 見出しバー ぶんだけ（約60px）。
+     → ゲーム本体が 1画面に おさまる 状態を くずさない。
+   ・上の あそびかた3行ボックスとは 見た目を わざと 変える。
+     3行ボックス＝点線・うすい／ここ＝白い しっかりした パネル ＝「ここから下は 読みもの」。
+   ・行間は ひろめ（1.9）。分かち書きの 文章は 行間が せまいと 語のかたまりが 見えなくなる。
+   ============================================================ */
+
+.guide {
+  margin-top: 6px;
+  background: var(--white);
+  border: 4px solid var(--white);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;             /* 角の まるみから 中身が はみ出さない */
+}
+
+/* ── 見出しバー（押すと ひらく） ─────────────── */
+
+.guide-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 58px;             /* 指で 押せる 大きさ */
+  padding: 8px 12px;
+  background: var(--pink-soft);
+  border-radius: 22px;
+  cursor: pointer;
+  list-style: none;             /* ブラウザの ▶ を 消して、自前の ▼ に する */
+  transition: background .14s ease;
+}
+.guide-head::-webkit-details-marker { display: none; }
+.guide-head::marker { content: ""; }
+.guide-head:hover { background: #FFD7E7; }
+.guide-head:active { transform: translateY(2px); }
+.guide-head:focus-visible { outline: 4px solid var(--pink-deep); outline-offset: -2px; }
+
+/* ハッピー（顔だけ）。本文の じゃまを しない 大きさに おさえる */
+.ghappy {
+  flex: 0 0 auto;
+  width: 44px; height: 34px;
+  filter: drop-shadow(0 3px 3px rgba(150,110,70,.2));
+}
+.guide[open] .ghappy { animation: gpeek .5s ease-out; }
+@keyframes gpeek {
+  0%   { transform: translateY(6px) rotate(-8deg); }
+  60%  { transform: translateY(-2px) rotate(4deg); }
+  100% { transform: none; }
+}
+
+.guide-label { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.guide-title { font-size: 15.5px; font-weight: 900; line-height: 1.35; color: var(--pink-dark); }
+.guide-sub   { font-size: 11px;  font-weight: 800; line-height: 1.35; color: var(--ink-soft); }
+
+/* ひらく／とじる の しるし。ひらくと くるっと 上を むく */
+.guide-arrow {
+  flex: 0 0 auto;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  color: #fff;
+  background: var(--pink);
+  border-radius: 999px;
+  box-shadow: 0 2px 0 var(--pink-dark);
+  transition: transform .2s ease;
+}
+.guide[open] .guide-arrow { transform: rotate(180deg); }
+
+/* ── 本文 ─────────────────────────── */
+
+.guide-body {
+  padding: 4px 4px 6px;
+  animation: gOpen .24s ease-out;
+}
+@keyframes gOpen {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 1つの まとまり ＝ クリームの わく。かたまりが 目で 数えられる */
+.gsec {
+  margin-top: 10px;
+  padding: 10px 12px 12px;
+  background: var(--cream-2);
+  border: 3px solid var(--cream);
+  border-radius: var(--r-lg);
+}
+
+/* 見出し（中）。ピンクの まる しるし ＋ 下に うすい線 */
+.gh {
+  position: relative;
+  margin: 0 0 7px;
+  padding-left: 17px;
+  padding-bottom: 5px;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.4;
+  color: var(--pink-dark);
+  border-bottom: 2px dotted #F5CBDD;
+}
+.gh::before {
+  content: "";
+  position: absolute;
+  left: 0; top: .45em;
+  width: 10px; height: 10px;
+  background: var(--pink);
+  border-radius: 999px;
+}
+
+/* 本文（ぜんぶ 共通） */
+.gp {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.9;
+  color: var(--ink);
+}
+.gp + .gp { margin-top: 7px; }
+.gp b, .gsteps b, .glist b { font-weight: 900; color: var(--pink-dark); }
+
+/* ── あそびかた（番号つき） ── */
+
+.gsteps {
+  list-style: none;
+  counter-reset: gstep;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gsteps li {
+  position: relative;
+  counter-increment: gstep;
+  padding-left: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.85;
+  color: var(--ink);
+}
+/* 番号は まるい ふだ に。「じゅんばんに やる」が ひと目で わかる */
+.gsteps li::before {
+  content: counter(gstep);
+  position: absolute;
+  left: 0; top: .28em;
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12.5px; font-weight: 900;
+  color: #fff;
+  background: var(--pink);
+  border-radius: 999px;
+  box-shadow: 0 2px 0 var(--pink-dark);
+}
+
+/* 注意書き（小さめ・きいろの おび） */
+.gnote {
+  margin-top: 9px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  background: var(--gold-soft);
+  border: 2px solid var(--gold);
+  border-radius: var(--r-md);
+}
+
+/* ── ふつうの リスト ── */
+
+.glist {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.glist li {
+  position: relative;
+  padding-left: 19px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.85;
+  color: var(--ink);
+}
+/* まるの しるし。かち・まけの ところだけ、ゲーム中の ふきだしと おなじ 色の やくそくに する
+   （みどり＝かち／ピンク＝まけ／きいろ＝ひきわけ）。文字（太字）は いっさい いじらない。
+   ※ひきわけの ふきだしは クリームだが、クリーム地の うえでは まるが 見えないので
+     いちだん こい きいろ（--gold-deep）に する。色の 意味は そのまま。 */
+.gm {
+  position: absolute;
+  left: 0; top: .55em;
+  width: 11px; height: 11px;
+  background: #EBD5A8;
+  border-radius: 999px;
+}
+.gm-win  { background: var(--green-deep); }
+.gm-lose { background: var(--pink-deep); }
+.gm-push { background: var(--gold-deep); }
+
+/* ── ブラックジャック（小見出し・きいろの わく） ──
+   ゲーム中の ブラックジャックの ふきだしが きいろ なので、色を そろえて
+   「あの きいろの やつの 話だ」と つながるように する。 */
+.gbj {
+  margin-top: 10px;
+  padding: 9px 11px 11px;
+  background: var(--gold-soft);
+  border: 3px solid var(--gold);
+  border-radius: var(--r-lg);
+}
+.gh3 {
+  margin: 0 0 5px;
+  font-size: 13.5px;
+  font-weight: 900;
+  line-height: 1.45;
+  color: var(--gold-dark);
+}
+.gh3-mark { margin-right: 5px; color: var(--ink); }
+.gbj .gp b { color: var(--gold-dark); }
+
+/* ============================================================
+   小さい画面（375px でも 横スクロールを出さない）
+   ============================================================ */
+
+@media (max-width: 400px) {
+  :root { --card-w: 54px; }
+  #app { padding-left: 10px; padding-right: 10px; gap: 8px; }
+  .side { padding: 9px 10px 10px; }
+  .hand { gap: 4px; padding: 5px 6px; }
+  .card .pip { font-size: 24px; }
+  .back { font-size: 12.5px; padding: 0 12px; }
+  .coin { width: 21px; height: 21px; }
+  .round-box { padding: 0 11px; }
+  .round-now { font-size: 20px; }
+  .btn { font-size: 16px; min-height: 60px; }
+  .btn small { font-size: 10px; }
+  .controls { gap: 8px; }
+
+  /* かける画面を 1画面に おさめる（T9）。ここが いちばん たてが きつい */
+  .bet-phase { gap: 7px; padding: 10px 10px 12px; }
+  .bet-row-btns { gap: 4px; }
+  .bet-btn { min-width: 48px; min-height: 50px; font-size: 13px; }
+  .bet-input { min-height: 50px; font-size: 22px; }
+  .have-box { padding: 2px 13px 2px 9px; gap: 5px; }
+  .have-count { font-size: 23px; }
+  .banner { padding: 8px 10px; }
+
+  /* ラウンドえらび：5つを 1行に ならべたまま、数字と ことばを 読める 大きさに */
+  .setup-phase { gap: 10px; padding: 13px 10px 15px; }
+  .round-row { gap: 5px; }
+  .round-btn { min-height: 72px; border-width: 3px; border-radius: 18px; }
+  .round-btn b { font-size: 24px; }
+  .round-btn small { font-size: 10px; }
+  .round-btn em { font-size: 9px; padding: 1px 4px; }
+  .round-btn .tag { font-size: 9px; padding: 0 5px; }
+  .suit-deco { font-size: 22px; }
+
+  /* さいごの けっか：主役の 数字は 小さくしすぎない */
+  .final-phase { gap: 9px; padding: 13px 10px 15px; }
+  .final-title { font-size: 21px; }
+  .final-to b  { font-size: 46px; }
+  .coin-big    { width: 34px; height: 34px; }
+  .final-diff  { font-size: 16px; padding: 3px 13px; }
+  .rc b        { font-size: 19px; }
+  .btn-again   { min-height: 64px; font-size: 17px; }
+
+  /* ルール説明：よこが せまいので 余白だけ つめる。
+     文字は 小さくしない（読みものなので 読めることが 最優先） */
+  .guide-head  { gap: 8px; padding: 8px 10px; min-height: 56px; }
+  .guide-title { font-size: 14.5px; }
+  .guide-sub   { font-size: 10.5px; }
+  .ghappy      { width: 40px; height: 31px; }
+  .gsec        { padding: 9px 10px 11px; }
+  .gbj         { padding: 8px 9px 10px; }
+}
+
+/* ============================================================
+   たてが みじかい スマホ（iPhone SE / iPhone 8 ＝ 375×667）
+   ------------------------------------------------------------
+   ねらい：**大事な ボタンを 画面の 中に まるごと 入れる**。
+   667px だと 「これでスタート！」「カードをひく／ここでストップ」が
+   下に はみ出して いました（T13 🟡-3）。
+
+   ⚠️ この かたまりは **たてが 700px いかの ときだけ** きく（`max-height: 700px`）。
+      375×812（iPhone X いこう）は 1pxも 変わりません。ここが いちばん 大事な 線です。
+
+   つめかた の きまり：
+     ① **文字は 小さくしない。** 小学生が 読める 大きさを まもる
+        （へらしたのは タイトルの かざり文字 3px だけ）
+     ② **カードは 1pxも さわらない。** 比率 419:635 も 大きさ(54px)も そのまま
+     ③ へらすのは **あいている ところ（余白・すきま）だけ**
+     ④ ボタンの 高さは 56px。指で 押せる 44px は しっかり こえたまま
+   ============================================================ */
+
+@media (max-width: 400px) and (max-height: 700px) {
+
+  /* ① ぜんたいの すきま。6か所 あるので、2pxずつでも よく きく */
+  #app { padding-top: 6px; gap: 6px; }
+
+  /* ② タイトルの かざり文字を すこし ちいさく（読む文字では ないので ここから 削る） */
+  .title { font-size: clamp(20px, 6.6vw, 28px); margin: 0 0 2px; }
+
+  /* ③ 【いちばん きいた ところ】カードが 1まいも 出ていない ときの マット。
+        トライの 指摘どおり、かける画面では ディーラー／あなたの 置き場が
+        からっぽの まま 44px ずつ 使っていた。34px に して 上下で 20px 返す。
+        「ここに カードが 来る」は 点線の わくで のこる。 */
+  .hand:empty { min-height: 34px; }
+
+  /* ④ カードの 置き場の わく。中の カードは そのまま、まわりの 余白だけ つめる */
+  .side { padding: 7px 10px 8px; }
+  .side-head { margin-bottom: 5px; }
+
+  /* ⑤ かける パネル：すきまと 上の 余白だけ。入力欄・±ボタンの 大きさは そのまま */
+  .bet-phase { gap: 6px; padding: 10px 10px 11px; }
+  .have-box { padding: 1px 13px 1px 9px; }
+  .have-count { font-size: 21px; }
+
+  /* ⑥ 大きい ボタン。60 → 56px（44px の 指の めやすは しっかり こえている）。
+        文字の 大きさ（16px）は 変えない ＝ 読みやすさは そのまま */
+  .btn { min-height: 56px; }
+  .controls { gap: 7px; }
+
+  /* ⑦ さいごの けっか画面：ここも ボタンが 下に 行きやすいので 同じだけ つめる。
+        主役の 大きい 数字（46px）は さわらない */
+  .final-phase { gap: 7px; padding: 11px 10px 13px; }
+  .final-coin { padding: 4px 10px 8px; }
+  .btn-again { min-height: 60px; }
+}
+
+/* せまい画面では 「もどる」の 文字を みじかく */
+@media (max-width: 340px) {
+  .back { font-size: 0; }
+  .back::before { content: "◀ もどる"; font-size: 12.5px; }
+}
+
+/* ============================================================
+   大きい画面（幅にも 高さにも 余裕があるときだけ カードを大きく）
+   ============================================================ */
+
+@media (min-width: 480px) and (min-height: 720px) {
+  :root { --card-w: 74px; }
+  .card .pip { font-size: 34px; }
+}
+
+/* ============================================================
+   動きが苦手な人への配慮
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
