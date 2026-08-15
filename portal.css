@@ -55,6 +55,13 @@ body {
   font-weight: 700;             /* 全体的に太め＝丸ゴシックっぽく見える */
   line-height: 1.75;
   overflow-x: hidden;           /* 横スクロールは絶対に出さない */
+
+  /* 日本語の 行あたま禁則を きびしく する。
+     これが ないと「カードを集めよう」が「カ」／「ードを…」で 割れて、
+     のばす音（ー）が 行の あたまに 来てしまう。読みまちがいの もと。 */
+  line-break: strict;
+  word-break: normal;
+  overflow-wrap: break-word;    /* 長いURL等だけは 折り返して はみ出しを ふせぐ */
 }
 
 img { max-width: 100%; display: block; }

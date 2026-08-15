@@ -96,24 +96,24 @@ function renderBoard() {
   $('board').innerHTML = SUITS.map(s => `<div class="board-row">${Array.from({length:13},(_,i) => { const key=`${s.id}-${i+1}`, c=state.board[key]; const available=!c && isPlayable({ ...s, value:i+1, rank:RANKS[i], key }); return `<div class="board-cell ${available ? 'playable':''}">${c ? cardHTML(c, false, false, isGhost(c)) : ''}</div>`; }).join('')}</div>`).join('');
 }
 function renderPlayers() {
-  $('cpuArea').innerHTML = state.players.filter(p => !p.human).map(p => `<div class="cpu ${p.eliminated ? 'eliminated':''}"><div class="cpu-name">🤖 ${p.name}<small>${p.done ? 'ゴール！' : `パス ${p.passes}/4 ・ ${p.cards.length}まい`}</small></div><div class="cpu-cards">${Array.from({length:Math.min(p.cards.length,14)},()=>'<span class="cpu-card"></span>').join('')}</div></div>`).join('');
+  $('cpuArea').innerHTML = state.players.filter(p => !p.human).map(p => `<div class="cpu ${p.eliminated ? 'eliminated':''}"><div class="cpu-name">🤖 ${p.name}<small>${p.done ? 'ゴール！' : `パス ${p.passes}/4 ・ ${p.cards.length}枚`}</small></div><div class="cpu-cards">${Array.from({length:Math.min(p.cards.length,14)},()=>'<span class="cpu-card"></span>').join('')}</div></div>`).join('');
 }
 function renderHand() {
   const human = state.players[0]; const isTurn = !state.finished && state.current === 0 && !state.busy;
   $('humanHand').innerHTML = human.cards.map(c => cardHTML(c,true,isTurn && isPlayable(c))).join('');
-  $('handCount').textContent = `${human.cards.length}まい`;
+  $('handCount').textContent = `${human.cards.length}枚`;
   $('passBtn').disabled = !isTurn;
   // のこり0かい＝つぎの パスで おしまい。押せるままにして、言葉だけで しらせる。
   const passLeft = Math.max(0, 3 - human.passes);
-  $('passText').textContent = passLeft === 0 ? 'つぎ おすと おしまい' : `のこり ${passLeft}かい`;
+  $('passText').textContent = passLeft === 0 ? '次おすと おしまい' : `残り${passLeft}回`;
   $('passBubbles').innerHTML = Array.from({length:4},(_,i)=>`<span class="pass-dot ${i < human.passes ? 'used':''}"></span>`).join('');
 }
-function updateTurn() { const p=state.players[state.current]; $('turnBadge').textContent = state.finished ? 'ゲーム おわり！' : (p.human ? 'あなたの ばん！' : `${p.name}の ばん`); }
+function updateTurn() { const p=state.players[state.current]; $('turnBadge').textContent = state.finished ? 'ゲーム終わり！' : (p.human ? 'あなたの番！' : `${p.name}の番`); }
 function playCard(player, key) {
   const card = player.cards.find(c => c.key === key); if (!card || !isPlayable(card)) return false;
   state.board[key] = card; player.cards = player.cards.filter(c => c.key !== key);
-  if (player.cards.length === 0) { player.done = true; state.finishOrder.push(player); setMessage(`${player.name}が ゴール！ いま ${state.finishOrder.length}い だよ。`); return true; }
-  setMessage(`${player.name}は ${card.mark}${card.rank}を だしたよ！`); return true;
+  if (player.cards.length === 0) { player.done = true; state.finishOrder.push(player); setMessage(`${player.name}が ゴール！ 今 ${state.finishOrder.length}位だよ。`); return true; }
+  setMessage(`${player.name}は ${card.mark}${card.rank}を出したよ！`); return true;
 }
 function forceCardsToBoard(player) {
   player.cards.forEach(card => { state.board[card.key] = { ...card, forced: true }; });
@@ -124,7 +124,7 @@ function pass(player) {
   player.passes++;
   if (player.passes >= 4) {
     forceCardsToBoard(player);
-    setMessage(`${player.name}は 4かい パスしたので おしまい。てふだは ばに ならんだよ。`);
+    setMessage(`${player.name}は 4回パスしたので おしまい。手札は場に並んだよ。`);
   } else {
     setMessage(`${player.name}は パスした（${player.passes}/4）`);
   }
@@ -135,8 +135,8 @@ function beginTurn() {
   if (state.finished) return; const p=state.players[state.current];
   if (p.eliminated || p.done) return nextTurn();
   state.busy = !p.human; render();
-  if (p.human) { state.busy=false; render(); setMessage('ひかってる カードを えらんでね。なければ パス！'); return; }
-  setMessage(`${p.name}は かんがえちゅう…`);
+  if (p.human) { state.busy=false; render(); setMessage('光ってるカードを選んでね。なければ パス！'); return; }
+  setMessage(`${p.name}は考え中…`);
   window.setTimeout(() => { if (state.finished) return; const choices=p.cards.filter(isPlayable); if (choices.length) { const centerChoices=choices.sort((a,b)=>Math.abs(a.value-7)-Math.abs(b.value-7)); playCard(p, centerChoices[Math.floor(Math.random()*Math.min(2,centerChoices.length))].key); } else pass(p); render(); window.setTimeout(nextTurn, SPEEDS[state.speed].next); }, SPEEDS[state.speed].think);
 }
 function nextTurn() { if (state.finished) return; if (activePlayers().length <= 1) return finishGame(); let checks=0; do { state.current=(state.current+1)%state.players.length; checks++; } while ((state.players[state.current].eliminated || state.players[state.current].done) && checks <= state.players.length); beginTurn(); }
@@ -148,11 +148,11 @@ function finishGame() {
   state.finished=true; state.busy=false; render();
   const rows = ranking.map((player, index) => {
     const place = index + 1;
-    const note = player.eliminated ? 'パスで おしまい' : (player === lastPlayer ? 'さいごまで のこった' : 'てふだ ぜんぶ ならべた');
-    return `<li class="${player.human ? 'is-human' : ''}"><span class="place">${place}い</span><span>${player.human ? '🐱 あなた' : `🤖 ${player.name}`}</span><small>${note}</small></li>`;
+    const note = player.eliminated ? 'パスで おしまい' : (player === lastPlayer ? '最後まで残った' : '手札を全部並べた');
+    return `<li class="${player.human ? 'is-human' : ''}"><span class="place">${place}位</span><span>${player.human ? '🐱 あなた' : `🤖 ${player.name}`}</span><small>${note}</small></li>`;
   }).join('');
   const humanPlace = ranking.indexOf(state.players[0]) + 1;
-  $('resultContent').innerHTML = `<h2>🏆 じゅんい はっぴょう！</h2><p class="winner">あなたは ${humanPlace}い だったよ！</p><ol class="ranking">${rows}</ol>`;
+  $('resultContent').innerHTML = `<h2>🏆 順位発表！</h2><p class="winner">あなたは ${humanPlace}位だったよ！</p><ol class="ranking">${rows}</ol>`;
   window.setTimeout(()=>$('resultDialog').showModal(), 300);
 }
 

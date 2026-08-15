@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>ブラゲ工房 ― ブラウザを ひらけば、そこが あそびば！</title>
-<meta name="description" content="インストール いらず。ブラウザを ひらくだけで あそべるゲームを つくっています。― ブラゲ工房">
+<title>ブラゲ工房 ― ブラウザを開けば、そこが遊び場！</title>
+<meta name="description" content="インストールいらず。ブラウザを開くだけで遊べるゲームを作っています。― ブラゲ工房">
 <meta name="theme-color" content="#9EE0FA">
 
 <!-- ============================================================
@@ -25,17 +25,17 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ブラゲ工房">
 <meta property="og:locale" content="ja_JP">
-<meta property="og:title" content="ブラゲ工房 ― ブラウザを ひらけば、そこが あそびば！">
-<meta property="og:description" content="インストールも 会員とうろくも いりません。リンクを ひらいたら すぐ あそべる、こどもむけの ブラウザゲームを つくっています。スマホでも パソコンでも あそべます。">
+<meta property="og:title" content="ブラゲ工房 ― ブラウザを開けば、そこが遊び場！">
+<meta property="og:description" content="インストールも会員登録もいりません。リンクを開いたらすぐ遊べる、子ども向けのブラウザゲームを作っています。スマホでもパソコンでも遊べます。">
 <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/"><!-- ✅ 公開先URLに設定ずみ -->
 <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png"><!-- ✅ 公開先URLに設定ずみ -->
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="419">
 <meta property="og:image:height" content="635">
-<meta property="og:image:alt" content="トランプの ハートの エース">
+<meta property="og:image:alt" content="トランプのハートのエース">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="ブラゲ工房 ― ブラウザを ひらけば、そこが あそびば！">
-<meta name="twitter:description" content="インストールも 会員とうろくも いりません。リンクを ひらいたら すぐ あそべる、こどもむけの ブラウザゲームを つくっています。">
+<meta name="twitter:title" content="ブラゲ工房 ― ブラウザを開けば、そこが遊び場！">
+<meta name="twitter:description" content="インストールも会員登録もいりません。リンクを開いたらすぐ遊べる、子ども向けのブラウザゲームを作っています。">
 <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png"><!-- ✅ 公開先URLに設定ずみ -->
 
 <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。
@@ -79,11 +79,11 @@
       <p class="brand">🏭 ブラゲ工房</p>
 
       <h1>
-        <span class="line">ブラウザを ひらけば</span>
-        <span class="line">そこが あそびば！<span class="spade">♠</span></span>
+        <span class="line">ブラウザを開けば</span>
+        <span class="line">そこが遊び場！<span class="spade">♠</span></span>
       </h1>
 
-      <p class="slogan"><span>インストール いらず。</span><span>ひらいたら すぐ あそべるよ！</span></p>
+      <p class="slogan"><span>インストールいらず。</span><span>開いたらすぐ遊べるよ！</span></p>
 
       <!-- ねこ ＋ トランプ -->
       <div class="stage">
@@ -91,7 +91,7 @@
           <p class="bubble" id="bubble">ハッピーだよ！</p>
 
           <!-- マスコット：オレンジの トラねこ「ハッピー」（すべて自作SVG） -->
-          <svg class="cat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房の マスコット、ねこの ハッピー">
+          <svg class="cat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房のマスコット、ねこのハッピー">
             <!-- しっぽ -->
             <g class="cat-tail">
               <path d="M108 132 C142 132 140 96 120 96 C110 96 106 106 112 112"
@@ -154,19 +154,19 @@
 
     <div class="wrap">
       <p class="hello">
-        <span>🐱「こんにちは！ <b>ハッピー</b>だよ。</span><span>いっしょに あそぼう！」</span>
+        <span>🐱「こんにちは！ <b>ハッピー</b>だよ。</span><span>いっしょに遊ぼう！」</span>
       </p>
 
       <div class="panel meter">
         <div class="meter-top">
-          <span>あそべる ゲーム</span>
-          <b><span class="big" id="liveCount">0</span> / <span id="goalCount">20</span> ほん</b>
+          <span>遊べるゲーム</span>
+          <b><span class="big" id="liveCount">0</span> / <span id="goalCount">20</span> 本</b>
         </div>
         <div class="bar" role="img" aria-labelledby="meterText"><i id="meterBar" style="width:0%"></i></div>
-        <p class="meter-note" id="meterText">20ほん めざして つくってるよ。のこり <b id="restCount">20</b>ほん！</p>
+        <p class="meter-note" id="meterText">20本を目指して作ってるよ。残り<b id="restCount">20</b>本！</p>
       </div>
 
-      <a class="btn-play" href="#games">ゲームを えらぶ ▶</a>
+      <a class="btn-play" href="#games">ゲームを選ぶ ▶</a>
     </div>
   </div>
 
@@ -176,8 +176,8 @@
 
   <section class="section" id="games">
     <div class="section-head">
-      <h2>🎮 いま あそべるよ！</h2>
-      <span class="count" id="liveBadge">0ほん</span>
+      <h2>🎮 今、遊べるよ！</h2>
+      <span class="count" id="liveBadge">0本</span>
     </div>
     <div class="grid" id="gameGrid"></div>
     <noscript>
@@ -186,17 +186,17 @@
           <span class="game-art">🃏</span>
           <span class="game-body">
             <span class="game-title">ブラックジャック</span>
-            <span class="game-desc">21を こえないように カードを あつめよう！</span>
+            <span class="game-desc">21を こえないように カードを集めよう！</span>
           </span>
-          <span class="game-go">あそぶ ▶</span>
+          <span class="game-go">遊ぶ ▶</span>
         </a>
         <a class="game" href="seven-narabe/">
           <span class="game-art">🃏</span>
           <span class="game-body">
             <span class="game-title">七並べ</span>
-            <span class="game-desc">7から じゅんばんに ならべて、てふだを さきに なくそう！</span>
+            <span class="game-desc">7から順番に並べて、手札を先になくそう！</span>
           </span>
-          <span class="game-go">あそぶ ▶</span>
+          <span class="game-go">遊ぶ ▶</span>
         </a>
       </div>
     </noscript>
@@ -204,8 +204,8 @@
 
   <section class="section">
     <div class="section-head">
-      <h2>🔨 もうすぐ あそべるよ！</h2>
-      <span class="count">いま つくってるよ</span>
+      <h2>🔨 もうすぐ遊べるよ！</h2>
+      <span class="count">今、作ってるよ</span>
     </div>
     <div class="grid" id="soonGrid"></div>
     <p class="note" id="soonNote"></p>
@@ -215,8 +215,8 @@
 
 <footer class="foot">
   <div class="wrap">
-    <p><b>🏭 ブラゲ工房</b> ― <span>ブラウザを ひらけば、</span><span>そこが あそびば！</span></p>
-    <p><span>ハッピーと いっしょに、</span><span>スマホでも パソコンでも すぐ あそべるよ 🐱</span></p>
+    <p><b>🏭 ブラゲ工房</b> ― <span>ブラウザを開けば、</span><span>そこが遊び場！</span></p>
+    <p><span>ハッピーといっしょに、</span><span>スマホでもパソコンでもすぐ遊べるよ 🐱</span></p>
   </div>
 </footer>
 
@@ -228,7 +228,7 @@
    title : ゲーム名
    emoji : 画像を使わないときの絵柄
    card  : office/games/cards/ の絵札名（拡張子なし・任意）
-   desc  : 1行紹介（ひらがな多めのやさしい言葉で）
+   desc  : 1行紹介（設計図 §9.6 の言葉づかいに従う）
    time  : 遊ぶ時間の目安
    tags  : 追加のラベル（0〜2個くらいが読みやすい）
    path  : そのゲームのフォルダ
@@ -240,32 +240,41 @@ const GAMES = [
     title: 'ブラックジャック',
     emoji: '🃏',
     card:  'スペードA',
-    desc:  '21を こえないように カードを あつめよう！',
-    time:  '30びょう',
-    tags:  ['トランプ', 'ひとりで あそべる'],
+    desc:  '21を こえないように カードを集めよう！',
+    time:  '30秒',
+    tags:  ['トランプ', '一人で遊べる'],
     path:  'blackjack/'
   },
   {
     title: '七並べ',
     emoji: '🃏',
     card:  'ハート7',
-    desc:  '7から じゅんばんに ならべて、てふだを さきに なくそう！',
-    time:  '3〜5ふん',
-    tags:  ['トランプ', 'ロボットと たいせん'],
+    desc:  '7から順番に並べて、手札を先になくそう！',
+    time:  '3〜5分',
+    tags:  ['トランプ', 'ロボットと対戦'],
     path:  'seven-narabe/'
+  },
+  {
+    title: '大富豪',
+    emoji: '🃏',
+    card:  'スペード2',
+    desc:  '強いカードで勝ち残れ！ ルールは15個から選べるよ。',
+    time:  '2〜3分',
+    tags:  ['トランプ', 'ロボットと対戦', 'ルールを選べる'],
+    path:  'daifugo/'
   }
 ];
 
 /* 近日公開の枠（作るものが決まったら title を書き換える） */
 const COMING = [
-  { emoji: '🃏', title: '3ばんめの ゲーム', desc: 'ルルが かんがえちゅう。すぐ おぼえられて、すぐ おわる トランプゲーム！' },
-  { emoji: '🎲', title: 'ボードゲーム',        desc: 'ばんと コマで あそぶ、みじかい しょうぶ。' },
-  { emoji: '✨', title: 'おたのしみ',          desc: '社長の ひらめき まち。ここに ならぶよ！' }
+  { emoji: '🃏', title: '3番目のゲーム', desc: 'ルルが考え中。すぐ覚えられて、すぐ終わるトランプゲーム！' },
+  { emoji: '🎲', title: 'ボードゲーム',   desc: 'ばんと コマで遊ぶ、短い勝負。' },
+  { emoji: '✨', title: 'お楽しみ',       desc: '社長のひらめき待ち。ここに並ぶよ！' }
 ];
 
 /* ハッピー（看板ねこ）の ふきだし。じゅんばんに かわる。
    ふきだしは よこに のびない やくそくなので、1つ 7もじ までに おさえる。 */
-const CAT_WORDS = ['ハッピーだよ！', 'あそぼうよ！', 'どれに する？', 'まってたよ！', 'たのしいよ〜！'];
+const CAT_WORDS = ['ハッピーだよ！', '遊ぼうよ！', 'どれにする？', '待ってたよ！', '楽しいよ〜！'];
 
 /* 絵札のURL（日本語ファイル名なので必ずエンコードする） */
 function cardSrc(name) {
@@ -296,7 +305,7 @@ const grid = document.getElementById('gameGrid');
 GAMES.forEach(function (g) {
   const a = el('a', 'game');
   a.href = g.path;
-  a.setAttribute('aria-label', g.title + 'で あそぶ');
+  a.setAttribute('aria-label', g.title + 'で遊ぶ');
 
   const art = el('span', 'game-art');
   if (g.card) {
@@ -322,7 +331,7 @@ GAMES.forEach(function (g) {
 
   a.appendChild(art);
   a.appendChild(body);
-  a.appendChild(el('span', 'game-go', 'あそぶ ▶'));
+  a.appendChild(el('span', 'game-go', '遊ぶ ▶'));
   grid.appendChild(a);
 });
 
@@ -336,7 +345,7 @@ COMING.forEach(function (c) {
   const body = el('div', 'soon-body');
   body.appendChild(el('p', 'soon-title', c.title));
   body.appendChild(el('p', 'soon-desc', c.desc));
-  body.appendChild(el('span', 'soon-badge', 'じゅんびちゅう'));
+  body.appendChild(el('span', 'soon-badge', '準備中'));
 
   box.appendChild(body);
   soonGrid.appendChild(box);
@@ -349,10 +358,10 @@ const rest = Math.max(GOAL - live, 0);
 document.getElementById('liveCount').textContent = live;
 document.getElementById('goalCount').textContent = GOAL;
 document.getElementById('restCount').textContent = rest;
-document.getElementById('liveBadge').textContent = live + 'ほん';
+document.getElementById('liveBadge').textContent = live + '本';
 document.getElementById('meterBar').style.width = Math.round(live / GOAL * 100) + '%';
 document.getElementById('soonNote').textContent =
-  'あと ' + rest + 'ほん、これから こうぼうで つくるよ！';
+  'あと ' + rest + '本、これから工房で作るよ！';
 
 /* ---- ねこの ひとこと（動きが苦手な人には かえない） ---- */
 const bubble = document.getElementById('bubble');

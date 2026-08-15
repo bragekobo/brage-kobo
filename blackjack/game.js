@@ -241,7 +241,7 @@
     ui.betValue.textContent = bet;
     ui.betNote.textContent =
       chips <= 0 ? 'コインがなくなっちゃった…'
-                 : '1まい 〜 ' + chips + 'まい までかけられるよ';
+                 : '1枚 〜 ' + chips + '枚 までかけられるよ';
 
     const atMin = bet <= MIN_BET;
     const atMax = bet >= chips;
@@ -340,7 +340,7 @@
     d.className = 'card back';
     d.dataset.key = BACK_KEY;
     d.setAttribute('role', 'img');
-    d.setAttribute('aria-label', '伏せカード');
+    d.setAttribute('aria-label', 'ふせてあるカード');
     d.appendChild(faceImg(BACK_NAME, d));
     return d;
   }
@@ -458,7 +458,7 @@
     ui.finalPhase.classList.remove('is-over');
     clearProgress();               // まっさらに もどる ＝ 「つづき」は 消す
     showRow('setup');
-    setBanner('なんラウンド あそぶか えらんでね', '');
+    setBanner('何ラウンド遊ぶか選んでね', '');
   }
 
   /* リロードで もどってきたとき：ラウンドの あたま（かけるフェーズ）から 再開する。
@@ -473,7 +473,7 @@
     deck = buildDeck();
     enterBetPhase();
     if (phase !== 'bet') return;   // まんいち コインぎれ なら そのまま けっか画面へ
-    setBanner('つづきから！ ' + roundNo + ' / ' + roundsTotal + ' ラウンドめ。いくら かける？', '');
+    setBanner('続きから！ ' + roundNo + ' / ' + roundsTotal + ' ラウンド目。いくら かける？', '');
   }
 
   function startGame(n) {
@@ -504,7 +504,7 @@
     setBet(bet);                    // 前回の額。足りなければ自動で持ちコインまで下がる
     saveProgress(roundNo, chips);   // ここが「つづき」の しおり（賭け金を 引く まえ）
     showRow('bet');
-    setBanner(roundNo + ' / ' + roundsTotal + ' ラウンドめ。いくら かける？', '');
+    setBanner(roundNo + ' / ' + roundsTotal + ' ラウンド目。いくら かける？', '');
   }
 
   /* ───────── ② あそぶフェーズ ───────── */
@@ -532,7 +532,7 @@
     showRow('play');
     ui.hitBtn.disabled = false;
     ui.standBtn.disabled = false;
-    setBanner('カードをひく？ ここでストップ？', '');
+    setBanner('カードを引く？ ここでストップ？', '');
 
     // 最初の2枚での決着（ナチュラル）
     const pBJ = isBlackjack(player);
@@ -540,9 +540,9 @@
     if (pBJ || dBJ) {
       holeHidden = false;
       renderHands();
-      if (pBJ && dBJ)      finish('push', 'どっちもブラックジャック。ひきわけ');
+      if (pBJ && dBJ)      finish('push', 'どっちもブラックジャック。引き分け');
       else if (pBJ)        finish('bj',   'ブラックジャック！ いっぱつで21だよ');
-      else                 finish('lose', 'ディーラーがブラックジャック。まけちゃった');
+      else                 finish('lose', 'ディーラーがブラックジャック。負けちゃった');
     }
   }
 
@@ -570,7 +570,7 @@
 
     holeHidden = false;
     renderHands();
-    setBanner('ディーラーのばん…', '');
+    setBanner('ディーラーの番…', '');
     await sleep(DEALER_WAIT);
 
     // 17未満なら引く / 17以上で止まる
@@ -584,10 +584,10 @@
     const d = handValue(dealer).total;
 
     busy = false;
-    if (d > 21)      finish('win',  'ディーラーがバースト！ きみのかち');
-    else if (p > d)  finish('win',  p + ' たい ' + d + '。きみのかち！');
-    else if (p < d)  finish('lose', p + ' たい ' + d + '。ディーラーのかち');
-    else             finish('push', p + ' たい ' + d + '。ひきわけ');
+    if (d > 21)      finish('win',  'ディーラーがバースト！ 君の勝ち');
+    else if (p > d)  finish('win',  p + ' たい ' + d + '。君の勝ち！');
+    else if (p < d)  finish('lose', p + ' たい ' + d + '。ディーラーの勝ち');
+    else             finish('push', p + ' たい ' + d + '。引き分け');
   }
 
   /* ───────── ③ 1ラウンドの けっか ───────── */
@@ -629,9 +629,9 @@
     else               saveProgress(roundNo + 1, chips);
 
     ui.nextBtn.innerHTML =
-      broke ? 'けっかを みる<small>コインが なくなっちゃった</small>'
-    : last  ? 'さいごの けっかを みる<small>ぜんぶ おわり！</small>'
-            : 'つぎの ラウンドへ<small>' + (roundNo + 1) + ' / ' + roundsTotal + ' ラウンドめ</small>';
+      broke ? '結果を見る<small>コインが なくなっちゃった</small>'
+    : last  ? '最後の結果を見る<small>全部終わり！</small>'
+            : '次のラウンドへ<small>' + (roundNo + 1) + ' / ' + roundsTotal + ' ラウンド目</small>';
 
     showRow('next');
     ui.nextBtn.focus({ preventScroll: true });
@@ -656,22 +656,22 @@
     const played = Math.min(roundNo, roundsTotal);
 
     ui.finalPhase.classList.toggle('is-over', !!isGameOver);
-    ui.finalTitle.textContent = isGameOver ? 'ゲームオーバー' : 'ぜんぶ おわり！';
+    ui.finalTitle.textContent = isGameOver ? 'ゲームオーバー' : '全部終わり！';
     ui.finalFrom.textContent  = START_CHIPS;
     ui.finalTo.textContent    = chips;
 
     ui.finalDiff.textContent =
-      diff > 0 ? '＋' + diff + 'まい ふえた！'
-    : diff < 0 ? '−' + Math.abs(diff) + 'まい へっちゃった'
-               : 'ふえも へりも しなかった';
+      diff > 0 ? '＋' + diff + '枚増えた！'
+    : diff < 0 ? '−' + Math.abs(diff) + '枚減っちゃった'
+               : '増えも減りもしなかった';
     ui.finalDiff.className = 'final-diff ' + (diff > 0 ? 'up' : diff < 0 ? 'down' : 'same');
 
     ui.finalRound.textContent = isGameOver
-      ? played + ' / ' + roundsTotal + ' ラウンドで おわっちゃった'
-      : played + ' / ' + roundsTotal + ' ラウンド あそんだよ';
+      ? played + ' / ' + roundsTotal + ' ラウンドで終わっちゃった'
+      : played + ' / ' + roundsTotal + ' ラウンド遊んだよ';
 
     ui.finalRecord.textContent =
-      'かち ' + wins + 'かい・まけ ' + losses + 'かい・ひきわけ ' + pushes + 'かい';
+      '勝ち' + wins + '回・負け' + losses + '回・引き分け' + pushes + '回';
 
     /* ふきだしの 色（ハッピーの かおも これで きまる） */
     let kind, msg;
@@ -680,16 +680,16 @@
       msg  = 'コインが なくなっちゃった…';
     } else if (diff >= BIG_WIN_DIFF) {
       kind = 'bj';
-      msg  = 'コインが ' + chips + 'まい！ だいせいこう！';
+      msg  = 'コインが ' + chips + '枚！ 大成功！';
     } else if (diff > 0) {
       kind = 'win';
-      msg  = 'コインが ' + diff + 'まい ふえたよ！';
+      msg  = 'コインが ' + diff + '枚増えたよ！';
     } else if (diff === 0) {
       kind = 'push';
-      msg  = 'コインは ' + chips + 'まいの まま！';
+      msg  = 'コインは ' + chips + '枚の まま！';
     } else {
       kind = 'lose';
-      msg  = 'コインは ' + chips + 'まい。つぎは ふやそう！';
+      msg  = 'コインは ' + chips + '枚。次は増やそう！';
     }
     setBanner(msg, kind);
 

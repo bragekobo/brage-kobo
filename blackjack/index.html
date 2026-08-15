@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ブラックジャック ― ブラゲ工房</title>
-<meta name="description" content="21を こえないように カードを あつめよう！ なんラウンドか あそんで、コインを ふやそう。ブラウザで すぐ あそべる ブラックジャック ― ブラゲ工房">
+<meta name="description" content="21を こえないように カードを集めよう！ 何ラウンドか遊んで、コインを増やそう。ブラウザですぐ遊べるブラックジャック ― ブラゲ工房">
 <meta name="theme-color" content="#9EE0FA">
 
 <!-- ============================================================
@@ -26,17 +26,17 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ブラゲ工房">
 <meta property="og:locale" content="ja_JP">
-<meta property="og:title" content="ブラックジャック ― ブラウザで すぐ あそべる｜ブラゲ工房">
-<meta property="og:description" content="21を こえないように カードを あつめる、トランプの ゲーム。ダウンロードは いりません。ひらいたら すぐ あそべます。3〜15ラウンドから えらべて、1かい 1〜5ふん くらい。">
+<meta property="og:title" content="ブラックジャック ― ブラウザですぐ遊べる｜ブラゲ工房">
+<meta property="og:description" content="21を こえないように カードを集める、トランプのゲーム。ダウンロードはいりません。開いたらすぐ遊べます。3〜15ラウンドから選べて、1回1〜5分くらい。">
 <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/blackjack/"><!-- ✅ 公開先URLに設定ずみ -->
 <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%B9%E3%83%9A%E3%83%BC%E3%83%89A.png"><!-- ✅ 公開先URLに設定ずみ -->
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="419">
 <meta property="og:image:height" content="635">
-<meta property="og:image:alt" content="トランプの スペードの エース">
+<meta property="og:image:alt" content="トランプのスペードのエース">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="ブラックジャック ― ブラウザで すぐ あそべる｜ブラゲ工房">
-<meta name="twitter:description" content="21を こえないように カードを あつめる、トランプの ゲーム。ダウンロードは いりません。ひらいたら すぐ あそべます。">
+<meta name="twitter:title" content="ブラックジャック ― ブラウザですぐ遊べる｜ブラゲ工房">
+<meta name="twitter:description" content="21を こえないように カードを集める、トランプのゲーム。ダウンロードはいりません。開いたらすぐ遊べます。">
 <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%B9%E3%83%9A%E3%83%BC%E3%83%89A.png"><!-- ✅ 公開先URLに設定ずみ -->
 
 <!-- タブの アイコン（ファビコン）＝ ハッピーの かお ＋ スペードの ふだ。
@@ -92,14 +92,14 @@
 <div id="app">
 
   <header class="topbar">
-    <a class="back" href="../">◀ ゲームを えらぶ</a>
+    <a class="back" href="../">◀ ゲームを選ぶ</a>
 
     <!-- いま なんラウンドめ か（あそんでいる あいだ だけ 出る） -->
     <div class="round-box hidden" id="roundBox" role="status" aria-live="polite">
       <span class="round-now" id="roundNow">1</span>
       <span class="round-sep">/</span>
       <span class="round-total" id="roundTotal">5</span>
-      <span class="round-unit">ラウンドめ</span>
+      <span class="round-unit">ラウンド目</span>
     </div>
   </header>
 
@@ -121,7 +121,7 @@
 
       <div class="cat-wrap">
         <!-- マスコット：まとめサイトと同じ オレンジの トラねこ「ハッピー」（すべて自作SVG） -->
-        <svg class="cat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房の マスコット、ねこの ハッピー">
+        <svg class="cat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房のマスコット、ねこのハッピー">
           <!-- しっぽ -->
           <g class="cat-tail">
             <path d="M108 132 C142 132 140 96 120 96 C110 96 106 106 112 112"
@@ -201,8 +201,8 @@
 
       <!-- ねこの ふきだし。上＝ねこの ひとこと／下＝くわしい けっか -->
       <div class="banner" id="banner" role="status" aria-live="polite">
-        <b class="cat-line" id="catLine">なんかい あそぶ？</b>
-        <span id="bannerText">なんラウンド あそぶか えらんでね</span>
+        <b class="cat-line" id="catLine">何回遊ぶ？</b>
+        <span id="bannerText">何ラウンド遊ぶか選んでね</span>
       </div>
     </div>
 
@@ -224,26 +224,26 @@
       <span class="suit-deco d1" aria-hidden="true">♠</span>
       <span class="suit-deco d2" aria-hidden="true">♥</span>
 
-      <p class="setup-title">なんラウンド あそぶ？</p>
+      <p class="setup-title">何ラウンド遊ぶ？</p>
 
       <div class="round-row" id="roundRow">
-        <button class="round-btn" type="button" data-rounds="3" aria-label="3かい あそぶ。みじかい">
-          <b>3</b><small>かい</small><em>みじかい</em></button>
-        <button class="round-btn is-osusume" type="button" data-rounds="5" aria-label="5かい あそぶ。ふつう。おすすめ">
+        <button class="round-btn" type="button" data-rounds="3" aria-label="3回遊ぶ。短い">
+          <b>3</b><small>回</small><em>短い</em></button>
+        <button class="round-btn is-osusume" type="button" data-rounds="5" aria-label="5回遊ぶ。ふつう。おすすめ">
           <span class="tag" aria-hidden="true">おすすめ</span>
-          <b>5</b><small>かい</small><em>ふつう</em></button>
-        <button class="round-btn" type="button" data-rounds="7" aria-label="7かい あそぶ。ふつう">
-          <b>7</b><small>かい</small><em>ふつう</em></button>
-        <button class="round-btn" type="button" data-rounds="10" aria-label="10かい あそぶ。ながい">
-          <b>10</b><small>かい</small><em>ながい</em></button>
-        <button class="round-btn" type="button" data-rounds="15" aria-label="15かい あそぶ。ながい">
-          <b>15</b><small>かい</small><em>ながい</em></button>
+          <b>5</b><small>回</small><em>ふつう</em></button>
+        <button class="round-btn" type="button" data-rounds="7" aria-label="7回遊ぶ。ふつう">
+          <b>7</b><small>回</small><em>ふつう</em></button>
+        <button class="round-btn" type="button" data-rounds="10" aria-label="10回遊ぶ。長い">
+          <b>10</b><small>回</small><em>長い</em></button>
+        <button class="round-btn" type="button" data-rounds="15" aria-label="15回遊ぶ。長い">
+          <b>15</b><small>回</small><em>長い</em></button>
       </div>
 
       <p class="setup-note">
         <svg class="coin" aria-hidden="true" focusable="false"><use href="#coin"/></svg>
-        コイン <b>100まい</b> から スタート！<br>
-        おわったとき ふえていたら きみの かち！</p>
+        コイン <b>100枚</b>から スタート！<br>
+        終わったとき増えていたら君の勝ち！</p>
     </section>
 
     <!-- ① かけるフェーズ ─────────────────────── -->
@@ -252,9 +252,9 @@
       <!-- 社長ご指摘：かける まえに いちばん 見たい 数字なので ここに 大きく 出す -->
       <div class="have-box js-chip-box">
         <svg class="coin" aria-hidden="true" focusable="false"><use href="#coin"/></svg>
-        <span class="have-label">もっているコイン</span>
+        <span class="have-label">持っているコイン</span>
         <span class="have-count js-chips">100</span>
-        <span class="have-unit">まい</span>
+        <span class="have-unit">枚</span>
       </div>
 
       <p class="bet-title">いくら かける？</p>
@@ -264,7 +264,7 @@
         <button class="bet-btn bet-minus" id="betMinus1" type="button">−1</button>
 
         <label class="bet-field">
-          <span class="visually-hidden">かけるコインのまいすう</span>
+          <span class="visually-hidden">かけるコインの枚数</span>
           <input class="bet-input" id="betInput" type="number" inputmode="numeric"
                  min="1" step="1" value="10">
         </label>
@@ -273,27 +273,27 @@
         <button class="bet-btn bet-plus" id="betPlus10" type="button">＋10</button>
       </div>
 
-      <p class="bet-note" id="betNote">1まい 〜 100まい までかけられるよ</p>
+      <p class="bet-note" id="betNote">1枚 〜 100枚 までかけられるよ</p>
 
       <button class="btn btn-start" id="startBtn" type="button">
-        これでスタート！<small>カードを くばるよ</small>
+        これでスタート！<small>カードを配るよ</small>
       </button>
     </section>
 
     <!-- ② あそぶフェーズ ─────────────────────── -->
     <div class="play-info hidden" id="playInfo">
-      <span class="pi-coin js-chip-box">コイン <b class="js-chips">100</b>まい</span>
-      <span class="pi-bet">かけた <b id="betValue">10</b>まい</span>
+      <span class="pi-coin js-chip-box">コイン <b class="js-chips">100</b>枚</span>
+      <span class="pi-bet">かけた <b id="betValue">10</b>枚</span>
     </div>
 
     <div class="btn-row hidden" id="playRow">
-      <button class="btn btn-hit" id="hitBtn" type="button">カードをひく<small>もう1まい</small></button>
-      <button class="btn btn-stand" id="standBtn" type="button">ここでストップ<small>これで しょうぶ</small></button>
+      <button class="btn btn-hit" id="hitBtn" type="button">カードを引く<small>もう1枚</small></button>
+      <button class="btn btn-stand" id="standBtn" type="button">ここでストップ<small>これで勝負</small></button>
     </div>
 
     <!-- ③ 1ラウンドの けっかのあと ────────────────── -->
     <div class="btn-row hidden" id="nextRow">
-      <button class="btn btn-next" id="nextBtn" type="button">つぎの ラウンドへ<small>まだ つづくよ</small></button>
+      <button class="btn btn-next" id="nextBtn" type="button">次のラウンドへ<small>まだ続くよ</small></button>
     </div>
 
     <!-- ④ ぜんぶ おわったとき ／ コインが なくなったとき ──── -->
@@ -305,48 +305,48 @@
         <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
       </div>
 
-      <p class="final-title" id="finalTitle">ぜんぶ おわり！</p>
+      <p class="final-title" id="finalTitle">全部終わり！</p>
 
       <div class="final-coin">
         <p class="final-was">
-          <span class="final-was-label">さいしょ</span>
-          <span class="final-from"><b id="finalFrom">100</b>まい</span>
+          <span class="final-was-label">最初</span>
+          <span class="final-from"><b id="finalFrom">100</b>枚</span>
           <span class="final-arrow" aria-hidden="true">↓</span>
         </p>
         <p class="final-to">
           <svg class="coin coin-big" aria-hidden="true" focusable="false"><use href="#coin"/></svg>
-          <b id="finalTo" class="js-chips">100</b><span class="final-unit">まい</span>
+          <b id="finalTo" class="js-chips">100</b><span class="final-unit">枚</span>
         </p>
       </div>
 
-      <p class="final-diff" id="finalDiff">±0まい</p>
+      <p class="final-diff" id="finalDiff">±0枚</p>
 
       <!-- コインが なくなった ときだけ 出る はげまし -->
-      <p class="over-cheer">コインが なくなっちゃった。<br>でも だいじょうぶ！ また あそべるよ🍀</p>
+      <p class="over-cheer">コインが なくなっちゃった。<br>でも だいじょうぶ！ また遊べるよ🍀</p>
 
-      <!-- かち・まけ・ひきわけ。ふだ3つ（下の 1行を 見はり役が よみとって 作る） -->
+      <!-- 勝ち・負け・引き分け。ふだ3つ（下の 1行を 見はり役が よみとって 作る） -->
       <div class="record-chips" id="recordChips" aria-hidden="true">
-        <span class="rc rc-win"><small>かち</small><b id="rcWin">0</b></span>
-        <span class="rc rc-lose"><small>まけ</small><b id="rcLose">0</b></span>
-        <span class="rc rc-push"><small>ひきわけ</small><b id="rcPush">0</b></span>
+        <span class="rc rc-win"><small>勝ち</small><b id="rcWin">0</b></span>
+        <span class="rc rc-lose"><small>負け</small><b id="rcLose">0</b></span>
+        <span class="rc rc-push"><small>引き分け</small><b id="rcPush">0</b></span>
       </div>
-      <p class="final-record" id="finalRecord">かち 0かい・まけ 0かい・ひきわけ 0かい</p>
+      <p class="final-record" id="finalRecord">勝ち0回・負け0回・引き分け0回</p>
 
-      <p class="final-round" id="finalRound">5 / 5 ラウンド あそんだよ</p>
+      <p class="final-round" id="finalRound">5 / 5 ラウンド遊んだよ</p>
 
       <button class="btn btn-start btn-again" id="againBtn" type="button">
-        もういちど あそぶ<small>ラウンドを えらびなおす</small>
+        もう一度遊ぶ<small>ラウンドを選びなおす</small>
       </button>
     </section>
 
   </footer>
 
   <div class="rule" id="ruleNote">
-    <b class="rule-head">あそびかた</b>
+    <b class="rule-head">遊び方</b>
     <ul class="rule-list">
-      <li><span class="ri">①</span>カードの ごうけいを <b>21</b>に ちかづける</li>
-      <li><span class="ri">②</span><b>21を こえたら</b> まけ。こえずに ディーラーより 大きければ かち</li>
-      <li><span class="ri">③</span>えふだ（J・Q・K）は <b>10</b>、A は <b>1か11</b>。ディーラーは 17いじょうで ストップ</li>
+      <li><span class="ri">①</span>カードの合計を<b>21</b>に近づける</li>
+      <li><span class="ri">②</span><b>21を こえたら</b>負け。こえずに ディーラーより大きければ勝ち</li>
+      <li><span class="ri">③</span>絵札（J・Q・K）は<b>10</b>、Aは<b>1か11</b>。ディーラーは17以上でストップ</li>
     </ul>
   </div>
 
@@ -357,7 +357,7 @@
        ・game.js には いっさい さわらない。#app の いちばん下に 置くだけ。
        ・<details> で 畳んである ＝ 閉じている あいだは たてを ほとんど 使わない。
          （ゲーム本体が 375px で 1画面に おさまる 状態を くずさないため）
-       ・文章は ルルの 納品どおり。ことばの あいだの スペースは 意図的なもの。詰めない。
+       ・文章は ルルの 納品どおり（T30 で 設計図 §9.6 の言葉づかいに 更新ずみ）。スペースは 表のとおり。一括で 詰めない。
        ============================================================ -->
   <details class="guide" id="guide">
 
@@ -388,8 +388,8 @@
       </svg>
 
       <span class="guide-label">
-        <b class="guide-title">あそびかた・ルール</b>
-        <small class="guide-sub">わからなく なったら ここを ひらいてね</small>
+        <b class="guide-title">遊び方・ルール</b>
+        <small class="guide-sub">分からなくなったら ここを開いてね</small>
       </span>
 
       <span class="guide-arrow" aria-hidden="true">▼</span>
@@ -399,63 +399,63 @@
 
       <section class="gsec">
         <h2 class="gh">このゲームは？</h2>
-        <p class="gp">トランプで あそぶ、かんたんな しょうぶの ゲームだよ。<br>
-          カードの ごうけいを <b>21</b>に ちかづけて、ディーラーに かとう。</p>
-        <p class="gp">もう1まい ひくか、ここで やめるか ―― きめるのは きみ！</p>
+        <p class="gp">トランプで遊ぶ、かんたんな勝負のゲームだよ。<br>
+          カードの合計を<b>21</b>に近づけて、ディーラーに勝とう。</p>
+        <p class="gp">もう1枚引くか、ここでやめるか ―― 決めるのは君！</p>
       </section>
 
       <section class="gsec">
-        <h2 class="gh">あそびかた</h2>
+        <h2 class="gh">遊び方</h2>
         <ol class="gsteps">
-          <li><b>なんラウンド あそぶか えらぶ</b> … 3・5・7・10・15かい。はじめては 5かいが おすすめ</li>
-          <li><b>コインを かける</b> … 100まい もって スタート。1まいから かけられるよ</li>
-          <li><b>カードが 2まい くばられる</b> … 「カードをひく」で もう1まい。「ここでストップ」で しょうぶ</li>
-          <li><b>けっかを みる</b> … かてば コインが ふえる。まけると へる</li>
-          <li><b>2〜4を くりかえす</b> … さいごに コインが 100まいより ふえていたら、きみの かち！</li>
+          <li><b>何ラウンド遊ぶか選ぶ</b> … 3・5・7・10・15回。初めては5回がおすすめ</li>
+          <li><b>コインを かける</b> … 100枚持ってスタート。1枚からかけられるよ</li>
+          <li><b>カードが 2枚配られる</b> … 「カードを引く」で もう1枚。「ここでストップ」で勝負</li>
+          <li><b>結果を見る</b> … 勝てばコインが増える。負けると減る</li>
+          <li><b>2〜4をくり返す</b> … 最後にコインが100枚より増えていたら、君の勝ち！</li>
         </ol>
-        <p class="gnote">※ ちょうど 21に なったら、そこで じどうで ストップするよ。<br>
-          ※ とちゅうで コインが 0まいに なったら、そこで おしまい。</p>
+        <p class="gnote">※ ちょうど21になったら、そこで自動でストップするよ。<br>
+          ※ とちゅうでコインが0枚になったら、そこで おしまい。</p>
       </section>
 
       <section class="gsec">
-        <h2 class="gh">カードの かぞえかた</h2>
+        <h2 class="gh">カードの数え方</h2>
         <ul class="glist">
-          <li><span class="gm" aria-hidden="true"></span><b>2 〜 10</b> … かいてある かずの まま</li>
-          <li><span class="gm" aria-hidden="true"></span><b>えふだ（J・Q・K）</b> … ぜんぶ <b>10</b></li>
-          <li><span class="gm" aria-hidden="true"></span><b>A（エース）</b> … <b>1</b>か <b>11</b>。つごうの いい ほうで かぞえるよ（ゲームが えらんでくれる）</li>
+          <li><span class="gm" aria-hidden="true"></span><b>2 〜 10</b> … 書いてある数のまま</li>
+          <li><span class="gm" aria-hidden="true"></span><b>絵札（J・Q・K）</b> … 全部 <b>10</b></li>
+          <li><span class="gm" aria-hidden="true"></span><b>A（エース）</b> … <b>1</b>か <b>11</b>。都合のいいほうで数えるよ（ゲームが選んでくれる）</li>
         </ul>
       </section>
 
       <section class="gsec">
-        <h2 class="gh">かち・まけ</h2>
-        <!-- ふだの 色は ゲーム中の ふきだしと おなじ やくそく（みどり＝かち／ピンク＝まけ／クリーム＝ひきわけ）。
+        <h2 class="gh">勝ち・負け</h2>
+        <!-- ふだの 色は ゲーム中の ふきだしと おなじ やくそく（みどり＝勝ち／ピンク＝負け／クリーム＝引き分け）。
              文字は いじらず、まるの 色だけで 見わけを つける。 -->
         <ul class="glist">
-          <li><span class="gm gm-lose" aria-hidden="true"></span><b>21を こえちゃった</b> … まけ。どんなに おおきい かずでも だめ</li>
-          <li><span class="gm gm-win" aria-hidden="true"></span><b>21を こえないで、ディーラーより 大きい</b> … かち！ かけた ぶんだけ コインが ふえる</li>
-          <li><span class="gm gm-win" aria-hidden="true"></span><b>ディーラーが 21を こえた</b> … きみの かち！</li>
-          <li><span class="gm gm-push" aria-hidden="true"></span><b>ディーラーと おなじ かず</b> … ひきわけ。コインは ふえも へりも しない</li>
+          <li><span class="gm gm-lose" aria-hidden="true"></span><b>21を こえちゃった</b> … 負け。どんなに大きい数でもだめ</li>
+          <li><span class="gm gm-win" aria-hidden="true"></span><b>21を こえないで、ディーラーより大きい</b> … 勝ち！ かけた分だけコインが増える</li>
+          <li><span class="gm gm-win" aria-hidden="true"></span><b>ディーラーが21を こえた</b> … 君の勝ち！</li>
+          <li><span class="gm gm-push" aria-hidden="true"></span><b>ディーラーと同じ数</b> … 引き分け。コインは増えも減りもしない</li>
         </ul>
 
         <!-- T15：ルルの 追記①（2026-08-13）。「あそびかた」の ※2行と まったく 同じ 見た目（.gnote）。
              太字・新しい漢字・新しい 見出しは 足していない。分かち書きの スペースは そのまま。 -->
-        <p class="gnote">※ 21を こえちゃうことを「バースト」と いうよ。がめんにも そう でるからね。<br>
-          ※ ディーラーが さいしょの 2まいで 21だったら、ボタンを おす まえに きみの まけ。</p>
+        <p class="gnote">※ 21を こえちゃうことを「バースト」というよ。画面にもそう出るからね。<br>
+          ※ ディーラーが最初の2枚で21だったら、ボタンをおす前に君の負け。</p>
 
         <div class="gbj">
-          <h3 class="gh3"><span class="gh3-mark" aria-hidden="true">♠</span>ブラックジャック（いちばん つよい かちかた）</h3>
-          <p class="gp">さいしょの 2まいで、ぴったり <b>21</b>に なること。<br>
+          <h3 class="gh3"><span class="gh3-mark" aria-hidden="true">♠</span>ブラックジャック（一番強い勝ち方）</h3>
+          <p class="gp">最初の2枚で、ぴったり<b>21</b>になること。<br>
             <b>A</b> と、<b>10・J・Q・K の どれか</b> が そろうと できるよ。</p>
-          <p class="gp">このときだけ、コインが かけた ぶんの <b>1.5ばい</b> ふえる。<br>
-            うんと ツキが あれば、くばられた しゅんかんに かっちゃうかも。</p>
+          <p class="gp">このときだけ、コインが かけた分の<b>1.5倍</b>増える。<br>
+            運と ツキが あれば、配られた しゅんかんに勝っちゃうかも。</p>
         </div>
       </section>
 
       <section class="gsec">
-        <h2 class="gh">ディーラーの きまり</h2>
-        <p class="gp">ディーラーは じぶんで かんがえない。<br>
-          <b>17いじょうに なるまで カードを ひく。なったら とまる。</b> それだけ。</p>
-        <p class="gp">だから、ディーラーの 見えている カードを よく 見て きめると、だんだん つよくなれるよ。</p>
+        <h2 class="gh">ディーラーの決まり</h2>
+        <p class="gp">ディーラーは自分で考えない。<br>
+          <b>17以上になるまでカードを引く。なったら止まる。</b> それだけ。</p>
+        <p class="gp">だから、ディーラーの見えているカードを よく見て決めると、だんだん強くなれるよ。</p>
       </section>
 
     </div>
@@ -473,7 +473,7 @@
    game.js が おしらせ（#banner）を 書きかえるのを 見はって、
    ハッピーの セリフ（#catLine）と 顔（#talk の data-mood）を あわせるだけ。
 
-   セリフの きまり：ひらがな多め・あかるく・そばで おうえんする 相棒の口ぶり。
+   セリフのきまり：設計図 §9.6 の言葉づかい・あかるく・そばで応援する相棒の口ぶり。
    ふきだしを 2行に しないため、1つ 13もじ までに おさえる（375px で 1行に入る上限）。
    ============================================================ */
 (function () {
@@ -507,36 +507,36 @@
     var p    = phase();
 
     /* ── ラウンドえらび ── */
-    if (p === 'setup') return { mood: 'bet', say: 'なんかい あそぶ？' };
+    if (p === 'setup') return { mood: 'bet', say: '何回遊ぶ？' };
 
     /* ── ぜんぶ おわった あと ／ コインぎれ ──
        ここでは しょんぼり顔に しない。「また あそぼう」と はげます場面なので、
        ふつうの顔（前むき）で 受けとめる。 */
-    if (p === 'gameover') return { mood: 'over', say: 'また あそぼうね！', fin: 'over' };
+    if (p === 'gameover') return { mood: 'over', say: 'また遊ぼうね！', fin: 'over' };
     if (p === 'final') {
-      if (cls.indexOf('bj')   >= 0) return { mood: 'bj',   say: 'だいせいこう！ すごい！', fin: 'big'  };
-      if (cls.indexOf('win')  >= 0) return { mood: 'win',  say: 'コイン ふえたね！',       fin: 'win'  };
-      if (cls.indexOf('push') >= 0) return { mood: 'push', say: 'ぴったり おなじだ！',     fin: 'push' };
-      return { mood: 'soft', say: 'つぎは かてるよ！', fin: 'down' };
+      if (cls.indexOf('bj')   >= 0) return { mood: 'bj',   say: '大成功！ すごい！', fin: 'big'  };
+      if (cls.indexOf('win')  >= 0) return { mood: 'win',  say: 'コイン増えたね！',  fin: 'win'  };
+      if (cls.indexOf('push') >= 0) return { mood: 'push', say: 'ぴったり同じだ！',  fin: 'push' };
+      return { mood: 'soft', say: '次は勝てるよ！', fin: 'down' };
     }
 
     /* ── ラウンドの けっか ── */
     if (cls.indexOf('bj')   >= 0) return { mood: 'bj',   say: 'すごい！ ブラックジャック！' };
     if (cls.indexOf('win')  >= 0) return { mood: 'win',  say: 'やったね！ さすが！' };
-    if (cls.indexOf('push') >= 0) return { mood: 'push', say: 'おしい！ ひきわけ〜' };
+    if (cls.indexOf('push') >= 0) return { mood: 'push', say: 'おしい！ 引き分け〜' };
     if (cls.indexOf('lose') >= 0) {
       if (text.indexOf('バースト') >= 0)  return { mood: 'lose', say: 'あー！ こえちゃった' };
-      if (text.indexOf('なくなっ') >= 0)  return { mood: 'lose', say: 'また あそぼうね！' };
-      return { mood: 'lose', say: 'ドンマイ！ つぎ いこう' };
+      if (text.indexOf('なくなっ') >= 0)  return { mood: 'lose', say: 'また遊ぼうね！' };
+      return { mood: 'lose', say: 'ドンマイ！ 次いこう' };
     }
 
     if (p === 'dealer') return { mood: 'wait', say: 'どきどき…！' };
-    if (p === 'player') return { mood: 'play', say: 'ひく？ ストップする？' };
+    if (p === 'player') return { mood: 'play', say: '引く？ ストップする？' };
     return { mood: 'bet', say: 'いくら かける？' };
   }
 
-  /* ── さいごの けっか画面：かち／まけ／ひきわけ を 3つの ふだ に わけて 読みやすく ──
-     game.js が 書いた 1行（「かち 2かい・まけ 1かい・ひきわけ 0かい」）から
+  /* ── さいごの けっか画面：勝ち／負け／引き分け を 3つの ふだ に わけて 読みやすく ──
+     game.js が 書いた 1行（「勝ち2回・負け1回・引き分け0回」）から
      数字だけ よみとって うつす。よみとれなかったら 元の1行を そのまま 見せる（安全側）。 */
   function fillRecord() {
     if (!finalPhase || !finalRec || !rc.win) return;

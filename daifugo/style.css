@@ -1,0 +1,954 @@
+/* ============================================================
+   大富豪（だいふごう）― ブラゲ工房 ／ 第1段の 見た目
+   ------------------------------------------------------------
+   ・色・かたちは 七並べ／ブラックジャックと そろえてある
+     （設計図 §9.5 ＝ パステル・丸ゴシック・白い角丸カード）。
+   ・第1段は「まず 遊べる」ところまで。仕上げは 🎨アトが やります。
+     あとから かざりやすい ように、部品ごとに 見出しを 入れてあります。
+   ============================================================ */
+
+:root {
+  --ink:#463c52;
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+  --white:     #ffffff;
+  --cream:     #fff9ea;
+  --gold:      #F1A426;
+  --gold-soft: #FFE690;
+  --mint:      #6FC98C;
+  --mint-soft: #DCF6E4;
+
+  --font-main:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","M PLUS Rounded 1c","Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;
+
+  /* カードは 419×635（比率 2:3）。この ひりつは ぜったいに くずさない。 */
+  --card-w:62px;
+  --card-h:calc(var(--card-w) * 635 / 419);
+}
+
+* { box-sizing:border-box; }
+body {
+  margin:0; min-width:320px; color:var(--ink); font-family:var(--font-main);
+  background:linear-gradient(180deg,#bcebf0 0 158px,#fff7e8 158px); min-height:100vh;
+}
+button { font-family:inherit; cursor:pointer; }
+.hidden { display:none !important; }
+.sprite-defs { position:absolute; width:0; height:0; overflow:hidden; }
+.app-shell { max-width:1000px; margin:0 auto; padding:12px 14px 26px; }
+
+/* ── 上の帯 ───────────────────────────── */
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:8px; height:56px; }
+.back, .howto {
+  display:inline-flex; align-items:center; min-height:40px; padding:0 13px;
+  font-size:12.5px; font-weight:900; color:var(--pink-dark); text-decoration:none; white-space:nowrap;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
+}
+.back:hover, .howto:hover { border-color:var(--pink); }
+.brand { display:flex; align-items:flex-end; gap:6px; font-weight:900; font-size:29px; color:#59435e; text-shadow:0 2px #fff; }
+.brand-cat { width:38px; height:29px; transform:rotate(-9deg); }
+.brand small { font-weight:400; font-size:11px; color:#8d6d72; margin:0 0 8px 2px; }
+
+/* ── スタート画面 ─────────────────────── */
+.start-screen { position:relative; display:grid; justify-items:center; padding:18px 0 40px; }
+.cloud { position:absolute; color:#fff; font-size:70px; opacity:.8; }
+.cloud-one { top:2%; left:4%; } .cloud-two { bottom:12%; right:5%; font-size:52px; }
+.start-card {
+  position:relative; z-index:1; width:min(560px,100%); text-align:center;
+  background:var(--white); border:5px solid var(--pink-soft); border-radius:30px;
+  padding:26px 24px 24px; box-shadow:0 10px 0 rgba(196,58,115,.12);
+}
+.eyebrow { color:#ff759d; font-weight:900; margin:0; font-size:15px; }
+.start-card h1 { font-weight:900; font-size:60px; color:#5a9d72; letter-spacing:3px; margin:4px 0 0; text-shadow:0 4px #285e46, 0 7px #e3ffd7; }
+.start-card h1 span { color:#ff769b; font-size:42px; vertical-align:8px; }
+.intro { margin:4px 0 18px; font-size:17px; font-weight:700; }
+
+.preset-block { background:var(--cream); border:3px solid #F6E4C0; border-radius:20px; padding:12px; }
+.preset-title { margin:0 0 9px; font-weight:900; font-size:15px; color:#8a6a4e; }
+.presets { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.preset {
+  display:grid; gap:2px; padding:11px 6px; border-radius:16px;
+  background:var(--white); border:3px solid var(--pink-soft); color:var(--pink-dark);
+}
+.preset b { font-size:16px; font-weight:900; }
+.preset small { font-size:10.5px; color:#957c86; font-weight:700; }
+.preset.on { background:var(--pink); border-color:var(--pink-dark); color:#fff; box-shadow:0 4px 0 var(--pink-dark); }
+.preset.on small { color:#ffe6f0; }
+
+/* ── ルールを じぶんで えらぶ（折りたたみ・器） ── */
+.rule-fold { margin-top:14px; text-align:left; }
+.rule-fold > summary {
+  list-style:none; cursor:pointer; padding:10px 13px; border-radius:14px;
+  background:var(--pink-soft); color:var(--pink-dark); font-weight:900; font-size:14px;
+}
+.rule-fold > summary::-webkit-details-marker { display:none; }
+.rule-fold > summary b { font-weight:700; font-size:12px; color:#96788a; }
+.rule-list { margin-top:10px; display:grid; gap:10px; }
+.rule-group { border:3px solid #EFE6F2; border-radius:16px; padding:9px 11px; }
+.rule-group h4 { margin:0 0 6px; font-size:13.5px; color:#7a6a86; }
+.rule-group.warn { border-color:#F5D98B; background:#FFF8E2; }
+.group-note { margin:-2px 0 7px; font-size:11px; color:#a08b4d; }
+.rule-row { display:grid; grid-template-columns:22px 1fr; gap:2px 7px; align-items:center; padding:5px 2px; }
+.rule-row input { grid-row:span 2; width:20px; height:20px; accent-color:var(--pink-deep); }
+.rule-name { font-weight:900; font-size:13.5px; }
+.rule-desc { grid-column:2; font-size:11px; color:#8b7d92; line-height:1.4; }
+.rule-row.not-ready { opacity:.62; }
+.soon { display:inline-block; margin-left:5px; font-style:normal; font-size:9.5px; font-weight:700;
+  color:#8a7a55; background:#F3E9CE; border-radius:999px; padding:1px 6px; vertical-align:1px; }
+.rule-buttons { display:flex; gap:8px; margin-top:10px; }
+.rule-buttons button { flex:1; min-height:38px; border:3px solid var(--pink-soft); background:var(--white);
+  border-radius:999px; font-weight:900; font-size:12.5px; color:var(--pink-dark); }
+.rule-note { margin:8px 2px 0; font-size:11px; color:#9b8ba2; }
+
+.start-button {
+  margin-top:20px; width:min(340px,100%); display:grid; gap:1px; padding:12px 26px 10px;
+  background:linear-gradient(180deg,var(--pink),var(--pink-deep)); border:0; border-radius:50px;
+  color:#fff; font-weight:900; font-size:21px; box-shadow:0 7px 0 var(--pink-dark);
+}
+.start-button small { font-size:11.5px; font-weight:700; color:#ffe6f0; }
+.start-button:active { transform:translateY(4px); box-shadow:0 3px 0 var(--pink-dark); }
+.tip { margin:14px 0 0; font-size:12.5px; color:#896c71; }
+
+.mascot { position:relative; margin-top:16px; display:grid; justify-items:center; }
+.mascot .bubble {
+  margin:0 0 6px; padding:7px 14px; font-size:14px; font-weight:900; color:var(--pink-dark);
+  background:var(--white); border:3px solid var(--pink); border-radius:18px;
+}
+.cat-face { width:76px; height:58px; }
+.cat-name { margin:2px 0 0; font-size:11px; font-weight:900; color:var(--pink-dark); }
+
+/* ── ゲーム画面：上の おしらせ ───────────── */
+.status-line { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:2px 0 8px; }
+.turn-badge { padding:7px 13px; border-radius:999px; background:var(--pink); color:#fff; font-weight:900; font-size:13.5px; }
+.score-chip { padding:7px 12px; border-radius:999px; background:var(--gold-soft); color:#7d6321; font-weight:900; font-size:12.5px; }
+.mini-btn { min-height:34px; padding:0 11px; border:3px solid var(--pink-soft); background:var(--white);
+  border-radius:999px; font-size:11.5px; font-weight:900; color:var(--pink-dark); }
+.mini-btn:last-of-type { margin-left:auto; }
+
+.talk { flex:1 0 100%; display:flex; align-items:flex-start; gap:10px; }
+.cat-wrap { width:64px; flex:0 0 auto; text-align:center; }
+.cat-wrap .cat { width:100%; height:auto; }
+.talk .banner {
+  position:relative; flex:1; min-width:0; padding:8px 13px;
+  background:var(--white); border:3px solid var(--pink); border-radius:18px;
+}
+.talk .banner::before {
+  content:''; position:absolute; left:-17px; top:18px; border-style:solid;
+  border-width:9px 17px 9px 0; border-color:transparent var(--pink) transparent transparent;
+}
+.cat-line { display:block; font-size:15px; font-weight:900; color:var(--pink-dark); }
+.talk .banner p { margin:2px 0 0; font-size:13px; }
+.face-happy { display:none; }
+.talk[data-mood="win"] .face-normal { display:none; }
+.talk[data-mood="win"] .face-happy  { display:block; }
+.talk[data-mood="win"] .banner { border-color:var(--mint); }
+.talk[data-mood="win"] .banner::before { border-right-color:var(--mint); }
+.talk[data-mood="win"] .cat-line { color:#1F7A45; }
+
+/* ── ★ つよさ・むき の 帯（第2段A）─────────
+   かくめい／Jバックで つよさが ぎゃくに なったら、ここの ならびが その場で 入れ替わる。
+   飾りでは なく「いま どっちが つよいか」を 見せる 部品なので、けさない こと。 */
+.flag-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:0 0 8px; }
+.flag {
+  display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:999px;
+  font-size:11.5px; font-weight:900; white-space:nowrap;
+  background:var(--white); border:2px solid #EFE2C6; color:#7a6a86;
+}
+.flag small { font-size:10px; font-weight:700; opacity:.85; }
+.flag-order { font-family:Georgia,serif; letter-spacing:.4px; color:#6b5f74; }
+.flag-order.rev { background:#3C2D4E; border-color:#2A1E38; color:#FFE690; }
+.flag-rev { background:linear-gradient(180deg,#FFD86B,#F5A623); border-color:#C97C0C; color:#4a3208;
+  animation:flagPop .45s ease-out; }
+.flag-back { background:var(--mint-soft); border-color:var(--mint); color:#22694a; }
+.flag-dir { background:#EAF3FB; border-color:#B8D2E6; color:#3c6083; }
+.flag-dir.on { background:#4F86C6; border-color:#33608F; color:#fff; }
+@keyframes flagPop { from { transform:scale(.6); } to { transform:scale(1); } }
+
+/* ★ しばり バッジ（第2段B・ルルの じょうけん）
+   「いま なにに しばられているか」を つねに 見せる。
+   ⚠️ これを 消すなら しばりの ルールも 消すこと（バッジが しばりの 半分）。 */
+.flag-lock {
+  background:linear-gradient(180deg,#C9A7F0,#9B6BD8); border-color:#7A49B8; color:#fff;
+  animation:flagPop .45s ease-out;
+}
+.flag-lock small { color:#F2E6FF; }
+
+/* ★ みやこおち バッジ（じぶんが ねらわれている とき） */
+.flag-crown {
+  background:linear-gradient(180deg,#FFD86B,#F08A2E); border-color:#C4620B; color:#4a2c08;
+  animation:flagPop .45s ease-out;
+}
+.flag-crown small { color:#5c3a10; }
+
+/* ── ロボット3人 ───────────────────────── */
+.players { display:flex; justify-content:space-around; gap:8px; padding:4px 0 8px; }
+.cpu { flex:1; min-width:0; text-align:center; position:relative; padding:6px 2px 4px; border-radius:16px; border:3px solid transparent; }
+.cpu.is-turn { border-color:var(--gold); background:#FFFBEA; }
+.cpu.is-rest { opacity:.5; filter:grayscale(.7); }
+.cpu.is-done { opacity:.85; background:var(--mint-soft); border-color:var(--mint); }
+/* ★ みやこおち：ねらわれている ロボットの 上に つねに 出す バッジ（§8-2） */
+.crown-warn {
+  display:block; margin:0 auto 3px; width:fit-content; max-width:100%;
+  padding:2px 8px; border-radius:999px; font-size:10px; font-weight:900; white-space:nowrap;
+  background:linear-gradient(180deg,#FFD86B,#F08A2E); border:2px solid #C4620B; color:#4a2c08;
+}
+.cpu-name { font-size:13px; font-weight:900; }
+.cpu-name small { display:block; color:#ef5c86; font-size:11px; font-weight:700; }
+.cpu.is-done .cpu-name small { color:#2f7a4d; }
+
+/* ロボットの 伏せ札（T22 で 社長に ご指摘いただいた 形を そのまま）
+   札は ぜんぶ カード1まいぶんの 大きさ（419:635）にして、左マージンを マイナスで かさねる。
+   かさなるのは 左がわ どうしなので、いちばん 右の 1まいは かならず まるごと 見える。 */
+.cpu-cards { display:flex; justify-content:center; align-items:flex-end; min-width:0; padding-top:4px; gap:0; }
+.cpu-card {
+  --back-h:58px; --back-step:8px;
+  flex:0 0 auto;
+  width:calc(var(--back-h) * 419 / 635);
+  height:var(--back-h);
+  margin-left:calc(var(--back-step) - (var(--back-h) * 419 / 635));
+  border:0; border-radius:3px;
+  background:transparent url('../cards/%E3%83%88%E3%83%A9%E3%83%B3%E3%83%97%E8%A3%8F%E8%B5%A4.png') center/contain no-repeat;
+}
+.cpu-card:first-child { margin-left:0; }
+
+/* ── ばの カード ───────────────────────── */
+.table-wrap {
+  padding:14px 13px 10px; border-radius:23px; position:relative;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 2px,transparent 2px 8px), #82ce84;
+  border:5px solid #3f863f; box-shadow:0 7px 0 rgba(86,53,38,.2);
+}
+.table-ribbon {
+  position:absolute; z-index:3; top:-15px; left:50%; transform:translateX(-50%);
+  padding:4px 18px; background:#ffe681; border:3px solid #996d40; border-radius:30px;
+  color:#75513c; font-weight:900; font-size:12px; white-space:nowrap;
+}
+.field { min-height:calc(var(--card-h) + 10px); display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap; padding:6px 0; }
+.field-empty { margin:0; color:#215c2b; font-weight:900; font-size:14px; background:rgba(255,255,255,.75); border-radius:14px; padding:9px 15px; }
+.field-who { margin:0; text-align:center; min-height:17px; font-size:11.5px; font-weight:900; color:#eafbea; }
+
+/* ── てふだ ─────────────────────────── */
+.hand-area { margin-top:14px; padding:8px 13px 11px; background:#fffdf5; border:3px solid #f4dfbd; border-radius:20px; box-shadow:0 5px 0 rgba(193,153,112,.2); }
+.hand-heading { display:flex; align-items:center; justify-content:space-between; color:#755a5c; font-weight:900; font-size:14px; }
+.hand-heading small { color:#ec5a86; }
+/* 13〜14まい。よこスクロールは 出さず、はいらない ぶんは 下の だんへ おりる。 */
+.hand { min-height:calc(var(--card-h) + 14px); display:flex; flex-wrap:wrap; align-content:flex-start;
+  justify-content:center; gap:6px 5px; padding:8px 2px 2px; }
+
+.card {
+  flex:0 0 auto; padding:0; width:var(--card-w); height:var(--card-h); aspect-ratio:419 / 635;
+  border-radius:7px; border:2px solid #423d43; background:#fffefb;
+  box-shadow:1px 2px 1px rgba(49,41,42,.35); position:relative; overflow:hidden;
+  font-family:Georgia,serif; font-weight:bold;
+}
+.card.red { color:#e8434f; } .card.black { color:#25252c; }
+.card .face-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.card .fallback { position:absolute; inset:0; display:block; }
+.card.img-ok .fallback { display:none; }
+.card .corner { position:absolute; display:flex; flex-direction:column; align-items:center; gap:1px; font-size:13px; font-weight:900; line-height:1; }
+.card .corner i { font-style:normal; font-size:11px; }
+.card .corner.tl { top:4px; left:5px; }
+.card .corner.br { bottom:4px; right:5px; transform:rotate(180deg); }
+.card .pip { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:26px; line-height:1; }
+
+/* ★ ハイライト 3じょうたい（§7-1）
+   だせる          … 金の わく（この1まいから はじめられる）
+   いっしょに だせる … みどりの わく（えらんでいる ものに 足せる）
+   だせない        … うすい グレー（押せない） */
+.hand .card { transition:transform .14s, filter .14s, box-shadow .14s; }
+.hand .card.can-play { border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft),1px 3px 2px rgba(49,41,42,.35); }
+.hand .card.can-join { border-color:var(--mint); box-shadow:0 0 0 3px var(--mint-soft),1px 3px 2px rgba(49,41,42,.35); }
+.hand .card.selected { border-color:var(--pink-deep); box-shadow:0 0 0 4px var(--pink),0 6px 6px rgba(49,41,42,.3); transform:translateY(-12px); z-index:5; }
+.hand .card:hover:not(:disabled) { transform:translateY(-7px); z-index:6; }
+.hand .card.selected:hover { transform:translateY(-14px); }
+.hand .card:disabled { cursor:not-allowed; filter:brightness(.86) saturate(.65); }
+
+/* ★ あがりきんしで「とまる」ふだ（第2段B）
+   押せなくは しない ―― 押したら りゆうが 出る。
+   「なぜか だせない」を つくらない ための 見た目なので、けさない こと。 */
+.hand .card.cant-finish {
+  border-color:#E0575F; box-shadow:0 0 0 3px #FFD9DC,1px 3px 2px rgba(49,41,42,.35);
+  filter:grayscale(.45) brightness(.94);
+}
+.hand .card.cant-finish::after {
+  content:'🚫'; position:absolute; z-index:4; left:50%; top:50%; transform:translate(-50%,-50%);
+  font-size:20px; line-height:1; text-shadow:0 1px 2px rgba(0,0,0,.35);
+}
+
+/* ジョーカーが なにに なっているか（→♠7）。えらんだ ときと ばに 出た ときに 見える。 */
+.wild-tag {
+  position:absolute; left:2px; right:2px; bottom:2px; z-index:4;
+  font-style:normal; font-family:var(--font-main); font-size:9.5px; font-weight:900; line-height:1.5;
+  text-align:center; color:#fff; background:var(--pink-deep); border-radius:4px;
+}
+
+/* ジョーカーの かいしゃくが 2つ いじょう ある ときだけ 出る きりかえ */
+.alt-button {
+  display:block; margin:8px auto 0; min-height:38px; padding:0 16px;
+  border:3px solid var(--gold); background:var(--gold-soft); color:#7d6321;
+  border-radius:999px; font-weight:900; font-size:12.5px;
+}
+
+.actions { display:flex; gap:10px; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+.play-button, .pass-button {
+  display:grid; gap:1px; min-width:150px; min-height:52px; padding:8px 22px 6px;
+  border:0; border-radius:999px; color:#fff; font-weight:900; font-size:18px;
+}
+.play-button small, .pass-button small { font-size:11px; font-weight:700; opacity:.92; }
+.play-button { background:linear-gradient(180deg,var(--pink),var(--pink-deep)); box-shadow:0 6px 0 var(--pink-dark); }
+.pass-button { background:linear-gradient(180deg,#9FB3C8,#7A90A8); box-shadow:0 6px 0 #5F7488; }
+.play-button:active:not(:disabled), .pass-button:active:not(:disabled) { transform:translateY(3px); box-shadow:0 3px 0 rgba(0,0,0,.25); }
+.play-button:disabled, .pass-button:disabled { filter:grayscale(.75); opacity:.55; cursor:not-allowed; }
+/* ★ あがりきんし 2だんめ：だせるけど いちばん下に なる ときの きいろい けいこく（§3-6） */
+.play-button.is-warn { background:linear-gradient(180deg,#FFD055,#F0A21E); box-shadow:0 6px 0 #B7740C; color:#4a3208; }
+.play-button.is-warn small { color:#6b4a10; }
+
+/* ── ルールが はつどうした ときの おしらせ ── */
+.rule-flash {
+  position:fixed; left:50%; top:38%; transform:translate(-50%,-50%) scale(.8);
+  z-index:60; display:grid; gap:4px; text-align:center; pointer-events:none;
+  padding:16px 26px; border-radius:22px; background:var(--white);
+  border:5px solid var(--gold); box-shadow:0 12px 30px rgba(60,40,20,.3);
+  opacity:0; transition:opacity .18s, transform .18s;
+}
+.rule-flash b { font-size:24px; color:var(--pink-dark); }
+.rule-flash span { font-size:13px; color:#6d6076; max-width:280px; }
+/* いま なにが 起きたか の ぐたいてきな 1行（♠しばり！／みやこおち！ など） */
+.rule-flash .flash-extra { font-size:14px; font-weight:900; color:#3f3348; }
+.rule-flash.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+/* ── ダイアログ ───────────────────────── */
+dialog {
+  border:0; border-radius:22px; max-width:460px; width:calc(100% - 28px); color:#554856;
+  padding:26px 26px 22px; text-align:center; font-family:var(--font-main);
+  box-shadow:0 15px 50px rgba(48,34,44,.35);
+}
+dialog::backdrop { background:rgba(56,42,60,.4); }
+dialog h2 { color:#f05482; margin:0 0 12px; }
+.close-dialog { position:absolute; top:7px; right:11px; border:0; background:transparent; color:#a88d9b; font-size:26px; }
+.dialog-lead { margin:0 0 12px; padding:8px 10px; font-size:15px; font-weight:900; color:var(--pink-dark); background:var(--pink-soft); border-radius:14px; }
+.basic-head { margin:0 0 4px; font-size:14px; color:#7a6a86; text-align:left; }
+dialog ol { text-align:left; padding-left:22px; line-height:1.75; font-size:13.5px; margin:0 0 14px; }
+.live-rules { text-align:left; margin-bottom:16px; }
+.live-head { margin:0 0 6px; font-size:13.5px; font-weight:900; color:#7a6a86; }
+.live-rule { display:grid; gap:1px; padding:7px 10px; margin-bottom:6px; border-radius:12px; background:var(--cream); }
+.live-rule b { font-size:13.5px; color:var(--pink-dark); }
+.live-rule span { font-size:11.5px; color:#8b7d92; line-height:1.45; }
+.live-rule.not-ready { opacity:.62; }
+/* 「きをつける ルール」だけ 色を かえる（§7-2 の 分類を 画面に 出す） */
+.live-rule.is-care { background:#FFF8E2; box-shadow:inset 0 0 0 2px #F5D98B; }
+.live-rule.is-care b { color:#9a6b12; }
+.dialog-ok {
+  display:grid; gap:1px; border:0; border-bottom:4px solid var(--pink-dark); background:var(--pink);
+  color:#fff; padding:10px 18px 7px; border-radius:22px; font-weight:900; font-size:16px; text-decoration:none;
+}
+.dialog-ok small { font-size:10.5px; font-weight:700; color:#ffe6f0; }
+.dialog-sub { margin-top:12px; border:3px solid var(--pink-soft); background:var(--white); color:var(--pink-dark);
+  border-radius:999px; padding:8px 18px; font-weight:900; font-size:13px; }
+
+/* ⚠️「つぎの ゲームへ」だけを 大きくしない。やめどきが 見えるように 同じ 大きさで ならべる。 */
+.result-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:stretch; }
+.result-actions .dialog-ok { align-content:center; }
+.result-actions .alt { background:#9FB3C8; border-bottom-color:#5F7488; }
+.result-actions .alt small { color:#eef4f9; }
+
+#resultContent .winner { margin:4px 0 14px; font-size:22px; color:#ef5380; font-weight:900; }
+.ranking { list-style:none; padding:0; margin:0 0 14px; display:grid; gap:6px; }
+.ranking li { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; padding:7px 9px;
+  border-radius:10px; text-align:left; background:#fff5d8; font-size:13.5px; font-weight:900; }
+.ranking li:nth-child(1) { background:#fff0a8; }
+.ranking li.is-human { box-shadow:inset 0 0 0 2px #ff8eb0; }
+.ranking .place { color:#ee4e7d; font-size:12.5px; }
+.ranking small { color:#987a78; font-size:11px; }
+.total-head { margin:0 0 6px; font-size:13px; font-weight:900; color:#7a6a86; }
+.totals { list-style:none; padding:0; margin:0 0 16px; display:grid; gap:4px; }
+.totals li { display:flex; justify-content:space-between; gap:8px; padding:5px 9px; border-radius:10px;
+  background:#F6F1FA; font-size:12.5px; font-weight:900; text-align:left; }
+.totals li.is-human { background:var(--pink-soft); }
+.totals small { color:#7d6f86; font-weight:700; }
+
+/* ── ちいさい画面（スマホ）。よこスクロールは ぜったいに 出さない。 ── */
+@media (max-width:650px) {
+  :root { --card-w:46px; }
+  body { background:linear-gradient(180deg,#bcebf0 0 105px,#fff7e8 105px); }
+  .app-shell { padding:9px 8px 20px; }
+  .topbar { height:48px; }
+  .brand { font-size:22px; } .brand-cat { width:30px; height:23px; } .brand small { display:none; }
+  .back, .howto { font-size:11px; padding:0 10px; min-height:36px; border-width:2px; }
+  .cloud { display:none; }
+  .start-card { border-width:4px; padding:22px 15px 20px; border-radius:24px; }
+  .start-card h1 { font-size:46px; }
+  .preset b { font-size:14px; } .preset small { font-size:9.5px; }
+  .start-button { font-size:19px; min-height:58px; }
+  .turn-badge { font-size:12px; padding:6px 10px; }
+  .score-chip { font-size:11px; padding:6px 9px; }
+  /* 4つが 1れつに ならぶ ように。auto マージンを やめて つめる。 */
+  .mini-btn { font-size:10.5px; padding:0 8px; min-height:31px; }
+  .mini-btn:last-of-type { margin-left:0; }
+  .status-line { gap:5px; }
+  .cat-wrap { width:52px; }
+  .cat-line { font-size:13.5px; } .talk .banner p { font-size:12px; }
+  .cpu-name { font-size:10.5px; } .cpu-name small { font-size:9.5px; }
+  .cpu-card { --back-h:44px; --back-step:5px; }
+  .table-wrap { padding:12px 8px 8px; border-width:4px; border-radius:16px; }
+  .table-ribbon { font-size:10px; top:-13px; padding:3px 11px; }
+  .hand-area { padding:7px 8px 10px; }
+  .hand { gap:5px 4px; }
+  .card { border-width:1.5px; border-radius:5px; }
+  .card .corner { font-size:9px; } .card .corner i { font-size:8px; } .card .pip { font-size:18px; }
+  .flag { font-size:10px; padding:4px 8px; border-width:2px; }
+  .flag small { font-size:9px; }
+  .flag-row { gap:4px; padding-bottom:6px; }
+  .wild-tag { font-size:8px; border-radius:3px; }
+  .play-button, .pass-button { min-width:130px; font-size:16px; }
+  .rule-flash b { font-size:19px; } .rule-flash span { font-size:12px; max-width:220px; }
+  .result-actions { grid-template-columns:1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hand .card, .rule-flash { transition:none !important; }
+}
+
+/* ============================================================
+   ここから下：仕上げ ― 🎨アト（T36）
+   ------------------------------------------------------------
+   ・見た目だけの 追記です。game.js には 1文字も さわっていません。
+   ・画面に 出る ことばも 1文字も 変えていません（余白と 折り返しだけ）。
+   ・ねらいは 4つ：
+     ① ルールの バッジを「はなれて見ても わかる」形にする
+     ② かくめいの ひっくり返る しゅんかんを 見せる（ルルの「部品」）
+     ③ 1本目・2本目と 同じ 会社の 作品に 見せる（ハッピー・色・手ざわり）
+     ④ 375px で よこスクロールを 出さない・行あたまに「ー」を 出さない
+   ============================================================ */
+
+:root {
+  color-scheme: light;              /* 暗転させない（読めなくなる 事故を ふせぐ） */
+  --wood:      #80552e;
+  --felt:      #82ce84;
+  --ink-soft:  #7C6754;
+  --plum:      #3C2D4E;
+  --shadow-1: 0 4px 0 rgba(196,155,110,.18), 0 10px 22px rgba(150,110,70,.14);
+}
+
+/* ── 土台 ────────────────────────────────
+   line-break:strict ＝ 日本語の 行あたま禁則を きびしく する。
+   これが 無いと「ロボット」「カード」「ジョーカー」が 折り返しで
+   「ー」から 始まって しまう（2本目で 見つけた 禁則違反）。
+   background-size で 空の 帯の 高さを 決めうちに して、
+   画面の 高さで 空の 位置が ずれるのを とめる。 */
+body {
+  background-color:#fff7e8;
+  background-image:linear-gradient(180deg,#BCEBF0 0%,#D9F2F6 100%);
+  background-repeat:no-repeat;
+  background-size:100% 172px;
+  overflow-x:hidden;                /* よこスクロールは ぜったいに 出さない */
+  line-break:strict;
+  word-break:normal;
+  overflow-wrap:break-word;         /* 長い ものだけ 折り返して はみ出しを ふせぐ */
+}
+/* .nb ＝ ここで 切らない ひとかたまり（文の 最後の 1字だけが 次の行に 落ちるのを ふせぐ） */
+.nb { display:inline-block; }
+
+/* ★ 日本語の 折り返しを「ことばの きれめ」で 行う（word-break:auto-phrase）。
+   これが 効くと「次の人に わ／たす」の ような、ことばの まん中での
+   折り返しが 出なくなる。対応していない ブラウザは この1行を 読みとばすだけ
+   （line-break:strict の 禁則は そのまま 効く）ので、こわれない。
+   ⚠️ 対象は「game.js が 作る 文」＝ こちらで 折り返し位置を 直せない ところ。 */
+.rule-desc, .live-rule span, .rule-flash span, .talk .banner p,
+.field-empty, .field-who, .cpu-name, dialog ol li, .ranking small,
+.play-button small, .pass-button small, .rule-fold > summary,
+#resultContent .winner, .total-head, .tip, .group-note, .dialog-lead {
+  word-break:auto-phrase;
+}
+
+/* ── 上の帯：もどる・あそびかた（2本目と 同じ 白い丸ピル） ── */
+.back, .howto {
+  min-height:42px; padding:0 15px; font-size:13.5px;
+  box-shadow:0 3px 0 rgba(196,155,110,.18);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.back:hover, .howto:hover { transform:translateY(-2px); box-shadow:0 5px 0 rgba(196,155,110,.2); border-color:var(--pink); }
+.back:active, .howto:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(196,155,110,.18); }
+.back:focus-visible, .howto:focus-visible, .mini-btn:focus-visible,
+.start-button:focus-visible, .play-button:focus-visible, .pass-button:focus-visible,
+.preset:focus-visible, .alt-button:focus-visible {
+  outline:4px solid var(--pink-deep); outline-offset:3px;
+}
+
+/* ============================================================
+   ★★ ①-2 つよさの ならび ―― かくめいを 成立させる 部品
+   ------------------------------------------------------------
+   ルル：「ハイライトは 装飾では なく、革命を 成立させる 部品です」。
+   だから ここは いちばん 大きく、いちばん わかりやすく する。
+   ・ふだんは 白い ものさし（1つ1つの かずが 四角い こまに 見える）
+   ・かくめい／Jバックで こまが ひっくり返る（.is-flip は 1回だけ・下の script が つける）
+   ・ぎゃくの あいだは 帯ごと 黒むらさき＋金 に なって、ひとめで わかる
+   ============================================================ */
+.flag-row { align-items:stretch; gap:6px 6px; }
+
+/* ものさしは いつも 1行 まるごと つかう（バッジの 下）。
+   ＝ 手札の すぐ 上に「いま どっちが つよいか」が 出る。 */
+.flag-order {
+  order:9; flex:1 0 100%; max-width:680px; margin-left:auto; margin-right:auto;
+  display:flex; align-items:center; justify-content:center; gap:5px;
+  padding:5px 10px; border-radius:16px;
+  font-family:var(--font-main); letter-spacing:0;
+  background:linear-gradient(180deg,#FFFDF6,#FFF3DA);
+  border:3px solid #F0DDB4; color:#6b5f74;
+  box-shadow:0 3px 0 rgba(196,155,110,.16);
+  transform-style:preserve-3d;
+}
+/* こまの 見た目（上の帯と あそびかた で 使いまわす） */
+.ord-end {
+  flex:0 0 auto; font-style:normal; font-size:11.5px; font-weight:900; color:#9b8a72;
+  white-space:nowrap;               /* 「強い」の「い」だけが 次の行に 落ちない ように */
+}
+.ord-strip {
+  flex:1 1 auto; min-width:0; display:flex; align-items:center; justify-content:center; gap:2px;
+}
+.ord-chip {
+  flex:0 1 auto; min-width:19px; padding:2px 3px 1px;
+  font-style:normal; font-size:12.5px; font-weight:900; line-height:1.25; text-align:center;
+  color:#4A3A2C; background:var(--white); border:2px solid #E7D6B4; border-radius:7px;
+}
+.ord-chip.is-joker { min-width:22px; background:var(--gold-soft); border-color:var(--gold); }
+
+/* あそびかたの 5行目。ゲーム中の 帯と 同じ こまに する。
+   ⚠️ li に display:flex を かけると 番号（5.）が 消えるので、かけない。
+      中の こまの ほうを inline-flex に する。 */
+.order-line {
+  padding:6px 9px; margin:5px 0; border-radius:14px; line-height:2;
+  background:linear-gradient(180deg,#FFFDF6,#FFF3DA); border:2px solid #F0DDB4;
+}
+.order-line .ord-end   { display:inline; vertical-align:middle; }
+.order-line .ord-strip { display:inline-flex; flex-wrap:wrap; vertical-align:middle; margin:0 4px; }
+.order-line .ord-chip  { flex:0 0 auto; }
+/* ★ ぎゃくの あいだの 見た目（ずっと 出たまま ＝ 状態が 見える）
+   黒っぽい 背景は つかわない（設計図 §9.5）。あたたかい みかん色に して
+   「いま とくべつな ことが 起きている」を 出す。字は こげ茶で 読みやすいまま。 */
+.flag-order.rev {
+  background:linear-gradient(180deg,#FFC24D,#F08A20);
+  border-color:#fff; color:#5A3406;
+  box-shadow:0 3px 0 #C4620B, 0 0 0 3px rgba(240,138,32,.3);
+}
+.flag-order.rev .ord-end { color:#7A4506; }
+.flag-order.rev .ord-chip { color:#8A4A06; background:#FFFBF0; border-color:#fff; }
+.flag-order.rev .ord-chip.is-joker { color:#5A3406; background:#FFEDB6; border-color:#fff; }
+
+/* ★ ひっくり返る しゅんかん（1回だけ・.is-flip は script が つけて 外す）
+   よこ軸で ぐるんと 返って、こまが 順に ぱっと 出る。
+   0.7秒で 終わる ＝ 何回 起きても うるさくない。 */
+@keyframes ordFlip {
+  0%   { transform:rotateX(-92deg) scale(1.05); }
+  55%  { transform:rotateX(14deg)  scale(1.02); }
+  78%  { transform:rotateX(-6deg); }
+  100% { transform:rotateX(0)      scale(1); }
+}
+@keyframes ordChipIn {
+  0%   { opacity:0; transform:translateY(-7px) scale(.72); }
+  100% { opacity:1; transform:none; }
+}
+@keyframes ordGlow {
+  0%   { box-shadow:0 3px 0 rgba(196,155,110,.16), 0 0 0 0 rgba(241,164,38,.55); }
+  40%  { box-shadow:0 3px 0 rgba(196,155,110,.16), 0 0 0 10px rgba(241,164,38,0); }
+  100% { box-shadow:0 3px 0 rgba(196,155,110,.16), 0 0 0 0 rgba(241,164,38,0); }
+}
+.flag-order.is-flip { animation:ordFlip .66s cubic-bezier(.2,.85,.3,1), ordGlow .8s ease-out; }
+/* こまは 左から 順に めくれる。ぜんぶ 出そろうまで 0.7秒くらい。
+   これ以上 ゆっくりに すると、革命が 何度も 起きる ゲームでは じゃまに なる。 */
+.flag-order.is-flip .ord-chip {
+  animation:ordChipIn .38s ease-out backwards;
+  animation-delay:calc(var(--i, 0) * 18ms + 110ms);
+}
+
+/* ============================================================
+   ★★ ①-1 バッジ ―― 「できない ことが ふえる ルール」を 見せる
+   ------------------------------------------------------------
+   ルル：「できないことが ふえる ルールを だまって 入れると あそべない」。
+   バッジは 飾りでは なく ルールの 半分。だから：
+   ・はなれて 見ても わかる 大きさ（1行目が 大きい・2行目が 説明）
+   ・♦♥は 赤／♠♣は 黒（白い まるふだに のせる ＝ トランプと 同じ よみかた）
+   ・出た しゅんかんだけ 1回 はねる（ずっと 動かすと つかれる）
+   ============================================================ */
+.flag {
+  flex-wrap:wrap; padding:6px 12px; border-radius:16px; font-size:13px; line-height:1.3;
+  box-shadow:0 3px 0 rgba(150,110,70,.14);
+  animation:none;                       /* ⚠️ 毎回の えがき直しで はねるのを とめる */
+}
+.flag small { flex:1 0 100%; font-size:10.5px; opacity:.9; }
+
+/* マークの ふだ（♠♥♦♣）。script が 文字を これで つつむ。 */
+.mk {
+  display:inline-grid; place-items:center; font-style:normal;
+  min-width:1.35em; height:1.35em; padding:0 .12em; margin:0 1px;
+  font-size:1.25em; line-height:1; border-radius:6px;
+  background:var(--white); box-shadow:0 1px 0 rgba(0,0,0,.18);
+}
+.mk.is-red   { color:#E23B48; }
+.mk.is-black { color:#2B2B36; }
+.flag small .mk { font-size:1.5em; margin:0 2px 0 0; vertical-align:-.15em; }
+
+/* 出た しゅんかんの ひとはね（1回だけ） */
+@keyframes badgeIn {
+  0%   { opacity:0; transform:scale(.55) translateY(-6px); }
+  60%  { opacity:1; transform:scale(1.08); }
+  100% { opacity:1; transform:scale(1); }
+}
+.flag.is-new { animation:badgeIn .42s cubic-bezier(.2,.9,.3,1.2); }
+
+/* 🔒 しばり ―― 何に しばられて いるかが 主役。マークを いちばん 大きく。 */
+.flag-lock {
+  background:linear-gradient(180deg,#B98CEA,#8B57CE); border-color:#6B3DAA;
+  color:#fff; font-size:14px; box-shadow:0 3px 0 #5C3399;
+}
+.flag-lock .mk { font-size:1.5em; box-shadow:0 1px 0 rgba(0,0,0,.25); }
+.flag-lock small { color:#F3E8FF; }
+
+/* 👑 みやこおち ―― 「ねらわれてる」緊張は 出すが、こわくは しない。
+   赤ではなく あたたかい 金色。ふちを 白く して やわらかく 見せる。 */
+.flag-crown, .crown-warn {
+  background:linear-gradient(180deg,#FFDE7B,#F5942F);
+  border:3px solid #fff; color:#5A3406;
+  box-shadow:0 3px 0 #C4620B, 0 0 0 3px rgba(245,148,47,.35);
+}
+.flag-crown small { color:#6B4210; }
+/* ⚠️ バッジが 出た人だけ 下に ずれる のを 直す（コーダの 申し送り）。
+   3人ぶん つねに 場所を 空けて おいて、バッジは その 中に 浮かせる。
+   ＝ 出ても 出なくても、ロボット3人の 高さが そろう。 */
+.cpu { padding-top:20px; }
+.crown-warn {
+  position:absolute; left:50%; top:0; transform:translateX(-50%); margin:0;
+  font-size:11px; padding:2px 9px; border-width:2px; border-radius:999px;
+  box-shadow:0 2px 0 #C4620B, 0 0 0 2px rgba(245,148,47,.32);
+  animation:badgeIn .42s cubic-bezier(.2,.9,.3,1.2);
+}
+
+/* ⚡ 強さが ぎゃく ―― ものさしの「見出し」。
+   ものさし本体（みかん色）と 色を 分けて、2つが 1つの かたまりに 見えないように する。 */
+.flag-rev {
+  background:linear-gradient(180deg,#FF9DC3,#E94F8A); border-color:#fff; color:#fff;
+  box-shadow:0 3px 0 var(--pink-dark);
+}
+.flag-rev small { color:#FFE3EF; }
+.flag-back { background:var(--mint-soft); border-color:var(--mint); color:#22694a; }
+
+/* ↻ まわる むき（9リバース）―― 変わった ことに 気づける ように。
+   矢印だけ 1回 くるっと 回す。色も はっきり 変える。 */
+.flag-dir { background:#EAF3FB; border-color:#B8D2E6; color:#3c6083; font-size:13px; }
+.flag-dir.on {
+  background:linear-gradient(180deg,#6FA3DC,#3F72B4); border-color:#2B5A94; color:#fff;
+  box-shadow:0 3px 0 #24487A;
+}
+.flag-dir .dir-arrow { display:inline-block; font-style:normal; font-size:1.45em; line-height:1; }
+@keyframes dirSpin { from { transform:rotate(0); } to { transform:rotate(-360deg); } }
+.flag-dir.is-flip { animation:badgeIn .42s cubic-bezier(.2,.9,.3,1.2); }
+.flag-dir.is-flip .dir-arrow { animation:dirSpin .7s cubic-bezier(.25,.9,.3,1); }
+
+/* ============================================================
+   ★ ①-3 上がり禁止の ふだ（🚫）
+   ------------------------------------------------------------
+   コーダの 申し送り：「押せるのに 赤いので、押せる／でも いまは ダメ が わかる形に」。
+   ・カードの 絵は 見えるまま（うすい 白の すりガラスを かぶせるだけ）
+   ・🚫は まん中では なく 右上の ふだに して、絵を つぶさない
+   ・押せる ことが わかるよう、指を のせると すこし 浮く
+   ・押したら ゆれる ＋ ハッピーの ふきだしが 黄色に なる（＝りゆうが ここに 出る）
+   ============================================================ */
+.hand .card.cant-finish {
+  border-color:#E0575F;
+  box-shadow:0 0 0 3px #FFD9DC, 1px 3px 2px rgba(49,41,42,.35);
+  filter:none;                                   /* 絵を つぶさない */
+  cursor:pointer;
+}
+.hand .card.cant-finish::before {
+  content:''; position:absolute; inset:0; z-index:3; border-radius:5px;
+  background:repeating-linear-gradient(-45deg,
+    rgba(224,87,95,.13) 0 4px, rgba(255,255,255,.28) 4px 9px);
+}
+.hand .card.cant-finish::after {
+  content:'🚫'; position:absolute; z-index:4; left:50%; top:8%; transform:translateX(-50%);
+  font-size:17px; line-height:1;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.4));
+}
+.hand .card.cant-finish:hover { transform:translateY(-5px) rotate(-1.5deg); }
+.hand .card.cant-finish:active { transform:translateY(1px) scale(.97); }
+@keyframes cardShake {
+  0%,100% { transform:translateX(0) rotate(0); }
+  20% { transform:translateX(-4px) rotate(-3deg); }
+  45% { transform:translateX(4px)  rotate(3deg); }
+  70% { transform:translateX(-2px) rotate(-1.5deg); }
+}
+.hand .card.cant-finish.is-shake { animation:cardShake .42s ease-in-out; }
+
+/* 押した りゆうは ハッピーの ふきだしに 出る。そこを 黄色く して
+   「押したから これが 出た」を つなげる。 */
+.talk.is-why .banner { border-color:#F0A21E; background:#FFF6DE; }
+.talk.is-why .banner::before { border-right-color:#F0A21E; }
+.talk.is-why .cat-line { color:#8A5A08; }
+
+/* えらんだ ふだは 12px 浮くので、その ぶん 上に 場所を 空けて おく。
+   ＝ 浮いた ふだが「あなたの手札」の 字に かぶらない。 */
+.hand { padding-top:15px; }
+
+/* ── 手札：だせない ふだは はっきり しずめる ──
+   もとの brightness(.86) では 「押せる／押せない」が ほとんど 見分けられなかった。
+   2本目（七並べ）と 同じ、白っぽく しずめる 見せ方に そろえる。 */
+.hand .card:disabled { filter:grayscale(.85) brightness(1.04) contrast(.88); opacity:.62; }
+.hand .card.can-play { box-shadow:0 0 0 3px var(--gold-soft), 0 4px 0 rgba(198,140,30,.35), 1px 3px 2px rgba(49,41,42,.3); }
+.hand .card.can-join { box-shadow:0 0 0 3px var(--mint-soft), 0 4px 0 rgba(60,150,100,.3), 1px 3px 2px rgba(49,41,42,.3); }
+
+/* ============================================================
+   ③ 世界観 ―― 1本目・2本目と そろえる
+   ============================================================ */
+
+/* ── 看板ねこ ハッピー（まとめサイト／2本目から そのまま 持ちこみ） ── */
+.cat { width:100%; height:auto; overflow:visible;
+  animation:bob 3s ease-in-out infinite;
+  filter:drop-shadow(0 5px 5px rgba(150,110,70,.22)); }
+@keyframes bob { 0%,100%{ transform:translateY(0) rotate(0); } 50%{ transform:translateY(-5px) rotate(-1.5deg); } }
+.cat-eyes { transform-box:fill-box; transform-origin:center; animation:blink 5s infinite; }
+@keyframes blink { 0%,92%,100%{ transform:scaleY(1); } 95%{ transform:scaleY(.1); } }
+.cat-tail { transform-box:fill-box; transform-origin:10% 90%; animation:wag 2.4s ease-in-out infinite; }
+@keyframes wag { 0%,100%{ transform:rotate(0); } 50%{ transform:rotate(-9deg); } }
+.talk[data-mood="win"] .cat { animation:hop .5s ease-in-out 2; }
+@keyframes hop { 0%,100%{ transform:translateY(0) rotate(0); } 30%{ transform:translateY(-12px) rotate(6deg); } 60%{ transform:translateY(0) rotate(-4deg); } }
+
+.cat-wrap { position:relative; }
+.cat-name {
+  position:absolute; left:50%; bottom:-3px; transform:translateX(-50%);
+  z-index:2; margin:0; padding:0 7px;
+  font-size:10.5px; font-weight:900; line-height:1.7; letter-spacing:-.02em;
+  color:var(--pink-dark); background:var(--white);
+  border:2px solid var(--pink); border-radius:999px;
+  white-space:nowrap; box-shadow:0 2px 0 rgba(196,155,110,.18); pointer-events:none;
+}
+
+/* ふきだしの しっぽは 2まい重ね（ピンクの ふち＋白い 中身）＝ 1本目・2本目と 同じ */
+.talk .banner { box-shadow:0 3px 0 rgba(196,155,110,.18); }
+.talk .banner::after {
+  content:''; position:absolute; left:-11px; top:21px; width:0; height:0;
+  border-style:solid; border-width:6px 12px 6px 0;
+  border-color:transparent #fff transparent transparent;
+}
+.talk[data-mood="win"] .banner::after { border-right-color:#E4F8E9; }
+.talk[data-mood="win"] .banner { background:#E4F8E9; }
+.talk.is-why .banner::after { border-right-color:#FFF6DE; }
+
+/* ── スタート画面：ハッピーは 全身で 右下に 立たせる（2本目と 同じ 置き方） ── */
+.start-screen { min-height:calc(100vh - 96px); align-content:center; padding:18px 0 30px; }
+.start-card { box-shadow:var(--shadow-1); border-color:#FFD9E8; }
+.mascot {
+  position:absolute; right:2%; bottom:4%; z-index:2; margin:0;
+  width:clamp(112px,25vw,158px);
+  display:flex; flex-direction:column; align-items:center;
+}
+.mascot .cat-wrap { width:100%; }
+.mascot .bubble {
+  position:relative; align-self:center; width:max-content; max-width:min(210px,46vw);
+  margin:0 0 12px; padding:7px 13px; line-height:1.3; text-align:center;
+  box-shadow:0 3px 0 rgba(196,155,110,.18);
+}
+.mascot .bubble::before, .mascot .bubble::after {
+  content:''; position:absolute; left:50%; width:0; height:0; border-style:solid;
+}
+.mascot .bubble::before { bottom:-14px; margin-left:-6px; border-width:14px 11px 0 0; border-color:var(--pink) transparent transparent transparent; }
+.mascot .bubble::after  { bottom:-9px;  margin-left:-4px; border-width:10px 8px 0 0;  border-color:#fff transparent transparent transparent; }
+.mascot .cat-name { bottom:2px; }
+
+/* 余白の 小さな かざり（花・キラキラ）。ことばの じゃまを しない ばしょだけ。 */
+.start-screen::before, .start-screen::after {
+  content:'✿'; position:absolute; z-index:0; color:#FFC2D8; font-size:34px; line-height:1; pointer-events:none;
+}
+.start-screen::before { left:9%;  top:34%; transform:rotate(-14deg); }
+.start-screen::after  { right:9%; top:26%; font-size:26px; color:#FFE08A; transform:rotate(12deg); }
+
+/* ── 大ボタン（1本目・2本目と 同じ 手ざわり） ── */
+.start-button {
+  border:4px solid #fff;
+  box-shadow:0 7px 0 var(--pink-dark), 0 12px 18px rgba(196,58,115,.26);
+  transition:transform .1s ease, box-shadow .1s ease, background .12s ease;
+}
+.start-button:hover { background:linear-gradient(180deg,#FF9DC3,#EE5C93); transform:translateY(-2px); }
+.start-button:active { transform:translateY(4px); box-shadow:0 2px 0 var(--pink-dark); }
+
+/* ── プリセット3つ（子どもが 最初に 見る いちばん 大事な 選択） ── */
+.preset { position:relative; padding:13px 6px 11px; transition:transform .1s ease, box-shadow .1s ease; }
+.preset:hover { transform:translateY(-2px); border-color:var(--pink); }
+.preset.on { box-shadow:0 4px 0 var(--pink-dark), 0 0 0 3px #FFD3E5; }
+.preset.on::after {
+  content:'✓'; position:absolute; top:-10px; right:-8px;
+  width:23px; height:23px; display:grid; place-items:center;
+  font-size:13px; font-weight:900; color:#fff;
+  background:var(--pink-dark); border:3px solid #fff; border-radius:999px;
+  box-shadow:0 2px 0 rgba(150,110,70,.2);
+}
+
+/* ── ルール15個の 一覧（えらびやすく する） ── */
+.rule-fold > summary { padding:12px 14px; font-size:14.5px; box-shadow:0 3px 0 #F3C9DE; }
+.rule-fold > summary:hover { background:#FFD5E8; }
+.rule-group { border-radius:18px; padding:10px 12px; background:#FEFBFF; }
+.rule-group h4 {
+  display:inline-block; margin:0 0 8px; padding:3px 11px;
+  font-size:13px; color:#6E5C7C; background:#EFE6F2; border-radius:999px;
+}
+.rule-group.warn h4 { background:#F7E3AC; color:#7B5B12; }
+.rule-group.warn h4::before { content:'⚠ '; }
+.rule-row {
+  border-radius:12px; padding:7px 8px; margin:1px 0;
+  transition:background .12s ease;
+}
+.rule-row:hover { background:#FFF3F8; }
+.rule-row input { width:23px; height:23px; }
+.rule-name { font-size:14px; }
+.rule-desc { font-size:11.5px; }
+/* ONの ものだけ 背が つく ＝ いくつ ONか ひとめで わかる */
+.rule-row:has(input:checked) { background:#FFF0F7; box-shadow:inset 0 0 0 2px #FFD3E5; }
+.rule-group.warn .rule-row:has(input:checked) { background:#FFF4D6; box-shadow:inset 0 0 0 2px #F0CE7C; }
+.rule-buttons button { min-height:42px; box-shadow:0 3px 0 rgba(196,155,110,.18); }
+.rule-buttons button:hover { border-color:var(--pink); }
+.rule-buttons button:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(196,155,110,.18); }
+
+/* ── 場（テーブル）：2本目と 同じ 木わく＋みどりの ラシャ ── */
+.table-wrap {
+  padding:11px; border:5px solid #412817; border-radius:23px;
+  background:linear-gradient(135deg,#6b3d1e,#bf7a34 17%,#6d3f1f 33%,#c08139 50%,#66391b 73%,#b86e2a);
+  box-shadow:0 7px 0 rgba(86,53,38,.28);
+}
+.table-wrap .field {
+  border-radius:12px; border:3px solid #3f863f;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.06) 0 2px,transparent 2px 8px), var(--felt);
+  box-shadow:inset 0 0 20px #4c9d51;
+  padding:10px 6px;
+}
+.field-who { margin-top:6px; color:#FFE9C6; text-shadow:0 1px 1px rgba(0,0,0,.35); }
+/* 角の クローバー（かざり。ことばでは ないので 足してよい） */
+.table-wrap::before, .table-wrap::after {
+  content:'♣'; position:absolute; z-index:2; font-size:17px; color:#F6D69B; opacity:.75;
+}
+.table-wrap::before { left:9px; top:7px; }
+.table-wrap::after  { right:9px; bottom:5px; transform:rotate(150deg); }
+
+/* ── 出す／パス ボタン ── */
+.play-button, .pass-button { border:4px solid #fff; transition:transform .1s ease, box-shadow .1s ease; }
+.play-button { box-shadow:0 6px 0 var(--pink-dark), 0 10px 16px rgba(196,58,115,.2); }
+.pass-button { box-shadow:0 6px 0 #5F7488, 0 10px 16px rgba(95,116,136,.18); }
+.alt-button { box-shadow:0 3px 0 #C68A17; }
+.alt-button:active { transform:translateY(2px); box-shadow:0 1px 0 #C68A17; }
+
+/* ── ロボット3人 ── */
+.cpu { transition:background .15s ease, border-color .15s ease; }
+.cpu.is-turn { box-shadow:0 0 0 3px #FFEDB8; }
+.cpu-name { color:#6b5a5c; }
+
+/* ============================================================
+   ② はつどうの おしらせ（まん中に 出る カード）
+   ------------------------------------------------------------
+   まえは うすくて 下の 絵が すけて 読めなかった。
+   ・不透明に する ・すこし 下げて ロボットに かぶせない
+   ・入ってくる ときだけ 動く（0.35秒）＝ 何回 起きても うるさくない
+   ============================================================ */
+.rule-flash {
+  top:44%; padding:18px 28px; border-radius:24px; border-width:5px;
+  background:var(--white);
+  box-shadow:0 14px 34px rgba(60,40,20,.34), 0 0 0 6px rgba(255,255,255,.7);
+  transform:translate(-50%,-50%) scale(.86) rotate(-2deg);
+  transition:opacity .2s ease, transform .28s cubic-bezier(.2,.9,.3,1.3);
+}
+.rule-flash.show { transform:translate(-50%,-50%) scale(1) rotate(0); }
+.rule-flash b { font-size:25px; letter-spacing:.5px; text-shadow:0 2px 0 #FFE3EF; }
+.rule-flash span { color:var(--ink-soft); font-weight:700; max-width:310px; }
+/* おしらせの 中の マークは 字の 色だけ（白い カードの 上なので まるふだは いらない） */
+.rule-flash .mk { background:none; box-shadow:none; min-width:0; margin:0; font-size:1.2em; }
+
+/* ============================================================
+   ④ 結果画面 ―― 👑は 大きく、下位は 小さく（企画書 §9）
+   ============================================================ */
+#resultContent .winner { font-size:23px; text-shadow:0 2px 0 #FFE3EF; }
+.ranking li { padding:9px 11px; gap:10px; box-shadow:0 2px 0 rgba(196,155,110,.16); }
+.ranking li:nth-child(1) {
+  background:linear-gradient(180deg,#FFF3B0,#FFE071); font-size:15px; padding:12px 11px;
+  box-shadow:0 3px 0 rgba(196,155,110,.26);
+}
+.ranking li:nth-child(1) .place::before { content:'👑 '; font-size:17px; }
+.ranking li:nth-child(1) .place { color:#B25E0C; }
+.ranking li:nth-child(3) { font-size:13px; background:#FBF3E0; }
+.ranking li:nth-child(4) { font-size:12.5px; background:#F6F1EA; color:#8b7d72; }
+.ranking li:nth-child(4) .place { color:#a08672; }
+.ranking li.is-human { box-shadow:inset 0 0 0 3px #ff8eb0, 0 2px 0 rgba(196,155,110,.16); }
+.result-actions .dialog-ok { border-width:0 0 4px; box-shadow:0 4px 10px rgba(196,58,115,.18); }
+.result-actions .dialog-ok:active { transform:translateY(2px); }
+#resultDialog { padding-top:22px; }
+
+/* ============================================================
+   ⑤ ちいさい画面（375px）
+   ------------------------------------------------------------
+   まもる こと：よこスクロール 0／手札14まいが 読める／ボタンが 指で 押せる
+   ============================================================ */
+@media (max-width:650px) {
+  body { background-size:100% 118px; }
+
+  /* ものさし：こまを つめて、14こが 1行に おさまる ように する */
+  .flag-order { gap:3px; padding:4px 7px; border-width:2px; border-radius:13px; }
+  .ord-end { font-size:10px; }
+  .ord-strip { gap:1px; }
+  .ord-chip { min-width:15px; padding:1px 1px 0; font-size:10.5px; border-width:1.5px; border-radius:5px; }
+  .ord-chip.is-joker { min-width:17px; }
+  .order-line { padding:5px 6px; line-height:1.9; }
+  .order-line .ord-strip { margin:0 3px; }
+  /* せまい画面では ダイアログの よこ余白を つめて、1行に 入る 字数を ふやす
+     （2本目と 同じ 手当て）。これで つよさの ならびが 1行に おさまる。 */
+  dialog { padding:22px 13px 18px; }
+  dialog ol { padding-left:19px; }
+
+  /* バッジが 4つ 5つ そろう ことも あるので、1つ1つを つめる。
+     つめないと、下の「出す／パスする」が 画面から 押し出される。 */
+  .flag { font-size:11.5px; padding:3px 8px; border-radius:12px; line-height:1.22; }
+  .flag small { font-size:9.5px; line-height:1.25; }
+  .cat-wrap { width:48px; }
+  .talk .banner { padding:5px 10px; }
+  .hand-area { margin-top:9px; }
+  .hand { padding-top:13px; }
+  .table-wrap { margin-top:2px; }
+  .field-who { font-size:10.5px; min-height:14px; }
+  .app-shell { padding-bottom:12px; }
+  .flag-lock, .flag-dir { font-size:12px; }
+  .flag-lock .mk { font-size:1.3em; }
+  .mk { margin:0; }
+
+  /* 手札：14まいが 2だんに おさまる 大きさ（7まい × 2だん）。
+     3だんに すると 上の おしらせと あわせて 画面から あふれる。
+     よこスクロールは ぜったいに 出さない。 */
+  :root { --card-w:45px; }
+  .hand { gap:5px 3px; }
+  .hand-area { padding:8px 6px 11px; }
+  .hand .card.cant-finish::after { font-size:14px; }
+
+  /* ボタンは 指で 押せる 大きさを まもる（1行に 2つ ならぶ） */
+  .actions { gap:8px; }
+  .play-button, .pass-button { flex:1 1 0; min-width:0; min-height:56px; font-size:16px; padding:8px 10px 6px; border-width:3px; }
+  .play-button small, .pass-button small { font-size:10px; }
+
+  .table-wrap { padding:7px; border-width:4px; border-radius:16px; }
+  .table-wrap::before, .table-wrap::after { font-size:13px; }
+  .table-wrap .field { border-width:2px; padding:7px 3px; }
+
+  .start-screen::before, .start-screen::after { display:none; }
+  .mascot { position:relative; right:auto; bottom:auto; align-self:flex-end; margin:6px 6px 0 0; width:104px; }
+  .mascot .bubble { font-size:12px; padding:5px 10px; border-width:2px; max-width:min(190px,52vw); }
+  .cpu { padding-top:20px; }
+  .crown-warn { font-size:9.5px; padding:1px 6px; }
+  .rule-group h4 { font-size:12px; }
+  .rule-name { font-size:13px; }
+  .rule-desc { font-size:11px; }
+  .rule-flash { top:46%; padding:14px 18px; }
+  .rule-flash b { font-size:20px; }
+  .ranking li:nth-child(1) { font-size:14px; }
+}
+
+/* 動きが にがてな人には 動かさない（OSの せっていに したがう） */
+@media (prefers-reduced-motion: reduce) {
+  .cat, .cat-eyes, .cat-tail,
+  .flag-order.is-flip, .flag-order.is-flip .ord-chip,
+  .flag.is-new, .crown-warn, .flag-dir.is-flip .dir-arrow,
+  .hand .card.cant-finish.is-shake { animation:none !important; }
+  .rule-flash { transition:opacity .18s !important; }
+  .rule-flash, .rule-flash.show { transform:translate(-50%,-50%) !important; }
+}
