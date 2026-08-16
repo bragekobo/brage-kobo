@@ -1,0 +1,809 @@
+/* ============================================================
+   テキサス・ホールデム ― 第2段「役が見える画面」（T40）の 見た目
+   ------------------------------------------------------------
+   ・色・かたちは 既存3本（ブラックジャック／七並べ／大富豪）と そろえてある
+     （設計図 §9.5 ＝ パステル・丸ゴシック・白い角丸カード）。
+   ・ここは「役が 正しく 出ているか 目で 見るため」の 見た目です。
+     仕上げは 🎨アトが やります。あとから かざりやすい ように
+     部品ごとに 見出しを 入れてあります。
+   ・カードの ひりつ 419:635（2:3）は ぜったいに くずさない（設計図 §9）。
+   ============================================================ */
+
+:root {
+  --ink:#463c52;
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+  --white:     #ffffff;
+  --cream:     #fff9ea;
+  --gold:      #F1A426;
+  --gold-soft: #FFE690;
+  --mint:      #6FC98C;
+  --mint-soft: #DCF6E4;
+
+  --font-main:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","M PLUS Rounded 1c","Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;
+
+  /* カードは 419×635（比率 2:3）。この ひりつは ぜったいに くずさない。 */
+  --card-w:66px;
+  --card-h:calc(var(--card-w) * 635 / 419);
+}
+
+* { box-sizing:border-box; }
+body {
+  margin:0; min-width:320px; color:var(--ink); font-family:var(--font-main);
+  background:linear-gradient(180deg,#bcebf0 0 150px,#fff7e8 150px); min-height:100vh;
+}
+button { font-family:inherit; cursor:pointer; }
+.hidden { display:none !important; }
+.sprite-defs { position:absolute; width:0; height:0; overflow:hidden; }
+.app-shell { max-width:940px; margin:0 auto; padding:12px 14px 26px; }
+
+/* ── 上の帯 ───────────────────────────────────── */
+.topbar { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.back {
+  flex:0 0 auto; display:inline-flex; align-items:center; min-height:38px; padding:0 13px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
+  color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
+}
+.back:hover { border-color:var(--pink); }
+.brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:7px; min-width:0; }
+.brand-cat { width:34px; height:26px; flex:0 0 auto; }
+.brand span { font-weight:900; font-size:16px; color:#3f5a70; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stage-chip {
+  flex:0 0 auto; padding:7px 12px; border-radius:999px;
+  background:var(--gold-soft); color:#7d6321; font-weight:900; font-size:12.5px; white-space:nowrap;
+}
+
+/* ── 上の帯（何ハンドめ・自分のコイン）──────────────── */
+.tape {
+  margin:0 0 8px; text-align:center; padding:5px 12px; border-radius:999px;
+  background:#fff5d8; border:3px solid #f3d98a; color:#7d6321;
+  font-size:13px; font-weight:900;
+}
+
+/* ── ロボット3人の 席 ──────────────────────────── */
+.seats { display:flex; justify-content:space-around; gap:6px; padding:2px 0 10px; }
+.seat {
+  flex:1; min-width:0; text-align:center; padding:6px 2px 4px;
+  border-radius:16px; border:3px solid transparent; background:rgba(255,255,255,.55);
+}
+.seat-name { margin:0 0 2px; font-size:13px; font-weight:900; white-space:nowrap; }
+/* いま 番の人（T38：だれの番かが 分かること） */
+.seat.is-turn { border-color:var(--pink); background:var(--white); box-shadow:0 4px 0 rgba(233,79,138,.18); }
+/* 降りた人は うすい灰色（大富豪の「お休み中」の 作りかえ・T38 §1-5）*/
+.seat.is-folded { opacity:.45; filter:grayscale(.9); }
+.btn-mark { margin-left:3px; font-size:12px; }
+.seat-coin { margin:2px 0 0; font-size:12px; font-weight:900; color:#7d6321; white-space:nowrap; }
+.seat-bet  { margin:1px 0 0; font-size:11.5px; font-weight:900; color:var(--pink-dark); min-height:14px; }
+.seat-last { margin:1px 0 0; font-size:11px; font-weight:700; color:#8b7d95; min-height:13px; }
+
+/* 伏せ札（設計図 §9・大富豪 T22 の 形を そのまま）
+   札は ぜんぶ カード1枚ぶんの 大きさ（419:635）にして、左マージンを マイナスで かさねる。
+   かさなるのは 左がわ どうしなので、一番 右の 1枚は かならず まるごと 見える。 */
+.seat-cards { display:flex; justify-content:center; align-items:flex-end; min-width:0; padding-top:2px; }
+.seat-back {
+  --back-h:52px; --back-step:16px;
+  flex:0 0 auto;
+  width:calc(var(--back-h) * 419 / 635);
+  height:var(--back-h);
+  margin-left:calc(var(--back-step) - (var(--back-h) * 419 / 635));
+  border-radius:3px;
+  background:transparent url('../cards/%E3%83%88%E3%83%A9%E3%83%B3%E3%83%97%E8%A3%8F%E8%B5%A4.png') center/contain no-repeat;
+}
+.seat-back:first-child { margin-left:0; }
+
+/* ── 場のカード ────────────────────────────────── */
+.board-wrap {
+  position:relative; padding:18px 10px 12px; border-radius:23px;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 2px,transparent 2px 8px), #82ce84;
+  border:5px solid #3f863f; box-shadow:0 7px 0 rgba(86,53,38,.2);
+}
+.board-ribbon {
+  position:absolute; z-index:3; top:-15px; left:50%; transform:translateX(-50%);
+  margin:0; padding:4px 18px; background:#ffe681; border:3px solid #996d40; border-radius:30px;
+  color:#75513c; font-weight:900; font-size:12px; white-space:nowrap;
+}
+.board { display:flex; justify-content:center; align-items:center; gap:6px; flex-wrap:nowrap; }
+
+/* ポット（まん中に あつまっている コイン・T38 §9-1 で カタカナ可）*/
+.pot {
+  margin:0 auto 8px; width:max-content; padding:5px 18px; border-radius:999px;
+  background:#fffbe9; border:3px solid var(--gold); color:#7a5205;
+  font-size:15px; font-weight:900; box-shadow:0 3px 0 rgba(122,82,5,.15);
+}
+
+/* ── 進み具合バー（部品5）────────────────────────── */
+.steps {
+  display:flex; align-items:center; justify-content:center; gap:2px;
+  margin:12px 0 10px; padding:7px 6px; background:var(--white);
+  border:3px solid var(--pink-soft); border-radius:999px; overflow-x:auto;
+}
+.step {
+  flex:0 0 auto; padding:3px 9px; border-radius:999px;
+  font-size:11.5px; font-weight:900; color:#a394ab; white-space:nowrap;
+}
+.step.passed { color:var(--mint); }
+.step.now { background:var(--pink); color:#fff; }
+.step-line { flex:0 0 auto; width:12px; height:3px; border-radius:3px; background:#f0e3ea; }
+
+/* ── ★ 今の役の名札（部品1・ぜったいに 消さない）───────
+   画面で 一番 よく 読まれる 場所（T38 §6-1）。
+   🎨アトへ：ここを 大きく・目立たせて ください。消さないで ください。 */
+.hand-name {
+  background:var(--white); border:4px solid var(--pink); border-radius:22px;
+  padding:11px 14px; box-shadow:0 5px 0 rgba(233,79,138,.18); text-align:center;
+}
+.hand-name-label {
+  margin:0 0 2px; display:inline-block; padding:2px 12px; border-radius:999px;
+  background:var(--pink-soft); color:var(--pink-dark); font-size:11.5px; font-weight:900;
+}
+.hand-name-main { margin:2px 0 3px; font-size:26px; font-weight:900; color:#3f5a70; line-height:1.15; }
+.hand-name-main.is-none { font-size:17px; color:#9b8fa4; }
+.hand-name-sub { margin:0; font-size:13px; font-weight:700; color:#7a6a86; }
+
+/* ★ 手札2枚の 目安（部品4・T38 §6-4）―― 場が 開く 前だけ 出る。
+   ★は 3つ ぜんぶ ならべて、ついた ぶんだけ 色を つける
+   （3つ ならんでいるから、★2つが「まん中」だと 一目で 分かる）。
+   🎨アトへ：ここは 消せる 部品です（設定「手札の目安」）。名札そのものは 消しません。 */
+.hand-guide-stars { margin:3px 0 2px; font-size:23px; line-height:1; letter-spacing:3px; }
+.hand-guide-stars .star { color:#eadff0; }
+.hand-guide-stars .star.on { color:var(--gold); text-shadow:0 2px 0 rgba(178,124,7,.22); }
+
+/* 出るときだけ 見える 1行 */
+.hand-note {
+  margin:8px 0 0; padding:7px 12px; border-radius:14px;
+  font-size:13.5px; font-weight:900; line-height:1.4;
+  background:#FFF3C4; border:3px solid var(--gold); color:#7a5205;
+}
+.hand-note.note-ace { background:var(--mint-soft); border-color:var(--mint); color:#22694a; }
+
+/* ── 自分の手札 ────────────────────────────────── */
+.mine { margin-top:12px; padding:8px 13px 11px; background:#fffdf5; border:3px solid #f4dfbd; border-radius:20px; }
+.mine-head { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+.mine-heading { margin:0; font-size:13.5px; font-weight:900; color:#755a5c; }
+.me-info { margin:0; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.me-coin {
+  padding:3px 11px; border-radius:999px; background:#fff5d8; border:2px solid #f3d98a;
+  color:#7d6321; font-size:12.5px; font-weight:900;
+}
+.me-tag {
+  padding:3px 10px; border-radius:999px; background:var(--pink-soft);
+  color:var(--pink-dark); font-size:12px; font-weight:900;
+}
+.me-tag.is-out { background:#e9e4ee; color:#7c7186; }
+.hand { display:flex; justify-content:center; align-items:center; gap:8px; padding:6px 0 2px; }
+
+/* ── カード（絵札は かならず 支給画像・設計図 §9）─────── */
+.card {
+  flex:0 0 auto; position:relative; width:var(--card-w); height:var(--card-h);
+  aspect-ratio:419 / 635;
+  background:var(--white); border:2px solid #d9c9b6; border-radius:7px; overflow:hidden;
+  box-shadow:1px 3px 2px rgba(49,41,42,.25);
+}
+.card.red { color:#e8434f; } .card.black { color:#25252c; }
+.card .face-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.card .fallback { position:absolute; inset:0; display:block; }
+.card.img-ok .fallback { display:none; }
+.card .corner { position:absolute; top:4px; left:5px; display:flex; flex-direction:column; align-items:center; gap:1px;
+  font-size:13px; font-weight:900; line-height:1; }
+.card .corner i { font-style:normal; font-size:11px; }
+.card .pip { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:26px; line-height:1; }
+
+/* まだ 開いていない 場のカードの わく */
+.card-slot {
+  background:rgba(255,255,255,.28); border:3px dashed rgba(255,255,255,.75); box-shadow:none;
+  display:flex; align-items:center; justify-content:center;
+}
+.slot-mark { font-size:22px; font-weight:900; color:rgba(255,255,255,.9); }
+
+/* ★★ ここが 今回の 主役の もう1つ ―― 使う5枚 が 光る／使わない札 が うすい（§6-2）
+   🎨アトへ：光り方は 変えて OK。ただし「光る／うすい」の 差は 消さないで ください。
+   ここが 消えると「場だけの役」に 気づけなく なります。 */
+.card.is-used {
+  border-color:var(--gold);
+  box-shadow:0 0 0 4px var(--gold-soft), 0 0 12px rgba(241,164,38,.75), 1px 3px 2px rgba(49,41,42,.3);
+  transform:translateY(-4px);
+  z-index:2;
+}
+.card.is-dim {
+  filter:grayscale(.85) brightness(1.05) contrast(.82);
+  opacity:.45;
+}
+
+/* ★★ 勝負の 決着（T38 §6-6）―― つかった5枚だけを 上下に ならべる
+   🎨アトへ：かざりは 変えて OK。ただし つぎの3つは 消さないで ください。
+     ① 勝った行の 金色わく ＋ 👑（1行で 分かる）
+     ② つかった5枚だけを 出す（7枚は 出さない。ならべられなく なります）
+     ③ 同じ役どうしの ▲「ここで 勝った／負けた」（これが キッカーの 説明の 全部） */
+.showdown {
+  margin-top:12px; padding:11px 12px 12px; background:var(--white);
+  border:3px solid var(--gold); border-radius:20px;
+  box-shadow:0 4px 0 rgba(241,164,38,.22);
+}
+.sd-title { margin:0 0 2px; font-size:18px; font-weight:900; color:#7a5205; text-align:center; }
+.sd-lead  { margin:0 0 9px; font-size:13.5px; font-weight:900; color:var(--pink-dark); text-align:center; }
+.sd-rows  { display:flex; flex-direction:column; gap:7px; }
+.sd-row {
+  padding:7px 9px; background:#fffdf5; border:2px solid #f0e3d0; border-radius:14px;
+}
+.sd-row.is-win { background:var(--gold-soft); border-color:var(--gold); }
+.sd-row.is-out { background:#f4f1f7; border-color:#e3dcea; opacity:.75; }
+.sd-head { display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; margin:0 0 5px; }
+.sd-who  { font-size:13.5px; font-weight:900; color:#5c4a68; }
+.sd-hand { font-size:13px; font-weight:900; color:#7a5205; }
+.sd-hand small { font-size:11px; font-weight:700; color:#93743a; margin-left:3px; }
+.sd-gain { margin-left:auto; font-size:13.5px; font-weight:900; color:#1f6b32; white-space:nowrap; }
+.sd-gain.is-zero { color:#a396ac; }
+.sd-cards { display:flex; gap:4px; align-items:flex-start; flex-wrap:nowrap; }
+.sd-slot  { display:flex; flex-direction:column; align-items:center; min-width:0; }
+.sd-arrow { font-size:11px; font-weight:900; color:var(--pink-deep); line-height:1.1; min-height:13px; }
+.card.is-mini { --mini-w:38px; width:var(--mini-w); height:calc(var(--mini-w) * 635 / 419); border-width:2px; }
+.card.is-mini .corner { top:2px; left:3px; font-size:10px; }
+.card.is-mini .corner i { font-size:8px; }
+.card.is-mini .pip { font-size:17px; }
+.card.is-mini.is-deciding {
+  border-color:var(--pink-deep);
+  box-shadow:0 0 0 3px var(--pink-soft), 1px 2px 2px rgba(49,41,42,.3);
+}
+.sd-mark { margin:3px 0 0; font-size:11.5px; font-weight:900; color:var(--pink-deep); }
+.sd-out  { margin:0; font-size:12.5px; font-weight:900; color:#8b7d95; }
+.sd-pots { margin:9px 0 0; font-size:11.5px; font-weight:700; color:#93743a; text-align:center; }
+
+/* ── コインが 0（自分だけ・T38 §4-6）───────────────── */
+.over-box {
+  margin-top:10px; padding:13px 12px; text-align:center;
+  background:#fff1f5; border:3px solid var(--pink); border-radius:20px;
+}
+.over-title { margin:0 0 4px; font-size:20px; font-weight:900; color:var(--pink-dark); }
+.over-note  { margin:0 0 10px; font-size:13px; font-weight:900; color:#7a6a86; }
+.over-btn {
+  min-height:48px; padding:0 20px; border:0; border-radius:999px;
+  background:var(--pink); color:#fff; font-size:15px; font-weight:900;
+  box-shadow:0 4px 0 var(--pink-deep);
+}
+
+/* ── ハッピー（設計図 §9.5・全画面に かならず 出す）────── */
+.happy-row { display:flex; align-items:center; gap:8px; margin-top:12px; }
+.happy-cat { width:52px; height:39px; flex:0 0 auto; }
+.happy-bubble {
+  margin:0; position:relative; padding:9px 14px; background:var(--white);
+  border:3px solid var(--pink-soft); border-radius:16px; font-size:13.5px; font-weight:900; color:#7a6a86;
+}
+.happy-bubble::before {
+  content:''; position:absolute; left:-11px; top:50%; transform:translateY(-50%);
+  border:7px solid transparent; border-right-color:var(--pink-soft);
+}
+
+/* ── 実況（さいきん おきたこと 3行）───────────────── */
+.table-log {
+  margin:10px 0 0; padding:8px 12px; background:var(--white);
+  border:3px solid var(--pink-soft); border-radius:16px;
+  display:flex; flex-direction:column; gap:2px;
+}
+.log-line { font-size:12.5px; font-weight:700; color:#a396ac; }
+.log-line.now { font-size:14px; font-weight:900; color:#5c4a68; }
+
+/* ── ★ かけの ボタン ───────────────────────────
+   🎨アトへ：ここは「いくら 動くか」が 読めることが 命です。
+   <b>に 何を するか、<small>に いくら 出すか が 入っています。 */
+.act { margin-top:12px; }
+.act-row { display:flex; flex-wrap:wrap; gap:8px; }
+.act-btn {
+  flex:1 1 46%; min-width:132px; min-height:56px; padding:7px 10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:18px;
+  color:var(--pink-dark); box-shadow:0 4px 0 rgba(233,79,138,.13);
+}
+.act-btn b { font-size:16px; font-weight:900; line-height:1.1; }
+.act-btn small { font-size:11px; font-weight:700; color:#8b7d95; line-height:1.2; }
+.act-btn:hover { border-color:var(--pink); }
+.act-btn.is-call  { background:var(--pink); border-color:var(--pink-deep); color:#fff; }
+.act-btn.is-call small { color:#ffe6f0; }
+.act-btn.is-raise { background:var(--gold-soft); border-color:var(--gold); color:#7a5205; }
+.act-btn.is-raise small { color:#93743a; }
+.act-btn.is-allin { background:#ffe0ea; border-color:#ff9dbd; color:#b03060; }
+.act-btn.is-fold  { background:#f1eef5; border-color:#ddd4e6; color:#7c7186; }
+
+/* 上げる を おしたときの パネル（ふつう＝3つ／ぜんぶ＝1枚きざみ） */
+.raise-panel {
+  margin-top:9px; padding:10px 12px 12px; background:#fffbe9;
+  border:3px solid var(--gold); border-radius:18px;
+}
+.raise-title { margin:0 0 8px; font-size:13px; font-weight:900; color:#7a5205; text-align:center; }
+.raise-opts { display:flex; flex-wrap:wrap; gap:8px; }
+.raise-opt {
+  flex:1 1 30%; min-width:96px; min-height:52px; padding:6px 8px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  background:var(--white); border:3px solid var(--gold); border-radius:15px; color:#7a5205;
+}
+.raise-opt b { font-size:15px; font-weight:900; }
+.raise-opt small { font-size:11px; font-weight:700; color:#93743a; }
+.raise-opt:hover { background:var(--gold-soft); }
+.raise-stepper { display:flex; align-items:center; justify-content:center; gap:6px; flex-wrap:nowrap; }
+.step-btn {
+  flex:0 0 auto; min-width:46px; min-height:46px; border-radius:14px;
+  background:var(--white); border:3px solid var(--gold); color:#7a5205; font-size:14px; font-weight:900;
+}
+.raise-input {
+  flex:0 1 88px; min-width:70px; min-height:46px; text-align:center;
+  border:3px solid var(--gold); border-radius:14px; background:var(--white);
+  color:#7a5205; font-size:19px; font-weight:900; font-family:inherit;
+}
+.raise-note { margin:8px 0 9px; text-align:center; font-size:11.5px; font-weight:700; color:#93743a; }
+.raise-ok {
+  display:block; width:100%; min-height:48px; border-radius:15px;
+  background:var(--gold); border:3px solid #c9840f; color:#fff; font-size:16px; font-weight:900;
+}
+
+.turn-note {
+  margin:0; padding:12px; text-align:center; background:var(--white);
+  border:3px dashed var(--pink-soft); border-radius:16px;
+  font-size:13.5px; font-weight:900; color:#a396ac;
+}
+.next-hand {
+  display:block; width:100%; min-height:56px; margin-top:2px; border-radius:18px;
+  background:var(--pink); border:3px solid var(--pink-deep); color:#fff;
+  font-size:17px; font-weight:900; box-shadow:0 5px 0 rgba(196,58,115,.3);
+}
+
+/* ── かけ方の 設定（T38 §7・二層設計の 軸）──────────── */
+.settings {
+  margin-top:12px; padding:9px 12px 11px; background:var(--white);
+  border:3px solid var(--pink-soft); border-radius:18px;
+}
+.set-label { margin:0 0 7px; font-size:12.5px; font-weight:900; color:#7a6a86; }
+/* 2つめの 設定（ロボットの強さ）は、かけ方と 見分けが つくよう すこし あける */
+.set-label-2 { margin-top:11px; padding-top:10px; border-top:2px dashed #e7ddf0; }
+.set-row { display:flex; gap:7px; }
+.set-btn {
+  flex:1 1 0; min-width:0; min-height:50px; padding:5px 6px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  background:#fbf7ff; border:3px solid #e7ddf0; border-radius:15px;
+  color:#7c7186; font-size:13.5px; font-weight:900;
+}
+.set-btn small { font-size:10.5px; font-weight:700; color:#a396ac; }
+.set-btn.on { background:var(--pink); border-color:var(--pink-deep); color:#fff; }
+.set-btn.on small { color:#ffe6f0; }
+
+/* ★ 3つめの 設定（手札の目安）は 名前と ボタンを 横に ならべる。
+   えらぶものが 2つ しか ないので、たてに 積むより 箱が 短くなる（散らからない）。 */
+.set-line {
+  display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  margin-top:11px; padding-top:10px; border-top:2px dashed #e7ddf0;
+}
+.set-label-inline { margin:0; flex:0 0 auto; }
+.set-row-mini { flex:1 1 180px; }
+
+/* ── たしかめ用（作る人むけ）── */
+.devbox {
+  margin-top:16px; padding:10px 12px 12px; background:#f6f2fb;
+  border:3px dashed #cdbfe0; border-radius:18px;
+}
+.dev-heading { margin:0 0 7px; font-size:12.5px; font-weight:900; color:#7c6a92; }
+.dev-buttons { display:flex; flex-wrap:wrap; gap:7px; }
+.dev-btn {
+  min-height:38px; padding:0 14px; border:3px solid var(--pink-soft); background:var(--white);
+  border-radius:999px; font-size:13px; font-weight:900; color:var(--pink-dark);
+}
+.dev-btn:hover:not(:disabled) { border-color:var(--pink); }
+.dev-btn:disabled { opacity:.45; cursor:not-allowed; }
+.dev-btn.primary { background:var(--pink); border-color:var(--pink-deep); color:#fff; }
+.dev-btn.small { min-height:34px; padding:0 11px; font-size:12px; }
+.dev-note { margin:9px 0 5px; font-size:11.5px; font-weight:700; color:#7c6a92; word-break:break-all; }
+.dev-note code { background:#fff; border:2px solid #e2d7ef; border-radius:7px; padding:1px 6px; font-size:11.5px; }
+
+/* ── せまい画面（スマホ）────────────────────────── */
+@media (max-width:560px) {
+  :root { --card-w:52px; }
+  .app-shell { padding:10px 10px 22px; }
+  .brand span { font-size:14px; }
+  .board { gap:4px; }
+  .board-wrap { padding:16px 6px 10px; }
+  .seat-back { --back-h:42px; --back-step:13px; }
+  .seat-name { font-size:11.5px; }
+  .hand-name-main { font-size:22px; }
+  .hand-name-sub { font-size:12px; }
+  .hand-guide-stars { font-size:21px; }
+  .card .corner { font-size:10px; } .card .corner i { font-size:8px; } .card .pip { font-size:19px; }
+  .seats { gap:4px; }
+  .seat-coin { font-size:11px; } .seat-bet { font-size:10.5px; } .seat-last { font-size:10px; }
+  .act-btn { flex:1 1 46%; min-width:0; }
+  .act-btn b { font-size:15px; }
+  .set-btn { font-size:12.5px; }
+  .set-btn small { font-size:9.5px; }
+  .card.is-mini { --mini-w:34px; }
+  .sd-who { font-size:12.5px; } .sd-hand { font-size:12px; } .sd-gain { font-size:12.5px; }
+}
+@media (max-width:380px) {
+  :root { --card-w:46px; }
+  .stage-chip { display:none; }
+  .raise-input { flex:0 1 66px; min-width:56px; font-size:17px; }
+  .step-btn { min-width:40px; padding:0 4px; font-size:13px; }
+  /* 5枚 ならべても はみ出さない ように（横スクロールを 作らない） */
+  .card.is-mini { --mini-w:31px; }
+  .sd-cards { gap:3px; }
+  .showdown { padding:10px 8px 11px; }
+  .sd-row { padding:6px 6px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .card { transition:none !important; }
+}
+
+/* ============================================================
+   ここから下：仕上げ ― 🎨アト（T45）
+   ------------------------------------------------------------
+   ・見た目だけの 追記です。game.js／poker-core.js には 1文字も
+     さわっていません。画面に 出る ことばも 1文字も 変えていません。
+   ・ねらいは 5つ：
+     ① 既存3本と 同じ会社の 作品に 見せる（木わくの台・ハッピーの名ふだ・空と花）
+     ② かけの 5ボタンを「役割の色」で 分ける
+        ―― 降りる＝あお灰色（席を立つ）／かけない・合わせる＝ピンク（続ける の 主役）
+           上げる＝きいろ（もっと 出す）／ぜんぶかける＝むらさき（大勝負・1つだけの 色）
+        ⚠️「降りる」と「ぜんぶかける」は 取り返しが つかない 2つ。
+           冷たい色と あたたかい色の 両はしに 置いて、絶対に 見間違えない ように した
+     ③ 今の役の名札を 主役に する（この画面で 一番 よく 読まれる 場所）
+     ④ 光る5枚／うすい札の 差を はっきり（「場だけの役」に 気づく ための 部品）
+     ⑤ 決着の 場面 ―― 勝った5枚が 順に 光る（紙ふぶきの 考え方・派手すぎない）
+   ============================================================ */
+
+:root {
+  color-scheme: light;              /* 暗転させない（読めなくなる 事故を ふせぐ） */
+  --wood-dark:#412817;
+  --felt:#82ce84;
+  --blue:#9FB3C8; --blue-deep:#7A90A8; --blue-dark:#5F7488;
+  --purple:#B98CEA; --purple-deep:#8B57CE; --purple-dark:#6B3DAA;
+  --gold-dark:#B7740C;
+  --shadow-warm:0 4px 0 rgba(196,155,110,.18), 0 10px 22px rgba(150,110,70,.14);
+}
+
+/* ── 土台 ────────────────────────────────
+   line-break:strict ＝ 行あたまに「ー」を 出さない（会社の 定番）。
+   background-size で 空の 帯の 高さを 決めうちに して、
+   画面の 高さで 空の 位置が ずれるのを とめる。 */
+body {
+  background-color:#fff7e8;
+  background-image:linear-gradient(180deg,#BCEBF0 0%,#D9F2F6 100%);
+  background-repeat:no-repeat;
+  background-size:100% 172px;
+  overflow-x:hidden;                /* よこスクロールは ぜったいに 出さない */
+  line-break:strict;
+  word-break:normal;
+  overflow-wrap:break-word;
+}
+
+/* game.js が 作る 文（こちらで 折り返し位置を 直せない ところ）は
+   ことばの きれめで 折り返す。対応していない ブラウザは 読みとばすだけ。 */
+.seat-name, .seat-last, .hand-name-sub, .hand-note, .happy-bubble,
+.log-line, .turn-note, .sd-lead, .sd-out, .sd-pots, .raise-note,
+.over-note, .tape, .me-tag {
+  word-break:auto-phrase;
+}
+
+/* ── 上の帯：もどるボタン（既存3本と 同じ 白い丸ピルの 手ざわり） ── */
+.back {
+  box-shadow:0 3px 0 rgba(196,155,110,.18);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.back:hover { transform:translateY(-2px); box-shadow:0 5px 0 rgba(196,155,110,.2); }
+.back:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(196,155,110,.18); }
+.back:focus-visible, .act-btn:focus-visible, .set-btn:focus-visible,
+.next-hand:focus-visible, .over-btn:focus-visible, .raise-ok:focus-visible,
+.raise-opt:focus-visible, .step-btn:focus-visible, .dev-btn:focus-visible {
+  outline:4px solid var(--pink-deep); outline-offset:3px;
+}
+.brand span { text-shadow:0 2px 0 rgba(255,255,255,.85); }
+.tape { box-shadow:0 3px 0 rgba(196,155,110,.14); }
+
+/* ── 場：大富豪と 同じ 木わく＋みどりの ラシャ ──
+   わく本体を 木目に して、ラシャは ::before で 内がわに しく
+   （HTMLは 変えずに 2そう作りに できる）。 */
+.board-wrap {
+  padding:24px 12px 14px;
+  border:5px solid var(--wood-dark); border-radius:26px;
+  background:linear-gradient(135deg,#6b3d1e,#bf7a34 17%,#6d3f1f 33%,#c08139 50%,#66391b 73%,#b86e2a);
+  box-shadow:0 7px 0 rgba(86,53,38,.28);
+}
+.board-wrap::before {
+  content:''; position:absolute; inset:9px; z-index:0; border-radius:15px;
+  border:3px solid #3f863f;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.06) 0 2px,transparent 2px 8px), var(--felt);
+  box-shadow:inset 0 0 20px #4c9d51;
+}
+.board-wrap > * { position:relative; z-index:1; }
+/* 角の クローバー（かざり。ことばでは ないので 足してよい） */
+.board-wrap::after {
+  content:'♣'; position:absolute; z-index:1; right:11px; bottom:6px;
+  font-size:16px; color:#F6D69B; opacity:.75; transform:rotate(150deg); pointer-events:none;
+}
+
+/* ポット：金の コインを 1まい そえる（「まん中の 数字が もらえる コイン」を 絵で いう） */
+.pot {
+  display:flex; align-items:center; gap:7px;
+  box-shadow:0 3px 0 rgba(122,82,5,.2);
+}
+.pot::before {
+  content:''; flex:0 0 auto; width:15px; height:15px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #FFE690, #F1A426 70%, #C9840F);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.5), 0 1px 0 rgba(122,82,5,.35);
+}
+
+/* ── ロボットの 席：いま 番の人が 息づかいで わかる ── */
+.seat { transition:border-color .15s ease, background .15s ease, opacity .2s ease; }
+.seat.is-turn { animation:turnPulse 1.5s ease-in-out infinite; }
+@keyframes turnPulse {
+  0%, 100% { box-shadow:0 4px 0 rgba(233,79,138,.18); }
+  50%      { box-shadow:0 4px 0 rgba(233,79,138,.18), 0 0 0 6px rgba(255,140,184,.22); }
+}
+
+/* ── 進み具合バー：今いる ところに 影を つけて 立たせる ── */
+.steps { box-shadow:0 3px 0 rgba(196,155,110,.14); }
+.step.now { box-shadow:0 2px 0 var(--pink-dark); }
+
+/* ============================================================
+   ③ 今の役の名札 ―― 「名札は 装飾では なく、ホールデムを
+      成立させる 部品です」（ルル・T38 §6-1）。だから 主役あつかい。
+   ============================================================ */
+.hand-name {
+  box-shadow:0 6px 0 rgba(233,79,138,.16), 0 12px 22px rgba(233,79,138,.12);
+}
+.hand-name::before, .hand-name::after {
+  content:'✦'; position:absolute; z-index:0; pointer-events:none; line-height:1;
+}
+.hand-name { position:relative; }
+.hand-name::before { left:13px; top:11px; font-size:17px; color:#FFD3E5; }
+.hand-name::after  { right:13px; bottom:9px; font-size:14px; color:#FFE690; }
+.hand-name-main { font-size:29px; text-shadow:0 2px 0 rgba(255,227,239,.9); }
+.hand-guide-stars { font-size:25px; }
+.hand-guide-stars .star.on { text-shadow:0 2px 0 rgba(178,124,7,.28), 0 0 8px rgba(241,164,38,.4); }
+
+/* 「場だけの役。みんな同じだよ」―― 今回いちばん 大事な 1行（T38 §6-2）。
+   かくれる → 出る の しゅんかんに 1回だけ はねる（display が 切り替わると
+   アニメは 再スタートする ＝ JSに さわらず 済む）。 */
+.hand-note { animation:notePop .4s cubic-bezier(.2,.9,.3,1.2); }
+@keyframes notePop {
+  0%   { opacity:0; transform:scale(.85) translateY(4px); }
+  100% { opacity:1; transform:none; }
+}
+
+/* ============================================================
+   ④ 光る5枚／うすい札 ―― 差を もっと はっきり（大富豪の ハイライトが 手本）
+      白ふち＋金の わく ＝ みどりの ラシャの 上でも、クリームの 手札おきでも 目立つ
+   ============================================================ */
+.card.is-used {
+  border-color:#fff;
+  box-shadow:0 0 0 3px var(--gold), 0 0 14px rgba(241,164,38,.8), 0 4px 6px rgba(49,41,42,.26);
+  transform:translateY(-5px);
+}
+.card.is-dim {
+  filter:grayscale(1) brightness(1.06) contrast(.8);
+  opacity:.38;
+}
+
+/* ============================================================
+   ② かけの 5ボタン ―― 役割の色（ブラックジャックの 色分けが 手本）
+   ============================================================ */
+.act-btn {
+  border:4px solid #fff; border-radius:20px; min-height:60px;
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+.act-btn b { font-size:17px; }
+.act-btn:hover { border-color:#fff; transform:translateY(-2px); }
+.act-btn:active { transform:translateY(3px); }
+
+/* 降りる ＝ あお灰色（席を立つ・冷たい色は これだけ） */
+.act-btn.is-fold {
+  background:linear-gradient(180deg,#AFC3D6,var(--blue-deep));
+  color:#fff; box-shadow:0 5px 0 var(--blue-dark), 0 9px 14px rgba(95,116,136,.2);
+}
+.act-btn.is-fold small { color:#EAF1F7; }
+.act-btn.is-fold:active { box-shadow:0 2px 0 var(--blue-dark); }
+
+/* かけない・合わせる ＝ ピンク（「続ける」の 主役。2つは 同時に 出ないので 同じ席の色） */
+.act-btn[data-act="check"], .act-btn.is-call {
+  background:linear-gradient(180deg,var(--pink),var(--pink-deep));
+  border-color:#fff; color:#fff;
+  box-shadow:0 5px 0 var(--pink-dark), 0 9px 14px rgba(196,58,115,.22);
+}
+.act-btn[data-act="check"] small, .act-btn.is-call small { color:#FFE6F0; }
+.act-btn[data-act="check"]:active, .act-btn.is-call:active { box-shadow:0 2px 0 var(--pink-dark); }
+
+/* 上げる ＝ きいろ（もっと 出す。ブラックジャックの「カードをひく」と 同じ 役割の色） */
+.act-btn.is-raise {
+  background:linear-gradient(180deg,#FFD86B,#F0A21E);
+  color:#6B4405; box-shadow:0 5px 0 var(--gold-dark), 0 9px 14px rgba(209,140,18,.22);
+}
+.act-btn.is-raise small { color:#8A5A08; }
+.act-btn.is-raise:active { box-shadow:0 2px 0 var(--gold-dark); }
+
+/* ぜんぶかける ＝ むらさき（画面で ここにしか ない色 ＝ 大勝負だと 一目で わかる） */
+.act-btn.is-allin {
+  background:linear-gradient(180deg,var(--purple),var(--purple-deep));
+  color:#fff; box-shadow:0 5px 0 var(--purple-dark), 0 9px 14px rgba(139,87,206,.24);
+}
+.act-btn.is-allin small { color:#F3E8FF; }
+.act-btn.is-allin:active { box-shadow:0 2px 0 var(--purple-dark); }
+
+/* 上げるパネル・つぎのハンドへ も 同じ 手ざわりに */
+.raise-opt, .step-btn { transition:transform .1s ease, box-shadow .1s ease; }
+.raise-opt:active, .step-btn:active { transform:translateY(2px); }
+.raise-ok { box-shadow:0 4px 0 #A66B0A; transition:transform .1s ease, box-shadow .1s ease; }
+.raise-ok:active { transform:translateY(3px); box-shadow:0 1px 0 #A66B0A; }
+.next-hand {
+  border:4px solid #fff;
+  box-shadow:0 6px 0 var(--pink-dark), 0 10px 16px rgba(196,58,115,.22);
+  transition:transform .1s ease, box-shadow .1s ease;
+  animation:nextBreath 2.6s ease-in-out 1.2s infinite;
+}
+.next-hand:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); animation:none; }
+@keyframes nextBreath {
+  0%, 88%, 100% { transform:none; }
+  94%           { transform:scale(1.02); }
+}
+
+/* ============================================================
+   ⑤ 決着 ―― 勝った5枚が 順に 光る（ブラックジャックの 紙ふぶきの
+      考え方 ＝ よろこびは 出すが、数字と 矢印の じゃまは しない）
+      .hidden が 外れた しゅんかんに アニメが 再スタートする ので JS いらず。
+   ============================================================ */
+.showdown {
+  border-width:4px;
+  box-shadow:0 6px 0 rgba(241,164,38,.2), 0 12px 22px rgba(241,164,38,.14);
+  animation:sdIn .32s cubic-bezier(.2,.9,.3,1.15);
+}
+@keyframes sdIn {
+  from { opacity:0; transform:translateY(10px) scale(.97); }
+  to   { opacity:1; transform:none; }
+}
+.sd-title { font-size:21px; letter-spacing:1px; text-shadow:0 2px 0 var(--gold-soft); }
+
+/* 勝った行（👑）―― 大富豪の 1位の 行と 同じ 金の グラデーション */
+.sd-row { position:relative; }
+.sd-row.is-win {
+  background:linear-gradient(180deg,#FFF3B0,#FFE071);
+  border:3px solid var(--gold);
+  box-shadow:0 3px 0 rgba(196,155,110,.26);
+}
+.sd-row.is-win .sd-who { font-size:15px; color:#8A5A08; }
+.sd-row.is-win::after {
+  content:'✨'; position:absolute; right:9px; top:-11px; font-size:17px; pointer-events:none;
+  animation:sparkIn .7s ease-out both .45s;
+}
+@keyframes sparkIn {
+  0%   { opacity:0; transform:scale(.4) rotate(-18deg); }
+  55%  { opacity:1; transform:scale(1.2) rotate(6deg); }
+  100% { opacity:1; transform:scale(1) rotate(0); }
+}
+
+/* もらった コイン ＝ みどりの ふだ／±0 ＝ うすい ふだ */
+.sd-gain {
+  padding:2px 10px; border-radius:999px; font-size:13px;
+  background:var(--mint-soft); border:2px solid var(--mint); color:#1F6B32;
+}
+.sd-gain.is-zero { background:#F1EDF5; border-color:#E0D8E8; color:#a396ac; }
+
+/* ★ 勝った5枚が 左から 順に 光る（0.5秒 × ずらし ＝ ぜんぶで 1秒たらず） */
+.sd-row.is-win .card.is-mini {
+  border-color:var(--gold);
+  box-shadow:0 0 0 2px var(--gold-soft), 1px 2px 2px rgba(49,41,42,.25);
+  animation:winCard .5s ease-out backwards;
+}
+.sd-row.is-win .sd-slot:nth-child(1) .card.is-mini { animation-delay:.08s; }
+.sd-row.is-win .sd-slot:nth-child(2) .card.is-mini { animation-delay:.16s; }
+.sd-row.is-win .sd-slot:nth-child(3) .card.is-mini { animation-delay:.24s; }
+.sd-row.is-win .sd-slot:nth-child(4) .card.is-mini { animation-delay:.32s; }
+.sd-row.is-win .sd-slot:nth-child(5) .card.is-mini { animation-delay:.40s; }
+@keyframes winCard {
+  0%   { opacity:.5; transform:translateY(6px); }
+  55%  { opacity:1; transform:translateY(-4px);
+         box-shadow:0 0 0 3px var(--gold-soft), 0 0 14px rgba(241,164,38,.85); }
+  100% { opacity:1; transform:none; }
+}
+
+/* ⚠️ 決め手の ▲（キッカーの 説明の 全部）は、光りより 上に ―― ピンクの わくを 最後に 勝たせる */
+.sd-row.is-win .card.is-mini.is-deciding,
+.card.is-mini.is-deciding {
+  border-color:var(--pink-deep);
+  box-shadow:0 0 0 3px var(--pink-soft), 1px 2px 2px rgba(49,41,42,.3);
+}
+
+/* ── ゲームオーバー：責めない・やわらかく（ブラックジャックと 同じ 考え） ── */
+.over-box { box-shadow:0 5px 0 rgba(233,79,138,.14); }
+.over-btn {
+  border:4px solid #fff;
+  box-shadow:0 5px 0 var(--pink-dark), 0 9px 14px rgba(196,58,115,.22);
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+.over-btn:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
+
+/* ============================================================
+   ① ハッピー ―― 名ふだ＋ふきだしの 2まいしっぽ（既存3本と 同じ 見せ方）
+   ============================================================ */
+.happy-row { align-items:flex-end; }
+.happy-wrap { position:relative; flex:0 0 auto; width:64px; text-align:center; padding-bottom:7px; }
+.happy-cat {
+  width:100%; height:48px; display:block;
+  animation:happyBob 3s ease-in-out infinite;
+  filter:drop-shadow(0 4px 4px rgba(150,110,70,.22));
+}
+@keyframes happyBob {
+  0%, 100% { transform:translateY(0) rotate(0); }
+  50%      { transform:translateY(-4px) rotate(-1.5deg); }
+}
+.happy-name {
+  position:absolute; left:50%; bottom:-2px; transform:translateX(-50%);
+  z-index:2; margin:0; padding:0 7px;
+  font-size:10.5px; font-weight:900; line-height:1.7; letter-spacing:-.02em;
+  color:var(--pink-dark); background:var(--white);
+  border:2px solid var(--pink); border-radius:999px;
+  white-space:nowrap; box-shadow:0 2px 0 rgba(196,155,110,.18); pointer-events:none;
+}
+.happy-bubble {
+  margin-bottom:9px;
+  border-color:var(--pink); color:var(--pink-dark); font-size:14px;
+  box-shadow:0 3px 0 rgba(196,155,110,.18);
+}
+.happy-bubble::before {
+  left:-16px; border-width:8px 16px 8px 0;
+  border-color:transparent var(--pink) transparent transparent;
+}
+.happy-bubble::after {
+  content:''; position:absolute; left:-10px; top:50%; transform:translateY(-50%);
+  border-style:solid; border-width:5px 11px 5px 0;
+  border-color:transparent #fff transparent transparent;
+}
+
+/* ── 実況・考え中 ── */
+.table-log { box-shadow:0 3px 0 rgba(196,155,110,.14); }
+
+/* ── 設定3つ：えらばれている ものに 影を つけて 立たせる ── */
+.settings { box-shadow:0 3px 0 rgba(196,155,110,.14); }
+.set-btn { transition:transform .1s ease, box-shadow .1s ease, background .12s ease; }
+.set-btn:hover { border-color:var(--pink); }
+.set-btn:active { transform:translateY(2px); }
+.set-btn.on { box-shadow:0 3px 0 var(--pink-dark); }
+
+/* ── たしかめ用：たたんである（details）。遊ぶ人の 目に 入りにくく ── */
+.devbox { background:#F5F2F9; border-color:#DFD5EA; opacity:.85; }
+.devbox:hover, .devbox[open] { opacity:1; }
+.devbox > summary.dev-heading {
+  cursor:pointer; list-style:none; margin:0; user-select:none;
+  color:#8f81a6; font-size:12px;
+}
+.devbox > summary.dev-heading::-webkit-details-marker { display:none; }
+.devbox > summary.dev-heading::before { content:'▸ '; }
+.devbox[open] > summary.dev-heading::before { content:'▾ '; }
+.devbox[open] > summary.dev-heading { margin-bottom:7px; }
+
+/* ── せまい画面（スマホ・375px）────────────────── */
+@media (max-width:560px) {
+  body { background-size:100% 118px; }
+  .board-wrap { padding:20px 8px 10px; border-width:4px; border-radius:18px; }
+  .board-wrap::before { inset:7px; border-width:2px; border-radius:11px; }
+  .board-wrap::after { font-size:13px; right:8px; bottom:4px; }
+  .pot { font-size:13.5px; padding:4px 14px; }
+  .pot::before { width:13px; height:13px; }
+  .hand-name-main { font-size:24px; }
+  .hand-name::before { font-size:14px; left:9px; top:8px; }
+  .hand-name::after { font-size:12px; right:9px; bottom:7px; }
+  .hand-guide-stars { font-size:22px; }
+  .act-btn { min-height:56px; border-width:3px; border-radius:17px; }
+  .act-btn b { font-size:15.5px; }
+  .happy-wrap { width:56px; }
+  .happy-cat { height:42px; }
+  .happy-name { font-size:9.5px; }
+  .happy-bubble { font-size:12.5px; }
+  .sd-title { font-size:18px; }
+  .sd-row.is-win .sd-who { font-size:13.5px; }
+  .sd-gain { font-size:12px; padding:1px 8px; }
+  .next-hand { border-width:3px; }
+  .over-btn { border-width:3px; }
+}
+
+/* 動きが にがてな人には 動かさない（OSの せっていに したがう） */
+@media (prefers-reduced-motion:reduce) {
+  .happy-cat, .seat.is-turn, .next-hand,
+  .sd-row.is-win .card.is-mini, .sd-row.is-win::after,
+  .showdown, .hand-note { animation:none !important; }
+}

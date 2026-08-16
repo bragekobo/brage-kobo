@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>テキサス・ホールデム ― ブラゲ工房</title>
+  <meta name="description" content="手札2枚と 場の5枚から、一番強い5枚を作ろう！ ブラウザですぐ遊べるテキサス・ホールデム ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       ------------------------------------------------------------
+       既存3本（ブラックジャック・七並べ・大富豪）と おなじ 書き方。
+       絶対URL で 書く（よみとり係は 相対パスを 読めない）。
+       画像は トランプ1枚（419×635・たてなが）なので twitter:card は summary。
+       ⚠️ まだ 作っている とちゅう の ゲームです。まとめサイトに ならべる ときに
+          og:url が 正しいか もう一度 見なおすこと。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="テキサス・ホールデム ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="手札2枚と 場の5枚、合わせた7枚から 一番強い5枚を作る トランプのゲーム。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/holdem/" />
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="419" />
+  <meta property="og:image:height" content="635" />
+  <meta property="og:image:alt" content="トランプのハートのエース" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="テキサス・ホールデム ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="手札2枚と 場の5枚から 一番強い5枚を作る トランプのゲーム。開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお ＋ スペードの ふだ。
+       既存3本と まったく おなじ もの。外部ファイルを ふやさないよう
+       SVG を そのまま data URI で うめこんでいる。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存3本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ─────────────────────────────────────── -->
+  <header class="topbar">
+    <a class="back" href="../">◀ ゲームを選ぶ</a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>テキサス・ホールデム</span>
+    </div>
+    <span class="stage-chip" id="stageChip">手札2枚</span>
+  </header>
+
+  <!-- ── 上の帯（何ハンドめ・自分のコイン）──────────────── -->
+  <p class="tape" id="tape">1ハンドめ ・ コイン 200</p>
+
+  <!-- ── ロボット3人の 席（伏せ札・コイン・出した額・親マーク🔘）──── -->
+  <section class="seats" id="seats" aria-label="ロボットの席"></section>
+
+  <!-- ── 場のカード（3枚 → 1枚 → 1枚。5枚ぶんの わく）＋ ポット ─── -->
+  <section class="board-wrap" aria-labelledby="boardHeading">
+    <h2 class="board-ribbon" id="boardHeading">場のカード</h2>
+    <p class="pot" id="pot" aria-live="polite">ポット 0</p>
+    <div class="board" id="board"></div>
+  </section>
+
+  <!-- ── 進み具合バー（部品5・かるいので 先に 入れてある）───── -->
+  <nav class="steps" id="steps" aria-label="今どこまで進んだか"></nav>
+
+  <!-- ── ★ 今の役の名札（部品1・ぜったいに 消さない）──────── -->
+  <section class="hand-name" id="handName" aria-live="polite">
+    <p class="hand-name-label" id="handNameLabel">今の役</p>
+    <!-- ★ 手札2枚の 目安（部品4・§6-4）。場が 開く 前だけ 出る／設定で 消せる -->
+    <p class="hand-guide-stars hidden" id="guideStars"></p>
+    <p class="hand-name-main" id="handMain">―</p>
+    <p class="hand-name-sub" id="handSub">カードを配ると ここに 出るよ</p>
+    <!-- 場だけの役／Aを1として ―― 出るときだけ 見える 1行 -->
+    <p class="hand-note hidden" id="noteBoardOnly">場だけの役。みんな同じだよ</p>
+    <p class="hand-note note-ace hidden" id="noteAceLow">Aを1として使ったよ。一番弱いストレートだよ</p>
+  </section>
+
+  <!-- ── 自分の手札2枚 ＋ 自分のコイン・出した額・親マーク ────── -->
+  <section class="mine" aria-labelledby="mineHeading">
+    <div class="mine-head">
+      <h2 class="mine-heading" id="mineHeading">あなたの手札</h2>
+      <p class="me-info" id="meInfo"></p>
+    </div>
+    <div class="hand" id="hand"></div>
+  </section>
+
+  <!-- ── ★ 勝負の 決着（T38 §6-6）────────────────────
+       残った人の 手札を ぜんぶ 開いて、つかった5枚だけを 上下に ならべる。
+       役が 同じどうしの ときだけ、決め手の カードに ▲ と「ここで 勝った／負けた」。
+       中身は game.js が つくる。 -->
+  <section class="showdown hidden" id="showdownBox" aria-live="polite">
+    <h2 class="sd-title" id="sdTitle">勝負！</h2>
+    <p class="sd-lead" id="sdLead"></p>
+    <div class="sd-rows" id="sdRows"></div>
+    <p class="sd-pots" id="sdPots"></p>
+  </section>
+
+  <!-- ハッピー（設計図 §9.5・全画面に かならず 出す）
+       🎨T45：名ふだ「ハッピー」を 追加（既存3本と 同じ 見せ方に そろえた）。
+       ことばは §9.6 の 固有名。ゲームの 文言には さわっていない。 -->
+  <div class="happy-row">
+    <div class="happy-wrap">
+      <svg class="happy-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble">どんなカード？</p>
+  </div>
+
+  <!-- ── 実況（さいきん おきたこと 3行）──────────────── -->
+  <p class="table-log" id="tableLog" aria-live="polite"></p>
+
+  <!-- ── ★ かけの ボタン ────────────────────────────
+       降りる／かけない／合わせる／上げる／ぜんぶかける。
+       中身は game.js が つくる（いくら 動くかを かならず 出す）。 -->
+  <section class="act" aria-label="かける">
+    <div class="act-row" id="actButtons"></div>
+    <div class="raise-panel hidden" id="raisePanel"></div>
+    <p class="turn-note hidden" id="turnNote"></p>
+    <button class="next-hand hidden" type="button" id="btnNextHand">つぎの ハンドへ ▶</button>
+
+    <!-- ── コインが 0に なったとき（T38 §4-6）────────────
+         ロボットは かってに 200枚 もらって 戻ってくる。
+         自分が 0に なったときだけ、ここが 出る。 -->
+    <div class="over-box hidden" id="overBox">
+      <p class="over-title">ゲームオーバー</p>
+      <p class="over-note" id="overNote"></p>
+      <button class="over-btn" type="button" id="btnRestart">コインを もらって もういちど ▶</button>
+    </div>
+  </section>
+
+  <!-- ── かけ方の 設定（T38 §7・初期は「ふつう」）──────────── -->
+  <section class="settings" aria-labelledby="setLabel">
+    <p class="set-label" id="setLabel">かけ方</p>
+    <div class="set-row" id="modeRow" role="group" aria-labelledby="setLabel">
+      <button class="set-btn" type="button" data-mode="easy" aria-pressed="false">
+        かんたん<small>金額は おまかせ</small></button>
+      <button class="set-btn" type="button" data-mode="normal" aria-pressed="true">
+        ふつう ★<small>3つから 選ぶ</small></button>
+      <button class="set-btn" type="button" data-mode="full" aria-pressed="false">
+        ぜんぶ<small>1枚きざみ</small></button>
+    </div>
+
+    <!-- ── ★ ロボットの強さ（T38 §10・初期は「ふつう」）──────────
+         ⚠️ 上の「かけ方」とは べつの じく。
+            かけ方 ＝ 自分の 操作の しやすさ ／ 強さ ＝ 相手の 手ごわさ。 -->
+    <p class="set-label set-label-2" id="cpuLabel">ロボットの強さ</p>
+    <div class="set-row" id="cpuRow" role="group" aria-labelledby="cpuLabel">
+      <button class="set-btn" type="button" data-cpu="weak" aria-pressed="false">
+        弱い<small>よく ついてくる</small></button>
+      <button class="set-btn" type="button" data-cpu="normal" aria-pressed="true">
+        ふつう ★<small>それなりに 降りる</small></button>
+      <button class="set-btn" type="button" data-cpu="strong" aria-pressed="false">
+        つよい<small>よい手だけ 勝負</small></button>
+    </div>
+
+    <!-- ── ★ 手札の目安（T38 §6-4・初期は「出す」）──────────────
+         ⚠️ 3つめの 設定。上の2つと ならべて たてに 積むと 箱が 長くなるので、
+            えらぶものが 2つ だけの これは **名前と ボタンを 横に ならべた 1行**にした。 -->
+    <div class="set-line">
+      <p class="set-label set-label-inline" id="guideLabel">手札の目安 ★</p>
+      <div class="set-row set-row-mini" id="guideRow" role="group" aria-labelledby="guideLabel">
+        <button class="set-btn" type="button" data-guide="on" aria-pressed="true">
+          出す ★<small>はじめての人へ</small></button>
+        <button class="set-btn" type="button" data-guide="off" aria-pressed="false">
+          出さない<small>自分で 見る</small></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── たしかめ用（作る人むけ）────────────────────
+       🎨T45：遊ぶ人の 目に 入りにくい よう、たたむ 形（details）にした。
+       見出しの ことば・中の ボタンと 仕込み口は 1文字も 変えていない。
+       game.js は id と data 属性で 結線しているので、たたんでも そのまま 動く。 -->
+  <details class="devbox">
+    <summary class="dev-heading" id="devHeading">たしかめ用（作る人むけ）</summary>
+    <div class="dev-buttons">
+      <button class="dev-btn primary" type="button" id="btnPlay">新しい ハンド／ゲームに もどる</button>
+    </div>
+    <p class="dev-note">見本を出す（かけは 止まります）：</p>
+    <div class="dev-buttons">
+      <button class="dev-btn small" type="button" data-demo="場だけの役">場だけの役</button>
+      <button class="dev-btn small" type="button" data-demo="Aを1として">Aを1として</button>
+      <button class="dev-btn small" type="button" data-demo="ロイヤル">ロイヤル</button>
+      <button class="dev-btn small" type="button" data-demo="フルハウス">フルハウス</button>
+      <button class="dev-btn small" type="button" data-demo="ツーペア">ツーペア</button>
+    </div>
+    <p class="dev-note">決着を 仕込む（そのまま 勝負まで 進みます）：</p>
+    <div class="dev-buttons">
+      <button class="dev-btn small" type="button" data-stage="split">引き分けの 山分け</button>
+      <button class="dev-btn small" type="button" data-stage="side">サイドポット</button>
+      <button class="dev-btn small" type="button" data-stage="kicker">同じ役で 決まる</button>
+    </div>
+    <p class="dev-note">
+      仕込み口：<code>HOLDEM.setup('d7 c2', 's10 sJ sQ sK sA')</code>
+      ／ <code>HOLDEM.demo('場だけの役')</code>
+      ／ <code>HOLDEM.play()</code>（ゲームに もどる）
+      ／ <code>HOLDEM.autoPlay(300)</code>（自動で300ハンド まわして コインを たしかめる）
+      ／ <code>HOLDEM.stage('split')</code>（決着を 仕込む）
+      ／ <code>HOLDEM.bench(3000)</code>（★ 強さ3つの もうけを 数で 出す）
+      ／ <code>HOLDEM.matrix(200)</code>（強さ3 × かけ方3 ＝ 9通りの たしかめ）
+      ／ <code>HOLDEM.seed(7)</code>（★ 同じ遊びを もう一度 おこす。<code>seed(null)</code>で もどす）
+      ／ <code>HOLDEM.guide('off')</code>（★ 手札の目安を 消す）
+      ／ <code>HOLDEM.guideOf('sA hA')</code>（★ その2枚の 目安を そのまま 見る）
+    </p>
+  </details>
+
+</main>
+
+<script src="../poker-core.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

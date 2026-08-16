@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>役の判定エンジン ― けんしょう（開発用）</title>
+<style>
+  body { margin:0; padding:16px; background:#fff7fb; color:#3b2b33;
+         font-family:"Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  p.note { margin:0 0 12px; font-size:13px; color:#7a6470; }
+  #head { font-size:16px; font-weight:700; padding:10px 14px; border-radius:12px;
+          background:#e9f7ec; color:#1f6b32; margin-bottom:10px; }
+  #head.ng { background:#fdecec; color:#a12727; }
+  pre { background:#fff; border:2px solid #f2dbe6; border-radius:12px; padding:12px;
+        font-size:12px; line-height:1.6; overflow:auto; white-space:pre-wrap; }
+  button { font:inherit; padding:8px 14px; border:0; border-radius:999px;
+           background:#ff8fb1; color:#fff; font-weight:700; cursor:pointer; margin-right:8px; }
+</style>
+</head>
+<body>
+  <h1>役の判定エンジン ― けんしょう</h1>
+  <p class="note">
+    これは 開発用の ページです（ゲームでは ありません）。<br>
+    <code>office/games/poker-core.js</code> だけを たしかめます。
+    コンソールで <code>PokerCore</code> / <code>PokerTest</code> が つかえます。
+  </p>
+  <div id="head">走っています…</div>
+  <button id="again">もう一度 ぜんぶ</button>
+  <button id="quick">総当たり ぬきで 早く</button>
+  <pre id="out"></pre>
+
+  <script src="../poker-core.js"></script>
+  <script src="poker-core-test.js"></script>
+  <script>
+    function show(res) {
+      var head = document.getElementById('head');
+      head.textContent = (res.fail === 0 ? '✅ ぜんぶ 通りました' : '❌ ' + res.fail + '件 だめでした')
+        + '　' + res.pass + '/' + (res.pass + res.fail) + ' 件 OK　(' + res.ms + 'ms)';
+      head.className = res.fail ? 'ng' : '';
+      document.getElementById('out').textContent = res.text;
+    }
+    function go(opts) {
+      document.getElementById('head').textContent = '走っています…';
+      document.getElementById('head').className = '';
+      setTimeout(function () { show(PokerTest.run(opts)); }, 20);
+    }
+    document.getElementById('again').onclick = function () { go(); };
+    document.getElementById('quick').onclick = function () { go({ heavy: false }); };
+    go();
+  </script>
+</body>
+</html>
