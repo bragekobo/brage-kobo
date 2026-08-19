@@ -3,45 +3,41 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>テキサス・ホールデム ― ブラゲ工房</title>
-  <meta name="description" content="手札2枚と 場の5枚から、一番強い5枚を作ろう！ ブラウザですぐ遊べるテキサス・ホールデム ― ブラゲ工房" />
+  <title>ポーカー ― ブラゲ工房</title>
+  <meta name="description" content="5枚くばって、いらない札を取りかえて勝負！ ブラウザですぐ遊べるポーカー ― ブラゲ工房" />
   <meta name="theme-color" content="#BCEBF0" />
 
   <!-- ============================================================
        SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
        ------------------------------------------------------------
-       既存3本（ブラックジャック・七並べ・大富豪）と おなじ 書き方。
-       絶対URL で 書く（よみとり係は 相対パスを 読めない）。
-       画像は トランプ1枚（419×635・たてなが）なので twitter:card は summary。
+       既存4本と おなじ 書き方。絶対URL で 書く。
        ⚠️ まだ 作っている とちゅう の ゲームです。まとめサイトに ならべる ときに
           og:url が 正しいか もう一度 見なおすこと。
        ============================================================ -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="ブラゲ工房" />
   <meta property="og:locale" content="ja_JP" />
-  <meta property="og:title" content="テキサス・ホールデム ― ブラウザですぐ遊べる｜ブラゲ工房" />
-  <meta property="og:description" content="手札2枚と 場の5枚、合わせた7枚から 一番強い5枚を作る トランプのゲーム。ダウンロードはいりません。開いたらすぐ遊べます。" />
-  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/holdem/" />
-  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png" />
+  <meta property="og:title" content="ポーカー ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="5枚くばって、いらない札を取りかえて勝負！ みんなの知ってるポーカー。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/poker/" />
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%B9%E3%83%9A%E3%83%BC%E3%83%89A.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="419" />
   <meta property="og:image:height" content="635" />
-  <meta property="og:image:alt" content="トランプのハートのエース" />
+  <meta property="og:image:alt" content="トランプのスペードのエース" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="テキサス・ホールデム ― ブラウザですぐ遊べる｜ブラゲ工房" />
-  <meta name="twitter:description" content="手札2枚と 場の5枚から 一番強い5枚を作る トランプのゲーム。開いたらすぐ遊べます。" />
-  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png" />
+  <meta name="twitter:title" content="ポーカー ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="5枚くばって、いらない札を取りかえて勝負！ みんなの知ってるポーカー。開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%B9%E3%83%9A%E3%83%BC%E3%83%89A.png" />
 
-  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお ＋ スペードの ふだ。
-       既存3本と まったく おなじ もの。外部ファイルを ふやさないよう
-       SVG を そのまま data URI で うめこんでいる。 -->
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお ＋ スペードの ふだ。既存4本と おなじ。 -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- ハッピー（看板ねこ）の かお。既存3本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<!-- ハッピー（看板ねこ）の かお。既存4本から そのまま 持ちこみ（設計図 §9.5）。 -->
 <svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
   <defs>
     <symbol id="happy-head" viewBox="0 0 150 112">
@@ -77,9 +73,9 @@
     <a class="back" href="../">◀ ゲームを選ぶ</a>
     <div class="brand">
       <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
-      <span>テキサス・ホールデム</span>
+      <span>ポーカー</span>
     </div>
-    <span class="stage-chip" id="stageChip">手札2枚</span>
+    <span class="stage-chip" id="stageChip">くばる</span>
   </header>
 
   <!-- ── 上の帯（何ハンドめ・自分のコイン）────────────────
@@ -89,17 +85,20 @@
           取ると ゲームが 止まる。 -->
   <p class="tape" id="tape">1ハンドめ ・ コイン 200</p>
 
-  <!-- ── ロボット3人の 席（伏せ札・コイン・出した額・親マーク🔘）──── -->
+  <!-- ── ロボット3人の 席（伏せ札5枚・コイン・出した額・親マーク🔘・
+       ★ 取りかえ枚数バッジ ―― ドローの ただ1つの 公開情報。消えない・T47 §6-5）── -->
   <section class="seats" id="seats" aria-label="ロボットの席"></section>
 
-  <!-- ── 場のカード（3枚 → 1枚 → 1枚。5枚ぶんの わく）＋ ポット ─── -->
+  <!-- ── テーブル（ポット ＋ 山札の のこり）──────────────
+       ホールデムの「場のカード」に あたる 場所。ドローには 場の札が ないので、
+       まん中には ポットと 山札を おく。すてた札の 数も 見える（山に もどらない 証拠）。 -->
   <section class="board-wrap" aria-labelledby="boardHeading">
-    <h2 class="board-ribbon" id="boardHeading">場のカード</h2>
+    <h2 class="board-ribbon" id="boardHeading">テーブル</h2>
     <p class="pot" id="pot" aria-live="polite">ポット 0</p>
-    <div class="board" id="board"></div>
+    <div class="deck-row" id="deckRow"></div>
   </section>
 
-  <!-- ── 進み具合バー（部品5・かるいので 先に 入れてある）─────
+  <!-- ── 進み具合バー（くばる → かけ① → 取りかえ → かけ② → 勝負）──
        ⚠️ T57（社長指示）で 画面から 消した（style.css で display:none）。
           場の カードが ふえれば 進み具合は 分かる、が 社長の 判断。
           ⚠️ 要素そのものは 残す ―― game.js が $('steps') を さがすため。 -->
@@ -109,7 +108,9 @@
        「一回みたら もう見ない人が たくさん いる」が 理由。
        中身は 1文字も 変えていない。↓ かけボタンの 下に ある。 -->
 
-  <!-- ── 自分の手札2枚 ＋ 自分のコイン・出した額・親マーク ────── -->
+  <!-- ── 自分の手札5枚 ─────────────────────────────
+       取りかえの 番には タップで えらべる（大富豪の 複数枚選択と 同じ型・§5-1）。
+       ※ 役の中心の 光りは T53（社長指示）で 撤去。強調は「すてる」の 選択だけ。 -->
   <section class="mine" aria-labelledby="mineHeading">
     <div class="mine-head">
       <h2 class="mine-heading" id="mineHeading">あなたの手札</h2>
@@ -118,10 +119,8 @@
     <div class="hand" id="hand"></div>
   </section>
 
-  <!-- ── ★ 勝負の 決着（T38 §6-6）────────────────────
-       残った人の 手札を ぜんぶ 開いて、つかった5枚だけを 上下に ならべる。
-       役が 同じどうしの ときだけ、決め手の カードに ▲ と「ここで 勝った／負けた」。
-       中身は game.js が つくる。 -->
+  <!-- ── ★ 勝負の 決着 ―― 残った人の 5枚を 上下に ならべる。
+       勝った行は 金色わく ＋ 👑。同じ役どうしは ▲「ここで 勝った／負けた」。 -->
   <section class="showdown hidden" id="showdownBox" aria-live="polite">
     <h2 class="sd-title" id="sdTitle">勝負！</h2>
     <p class="sd-lead" id="sdLead"></p>
@@ -146,12 +145,12 @@
     </div>
   </div>
 
-  <!-- ── ★ かけの ボタン ────────────────────────────
-       コール／レイズ／フォールド／チェック／オールイン
-       （カタカナ主表記＋下に小さく日本語・§9.6の例外リスト・T54 社長裁定）。
+  <!-- ── ★ かけの ボタン ＋ ★ 取りかえの パネル ──────────
+       かけ：コール／レイズ／フォールド／チェック／オールイン
+       （カタカナ主表記＋下に小さく日本語・§9.6の例外リスト・T53 社長裁定）。
        持っている コインは ボタンの すぐ上に 出す（社長指示）。
-       中身は game.js が つくる（いくら 動くかを かならず 出す）。 -->
-  <section class="act" aria-label="かける">
+       取りかえ：札を えらんで ボタン1つ。0枚（そのまま）も 正しい 選択（T47 §5-2）。 -->
+  <section class="act" aria-label="かける・取りかえる">
     <p class="act-coins" id="actCoins">コイン 200枚</p>
     <!-- T59：レイズの パネルを「ボタンの 上に 浮かせる」ための 器。
          ⚠️ 中の id（actButtons／raisePanel）・class名は 1文字も 変えていない。
@@ -163,12 +162,11 @@
       <div class="act-row" id="actButtons"></div>
       <div class="raise-panel hidden" id="raisePanel"></div>
     </div>
+    <div class="swap-panel hidden" id="swapPanel"></div>
     <p class="turn-note hidden" id="turnNote"></p>
     <button class="next-hand hidden" type="button" id="btnNextHand">つぎの ハンドへ ▶</button>
 
-    <!-- ── コインが 0に なったとき（T38 §4-6）────────────
-         ロボットは かってに 200枚 もらって 戻ってくる。
-         自分が 0に なったときだけ、ここが 出る。 -->
+    <!-- ── コインが 0に なったとき（自分だけ）──────────── -->
     <div class="over-box hidden" id="overBox">
       <p class="over-title">ゲームオーバー</p>
       <p class="over-note" id="overNote"></p>
@@ -176,12 +174,12 @@
     </div>
   </section>
 
-  <!-- ※ 設定パネル（かけ方／ロボットの強さ／手札の目安）は T54（社長指示）で
-       まるごと 撤去した。かけ金は 1枚きざみに 一本化・ロボットは「つよい」固定。 -->
+  <!-- ※ 設定パネル（かけ方／ロボットの強さ／手札の目安）は T53（社長指示）で
+       まるごと 撤去した。かけ方は 1枚きざみに 一本化・ロボットは「つよい」固定。 -->
 
-  <!-- ── 役の強さの一覧（T54で ポーカーから 持ちこみ）────
-       「今の役」の 名札は T54（社長裁定・ポーカーと そろえる）で 撤去した。
-       役の 情報源は この一覧 1つ。中身は game.js が
+  <!-- ── 役の強さの一覧（T50で 新設 → T53で 小さく 格下げ）────
+       「今の役」の 名札は T53（社長指示）で 撤去した。
+       一覧は トライの 🟡2 対応なので 残す。中身は game.js が
        PokerCore.HANDS から 自動で 作る（ここに 手書きしない）。
        ★ T57（社長指示）で 画面の 一番下へ 動かした
          ―― 「一回みたら もう見ない人が たくさん いる」から。
@@ -196,14 +194,11 @@
   </section>
 
   <!-- ── たしかめ用（作る人むけ）────────────────────
-       🎨T45：遊ぶ人の 目に 入りにくい よう、たたむ 形（details）にした。
-       見出しの ことば・中の ボタンと 仕込み口は 1文字も 変えていない。
-       game.js は id と data 属性で 結線しているので、たたんでも そのまま 動く。
        ⚠️ T57（社長指示）で 画面から 消した（style.css で display:none）。
           お客さんに 見せる 物では なかった（消しわすれ）。
-          ⚠️ 中の ボタン（#btnPlay ／ data-demo ／ data-stage）は 残す。
-             game.js が 起動時に さがしているので、取ると ゲームが 止まる。
-          ⚠️ HOLDEM.autoPlay() HOLDEM.now() などの 命令は そのまま 生きている
+          ⚠️ 中の ボタン（#btnPlay ／ data-demo）は 残す。game.js が
+             起動時に さがしているので、取ると ゲームが 止まる。
+          ⚠️ POKER.autoPlay() POKER.setup() などの 命令は そのまま 生きている
              （トライの 検査に 使う）。 -->
   <details class="devbox">
     <summary class="dev-heading" id="devHeading">たしかめ用（作る人むけ）</summary>
@@ -212,28 +207,21 @@
     </div>
     <p class="dev-note">見本を出す（かけは 止まります）：</p>
     <div class="dev-buttons">
-      <button class="dev-btn small" type="button" data-demo="場だけの役">場だけの役</button>
-      <button class="dev-btn small" type="button" data-demo="Aを1として">Aを1として</button>
-      <button class="dev-btn small" type="button" data-demo="ロイヤル">ロイヤル</button>
-      <button class="dev-btn small" type="button" data-demo="フルハウス">フルハウス</button>
+      <button class="dev-btn small" type="button" data-demo="ワンペア">ワンペア</button>
+      <button class="dev-btn small" type="button" data-demo="まよう手">まよう手</button>
       <button class="dev-btn small" type="button" data-demo="ツーペア">ツーペア</button>
-    </div>
-    <p class="dev-note">決着を 仕込む（そのまま 勝負まで 進みます）：</p>
-    <div class="dev-buttons">
-      <button class="dev-btn small" type="button" data-stage="split">引き分けの 山分け</button>
-      <button class="dev-btn small" type="button" data-stage="side">サイドポット</button>
-      <button class="dev-btn small" type="button" data-stage="kicker">同じ役で 決まる</button>
+      <button class="dev-btn small" type="button" data-demo="フルハウス">フルハウス</button>
+      <button class="dev-btn small" type="button" data-demo="ハイカード">ハイカード</button>
     </div>
     <p class="dev-note">
-      仕込み口：<code>HOLDEM.setup('d7 c2', 's10 sJ sQ sK sA')</code>
-      ／ <code>HOLDEM.demo('場だけの役')</code>
-      ／ <code>HOLDEM.play()</code>（ゲームに もどる）
-      ／ <code>HOLDEM.autoPlay(300)</code>（自動で300ハンド まわして コインを たしかめる）
-      ／ <code>HOLDEM.stage('split')</code>（決着を 仕込む）
-      ／ <code>HOLDEM.bench(3000)</code>（★ 強さ3つの もうけを 数で 出す）
-      ／ <code>HOLDEM.matrix(200)</code>（強さ3 × かけ方3 ＝ 9通りの たしかめ）
-      ／ <code>HOLDEM.seed(7)</code>（★ 同じ遊びを もう一度 おこす。<code>seed(null)</code>で もどす）
-      ／ <code>HOLDEM.guideOf('sA hA')</code>（その2枚の 手のよさを 数で 見る）
+      仕込み口：<code>POKER.setup('s7 h7 sK s4 s2')</code>（自分の5枚を 仕込む）
+      ／ <code>POKER.demo('まよう手')</code>
+      ／ <code>POKER.play()</code>（ゲームに もどる）
+      ／ <code>POKER.coreOf()</code>（役の中心の こたえ合わせ）
+      ／ <code>POKER.autoPlay(1000)</code>（自動で まわして コインと 山札を たしかめる）
+      ／ <code>POKER.bench(3000)</code>（強さ3つの もうけを 数で 出す）
+      ／ <code>POKER.matrix(200)</code>（強さ3 × かけ方3 ＝ 9通りの たしかめ）
+      ／ <code>POKER.seed(7)</code>（同じ遊びを もう一度。<code>seed(null)</code>で もどす）
     </p>
   </details>
 

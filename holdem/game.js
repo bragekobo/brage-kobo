@@ -1,6 +1,18 @@
 /* ============================================================
    テキサス・ホールデム ― 第6段「手札の目安 ★」（T44）
    ------------------------------------------------------------
+   ── T54（2026-08-18・社長裁定「ポーカーと 同じく シンプルに」）──
+     撤去した 表示（かけ・決着・サイドポットの ロジックは 1文字も 触っていない）：
+       ・設定パネル まるごと（かけ方3段階／ロボットの強さ／手札の目安★）
+         → ロボットは「つよい」固定・かけ金は 1枚きざみに 一本化
+       ・「今の役」の 名札（常設パネル・目安★の 表示も いっしょに）
+       ・役に つかう5枚の 光り（is-used／is-dim）
+         → 強調は 画面に 1種類まで（設計図 §5.5「二層設計の上限」）
+     ボタンは カタカナ主表記に（コール／レイズ／フォールド／チェック／オールイン
+     ＋ 下に 小さく 日本語・§9.6の 例外リスト）。コイン枚数を ボタンの すぐ上に 出す。
+     役の一覧「役の強さを 見る ▾」を ポーカーから 持ちこんだ（役の 情報源は これ1つ）。
+     preflopGuide・場だけの役の 判定（PC.uses）は ロボットが 使うので 温存（表示だけ 消した）。
+   ------------------------------------------------------------
    今回 足したもの（T44・T38 §6-4・§11 の 15）：
      ㉒ ★ 手札2枚の 目安 ―― 場のカードが 1枚も 無い ときの 判断材料。
         ①のかけの あいだだけ、名札の 中身が「今の役」→「手札の目安」に 変わる。
@@ -105,10 +117,16 @@
   var SEATS       = 4;     // 自分＋ロボット3人（T38 §1-5・固定）
   var CPU_MAX_RAISE = 3;   // 1回の かけで ロボットが 上げるのは 3回まで（§5-3）
 
-  /* ───────── かけ方 3つ（T38 §7・二層設計の 軸）───────── */
+  /* 上乗せの 最小。1＝いくらでも 上乗せできる（社長指示・T58）
+     'rule' に すると 本式（直前の 上げ幅ぶん 以上）に もどる */
+  var MIN_RAISE_ADD = 1;   // 1 または 'rule'
+
+  /* ───────── かけ方（T54：画面は 1枚きざみに 一本化）─────────
+     MODES と POT_STEPS は autoPlay・matrix の けんしょう道具が 今も 使うので 温存。
+     画面の 設定パネルは 撤去した（state.mode は 'full' 固定）。 */
   var MODES = {
     easy:   { label: 'かんたん', note: '金額は おまかせ' },
-    normal: { label: 'ふつう ★', note: '3つから 選ぶ' },
+    normal: { label: 'ふつう',   note: '3つから 選ぶ' },
     full:   { label: 'ぜんぶ',   note: '自分で 決める' }
   };
   var POT_STEPS = [
@@ -117,21 +135,12 @@
     { f: 2.0, label: 'たくさん' }
   ];
 
-  /* ───────── ★ ロボットの 強さ 3つ（T38 §10）─────────
-     ⚠️ かけ方（上）とは べつの じく。まぜない。
-        かけ方 ＝ 自分の 操作の しやすさ ／ 強さ ＝ 相手の 手ごわさ。 */
+  /* ───────── ロボットの 強さ（T54：画面は「つよい」固定）─────────
+     3段階の 頭（BRAINS）は bench・matrix の けんしょうが 使うので 温存。 */
   var CPUS = {
-    weak:   { label: '弱い',     note: 'よく ついてくる' },
-    normal: { label: 'ふつう ★', note: 'それなりに 降りる' },
-    strong: { label: 'つよい',   note: 'よい手だけ 勝負' }
-  };
-
-  /* ───────── ★ 手札の目安（T38 §6-4・3つめの 設定）─────────
-     ⚠️ これだけは 消せる。★の数は「答え」に 近いから（§6-4）。
-        名札・光る5枚・進み具合バーは 事実の 表示なので 消せない。 */
-  var GUIDES = {
-    on:  { label: '出す ★',  note: 'はじめての人へ' },
-    off: { label: '出さない', note: '自分で 見る' }
+    weak:   { label: '弱い',   note: 'よく ついてくる' },
+    normal: { label: 'ふつう', note: 'それなりに 降りる' },
+    strong: { label: 'つよい', note: 'よい手だけ 勝負' }
   };
 
   /* ───────── 今の ばめん ───────── */
@@ -157,8 +166,7 @@
     injected: SEATS * START_COINS, // 世の中に 出したコインの 合計（0枚に なった人に 足したぶんも 入る）
     errors: [],        // コインの けいさんが 合わない ときだけ たまる
     logs: [],
-    cpu: 'normal',     // ★ ロボットの 強さ（weak / normal / strong）。初期は ふつう
-    guide: 'on',       // ★ 手札の目安 ★（on / off）。初期は「出す」（T38 §1-3・§6-4）
+    cpu: 'strong',     // T54：常に「つよい」（設定パネルは 撤去。dev の HOLDEM.cpu では 変えられる）
     foldStats: [],     // 席ごとの「何ハンドで 何回 降りたか」。つよいロボットだけ 見る
     /* 第2段からの もの（名札・光る5枚が これを 見ている） */
     hole: [], board: [], robots: [], result: null
@@ -255,7 +263,7 @@
       if (p.coins <= 0) {
         p.coins = START_COINS;
         state.injected += START_COINS;        // 世の中に 足した ぶん（けいさんの つじつま用）
-        log(p.me ? 'コインを 200まい もらって、もういちど！'
+        log(p.me ? 'コインを 200枚 もらって、もういちど！'
                  : p.name + 'が コインを もらって 戻ってきたよ');
       }
     });
@@ -529,7 +537,7 @@
     /* ★ 自分の コインが 0 ―― ここで 止める（T38 §4-6） */
     if (me.coins <= 0) {
       state.phase = 'over';
-      log('ゲームオーバー ―― ' + state.handNo + 'ハンド 遊べたよ。最高は ' + state.best + 'まい');
+      log('ゲームオーバー ―― ' + state.handNo + 'ハンド 遊べたよ。最高は ' + state.best + '枚');
     }
     render();
   }
@@ -569,6 +577,14 @@
   function maxRaiseTo(p) { return p.bet + p.coins; }
   function canRaise(p)   { return !p.allIn && maxRaiseTo(p) > state.toCall; }
 
+  /* T58：自分が レイズするときの「上乗せ」の 下限。MIN_RAISE_ADD で 切りかえる。
+     ロボットの 思考は これを 使わない（minRaiseTo のまま ＝ 強さは 変わらない） */
+  function myMinAdd() {
+    if (MIN_RAISE_ADD === 'rule') return Math.max(1, minRaiseTo() - state.toCall);
+    return Math.max(1, MIN_RAISE_ADD | 0);
+  }
+  function myMinRaiseTo() { return state.toCall + myMinAdd(); }
+
   function afterAction(idx) {
     state.turn = seatAt(idx + 1);
     render();
@@ -596,7 +612,7 @@
     var paid = commit(p, needOf(p));
     p.acted = true;
     p.last = p.allIn ? ('ぜんぶかけた ' + p.bet) : ('合わせた ' + p.bet);
-    log(p.name + (p.allIn ? 'が ぜんぶかけた！ ' + paid + 'まい' : 'が 合わせた（' + paid + 'まい）'));
+    log(p.name + (p.allIn ? 'が ぜんぶかけた！ ' + paid + '枚' : 'が 合わせた（' + paid + '枚）'));
     afterAction(idx);
   }
 
@@ -616,7 +632,8 @@
     p.acted = true;
     p.raises++;
     p.last = p.allIn ? ('ぜんぶかけた ' + p.bet) : ('上げた ' + p.bet);
-    log(p.name + (p.allIn ? 'が ぜんぶかけた！ ' + paid + 'まい' : 'が ' + p.bet + 'まで 上げた（' + paid + 'まい）'));
+    /* T58：「◯まで 上げた」は 分かりにくい（社長指示）。上乗せ と 合計 で 言う */
+    log(p.name + (p.allIn ? 'が ぜんぶかけた！ ' + paid + '枚' : 'が 上乗せ ' + up + ' ／ ぜんぶで ' + p.bet + '枚'));
     afterAction(idx);
   }
 
@@ -629,11 +646,9 @@
   /* ============================================================
      ★★ 手札2枚の 目安 ―― 1か所きり（T38 §6-4・第6段の 本体）
      ------------------------------------------------------------
-     ⚠️ この 関数 1つで、2つの ことを いっぺんに 出します。
-        ・画面に 出す 目安 … ★の数／見出し／なぜ そう言えるか の 1行
-        ・中で つかう 数（0〜1） … ロボットと、けんしょう用の 打ち手（HUMAN）が 見る
-     この2つを べつべつに 書くと、**画面が 言っていることと、中の 考えが ずれます。**
-     ぜったいに 分けないこと（同じ ものを 2か所に 書いたら、その時点で 設計が こわれている）。
+     ※ T54：★の 画面表示は 撤去した。いまは ロボットと けんしょう用の
+        打ち手（HUMAN）、dev の HOLDEM.guideOf だけが この関数を 見る。
+        数の 出し方は 1文字も 変えていない（bench の 数字が ずれないため）。
 
      見かたは §6-4 の 5つ だけ。上から 順に あてはめる：
         ペア ／ 大きい札が2枚 ／ 同じマーク ／ 数が となり同士 ／ どれでもない
@@ -688,15 +703,7 @@
     return g;
   }
 
-  /* いま 名札に 目安を 出すか（①のかけ ＝ 場が 開く 前の ときだけ・§6-4） */
-  function guideNow() {
-    if (state.guide !== 'on') return null;          // 設定で「出さない」
-    if (state.phase === 'over') return null;
-    if (state.result) return null;                  // 役が できたら 名札は 役に ゆずる
-    if (!state.hole || state.hole.length < 2) return null;
-    if (openCount() >= 3) return null;
-    return preflopGuide(state.hole);
-  }
+  /* ※ guideNow（名札に 目安を 出すかの 判定）は T54 で 撤去した（名札ごと 無くなった） */
 
   /* ============================================================
      ★★ ロボットの 考え ―― 強さ 3段階（T38 §10・第5段の 本体）
@@ -922,12 +929,6 @@
     }
   }
 
-  function holeLine() {
-    if (state.hole.length < 2) return '';
-    var a = state.hole[0], b = state.hole[1];
-    return a.ja + 'の' + a.rank + ' と ' + b.ja + 'の' + b.rank;
-  }
-
   /* ============================================================
      画面に 出す
      ============================================================ */
@@ -948,11 +949,8 @@
     return '<div class="card card-slot" aria-hidden="true"><span class="slot-mark">?</span></div>';
   }
 
-  /* その札が 役に つかわれているか → 光る／うすい の クラス */
-  function markOf(card) {
-    if (!state.result) return '';
-    return state.result.usedKeys.indexOf(card.key) >= 0 ? 'is-used' : 'is-dim';
-  }
+  /* ※ 役に つかう5枚の 光り（markOf → is-used／is-dim）は T54 で 撤去した。
+     判定そのもの（state.result・PC.uses）は ロボットと ハッピーが 今も 使う。 */
 
   function renderSeats() {
     var caps = capsNow();          // サイドポットが 起きている ときだけ 中身が 入る
@@ -1009,7 +1007,7 @@
   function renderBoard() {
     var open = openCount(), html = '';
     for (var i = 0; i < 5; i++) {
-      if (i < open) html += cardHTML(state.board[i], markOf(state.board[i]));
+      if (i < open) html += cardHTML(state.board[i]);
       else html += slotHTML();
     }
     $('board').innerHTML = html;
@@ -1017,7 +1015,7 @@
 
   function renderHand() {
     $('hand').innerHTML = state.hole.map(function (c) {
-      return cardHTML(c, markOf(c));
+      return cardHTML(c);
     }).join('');
   }
 
@@ -1032,61 +1030,45 @@
     $('stageChip').textContent = showdown ? '勝負' : STEPS[state.step].label;
   }
 
-  /* ★の数を 3つぶん 出す（ついた ぶんだけ 色が つく） */
-  function starHTML(n) {
-    var out = '';
-    for (var i = 1; i <= 3; i++) out += '<span class="star' + (i <= n ? ' on' : '') + '">★</span>';
-    return out;
+  /* ※「今の役」の 名札（renderHandName）と 目安★の 表示は T54 で 撤去した。
+     役の 名前は 勝負の わく（renderShowdown）と 役の一覧の 印で 分かる。 */
+
+  /* ============================================================
+     ★ 役の強さの一覧（T54で ポーカーから 持ちこみ）
+     ------------------------------------------------------------
+     ・中身は PokerCore.HANDS から 自動で 作る（手書きの 一覧は 作らない。
+       HANDS は 強い順に ならんでいるので、その順の まま 出す）
+     ・どの 場面でも ボタンで 開ける（ゲームは 止めない）
+     ・今の 自分の役の 行に 印を つける（一覧の 中の「今どこか」）
+     ============================================================ */
+  var ranksOpen = false;
+
+  function buildRanks() {
+    $('ranksList').innerHTML = PC.HANDS.map(function (h, i) {
+      return '<li class="ranks-row" data-hand="' + h.id + '">'
+        + '<span class="ranks-no">' + (i + 1) + '位</span>'
+        + '<span class="ranks-body">'
+        +   '<b class="ranks-name">' + h.name + '</b>'
+        +   '<small class="ranks-desc">' + h.desc + '</small>'
+        + '</span>'
+        + '<span class="ranks-now">← 今の役</span>'
+        + '</li>';
+    }).join('');
   }
 
-  /* ★ 今の役の名札 ―― かけの さいちゅうも ずっと 出したまま（第2段の 背骨）
-     ⚠️ ①のかけ（場が 開く 前）だけ、中身が「手札の目安」に 変わる（§6-4）。
-        名札そのものは 消えない。 */
-  function renderHandName() {
-    var r = state.result;
-    var main = $('handMain'), sub = $('handSub');
-    var noteBoard = $('noteBoardOnly'), noteAce = $('noteAceLow');
-    var label = $('handNameLabel'), stars = $('guideStars');
-
-    /* ★ 手札2枚の 目安（設定で 出す／出さない） */
-    var g = guideNow();
-    stars.classList.toggle('hidden', !g);
-    label.textContent = g ? '手札の目安' : '今の役';
-    if (g) {
-      stars.innerHTML = starHTML(g.stars);
-      stars.setAttribute('aria-label', '目安 3つのうち ' + g.stars + 'つ');
-      main.textContent = g.main;
-      main.classList.remove('is-none');
-      main.removeAttribute('data-rank');
-      main.dataset.stars = g.stars;               // アトが ★の数で 色を 変えられる ように
-      sub.textContent = g.why;
-      noteBoard.classList.add('hidden');
-      noteAce.classList.add('hidden');
-      return;
-    }
-    main.removeAttribute('data-stars');
-
-    if (!r) {
-      main.textContent = 'まだ 役は できていないよ';
-      sub.textContent = holeLine() + '。場のカードを 待とう';
-      main.classList.add('is-none');
-      noteBoard.classList.add('hidden');
-      noteAce.classList.add('hidden');
-      return;
-    }
-
-    var def = PC.HAND_BY_ID[r.id];                 // 名前・説明は ここから だけ 引く
-    main.textContent = def.name;
-    main.classList.remove('is-none');
-    sub.textContent = def.desc + '（' + handDetail(r) + '）';
-    main.dataset.rank = r.rank;                   // アトが 役ごとに 色を 変えられる ように
-
-    /* ★ 場だけの役 ―― 自分の手札2枚が どちらも つかわれていない とき（§6-2） */
-    var usesHole = PC.uses(r, state.hole);
-    noteBoard.classList.toggle('hidden', usesHole);
-
-    /* A を 1として つかった ストレート（§3-3） */
-    noteAce.classList.toggle('hidden', !r.aceLow);
+  function renderRanks() {
+    var btn = $('btnRanks');
+    btn.textContent = ranksOpen ? '🃏 役の強さを 閉じる ▲' : '🃏 役の強さを 見る ▾';
+    btn.setAttribute('aria-expanded', ranksOpen ? 'true' : 'false');
+    $('ranksBox').classList.toggle('hidden', !ranksOpen);
+    if (!ranksOpen) return;
+    var nowId = state.result ? state.result.id : '';
+    Array.prototype.forEach.call($('ranksList').children, function (li) {
+      var isMe = li.dataset.hand === nowId;
+      li.classList.toggle('is-me', isMe);
+      if (isMe) li.setAttribute('aria-current', 'true');
+      else li.removeAttribute('aria-current');
+    });
   }
 
   /* ★ 勝負の 決着を ならべる（§6-6）
@@ -1145,7 +1127,7 @@
     var box = $('overBox');
     if (state.phase !== 'over') { box.classList.add('hidden'); return; }
     $('overNote').textContent =
-      state.handNo + 'ハンド 遊べたよ。最高は ' + state.best + 'まい';
+      state.handNo + 'ハンド 遊べたよ。最高は ' + state.best + '枚';
     box.classList.remove('hidden');
   }
 
@@ -1159,13 +1141,14 @@
     else if (state.phase === 'end') {
       if (!state.settle && me && me.gain > 0)      msg = '見せないで勝った！ かっこいい';
       else if (state.split && myRow && myRow.win)  msg = '引き分け。コインを 分けたよ';
-      else if (me && me.gain > 0)                  msg = 'やったー！ コイン ' + me.gain + 'まい！';
+      else if (me && me.gain > 0)                  msg = 'やったー！ コイン ' + me.gain + '枚！';
       else                                         msg = 'つぎ がんばろ！';
     }
     else if (me && me.folded)         msg = 'つぎ いこう！';
     else if (!r)                      msg = 'どんなカード？';
-    else if (!PC.uses(r, state.hole)) msg = 'これ、みんな同じだよ。気をつけて';
-    else if (r.rank >= 4)             msg = 'やった！ 強くなったよ';
+    /* T54：「これ、みんな同じだよ」は 光る5枚を 指す セリフだったので 撤去
+       （場だけの役の 判定 PC.uses は ロボットが 今も 使う） */
+    else if (r.rank >= 4)             msg = 'やった！ 強い手だ！';
     else                              msg = '場のカードを 見てみよう';
     $('happyBubble').textContent = msg;
   }
@@ -1184,7 +1167,7 @@
         ―― どのボタンも「いくら 動くか」が 見えるように している
      ============================================================ */
   var raiseOpen = false;
-  var fullValue = 0;
+  var addValue = 0;   // T58：入力欄の 数字 ＝ コールの 上に 足す 枚数
 
   function renderActions() {
     var box = $('actButtons'), panel = $('raisePanel'), note = $('turnNote');
@@ -1213,27 +1196,23 @@
     }
     note.classList.add('hidden');
 
+    /* T54（社長裁定）：カタカナ主表記 ＋ 下に 小さく 日本語（§9.6の 例外リスト） */
     var need = needOf(me);
     var html = '';
 
-    html += btn('fold', '降りる', 'この回は やめる', 'is-fold');
+    html += btn('fold', 'フォールド', '降りる', 'is-fold');
 
     if (need === 0) {
-      html += btn('check', 'かけない', '0まい 出す・勝負は 続ける', '');
+      html += btn('check', 'チェック', 'パスする', '');
     } else if (need < me.coins) {
-      html += btn('call', '合わせる ' + need, 'みんなと 同じ ' + state.toCall + 'まで', 'is-call');
+      html += btn('call', 'コール ' + need, 'みんなと合わせる', 'is-call');
     }
 
-    if (canRaise(me) && maxRaiseTo(me) >= minRaiseTo()) {
-      if (state.mode === 'easy') {
-        var to = Math.min(minRaiseTo(), maxRaiseTo(me));
-        html += btn('easyraise', '上げる ' + to, 'あと ' + (to - me.bet) + 'まい 出す', 'is-raise');
-      } else {
-        html += btn('raise', '上げる ▾', 'もっと 出す', 'is-raise');
-      }
+    if (canRaise(me) && maxRaiseTo(me) >= myMinRaiseTo()) {
+      html += btn('raise', 'レイズ ▾', 'かけ金を上げる', 'is-raise');
     }
 
-    html += btn('allin', 'ぜんぶかける', 'コイン全部 ' + me.coins + 'まい', 'is-allin');
+    html += btn('allin', 'オールイン', '全部かける（' + me.coins + '枚）', 'is-allin');
 
     box.innerHTML = html;
     renderRaisePanel();
@@ -1244,61 +1223,55 @@
       + '<b>' + main + '</b><small>' + sub + '</small></button>';
   }
 
+  /* T58：入力欄の 数字は「コールの 上に いくら 足すか」。
+     決定を おした ときだけ raiseTo（＝コール ＋ 上乗せ）に もどして doRaise に わたす。 */
+  function addRange(me) {
+    var hi = Math.max(1, maxRaiseTo(me) - state.toCall);   // 上限＝オールインと 同じ
+    return { lo: Math.min(myMinAdd(), hi), hi: hi };
+  }
+  function clampAdd(me, v) {
+    var r = addRange(me);
+    v = Math.round(v);
+    if (!isFinite(v) || !v) v = r.lo;
+    return Math.min(Math.max(v, r.lo), r.hi);
+  }
+  function raiseNoteText(me, add) {
+    var call = state.toCall, total = call + add;
+    var line = call > 0
+      ? 'コール ' + call + ' ＋ 上乗せ ' + add + ' ＝ ぜんぶで ' + total + '枚'
+      : 'ぜんぶで ' + total + '枚 かける';
+    if (me.bet > 0) line += ' ／ いま出すのは ' + (total - me.bet) + '枚';
+    return line;
+  }
+
   function renderRaisePanel() {
     var panel = $('raisePanel'), me = state.players[0];
-    if (!raiseOpen || state.mode === 'easy' || !state.awaitMe || !canRaise(me)) {
+    if (!raiseOpen || !state.awaitMe || !canRaise(me)) {
       panel.classList.add('hidden');
       panel.innerHTML = '';
       return;
     }
-    var lo = Math.min(minRaiseTo(), maxRaiseTo(me));
-    var hi = maxRaiseTo(me);
-
-    if (state.mode === 'normal') {
-      /* ふつう：3つから 選ぶ（ポットを もとに 計算して 数字を 出す） */
-      var seen = [], rows = '';
-      POT_STEPS.forEach(function (s) {
-        var to = Math.min(Math.max(Math.round(state.pot * s.f), lo), hi);
-        if (seen.indexOf(to) >= 0) return;
-        seen.push(to);
-        rows += '<button type="button" class="raise-opt" data-to="' + to + '">'
-          + '<b>' + s.label + ' ' + to + '</b><small>あと ' + (to - me.bet) + 'まい</small></button>';
-      });
-      panel.innerHTML = '<p class="raise-title">いくらまで 上げる？</p><div class="raise-opts">' + rows + '</div>';
-    } else {
-      /* ぜんぶ：1枚きざみ（ブラックジャックの かけるパネルと 同じ かたち） */
-      fullValue = Math.min(Math.max(fullValue || lo, lo), hi);
-      panel.innerHTML =
-          '<p class="raise-title">いくらまで 上げる？</p>'
-        + '<div class="raise-stepper">'
-        +   '<button type="button" class="step-btn" data-step="-10">−10</button>'
-        +   '<button type="button" class="step-btn" data-step="-1">−1</button>'
-        +   '<input class="raise-input" id="raiseInput" type="number" inputmode="numeric" '
-        +     'min="' + lo + '" max="' + hi + '" step="1" value="' + fullValue + '">'
-        +   '<button type="button" class="step-btn" data-step="1">＋1</button>'
-        +   '<button type="button" class="step-btn" data-step="10">＋10</button>'
-        + '</div>'
-        + '<p class="raise-note">' + lo + ' 〜 ' + hi + ' まで ／ あと ' + (fullValue - me.bet) + 'まい 出す</p>'
-        + '<button type="button" class="raise-ok" data-to="' + fullValue + '">決定</button>';
-    }
+    var r = addRange(me);
+    addValue = clampAdd(me, addValue);
+    panel.innerHTML =
+        '<p class="raise-title">' + (state.toCall > 0 ? 'いくら 上乗せする？' : 'いくら かける？') + '</p>'
+      + '<div class="raise-stepper">'
+      +   '<button type="button" class="step-btn" data-step="-10">−10</button>'
+      +   '<button type="button" class="step-btn" data-step="-1">−1</button>'
+      +   '<input class="raise-input" id="raiseInput" type="number" inputmode="numeric" '
+      +     'min="' + r.lo + '" max="' + r.hi + '" step="1" value="' + addValue + '">'
+      +   '<button type="button" class="step-btn" data-step="1">＋1</button>'
+      +   '<button type="button" class="step-btn" data-step="10">＋10</button>'
+      + '</div>'
+      + '<p class="raise-note">' + raiseNoteText(me, addValue) + '</p>'
+      + '<button type="button" class="raise-ok" data-to="' + (state.toCall + addValue) + '">決定</button>';
     panel.classList.remove('hidden');
   }
 
-  function renderModeRow() {
-    Array.prototype.forEach.call($('modeRow').children, function (b) {
-      b.classList.toggle('on', b.dataset.mode === state.mode);
-      b.setAttribute('aria-pressed', b.dataset.mode === state.mode ? 'true' : 'false');
-    });
-    /* ★ ロボットの 強さ（かけ方とは べつの じく） */
-    Array.prototype.forEach.call($('cpuRow').children, function (b) {
-      b.classList.toggle('on', b.dataset.cpu === state.cpu);
-      b.setAttribute('aria-pressed', b.dataset.cpu === state.cpu ? 'true' : 'false');
-    });
-    /* ★ 手札の目安（出す／出さない） */
-    Array.prototype.forEach.call($('guideRow').children, function (b) {
-      b.classList.toggle('on', b.dataset.guide === state.guide);
-      b.setAttribute('aria-pressed', b.dataset.guide === state.guide ? 'true' : 'false');
-    });
+  /* T54：持っている コインを ボタン群の すぐ上に（社長指示） */
+  function renderActCoins() {
+    var me = state.players[0];
+    if (me) $('actCoins').textContent = 'コイン ' + me.coins + '枚';
   }
 
   function render() {
@@ -1312,12 +1285,12 @@
     renderBoard();
     renderHand();
     renderSteps();
-    renderHandName();
+    renderRanks();
     renderShowdown();
     renderOver();
     renderHappy();
+    renderActCoins();
     renderActions();
-    renderModeRow();
   }
 
   /* ============================================================
@@ -1327,22 +1300,25 @@
     var b = e.target.closest ? e.target.closest('.act-btn') : null;
     if (!b || !state.awaitMe) return;
     var act = b.dataset.act;
-    if (act === 'raise') { raiseOpen = !raiseOpen; renderRaisePanel(); return; }
+    if (act === 'raise') {
+      raiseOpen = !raiseOpen;
+      if (raiseOpen) addValue = 0;   // T58：開いたら 上乗せの 最小に もどす
+      renderRaisePanel();
+      return;
+    }
     raiseOpen = false;
     state.awaitMe = false;
     if (act === 'fold')      doFold(0);
     else if (act === 'check')doCheck(0);
     else if (act === 'call') doCall(0);
     else if (act === 'allin')doAllIn(0);
-    else if (act === 'easyraise') doRaise(0, Math.min(minRaiseTo(), maxRaiseTo(state.players[0])));
   });
 
   $('raisePanel').addEventListener('click', function (e) {
     var me = state.players[0];
     var step = e.target.closest ? e.target.closest('.step-btn') : null;
     if (step) {
-      var lo = Math.min(minRaiseTo(), maxRaiseTo(me)), hi = maxRaiseTo(me);
-      fullValue = Math.min(Math.max((fullValue || lo) + (+step.dataset.step), lo), hi);
+      addValue = clampAdd(me, clampAdd(me, addValue) + (+step.dataset.step));
       renderRaisePanel();
       return;
     }
@@ -1351,7 +1327,8 @@
     var to = +ok.dataset.to;
     if (ok.classList.contains('raise-ok')) {
       var input = $('raiseInput');
-      if (input) to = +input.value;
+      /* T58：入力欄は「上乗せ」なので、コールを 足して 合計に もどす */
+      if (input) to = state.toCall + clampAdd(me, +input.value);
     }
     raiseOpen = false;
     state.awaitMe = false;
@@ -1361,46 +1338,23 @@
   $('raisePanel').addEventListener('input', function (e) {
     if (e.target.id !== 'raiseInput') return;
     var me = state.players[0];
-    var lo = Math.min(minRaiseTo(), maxRaiseTo(me)), hi = maxRaiseTo(me);
-    fullValue = Math.min(Math.max(Math.round(+e.target.value || lo), lo), hi);
+    addValue = clampAdd(me, +e.target.value);
     var ok = $('raisePanel').querySelector('.raise-ok');
-    if (ok) ok.dataset.to = fullValue;
+    if (ok) ok.dataset.to = state.toCall + addValue;
+    var note = $('raisePanel').querySelector('.raise-note');
+    if (note) note.innerHTML = raiseNoteText(me, addValue);
   });
 
-  $('modeRow').addEventListener('click', function (e) {
-    var b = e.target.closest ? e.target.closest('[data-mode]') : null;
-    if (!b) return;
-    state.mode = b.dataset.mode;
-    raiseOpen = false;
-    fullValue = 0;
-    try { localStorage.setItem('holdem.mode', state.mode); } catch (err) {}
-    render();
-  });
-
-  /* ★ ロボットの 強さ を えらぶ（つぎの 手番から すぐ 効く） */
-  $('cpuRow').addEventListener('click', function (e) {
-    var b = e.target.closest ? e.target.closest('[data-cpu]') : null;
-    if (!b || !CPUS[b.dataset.cpu]) return;
-    if (state.cpu === b.dataset.cpu) return;
-    state.cpu = b.dataset.cpu;
-    try { localStorage.setItem('holdem.cpu', state.cpu); } catch (err) {}
-    log('ロボットの強さを「' + CPUS[state.cpu].label.replace(' ★', '') + '」に したよ');
-    render();
-  });
-
-  /* ★ 手札の目安を 出す／出さない（その場で 名札に 効く） */
-  $('guideRow').addEventListener('click', function (e) {
-    var b = e.target.closest ? e.target.closest('[data-guide]') : null;
-    if (!b || !GUIDES[b.dataset.guide]) return;
-    if (state.guide === b.dataset.guide) return;
-    state.guide = b.dataset.guide;
-    try { localStorage.setItem('holdem.guide', state.guide); } catch (err) {}
-    log('手札の目安を「' + GUIDES[state.guide].label.replace(' ★', '') + '」に したよ');
-    render();
-  });
+  /* ※ 設定パネル（modeRow／cpuRow／guideRow）の 聞き耳は T54 で 撤去した */
 
   $('btnNextHand').addEventListener('click', function () { startHand(); });
   $('btnRestart').addEventListener('click', function () { restart(); });
+
+  /* ★ 役の強さの一覧の 開け閉め（どの 場面でも 押せる。ゲームは 止めない） */
+  $('btnRanks').addEventListener('click', function () {
+    ranksOpen = !ranksOpen;
+    renderRanks();
+  });
 
   /* ============================================================
      ★ 仕込み口（社長・アトが 見本を 出すための 口）― 第2段から そのまま
@@ -1414,13 +1368,13 @@
      ============================================================ */
   var DEMOS = {
     '場だけの役':   { hole: 'd7 c2', board: 's10 sJ sQ sK sA',
-                      why: '場の5枚だけで ロイヤル。手札2枚は どちらも うすくなる' },
+                      why: '場の5枚だけで ロイヤル ＝ みんな 同じ役（引き分けに なる）' },
     'Aを1として':   { hole: 'sA h2', board: 'd3 c4 h5 sK d9',
                       why: 'A 2 3 4 5 の 一番弱い ストレート' },
     'ロイヤル':     { hole: 's10 sJ', board: 'sQ sK sA h2 d3',
-                      why: '手札を つかった ロイヤル。手札2枚が 光る' },
+                      why: '手札を つかった ロイヤル' },
     'フルハウス':   { hole: 'd7 d9', board: 's7 h7 cK dK c2',
-                      why: '7が3枚とKが2枚。手札の9は うすくなる' },
+                      why: '7が3枚とKが2枚。手札の9は つかわない' },
     'ツーペア':     { hole: 'sQ h4', board: 'dQ c4 s8 h10 d2',
                       why: 'Qが2枚と4が2枚。8・10・2の うち1枚だけ つかう' }
   };
@@ -1563,7 +1517,7 @@
       仕込み: s.why,
       ポット数: state.settle ? state.settle.pots.length : 0,
       分けた中身: state.settle ? state.settle.pots.map(function (p) {
-        return p.amount + 'まい → ' + p.winners.map(function (i) { return state.players[i].name; }).join('・')
+        return p.amount + '枚 → ' + p.winners.map(function (i) { return state.players[i].name; }).join('・')
           + (p.odd.length ? '（あまり ' + p.odd.length + '枚：' + p.odd.map(function (i) { return state.players[i].name; }).join('・') + '）' : '');
       }) : [],
       もらった: state.players.map(function (p) { return p.name + ' ＋' + p.gain + '（コイン ' + p.coins + '）'; }),
@@ -1706,7 +1660,7 @@
     var profit = 0, plus = 0, minus = 0, even = 0, tookPot = 0, shows = 0, refills = 0, stuck = 0;
 
     for (var h = 0; h < n; h++) {
-      if (me.coins <= 0) refills++;      // 0まいに なった ＝ 200枚 もらって 続ける
+      if (me.coins <= 0) refills++;      // 0枚に なった ＝ 200枚 もらって 続ける
       startHand();
       var c0 = me.coins + me.put;        // このハンドの はじめの もちコイン
       var guard = 0;
@@ -1823,17 +1777,14 @@
     mode: function (m) { if (MODES[m]) { state.mode = m; raiseOpen = false; render(); } return state.mode; },
     cpu: function (c) { if (CPUS[c]) { state.cpu = c; render(); } return state.cpu; },
     cpus: function () { return Object.keys(CPUS); },
-    /* ★ 手札の目安（§6-4）。出す／出さない ＋ 中身を そのまま 見る */
-    guide: function (v) { if (GUIDES[v]) { state.guide = v; render(); } return state.guide; },
+    /* 手札2枚の 手のよさを 数で 見る（T54：★の 画面表示は 撤去。中の 考えの 確認口） */
     guideOf: function (spec) { return preflopGuide(spec ? PC.cards(spec) : state.hole); },
     state: state,
     /* 今の ようすを 1つの もので 見る（けんしょう用） */
     now: function () {
       var r = state.result;
-      var g = guideNow();
       return {
         ハンド: state.handNo,
-        手札の目安: g ? ('★' + g.stars + '　' + g.main + '　' + g.why) : '（出していない）',
         step: STEPS[state.step].label,
         親: state.players[state.dealer] ? state.players[state.dealer].name : '',
         ポット: state.pot,
@@ -1869,18 +1820,14 @@
   /* ============================================================
      はじめる
      ============================================================ */
-  var saved = null, savedBest = null, savedCpu = null, savedGuide = null;
-  try {
-    saved = localStorage.getItem('holdem.mode');
-    savedBest = localStorage.getItem('holdem.best');
-    savedCpu = localStorage.getItem('holdem.cpu');
-    savedGuide = localStorage.getItem('holdem.guide');
-  } catch (e) {}
-  state.mode = MODES[saved] ? saved : 'normal';     // 初期は「ふつう」（T38 §7）
-  state.cpu = CPUS[savedCpu] ? savedCpu : 'normal'; // ★ 強さも 初期は「ふつう」（T38 §1-3）
-  state.guide = GUIDES[savedGuide] ? savedGuide : 'on'; // ★ 目安は 初期は「出す」（§6-4）
+  /* T54：おぼえるのは 最高記録だけ（かけ方・強さ・目安の 設定は 撤去した） */
+  var savedBest = null;
+  try { savedBest = localStorage.getItem('holdem.best'); } catch (e) {}
+  state.mode = 'full';       // かけ金は 1枚きざみに 一本化
+  state.cpu = 'strong';      // ロボットは 常に「つよい」
   if (savedBest && +savedBest > START_COINS) state.best = +savedBest;
 
+  buildRanks();     // 役の強さの一覧（HANDS から 1回だけ 作る）
   makePlayers();
   startHand();
 })();

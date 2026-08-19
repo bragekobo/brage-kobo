@@ -104,8 +104,6 @@ button { font-family:inherit; cursor:pointer; }
   margin:0; padding:4px 18px; background:#ffe681; border:3px solid #996d40; border-radius:30px;
   color:#75513c; font-weight:900; font-size:12px; white-space:nowrap;
 }
-.board { display:flex; justify-content:center; align-items:center; gap:6px; flex-wrap:nowrap; }
-
 /* ポット（まん中に あつまっている コイン・T38 §9-1 で カタカナ可）*/
 .pot {
   margin:0 auto 8px; width:max-content; padding:5px 18px; border-radius:999px;
@@ -127,10 +125,10 @@ button { font-family:inherit; cursor:pointer; }
 .step.now { background:var(--pink); color:#fff; }
 .step-line { flex:0 0 auto; width:12px; height:3px; border-radius:3px; background:#f0e3ea; }
 
-/* ※「今の役」の 名札・手札の目安★・場だけの役の 1行は T54 で 撤去した（復活させないこと）。
-   かわりに 下の「役の強さの一覧」が 役の 情報源に なる。 */
+/* ※「今の役」の 名札（.hand-name）と 手札の目安（★）は T53（社長指示）で
+   まるごと 撤去した。復活させないこと（設計図 §5.5「二層設計の上限」）。 */
 
-/* ── ★ 役の強さの一覧（T54で ポーカーから 持ちこみ）──────
+/* ── ★ 役の強さの一覧（T49 🟡2・コーダ）──────────────
    中身は game.js の buildRanks が PokerCore.HANDS から 自動で 作る。
    🎨アトへ：見た目は 自由に 直して OK。ただし
    「今の役」の 印（.ranks-row.is-me）は 消さないで ください。 */
@@ -194,15 +192,9 @@ button { font-family:inherit; cursor:pointer; }
 .card .corner i { font-style:normal; font-size:11px; }
 .card .pip { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:26px; line-height:1; }
 
-/* まだ 開いていない 場のカードの わく */
-.card-slot {
-  background:rgba(255,255,255,.28); border:3px dashed rgba(255,255,255,.75); box-shadow:none;
-  display:flex; align-items:center; justify-content:center;
-}
-.slot-mark { font-size:22px; font-weight:900; color:rgba(255,255,255,.9); }
-
-/* ※ 使う5枚の 光り（.card.is-used）と うすい札（.card.is-dim）は T54 で 撤去した
-   （強調は 画面に 1種類まで・設計図 §5.5。復活させないこと）。 */
+/* ※ 役の中心の 光り（.card.is-used／.card.is-dim）は T53（社長指示）で 撤去した。
+   すてる札の 選択（is-pick）と 混ざって 両方 死ぬ、が 理由。
+   強調は 画面に 1種類だけ（設計図 §5.5「二層設計の上限」）。復活させないこと。 */
 
 /* ★★ 勝負の 決着（T38 §6-6）―― つかった5枚だけを 上下に ならべる
    🎨アトへ：かざりは 変えて OK。ただし つぎの3つは 消さないで ください。
@@ -281,7 +273,7 @@ button { font-family:inherit; cursor:pointer; }
    🎨アトへ：ここは「いくら 動くか」が 読めることが 命です。
    <b>に 何を するか、<small>に いくら 出すか が 入っています。 */
 .act { margin-top:12px; }
-/* T54：持っている コイン ―― ボタンの すぐ上に（社長指示）。
+/* T53：持っている コイン ―― ボタンの すぐ上に（社長指示）。
    上の帯と 同じ 黄色の コインふだ。金のまる（.pot と 同じ 絵）を 1つ そえる。 */
 .act-coins {
   display:flex; align-items:center; gap:7px;
@@ -313,7 +305,7 @@ button { font-family:inherit; cursor:pointer; }
 .act-btn.is-allin { background:#ffe0ea; border-color:#ff9dbd; color:#b03060; }
 .act-btn.is-fold  { background:#f1eef5; border-color:#ddd4e6; color:#7c7186; }
 
-/* レイズ を おしたときの パネル（T54：1枚きざみに 一本化。3択の .raise-opt は 撤去した） */
+/* レイズ を おしたときの パネル（1枚きざみ・T53で 一本化） */
 .raise-panel {
   margin-top:9px; padding:10px 12px 12px; background:#fffbe9;
   border:3px solid var(--gold); border-radius:18px;
@@ -346,8 +338,8 @@ button { font-family:inherit; cursor:pointer; }
   font-size:17px; font-weight:900; box-shadow:0 5px 0 rgba(196,58,115,.3);
 }
 
-/* ※ 設定パネル（.settings／.set-btn 一式）は T54 で まるごと 撤去した（復活させないこと）。
-   ロボットは「つよい」固定・かけ金は 1枚きざみに 一本化。 */
+/* ※ 設定パネル（.settings／.set-*）は T53（社長指示）で まるごと 撤去した。
+   かけ方は 1枚きざみに 一本化・ロボットは「つよい」固定。復活させないこと。 */
 
 /* ── たしかめ用（作る人むけ）── */
 .devbox {
@@ -372,7 +364,6 @@ button { font-family:inherit; cursor:pointer; }
   :root { --card-w:52px; }
   .app-shell { padding:10px 10px 22px; }
   .brand span { font-size:14px; }
-  .board { gap:4px; }
   .board-wrap { padding:16px 6px 10px; }
   .seat-back { --back-h:42px; --back-step:13px; }
   .seat-name { font-size:11.5px; }
@@ -446,7 +437,7 @@ body {
    ことばの きれめで 折り返す。対応していない ブラウザは 読みとばすだけ。 */
 .seat-name, .seat-last, .happy-bubble,
 .log-line, .turn-note, .sd-lead, .sd-out, .sd-pots, .raise-note,
-.over-note, .tape, .me-tag, .ranks-desc {
+.over-note, .tape, .me-tag {
   word-break:auto-phrase;
 }
 
@@ -511,47 +502,17 @@ body {
 .step.now { box-shadow:0 2px 0 var(--pink-dark); }
 
 /* ============================================================
-   ③ 役の強さの 一覧（T54で ポーカーから 持ちこみ）
-      ※ 今の役の名札（③）と 光る5枚（④）の 仕上げは T54 で 撤去した。
+   ③（T45の「今の役の名札」の 仕上げは T53 で 名札ごと 撤去。
+      notePop は 取りかえバッジと 役の一覧が 今も 使うので 残す）
    ============================================================ */
-.ranks-toggle {
-  box-shadow:0 3px 0 rgba(196,155,110,.14);
-  transition:transform .1s ease, box-shadow .1s ease, border-color .12s ease;
-}
-.ranks-toggle:hover { transform:translateY(-1px); }
-.ranks-toggle:active { transform:translateY(2px); box-shadow:none; }
-.ranks-toggle:focus-visible { outline:4px solid var(--pink-deep); outline-offset:3px; }
-.ranks-box {
-  border-radius:18px;
-  box-shadow:0 4px 0 rgba(196,155,110,.14);
-  animation:notePop .3s cubic-bezier(.2,.9,.3,1.2);
-}
 @keyframes notePop {
   0%   { opacity:0; transform:scale(.85) translateY(4px); }
   100% { opacity:1; transform:none; }
 }
-.ranks-list { gap:3px; }
-.ranks-row { padding:5px 8px; }
-.ranks-row:nth-child(even) { background:#FFFBF2; }   /* 1行おきの しましま */
-.ranks-no {
-  flex:0 0 40px; padding:2px 0; border-radius:999px;
-  background:#FFF5D8; border:2px solid #F3D98A; color:#7D6321;
-  font-size:11px; line-height:1.4;
-}
-/* 上位3役は 金の ふだ ＝「上に あるほど 強い」を 絵でも いう */
-.ranks-row:nth-child(-n+3) .ranks-no {
-  background:linear-gradient(180deg,#FFF3B0,#FFE071);
-  border-color:var(--gold); color:#7A5205;
-}
-/* 今の役の 行（コーダの 印は 消さない・上から 塗り直して 立たせる） */
-.ranks-row.is-me {
-  background:var(--pink-soft); border-color:var(--pink);
-  box-shadow:0 2px 0 rgba(233,79,138,.18);
-}
-.ranks-row.is-me .ranks-no {
-  background:var(--pink); border-color:var(--pink-deep); color:#fff;
-}
-.ranks-row.is-me .ranks-name { color:var(--pink-dark); }
+
+/* ============================================================
+   ④（T45の 光る5枚／うすい札 は T53 で 撤去。上の 注意書きと 同じ 理由）
+   ============================================================ */
 
 /* ============================================================
    ② かけの 5ボタン ―― 役割の色（ブラックジャックの 色分けが 手本）
@@ -729,8 +690,6 @@ body {
 /* ── 実況・考え中 ── */
 .table-log { box-shadow:0 3px 0 rgba(196,155,110,.14); }
 
-/* ※ 設定パネルの 仕上げ（.settings／.set-btn）は T54 で 撤去した */
-
 /* ── たしかめ用：たたんである（details）。遊ぶ人の 目に 入りにくく ── */
 .devbox { background:#F5F2F9; border-color:#DFD5EA; opacity:.85; }
 .devbox:hover, .devbox[open] { opacity:1; }
@@ -755,9 +714,6 @@ body {
   .act-btn b { font-size:15.5px; }
   .act-coins { font-size:13px; padding:4px 12px; }
   .act-coins::before { width:12px; height:12px; }
-  .ranks-no { flex-basis:36px; font-size:10px; }
-  .ranks-name { font-size:12.5px; }
-  .ranks-desc { font-size:11px; }
   .happy-wrap { width:56px; }
   .happy-cat { height:42px; }
   .happy-name { font-size:9.5px; }
@@ -773,7 +729,224 @@ body {
 @media (prefers-reduced-motion:reduce) {
   .happy-cat, .seat.is-turn, .next-hand,
   .sd-row.is-win .card.is-mini, .sd-row.is-win::after,
-  .showdown, .ranks-box { animation:none !important; }
+  .showdown { animation:none !important; }
+}
+
+/* ============================================================
+   ここから下：ポーカー（5枚くばって 取りかえる）専用の 差分 ― 💻コーダ（T48）
+   ------------------------------------------------------------
+   上は ホールデム（T45・アト仕上げずみ）の 見た目を そのまま 土台に した。
+   ドローで 足した 部品だけ ここに 書く。仕上げは 🎨アトが やる。
+     ① 取りかえ枚数バッジ（.seat-swap）… ドローの ただ1つの 公開情報。消さない
+     ② すてる札の えらび（.card.is-pick）… 大富豪の 複数枚選択と 同じ 手ざわり
+     ③ 引いた札の うら向き（.card.is-back-me）… 1枚ずつ めくる 演出の もと
+     ④ テーブルまん中の 山札（.deck-row）… のこり枚数と すてた枚数が 見える
+     ⑤ 取りかえの パネル（.swap-panel）… ボタンは 1つだけ。字が 変わる
+   ============================================================ */
+
+/* 伏せ札が 5枚に なったぶん、少し 小さく・つめて ならべる */
+.seat-back { --back-h:46px; --back-step:13px; }
+
+/* ① 取りかえ枚数バッジ ―― ハンドが 終わるまで 消えない（T47 §6-5）。
+   0枚（取りかえなかった！）は いちばん こわい 情報なので 強調色。 */
+.seat-swap {
+  margin:2px auto 0; width:max-content; max-width:100%;
+  padding:1px 8px; border-radius:999px;
+  background:#EAF4FB; border:2px solid #BFDCEE;
+  font-size:10.5px; font-weight:900; color:#3F6F8E;
+  min-height:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.seat-swap:empty { border-color:transparent; background:transparent; }
+.seat-swap.is-zero {
+  background:var(--pink-soft); border-color:var(--pink); color:var(--pink-dark);
+  animation:notePop .4s cubic-bezier(.2,.9,.3,1.2);
+}
+.me-tag.is-swap-zero { background:var(--pink); color:#fff; }
+
+/* ② すてる札の えらび ―― この画面で ただ1つの 強調（T53）。
+   浮かせて ピンクの わく ＋「すてる」の ふだ。もう1回 タップで もどる。 */
+.card.is-pick {
+  transform:translateY(-12px);
+  border-color:var(--pink-deep);
+  box-shadow:0 0 0 3px var(--pink-soft), 0 6px 10px rgba(196,58,115,.3);
+  z-index:3;
+}
+.card.is-pick::after {
+  content:'すてる';
+  position:absolute; left:50%; bottom:4px; transform:translateX(-50%);
+  padding:1px 7px; border-radius:999px;
+  background:var(--pink-deep); color:#fff;
+  font-size:10px; font-weight:900; white-space:nowrap;
+  pointer-events:none;
+}
+/* 取りかえの 番だけ「タップできる」と 分かる 手ざわりに（カーソルは 下の T53改で 付ける） */
+.card[data-key] { transition:transform .12s ease, box-shadow .12s ease; }
+
+/* ③ 引いた札の うら向き（1枚ずつ めくる・T47 §6-7） */
+.card.is-back-me {
+  background:transparent url('../cards/%E3%83%88%E3%83%A9%E3%83%B3%E3%83%97%E8%A3%8F%E8%B5%A4.png') center/cover no-repeat;
+  border-color:#c9a9a9;
+}
+.card.is-back-me .fallback { display:none; }
+
+/* ④ テーブルまん中の 山札 */
+.deck-row {
+  display:flex; align-items:center; justify-content:center; gap:9px;
+  min-height:44px;
+}
+.deck-back {
+  flex:0 0 auto; width:30px; height:calc(30px * 635 / 419);
+  border-radius:4px;
+  background:transparent url('../cards/%E3%83%88%E3%83%A9%E3%83%B3%E3%83%97%E8%A3%8F%E8%B5%A4.png') center/contain no-repeat;
+  filter:drop-shadow(1px 2px 1px rgba(49,41,42,.3));
+}
+.deck-note {
+  padding:4px 13px; border-radius:999px;
+  background:rgba(255,255,255,.88); border:2px solid #3f863f;
+  font-size:12px; font-weight:900; color:#2c6b2c; white-space:nowrap;
+}
+
+/* ⑤ 取りかえの パネル ―― ボタンは 1つ。0枚でも 押せる（T47 §5-2） */
+.swap-panel {
+  margin-top:2px; padding:11px 12px 13px; background:#EAF7FF;
+  border:3px solid #8CC8E8; border-radius:18px; text-align:center;
+}
+.swap-title { margin:0 0 9px; font-size:13.5px; font-weight:900; color:#2F6D93; }
+.swap-btn {
+  display:block; width:100%; min-height:56px; border-radius:18px;
+  background:linear-gradient(180deg,#67BDE8,#3D96C9); border:4px solid #fff; color:#fff;
+  font-size:17px; font-weight:900; font-family:inherit;
+  box-shadow:0 5px 0 #2A6E96, 0 9px 14px rgba(61,150,201,.24);
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+.swap-btn:hover { transform:translateY(-2px); }
+.swap-btn:active { transform:translateY(3px); box-shadow:0 2px 0 #2A6E96; }
+.swap-btn:focus-visible { outline:4px solid var(--pink-deep); outline-offset:3px; }
+
+/* 勝負の わくの 取りかえ枚数（読み合わせが できるよう 決着にも 出す） */
+.sd-swap {
+  padding:1px 8px; border-radius:999px;
+  background:#EAF4FB; border:2px solid #BFDCEE;
+  font-size:11px; font-weight:900; color:#3F6F8E; white-space:nowrap;
+}
+
+/* 自分の手札は 5枚 ―― 取りかえで 浮く ぶんの 上の 余白を たす */
+.hand { padding-top:14px; gap:6px; }
+
+/* ── せまい画面（スマホ）───────────────────────── */
+@media (max-width:560px) {
+  .seat-back { --back-h:34px; --back-step:10px; }
+  .seat-swap { font-size:9.5px; padding:1px 6px; }
+  .deck-back { width:24px; height:calc(24px * 635 / 419); }
+  .deck-note { font-size:10.5px; padding:3px 10px; }
+  .swap-btn { min-height:52px; font-size:15.5px; border-width:3px; }
+  .swap-title { font-size:12px; }
+  .sd-swap { font-size:10px; }
+  .hand { gap:4px; padding-top:12px; }
+  .card.is-pick { transform:translateY(-9px); }
+  .card.is-pick::after { font-size:9px; padding:1px 5px; }
+}
+@media (max-width:380px) {
+  .hand { gap:3px; }   /* カードの 大きさは 土台の 46px のまま（5枚 ならんでも はみ出さない） */
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .seat-swap.is-zero { animation:none !important; }
+}
+
+/* ============================================================
+   ここから下：ポーカーの 見た目仕上げ ― 🎨アト（T51）→ 💻コーダが T53 で 改
+   ------------------------------------------------------------
+   T51の「すてる？」の 小ふだは、もともと うすい札（is-dim）に だけ
+   付けていた。T53（社長指示）で 光り（is-used／is-dim）を 撤去した ので、
+   いまは「自分の 取りかえの 番の、まだ えらんでいない 5枚 ぜんぶ」に 付ける。
+   　・青い 点線わく ＋「すてる？」の 小ふだ ＝ えらべる札
+   　・押すと ピンクの「すてる」（is-pick）に 変わる ―― 問いが 答えに なる
+   　・強調（ピンク）は is-pick の 1種類だけ（設計図 §5.5「二層設計の上限」）。
+   　　青い 点線は「えらべる」の 案内で、強調では ない
+   検知は body:has(.swap-panel:not(.hidden))。swap-panel が 出るのは
+   自分の 取りかえの 番だけ なので、JSに さわらず フェーズが 分かる。
+   :has が ない 古い ブラウザでも、タップの 聞き耳は game.js に あるので
+   えらぶ こと自体は できる（小ふだが 出ないだけ）。
+
+   ② 役の強さの 一覧（コーダの 最小スタイルの 仕上げ）
+      ・順位を まるい 数字ふだに（上位3役は 金 ＝「上ほど 強い」が 絵で 分かる）
+      ・1行おきに うすい しましま（10行を 目で たどれる ように）
+      ・今の役の 行は ピンクの まま、順位ふだも ピンクに して 目を 引く
+      ・開いた しゅんかんに ぽんと 出る（notePop 再利用・盤面は 動かさない）
+   ============================================================ */
+
+/* ── ① 自分の 取りかえの 番：まだ えらんでいない 札 ＝「えらべる札」──
+   青い 点線わく（取りかえパネルと おそろいの 青）。 */
+body:has(.swap-panel:not(.hidden)) .card[data-key]:not(.is-pick) {
+  border-color:#6FAFD6;
+  border-style:dashed;
+  box-shadow:0 0 0 2px rgba(140,200,232,.35), 1px 3px 2px rgba(49,41,42,.22);
+}
+/* 「すてる？」の 小ふだ（えらぶと is-pick の「すてる」に 変わる） */
+body:has(.swap-panel:not(.hidden)) .card[data-key]:not(.is-pick)::after {
+  content:'すてる？';
+  position:absolute; left:50%; bottom:4px; transform:translateX(-50%);
+  padding:1px 6px; border-radius:999px;
+  background:#3D96C9; color:#fff;
+  font-size:10px; font-weight:900; white-space:nowrap;
+  pointer-events:none;
+}
+/* タップできるのは 取りかえの 番だけ（game.js の 聞き耳と そろえる） */
+body:has(.swap-panel:not(.hidden)) .card[data-key] { cursor:pointer; }
+/* マウスの人へ：なでると 少し 浮く（押せる 手ざわり） */
+body:has(.swap-panel:not(.hidden)) .card[data-key]:not(.is-pick):hover {
+  transform:translateY(-5px);
+}
+
+/* ── ② 役の強さの 一覧 ────────────────────────── */
+.ranks-toggle {
+  box-shadow:0 3px 0 rgba(196,155,110,.14);
+  transition:transform .1s ease, box-shadow .1s ease, border-color .12s ease;
+}
+.ranks-toggle:hover { transform:translateY(-1px); }
+.ranks-toggle:active { transform:translateY(2px); box-shadow:none; }
+.ranks-toggle:focus-visible { outline:4px solid var(--pink-deep); outline-offset:3px; }
+.ranks-box {
+  border-radius:18px;
+  box-shadow:0 4px 0 rgba(196,155,110,.14);
+  animation:notePop .3s cubic-bezier(.2,.9,.3,1.2);
+}
+.ranks-list { gap:3px; }
+.ranks-row { padding:5px 8px; }
+.ranks-row:nth-child(even) { background:#FFFBF2; }   /* 1行おきの しましま */
+.ranks-no {
+  flex:0 0 40px; padding:2px 0; border-radius:999px;
+  background:#FFF5D8; border:2px solid #F3D98A; color:#7D6321;
+  font-size:11px; line-height:1.4;
+}
+/* 上位3役は 金の ふだ ＝「上に あるほど 強い」を 絵でも いう */
+.ranks-row:nth-child(-n+3) .ranks-no {
+  background:linear-gradient(180deg,#FFF3B0,#FFE071);
+  border-color:var(--gold); color:#7A5205;
+}
+/* 今の役の 行（コーダの 印は 消さない・上から 塗り直して 立たせる） */
+.ranks-row.is-me {
+  background:var(--pink-soft); border-color:var(--pink);
+  box-shadow:0 2px 0 rgba(233,79,138,.18);
+}
+.ranks-row.is-me .ranks-no {
+  background:var(--pink); border-color:var(--pink-deep); color:#fff;
+}
+.ranks-row.is-me .ranks-name { color:var(--pink-dark); }
+
+/* ── せまい画面（スマホ・375px）───────────────── */
+@media (max-width:560px) {
+  .ranks-no { flex-basis:36px; font-size:10px; }
+  .ranks-name { font-size:12.5px; }
+  .ranks-desc { font-size:11px; }
+  body:has(.swap-panel:not(.hidden)) .card[data-key]:not(.is-pick)::after {
+    font-size:9px; padding:1px 4px; bottom:3px;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .ranks-box { animation:none !important; }
 }
 
 /* ============================================================
@@ -832,17 +1005,13 @@ body {
 /* つまれた しゅんかんだけ、ごく 小さく 落ちる（設計図 §5.5：動きは ひかえめに）*/
 @keyframes chipDrop { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:none; } }
 .chip.is-new { animation:chipDrop .18s ease-out both; }
-@media (prefers-reduced-motion:reduce) { .chip.is-new { animation:none; } }
 
 /* ============================================================
    ★ T57 ―― 画面を けずって シンプルに（社長指示・2026-08-19）― 🎨アト
    ------------------------------------------------------------
-   ⚠️ ポーカー（../poker/style.css）と 中身を 完全に そろえてある。
-      片方を 直したら もう片方も 同じに 直すこと（操作感の 統一・先週の 約束）。
-
    なぜ：「他社の ポーカー画面くらい シンプルに したい。
           スライド（スクロール）しないで 遊びたい」（社長）。
-          けずる前は たて 1238px。パソコン（900px）でも スクロールが 要った。
+          けずる前は たて 1203px。パソコン（900px）でも スクロールが 要った。
    やったのは「消す・動かす・つめる」の 3つだけ。
      ・画面の ことばは 1文字も 変えていない（消す・動かすだけ）
      ・game.js ／ poker-core.js には 1バイトも さわっていない
@@ -854,7 +1023,7 @@ body {
         .tape   … コインは かけボタンの 上に もう 出ている
         .steps  … 場の カードが ふえれば 分かる
         .devbox … お客さんに 見せる 物では ない（消しわすれ）
-                  ※ HOLDEM.autoPlay() などの 命令は そのまま 生きている
+                  ※ POKER.autoPlay() などの 命令は そのまま 生きている
         ふきだしの 行 … 下の 実況欄と 口が 2つ あった
                   → ハッピーの かおは 実況欄の 中へ 引っこし（index.html）
    ② 動かす：役の強さの 一覧（.ranks）を 画面の 一番下へ（index.html）
@@ -908,7 +1077,7 @@ body {
 /* ── ④ かけの ボタン ―― かならず 横1行 ─────────────
    同時に 出るのは 最大4つ（チェックと コールは 同時に 出ない）。
    4つで 組んで、5つ 出ても くずれない。
-   下の 小さい 日本語（社長指示・T54）は 残す ―― 字を 小さく、
+   下の 小さい 日本語（社長指示・T53）は 残す ―― 字を 小さく、
    余白を つめて 入れる。押しやすさ（44px以上）は 落とさない。 */
 .act-row {
   display:flex; flex-wrap:nowrap; gap:6px; align-items:stretch;
@@ -928,6 +1097,14 @@ body {
 .pot         { margin:0 auto 6px; }
 .chips-slot  { margin:0 0 5px; }
 .mine        { margin-top:7px; padding:5px 13px 7px; }
+.hand        { padding-top:10px; }   /* 取りかえで 札が 浮く ぶんの 上の 余白（ポーカーだけ）*/
+
+/* 取りかえの パネル（ポーカーだけ。ホールデムには 無い）――
+   かけの ボタンより 高く なるので、ここも つめる。
+   押す ところは 52px ＝ 44px より 大きい まま。 */
+.swap-panel { padding:9px 12px 10px; }
+.swap-title { margin:0 0 7px; }
+.swap-btn   { min-height:52px; }
 .act         { margin-top:7px; }
 .act-coins   { margin:0 0 6px; }
 .ranks       { margin-top:7px; }
@@ -946,6 +1123,7 @@ body {
   .act-row { gap:4px; }
   .act-btn { padding:5px 2px; }
 }
+@media (prefers-reduced-motion:reduce) { .chip.is-new { animation:none; } }
 
 /* ============================================================
    ここから下：T59 ― レイズの パネルを「浮かせる」 🎨アト
