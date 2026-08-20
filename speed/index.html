@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>スピード ― ブラゲ工房</title>
+  <meta name="description" content="1つちがいの数字を どんどん出す！ 番を待たない 早い者勝ちのゲーム ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       ------------------------------------------------------------
+       既存5本と おなじ 書き方。絶対URL で 書く。
+       ⚠️ まだ 作っている とちゅう の ゲームです。まとめサイトに ならべる ときに
+          og:url が 正しいか もう一度 見なおすこと。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="スピード ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="1つちがいの数字を どんどん出す！ 番を待たない 早い者勝ちのゲーム。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/speed/" />
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%888.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="419" />
+  <meta property="og:image:height" content="635" />
+  <meta property="og:image:alt" content="トランプのハートの8" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="スピード ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="1つちがいの数字を どんどん出す！ 番を待たない 早い者勝ちのゲーム。開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%83%8F%E3%83%BC%E3%83%888.png" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存5本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存5本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       もどる道と 名前だけ。ポーカーの T57 後の 形に そろえる ―― 進み具合バー・
+       常設の 解説パネル・たしかめ用の 箱は 1つも 作らない（設計図 §5.5 の上限）。 -->
+  <header class="topbar">
+    <a class="back" href="../">◀ ゲームを選ぶ</a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>スピード</span>
+    </div>
+    <span class="topbar-pad" aria-hidden="true"></span>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       言葉は 下の ハッピーの ふきだしが 言う（口を 2つ 作らない・T57 の 形）。 -->
+  <section class="title-screen" id="titleScreen">
+    <!-- ★T64：ロボットの 速さは 遊ぶ人が えらぶ（社長裁定）。
+         5だんかいの 中身は game.js の TUNE.SPEEDS 1か所から 作る。
+         えらんだ ものは そのまま 続く ―― 勝ち負けで かってに 変わらない。 -->
+    <label class="speed-pick" for="speedTitle">
+      <span class="speed-pick-name">ロボットの速さ</span>
+      <select class="speed-select" id="speedTitle"></select>
+    </label>
+    <button class="start-button" type="button" id="btnStart">
+      <span>ゲームを始める <b>▶</b></span><small>カードを配るよ</small>
+    </button>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       遊んでいる間の ボタンは 1つも ない（6本で 初めて）。
+       ずっと 出ている 数字は 山札の 残り 2つだけ ＝ これが 点数。 -->
+  <section class="play-screen hidden" id="playScreen">
+
+    <div class="side-row bot-row">
+      <div class="side-head">
+        <p class="side-name">🤖 ロボット</p>
+        <p class="deck-count" id="botDeck">山札 21枚</p>
+      </div>
+      <div class="hand-row" id="botHand"></div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="pile" id="pile0" aria-label="左の山"></div>
+      <div class="pile" id="pile1" aria-label="右の山"></div>
+      <p class="count-box hidden" id="countBox" aria-live="assertive"></p>
+    </div>
+
+    <div class="side-row me-row">
+      <div class="side-head">
+        <p class="side-name">わたし</p>
+        <p class="deck-count" id="myDeck">山札 21枚</p>
+      </div>
+      <div class="hand-row is-mine" id="myHand"></div>
+    </div>
+  </section>
+
+  <!-- ハッピー ＋ ふきだし（T57 の ポーカーと 同じ 1行の 形）
+       ⚠️ 遊ぶ前の 画面でも 出す ―― ハッピーは 全ゲーム・全ページに 必ず 出す
+          （設計図 §9.5）。画面の 言葉は ここ 1か所だけ から 出る。 -->
+  <div class="log-row">
+    <div class="happy-wrap">
+      <svg class="happy-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">赤いカードが 自分の。1つちがいの 数字を どんどん出そう！</p>
+  </div>
+
+  <!-- ── 遊び方（画面の 一番下・T57 の 形）────────────── -->
+  <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+
+</main>
+
+<!-- ── 勝ち負けの 画面 ────────────────────────────
+     ボタンは 2つだけ（もう1回 ／ やめる）。
+     ⚠️ この 2つは 手札カードの 真上に かさなる（T62 トライの 実測）。
+        スピードは 連打する ゲームなので、決着した 瞬間に 指が 止まらない。
+        → 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（game.js）。
+          おせない あいだは うすく 平たく 見せる（強調は 増やさない）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="result-title" id="resultTitle">勝ち！</p>
+    <div class="result-card" id="resultCard"></div>
+    <p class="result-say" id="resultSay"></p>
+    <!-- ★T64：ここにも 同じ プルダウンを 置く（★大事）
+         負けた 直後の ハッピーの「速さは 変えられるよ！」を、言われた その場で
+         できる ように する ため。ここに 無いと あの ひとことが 空ぶりする。
+         えらび直して「もう1回」を おすと、その 速さで 始まる。
+         ⚠️ 決着 直後の かぎ（T63）は この プルダウンにも 効く（game.js の lockResult）。 -->
+    <label class="speed-pick" for="speedResult">
+      <span class="speed-pick-name">ロボットの速さ</span>
+      <select class="speed-select" id="speedResult"></select>
+    </label>
+    <div class="result-buttons">
+      <button class="dialog-ok" type="button" id="btnAgain">もう1回 <b>▶</b></button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ⚠️ ここが A と K の つながりを 教える ただ1つの 場所。
+        社長裁定3（光らせない）で、遊んでいる とちゅうの 画面には
+        1文字も 足さない と 決めた。だから 絵で 見せる。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">先に 全部なくした人の 勝ち！</p>
+  <ol class="help-list">
+    <li>赤いカードが 自分の。黒いカードが ロボットの。</li>
+    <li>真ん中の山の <b>1つちがい</b>の 数字を、どんどん出す。</li>
+    <li>番は ない。<b>早い者勝ち。</b></li>
+  </ol>
+
+  <!-- 数字の 輪っか（A と K も となり）― 文字ではなく 絵で 見せる -->
+  <div class="ring-wrap">
+    <svg class="ring" viewBox="0 0 200 200" role="img" aria-label="数字は輪になっていて、AとKもとなり">
+      <circle cx="100" cy="100" r="76" fill="none" stroke="#FFE3EF" stroke-width="10"/>
+      <path d="M64.7 32.7 A 76 76 0 0 1 100 24" fill="none" stroke="#FF8CB8" stroke-width="10" stroke-linecap="round"/>
+      <g class="ring-num">
+        <text class="hi" x="100" y="24">A</text>
+        <text x="135.3" y="32.7">2</text>
+        <text x="162.5" y="56.8">3</text>
+        <text x="175.4" y="90.8">4</text>
+        <text x="171.1" y="126.9">5</text>
+        <text x="150.4" y="156.9">6</text>
+        <text x="118.2" y="173.8">7</text>
+        <text x="81.8" y="173.8">8</text>
+        <text x="49.6" y="156.9">9</text>
+        <text x="28.9" y="126.9">10</text>
+        <text x="24.6" y="90.8">J</text>
+        <text x="37.5" y="56.8">Q</text>
+        <text class="hi" x="64.7" y="32.7">K</text>
+      </g>
+      <text class="ring-cap" x="100" y="96">数字は</text>
+      <text class="ring-cap" x="100" y="118">輪っか</text>
+    </svg>
+    <p class="ring-note"><b>A</b> と <b>K</b> も となり</p>
+  </div>
+
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<script src="game.js"></script>
+</body>
+</html>
