@@ -290,7 +290,8 @@ button { font-family:inherit; cursor:pointer; }
      足すのでは なく 引く ―― おせない あいだだけ うすく・平たく して、
      おせるように なった 瞬間に すっと 色と かげが もどる。
      「おせそうな 見た目の まま おせない」を 作らない ことが 大事。
-   待ち時間は game.js の TUNE.RESULT_LOCK 1か所だけ。 */
+   待ち時間は game.js の TUNE.RESULT_LOCK 1か所だけ。
+
    ★T64：速さの プルダウンも 同じ かぎの 中に 入れる。
      連打の 勢いで 速さが かってに 変わったら 台なしに なる。
      ⚠️ pointer-events:none は **wrapper（.speed-pick）に かける**こと。

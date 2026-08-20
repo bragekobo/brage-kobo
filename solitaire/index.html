@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ソリティア ― ブラゲ工房</title>
+  <meta name="description" content="1人で じっくり。52枚を A から K まで きれいに そろえよう！ ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       既存6本と おなじ 書き方。絶対URL で 書く。
+       ⚠️ まとめサイトに ならべる ときに og:url を もう一度 見なおすこと。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="ソリティア ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="1人で じっくり。52枚を A から K まで きれいに そろえよう！ ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/solitaire/" />
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%90%E3%83%BCA.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="419" />
+  <meta property="og:image:height" content="635" />
+  <meta property="og:image:alt" content="トランプのクローバーのエース" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="ソリティア ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="1人で じっくり。52枚を A から K まで きれいに そろえよう！ 開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%90%E3%83%BCA.png" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存6本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存6本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       もどる道と 名前、そして 遊んでいる間の ボタン 2つ（仕様 §4-5）。
+       ポーカー T57・スピードの 形に そろえる ―― 進み具合バー・常設の 解説パネル・
+       たしかめ用の 箱は 1つも 作らない（設計図 §5.5 の上限）。
+       ★ ボタンを 別の 帯に せず ここに 入れたのは、たての 40px を
+         場札に まわす ため（仕様 §1-3：札の 大きさを 決めているのは たて）。 -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>ソリティア</span>
+    </div>
+    <div class="tools hidden" id="tools">
+      <button class="tool" type="button" id="btnUndo">もどす</button>
+      <button class="tool" type="button" id="btnNew">新しく 配る</button>
+    </div>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★ 社長裁定2：難しさは 選ばせない。プルダウンは 1つも 置かない。 -->
+  <section class="title-screen" id="titleScreen">
+    <p class="title-lead">A から K まで、4つの 山を そろえよう！</p>
+    <button class="start-button" type="button" id="btnStart">
+      <!-- ★ T69・🟡3/🟡9：小さい字は「カードを 配るよ」から 置きかえ。
+           ① 1回タップは 何も 起きない 作りなので、遊ぶ 前に 操作を 1回だけ 伝える
+           ② 「カード」と「札」の 呼び名が 2つ あったのを「札」に そろえる
+           ★ 文字は 1つも 増えていない（すでに ある 1行の 置きかえ）。 -->
+      <span>はじめる <b>▶</b></span><small>札は つまんで 運ぼう</small>
+    </button>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       置き場は 13か所。中身（下じきと 52枚の札）は game.js が 作って
+       置き場所を 計算する ―― 寸法は TUNE 1か所から しか 出てこない。 -->
+  <section class="play-screen hidden" id="playScreen">
+    <div class="board" id="board"></div>
+  </section>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方（画面の 一番下・1行に まとめる）
+       ⚠️ ハッピーは 全ゲーム・全ページに 必ず 出す（設計図 §9.5）。
+          画面の 言葉は ここ 1か所だけ から 出る。
+       ★ 遊び方を この 行に 入れたのは、たての 44px を 場札に まわす ため。 -->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap">
+      <svg class="happy-cat" id="happyCat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">1人で じっくり。52枚を きれいに そろえよう！</p>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </div>
+
+</main>
+
+<!-- 札が 降る 演出（仕様 §6-1・社長裁定3）。タップで 飛ばせる・6秒で 止まる。 -->
+<canvas class="fall-canvas hidden" id="fallCanvas" aria-hidden="true"></canvas>
+
+<!-- ── 勝ち／止まった ときの 画面 ──────────────────
+     ⚠️ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（game.js）。
+        ソリティアは 演出を タップで 飛ばせる ので、その 同じ 指が
+        次の タップで ボタンを おす 危険が スピードより 高い（仕様 §6-1）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="result-title" id="resultTitle">ぜんぶ そろった！</p>
+    <p class="result-say" id="resultSay"></p>
+    <div class="result-buttons">
+      <button class="dialog-ok" type="button" id="btnMain">新しく 配る <b>▶</b></button>
+      <button class="dialog-ok alt hidden" type="button" id="btnSub">新しく 配る</button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）────────────── -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">52枚 全部を 右上に 積んだら 勝ち！</p>
+  <ol class="help-list">
+    <li>右上の 4つに、<b>A から K まで</b> 同じマークを 順に 積んだら 勝ち。</li>
+    <!-- ★ T69・🟡8：「交互」の 互 は 中学の 漢字（設計図 §9.6・例外リストにも 無い）。 -->
+    <li>下の 7列では、<b>赤と黒を かわりばんこに</b>、1つずつ 小さい順に 重ねられる。</li>
+    <li>動かせなく なったら、左上の <b>山札を めくる</b>。</li>
+  </ol>
+  <!-- ★ T69・🟡4/🟡5：注の箱に 2行 足す（説明の 3行は 3行の まま ＝ §5.5 は 守る）。
+       クロンダイクの ルールで、画面からも 遊び方からも 知る 道が 無かったのが
+       この 2つ だけ ―― 置ける ところを 光らせない 作りなので、
+       知らないと 「列が 空いたのに 何も 置けない」で 必ず 止まる。 -->
+  <p class="help-note">札は <b>つまんで 運ぶ</b>。置けない ところなら 元に もどるよ。<br>
+    <b>2回 続けて おす</b>と 右上へ。<b>「もどす」は 何回でも</b> おせる。<br>
+    空いた 列に 置けるのは <b>K だけ</b>。<br>
+    右上に 上げた札は、<b>引っぱって もどせる</b>。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<script src="game.js"></script>
+</body>
+</html>
