@@ -1,0 +1,323 @@
+/* ============================================================
+   神経衰弱 ― 見た目（T79・コーダ）
+   ------------------------------------------------------------
+   ・色・かたち・丸ゴシックは 既存9本と そろえてある（設計図 §9.5）。
+   ・カードの ひりつ 419:635（2:3）は ぜったいに くずさない（設計図 §9）。
+   ・遊んでいる間の ボタンは **1つも 無い**（もどすも 新しく配るも 作らない）。
+
+   ★★★ この 画面には「光る・色が 変わる」ものが **1つも ない** ★★★
+     ------------------------------------------------------------
+     社長裁定5：★青わくは 作らない。強調ゼロ。
+     ★ 1枚めを おした ことは、**その札が 裏から 表に なる**ことで 分かる
+       ―― この 画面で 一番 大きい 変化。青わくは 同じことを 2回 言うだけ。
+     ★ 下の 札（.card）の きまりを 全部 見ても、
+       :hover ／ :active ／ filter ／ 色の 切りかえ は 1つも 無い。
+       あるのは
+         ・.is-down … 裏と表の 入れかえ（＝ めくる。ゲームの 動きそのもの）
+         ・.is-no   … ぷるっと ゆれる（transform だけ。光でも 色でもない）
+       の 2つだけ。**ここに 光る ものを 足さないこと。**
+
+   ★★ 寸法の 決めごと（★ここを 間違えると 全部 こわれる）★★
+     ・並べ方は **7列×8段（56枠）。最後の段だけ 3枚**（52枚）
+     ・52枠の 場所は 最後まで 動かさない（覚える ゲームで 並びが 動いたら 全損）
+     → だから 札の 大きさは CSS では 決めない。
+       game.js の layout() が **盤の 実寸** から 計算する。
+       CSS が 決めるのは「器の かたち」だけ。
+
+   ・1000×900・375px・320px の どれでも スクロールを 出さない。
+   ・仕上げは 🎨アトが やります。部品ごとに 見出しを 入れてあります。
+   ============================================================ */
+
+:root {
+  --ink:#463c52;
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+  --white:     #ffffff;
+  --cream:     #fff9ea;
+  --gold:      #F1A426;
+  --gold-soft: #FFE690;
+  --mint:      #6FC98C;
+  --mint-soft: #DCF6E4;
+  --blue-soft: #DDF3F7;
+
+  --font-main:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","M PLUS Rounded 1c","Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;
+
+  /* ★ 札の 大きさは game.js が 入れる（CSS からは 決めない・上の 説明を 読むこと）*/
+  --cw: 49px;
+  --ch: 74px;
+  --radius: 4px;
+}
+
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  margin:0; min-width:320px; color:var(--ink); font-family:var(--font-main);
+  background:linear-gradient(180deg,#bcebf0 0 190px,#fff7e8 190px);
+  overflow:hidden;                     /* ★ スクロールは ぜったいに 出さない */
+  overscroll-behavior:none;            /* ★ 指が ぶれても、引っぱって 読み込み直しに ならない */
+  -webkit-text-size-adjust:100%;
+  -webkit-touch-callout:none;          /* ★ 長おしの メニューを 出さない */
+}
+button { font-family:inherit; cursor:pointer; }
+.hidden { display:none !important; }
+.sprite-defs { position:absolute; width:0; height:0; overflow:hidden; }
+
+/* ★ たて 1画面ぴったりに 積む。盤だけが のびちぢみ する。 */
+.app-shell {
+  height:100vh; height:100svh;
+  max-width:1000px; margin:0 auto; padding:8px 10px;
+  display:flex; flex-direction:column; gap:8px;
+}
+
+/* ── 上の帯（もどる ／ 名前）────────────────────────
+   ★ 遊んでいる間の ボタンは 無い。左右の つりあいを 取るための 空きだけ 置く。 */
+.topbar { flex:0 0 auto; display:flex; align-items:center; gap:6px; min-height:38px; }
+.back {
+  flex:0 0 auto; display:inline-flex; align-items:center; min-height:36px; padding:0 12px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
+  color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
+}
+.back:hover { border-color:var(--pink); }
+.brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
+.brand-cat { width:30px; height:23px; flex:0 0 auto; }
+.brand span { font-weight:900; font-size:16px; color:#3f5a70; white-space:nowrap; }
+.topbar-pad { flex:0 0 auto; width:96px; }
+
+@media (max-width:520px) {
+  .back span { display:none; }
+  .back { padding:0 11px; }
+  .brand span { font-size:15px; }
+  .topbar-pad { width:40px; }
+}
+@media (max-width:360px) {
+  .app-shell { gap:6px; }
+  .brand-cat { display:none; }
+  .brand span { font-size:13px; }
+  .topbar-pad { width:34px; }
+}
+
+/* ── はじめの 画面 ──────────────────────────────
+   ★ 置くものは 3つだけ ―― ひとこと ／ もの覚えの プルダウン ／ はじめる。 */
+.title-screen {
+  flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+  padding:24px 18px; background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  text-align:center; box-shadow:0 7px 0 rgba(196,58,115,.10); min-height:0;
+}
+.title-lead { margin:0; font-size:clamp(17px,4.4vw,23px); font-weight:900; color:#5a4a63; line-height:1.6; }
+.start-button {
+  display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+  min-width:250px; padding:15px 26px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 6px 0 var(--pink-dark);
+  font-size:20px; font-weight:900;
+}
+.start-button small { font-size:12px; font-weight:700; opacity:.9; }
+.start-button:active { transform:translateY(3px); box-shadow:0 3px 0 var(--pink-dark); }
+
+/* ── ロボットの もの覚え（★この ゲームで ただ1つの 設定）──────
+   置き場は 2か所だけ ―― はじめの 画面 と 終わりの 画面（スピード T64 と 同じ）。
+   ★ 遊んでいる 最中の 画面には 置かない（設計図 §5.5 の 線引き）。
+   ★ 中身（枚数）は 1つも 出さない。言葉だけで 分かるように する。 */
+.level-pick {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px 10px;
+  max-width:100%; margin:0 auto 14px; padding:7px 10px;
+  background:var(--cream); border:3px solid var(--gold-soft); border-radius:20px;
+}
+.title-screen .level-pick { margin:0; }
+.level-pick-name { font-size:13px; font-weight:900; color:#7a5205; white-space:nowrap; }
+.level-select {
+  max-width:100%; min-height:38px; padding:5px 10px;
+  background:var(--white); border:3px solid var(--gold); border-radius:999px;
+  color:var(--ink); font-family:inherit; font-size:15px; font-weight:900; cursor:pointer;
+}
+.level-select:focus-visible { outline:3px solid var(--pink); outline-offset:2px; }
+
+/* ── 遊ぶ 画面（盤）──────────────────────────
+   ★ .board が のこり ぜんぶを もらう。その 実寸を game.js が 測って
+     札の 大きさを 決める（＝ 52枚が 絶対に はみ出さない）。
+   ★ 52枚 固定。1枚も 増えず 1pxも 伸びない ので、
+     「まれな 最悪ケース」が そもそも 存在しない（設計図 2026-08-20 の裁定）。 */
+.play-screen { flex:1 1 auto; min-height:0; display:flex; }
+.board {
+  flex:1 1 auto; min-height:0; min-width:0; display:flex;
+  padding:6px; border-radius:20px;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 2px,transparent 2px 8px), #82ce84;
+  border:4px solid #3f863f; box-shadow:0 6px 0 rgba(86,53,38,.18);
+}
+.board-in { position:relative; flex:1 1 auto; min-width:0; min-height:0; }
+
+/* ★★ 盤の 上では、ページを 1mmも 動かさない ★★
+   touch-action:none を 置かないと、指が 少し ぶれた 瞬間に ブラウザが
+   「これは 画面を すべらせる 指だ」と 決めて、おした のに 反応しない ことが ある。
+   ★ このゲームは 押し間違いが 取り消せない ので、ここは 絶対に 消さない。 */
+.board, .board-in, .card { touch-action:none; }
+
+/* ★ スマホでは 器の わくを 削る（仕様 §1-0 の 内わけを 守る ため）
+     375px … 余白4＋わく3＋内3 ＝ 片側10px → 中身 355px → 札 49px ✅
+     320px … 余白3＋わく2＋内2 ＝ 片側 7px → 中身 306px → 札 33px */
+@media (max-width:520px) {
+  .app-shell { padding:6px 4px; }
+  .board { padding:3px; border-width:3px; border-radius:14px; }
+}
+@media (max-width:340px) {
+  .app-shell { padding:6px 3px; }
+  .board { padding:2px; border-width:2px; border-radius:11px; }
+}
+
+/* ── 札1枚 ────────────────────────────────
+   位置は transform だけで 動かす ので、動きが そのまま アニメに なる。
+   ★ 2枚がさね に して ある：
+     外（.card）… 置き場所（transform）。★取った 2枚が 帯へ 飛ぶ のも ここ
+     内（.card-in）… 中身（絵）
+   ★ 取られた 場所に 下じきは 置かない（わくが 残ると「まだ 何か ある」と 見える）。
+   ★ だから 52枠の 場所は 最後まで 動かない のに、盤は だんだん 空いていく。 */
+.card {
+  position:absolute; left:0; top:0; width:var(--cw); height:var(--ch);
+  transform-origin:0 0;                     /* ★帯へ 縮めて 飛ぶ ときの 基準 */
+  -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;
+  cursor:pointer;
+  transition:transform .3s cubic-bezier(.3,.7,.4,1);
+}
+.card-in { position:absolute; inset:0; border-radius:var(--radius); }
+.card img {
+  position:absolute; inset:0; display:block; width:100%; height:100%;
+  border-radius:inherit; box-shadow:0 2px 0 rgba(86,53,38,.22);
+  -webkit-user-drag:none;                   /* ★ パソコンの「画像の 引きずり」を 止める */
+  pointer-events:none;                      /* 当たり判定は game.js の 座標計算に まかせる */
+}
+
+/* ★★ めくる（裏 → 表）★★
+   ------------------------------------------------------------
+   ★ これが この ゲームの 唯一の「変化」であり、そのまま
+     「えらんだ」の 合図でも ある（社長裁定5 ―― 青わくは 作らない）。
+   ★ 時間は 200ms（game.js の TUNE.FLIP）。
+     ⚠️ この 200ms は「見せる時間（1.2秒／0.6秒）」には 含めない。 */
+.card .cf { opacity:1; transition:opacity .2s ease-out; }
+.card .cb { opacity:0; transition:opacity .2s ease-out; }
+.card.is-down .cf { opacity:0; }
+.card.is-down .cb { opacity:1; }
+.board.no-anim .card, .board.no-anim .card img { transition:none; }
+
+/* ★★「それは だめ」の ゆれ ★★
+   ------------------------------------------------------------
+   すでに めくれている 1枚めを もう一度 おすと、その札だけ ぷるっと ゆれる。
+   ★「もう一度 おして 取り消す」は 無い ―― もう 見えて しまっている ので、
+     外しても「見なかったこと」には できない（仕様 §4-3）。
+   ★ ゆれは **光でも 色でも ない** ので、強調は ゼロの まま。音も 鳴らさない。
+   ★ どの札が 当たりかは 1つも 教えない（設計図 追記②）。
+
+   ⚠️ ふだんの 置き場所は transform で 決めている。ゆれの アニメも transform なので、
+      そのまま 書くと **左上に 飛ぶ**。→ ゆらす 直前に 置き場所を --sx / --sy に 入れる。 */
+@keyframes shakeNo {
+  0%,100% { transform:translate(var(--sx,0px),var(--sy,0px)); }
+  20% { transform:translate(calc(var(--sx,0px) - 5px),var(--sy,0px)) rotate(-2deg); }
+  45% { transform:translate(calc(var(--sx,0px) + 4px),var(--sy,0px)) rotate(2deg); }
+  70% { transform:translate(calc(var(--sx,0px) - 2px),var(--sy,0px)); }
+}
+.card.is-no { animation:shakeNo .15s ease-in-out; transition:none; }
+
+/* 画像が 届かなかった ときだけ 出る 下じき（画面が 白く ならない ように）。
+   ふだんは 一度も 出ない ―― 支給画像は 55枚 そろっている。 */
+.fallback {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  border-radius:inherit; background:#fff; border:2px solid #d9cfe0;
+  font-size:calc(var(--cw) * .3); font-weight:900; line-height:1;
+}
+.fallback.red { color:#d8395f; } .fallback.black { color:#3a3a46; }
+
+/* ── ハッピー ＋ ふきだし ＋ 遊び方（画面の 一番下・1行）──── */
+.log-row {
+  position:relative; z-index:75;
+  flex:0 0 auto; display:flex; align-items:center; gap:9px;
+  padding:6px 10px; background:var(--white); border:3px solid var(--pink-soft); border-radius:18px;
+}
+.happy-wrap { flex:0 0 auto; text-align:center; }
+.happy-cat { width:42px; height:32px; display:block; }
+.happy-name { margin:0; font-size:10px; font-weight:900; color:#c9a24a; }
+.happy-bubble {
+  flex:1 1 auto; margin:0; min-width:0;
+  font-size:14.5px; font-weight:900; color:#5a4a63; line-height:1.45;
+  word-break:keep-all;
+}
+.howto {
+  flex:0 0 auto; padding:8px 12px; border-radius:999px;
+  background:var(--white); border:3px solid var(--pink-soft);
+  color:var(--pink-dark); font-size:12.5px; font-weight:900; white-space:nowrap;
+}
+.howto:hover { border-color:var(--pink); }
+@media (max-width:360px) {
+  .happy-cat { width:34px; height:26px; }
+  .happy-bubble { font-size:12.5px; }
+  .howto { padding:7px 9px; font-size:11.5px; border-width:2px; }
+  .log-row { padding:5px 7px; gap:6px; }
+}
+
+/* ハッピーが とびはねる（勝った ときだけ）*/
+@keyframes happyJump {
+  0%,100% { transform:translateY(0) rotate(0); }
+  30% { transform:translateY(-9px) rotate(-7deg); }
+  60% { transform:translateY(0) rotate(5deg); }
+}
+.happy-cat.is-jump { animation:happyJump .5s ease-in-out 6; }
+
+/* ── 勝ち／負け／引き分け の 画面 ───────────────────── */
+.result-wrap {
+  position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+  padding:16px; background:rgba(70,60,82,.42);
+}
+.result-box {
+  width:min(360px,100%); padding:22px 20px 20px; text-align:center;
+  background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  box-shadow:0 10px 0 rgba(196,58,115,.16); max-height:100%; overflow-y:auto;
+}
+@keyframes resultIn { 0% { transform:scale(.8); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+.result-wrap:not(.hidden) .result-box { animation:resultIn .22s ease-out; }
+.result-title { margin:0 0 10px; font-size:26px; font-weight:900; color:var(--pink-dark); }
+/* ★ 負け・引き分けは 同じ 落ちついた 色。★引き分けを 負けと 同じ 言葉で 片づけない
+   （8試合に 1回 出る ので、専用の 言葉を 用意して ある ―― index.html を 見ること）。 */
+.result-title.is-quiet { color:#7f8fa0; }
+.result-say { margin:0 0 14px; font-size:16px; font-weight:900; color:#5a4a63; line-height:1.6; }
+.result-buttons { display:flex; flex-direction:column; gap:9px; }
+.dialog-ok {
+  display:block; width:100%; padding:13px 16px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 5px 0 var(--pink-dark);
+  font-family:inherit; font-size:19px; font-weight:900; text-decoration:none; text-align:center;
+}
+.dialog-ok:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
+.dialog-ok.alt {
+  background:var(--white); color:var(--pink-dark);
+  border:3px solid var(--pink-soft); box-shadow:0 4px 0 rgba(196,58,115,.10);
+  font-size:14px; padding:9px 14px;
+}
+
+/* ★ 箱が 出た 瞬間、指が まだ 動いている あいだは おせなく する（T62・T63 の 事故よけ）
+   強調は 増やさない ―― 足すのでは なく 引く。 */
+.result-buttons, .result-box .level-pick { transition:opacity .16s ease-out; }
+.result-box.is-locked .result-buttons,
+.result-box.is-locked .level-pick { pointer-events:none; opacity:.4; }
+.result-box.is-locked .dialog-ok { box-shadow:none; transform:translateY(3px); }
+
+/* ── 遊び方の 中身 ────────────────────────────── */
+dialog {
+  width:min(420px,92vw); padding:22px 20px 20px; border:none; border-radius:26px;
+  background:var(--white); color:var(--ink); font-family:var(--font-main);
+  box-shadow:0 12px 0 rgba(196,58,115,.16);
+}
+dialog::backdrop { background:rgba(70,60,82,.42); }
+dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-dark); text-align:center; }
+.dialog-lead { margin:0 0 14px; font-size:15px; font-weight:900; text-align:center; color:#5a4a63; }
+.close-dialog {
+  position:absolute; top:10px; right:12px; width:34px; height:34px; border-radius:50%;
+  border:3px solid var(--pink-soft); background:var(--white); color:var(--pink-dark);
+  font-size:17px; font-weight:900; line-height:1;
+}
+.help-list { margin:0 0 12px; padding-left:1.3em; }
+.help-list li { margin-bottom:8px; font-size:14.5px; font-weight:700; line-height:1.65; }
+.help-list b { color:var(--pink-dark); }
+.help-note {
+  margin:0 0 16px; padding:10px 12px; border-radius:16px;
+  background:var(--cream); border:3px solid var(--gold-soft);
+  font-size:13.5px; font-weight:700; line-height:1.7; color:#6b5522;
+}
+.help-note b { color:var(--pink-dark); }
