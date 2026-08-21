@@ -81,6 +81,20 @@
     FLIP:       200,    // 裏 → 表 の 動き
     FLY:        300,    // 取った 2枚が 帯へ 飛ぶ
 
+    /* ★★ 絵が 手元に 来るまでは、めくらない（T80 §7 ―― トライが 見つけた 事故）★★
+       ------------------------------------------------------------
+       札1枚 193KB。★神経衰弱は 10本で ただ1本、52枚 ぜんぶが 必ず めくられる。
+       T79 では 見せる時間の 時計が **絵が 届いたかに かかわらず** 走っていた。
+       → 電波が 弱いと「白い札を 1.2秒 見せて 裏に 戻す」。
+       → ★しかも ロボットは その札を「見た」ことに なっていた（人だけが 見られない）。
+       ★ 直した 形：**絵が 手元に 来てから めくる。** めくった 瞬間に 時計が 動き出す ので、
+         ★見せる時間は どんな 回線でも きっちり 1.2秒／0.6秒。
+       ★ ロボットが 覚えるのも「めくれた 瞬間」に した ので、
+         ★人に 見えなかった 札を ロボットだけが 知る、が **起こりようが ない**。 */
+    FACE_GRACE:  150,   // これ以上 待たせる ときだけ、その札を ゆらす（★待っていることが 分かる）
+    FACE_WAIT_MAX: 6000,// どうしても 来ない ときは 文字の 札で 必ず 見せる（★試合は 止めない）
+    WARM_PAR:      4,   // 裏で 先読みする 本数（★6本の 空きを 使い切らない ―― おした札を 待たせない）
+
     TAP_SLOP:    14,    // おした所から これ以上 ずれたら その1回は 数えない
 
     /* 結果の 箱の 連打よけ（T62・T63 の 事故を くり返さない）*/
@@ -94,23 +108,38 @@
     BAND_GAP:     8,    // 盤と 帯の すきま
     RATIO: 635 / 419,   // 支給画像 419×635 の ひりつ。★ぜったいに くずさない
 
-    /* ★★ もの覚えの 4段階（社長裁定2・3）★★
+    /* ★★ もの覚えの 5段階（T81 で 1つ 足した）★★
        ------------------------------------------------------------
        ★「覚えている枚数（新しい順・古いものから 忘れる）」で 表す（ルル §2-1）。
          ★確率で 忘れさせない ―― さっき 見た札を 外す ロボットは 間ぬけに 見える。
-       ★ 52枚で 測り直した 勝率（4,000〜6,000試合ずつ）
-           はじめての人（4枚 覚える）から 見て
-             わすれんぼう(2) … 99.9%
-             ★ふつう(4)      … ★43.6%  ← 初期値。36枚のときの 43% と ほぼ 同じ
-             もの覚えがいい(6)… 2.9%
-             ぜんぶ           … 0.1%
-       ★ 名前は 変えない（社長指示）。中身の 枚数も、測った 結果 変える 必要が 無かった。
+
+       ★ T79 は 4段（2/4/6/ぜんぶ）だった。トライ（T80 §4）が すきまを 見つけた：
+           7枚 覚えられる人 … 63.6% か 9.0%   ★どちらも 遠い
+           8枚 　　　〃　　 … 81.2% か 18.8%  ★どちらも 遠い
+           9枚 　　　〃　　 … 91.2% か 29.2%  ★どちらも 遠い
+       ★ T79 の 私は「3段めを 6→8 に **動かす**」しか 考えず、
+         「6枚の人が 43.8%→9.6% に 落ちる」ので 動かせない、と 結論した。
+         ★ 動かすのでは なく **足す** ―― これで 今の 段を 使っている人は 1人も 損しない。
+
+       ★ 足したあと（500試合ずつ 実測。→ logs/T81_神経衰弱_5段_勝率.txt）
+           6枚 … もの覚えが いい 43.8%（★変わらない）
+           7枚 … ★ほとんど おぼえてる 26.6%
+           8枚 … ★ほとんど おぼえてる 45.0%  ← すきまの 一番 広い所が ぴったり 埋まる
+           9枚 … ★ほとんど おぼえてる 52.8%
+          10枚 … ぜんぶ おぼえてる 39.4%（★変わらない）
+       ★ 9 では なく 8 に した 理由：9 だと 8枚の人が 30.0% のまま 残る。
+
+       ★ 5段は 設計図ちがい では ない ―― スピード（T64）は 社長ご指名で 5段。
+         設計図の「選ばせるのは 1つまで」は **何種類 選ばせるか** の 話で、
+         **1種類の 中の 段の数** の 話では ない。
+       ★ 初期値は「ふつう」の まま。名前は トライの 案（社長へ 報告ずみ）。
        ★ 画面に 数字（枚数・%・秒）は 1つも 出さない。 */
     LEVELS: [
-      { label: 'わすれんぼう',     cap: 2 },
-      { label: 'ふつう',           cap: 4 },   // ★ はじめは これ
-      { label: 'もの覚えが いい',  cap: 6 },
-      { label: 'ぜんぶ おぼえてる', cap: 52 }
+      { label: 'わすれんぼう',       cap: 2 },
+      { label: 'ふつう',             cap: 4 },   // ★ はじめは これ
+      { label: 'もの覚えが いい',    cap: 6 },
+      { label: 'ほとんど おぼえてる', cap: 8 },  // ★ T81 で 足した 1段
+      { label: 'ぜんぶ おぼえてる',   cap: 52 }
     ],
     LEVEL_START: 1
   };
@@ -341,12 +370,31 @@
   /* ── カードの 絵（設計図 §9・厳守）──────────────────
      ・画像は office/games/cards/ の 支給画像。CSSや 絵文字で 自作しない。
      ・ファイル名が 日本語なので encodeURIComponent を 必ず 通す。
-     ・全55枚で 約11MB なので 先読みしない ―― 表に なった 札だけ 読む。 */
+     ・★絵そのもの（cards/）は 1バイトも さわらない ―― 9本が 同じ 絵を 使っている。
+
+     ★★ 先読みについて（設計図 §9 の 「全部 先読みしない」との 関係）★★
+       ------------------------------------------------------------
+       設計図 §9：「全55枚で 約11MB あるため、★必要な札だけ 読み込む」。
+       ★ 神経衰弱では **必要な札 ＝ 52枚 ぜんぶ** ―― 10本で ただ1本、
+         最後の1枚まで 必ず めくられる ゲーム だから（ソリティアも ピラミッドも
+         「最後まで 見ない札」が 残る。だから あちらは 先読みしない のが 正しい）。
+       ★ つまり これは §9 の 例外では なく、§9 を この1本に あてはめた 答え。
+       ★ JOKER 2枚は 使わない ので 読まない（55枚では なく 53枚）。
+       ★ そして **待たせない**：はじめの画面が 出た 時点から **裏で こっそり** 読む。
+         ★4本ずつ しか 流さない（TUNE.WARM_PAR）ので、
+           人が おした 札は 空いている 線を 使って **先に 追い越せる**。
+         ★「読み込み中」の 文字は 1つも 出さない（設計図 §5.5）。 */
   var CARD_DIR = '../cards/';
   function cardSrc(name) { return CARD_DIR + encodeURIComponent(name) + '.png'; }
   var BACK_SRC = cardSrc('トランプ裏赤');
 
-  var STORE_KEY = 'bragekobo.memory.level';
+  /* ★ 保存は「覚える枚数」で 持つ（★段を 足しても ずれない）。
+     T79 は 段の 番号で 保存していた ―― そのままだと 5段に した 瞬間、
+     ★「ぜんぶ おぼえてる」を えらんでいた人が 黙って「ほとんど」に 落ちる。
+     だから 1度だけ 古い 保存を 読みかえる。 */
+  var STORE_KEY = 'bragekobo.memory.cap';
+  var STORE_OLD = 'bragekobo.memory.level';
+  var OLD_CAPS  = [2, 4, 6, 52];        // T79 の 4段（番号 → 枚数）
 
   /* ── 部品 ─────────────────────────────────── */
   var G = null, botMem = null, boardEl = null, boardIn = null, cardEl = [], built = false;
@@ -357,12 +405,22 @@
   var geo = { cw: 49, ch: 74, gap: 2, C: 7, R: 8 };
 
   var state = { level: TUNE.LEVEL_START };
+  function levelOfCap(c) {
+    for (var i = 0; i < TUNE.LEVELS.length; i++) if (TUNE.LEVELS[i].cap === c) return i;
+    return -1;
+  }
   try {
-    var saved = localStorage.getItem(STORE_KEY);
-    if (saved !== null && saved !== '') {
-      var nv = +saved;
-      if (nv === Math.floor(nv) && nv >= 0 && nv < TUNE.LEVELS.length) state.level = nv;
+    var savedCap = NaN, saved = localStorage.getItem(STORE_KEY);
+    if (saved !== null && saved !== '') savedCap = +saved;
+    if (!(savedCap > 0)) {                       // ★新しい 保存が 無い → T79 の 保存を 読みかえる
+      var old = localStorage.getItem(STORE_OLD);
+      if (old !== null && old !== '') {
+        var oi = +old;
+        if (oi === Math.floor(oi) && oi >= 0 && oi < OLD_CAPS.length) savedCap = OLD_CAPS[oi];
+      }
     }
+    var li = levelOfCap(savedCap);
+    if (li >= 0) state.level = li;
   } catch (e) {}
   function levelCap() { return TUNE.LEVELS[state.level].cap; }
 
@@ -516,6 +574,130 @@
     inn.appendChild(d);
   }
 
+  /* ============================================================
+     ★★ 絵の 先読み（裏で こっそり）★★
+     ------------------------------------------------------------
+     ★ はじめの画面が 出た 時点から 始める。「はじめる」を おすまでの 数秒は
+       どうせ 待ち時間 ―― そこで 読んで しまう。
+     ★ 一度に 4本まで（TUNE.WARM_PAR）。ブラウザが 同じ 相手に 開ける 線は 6本。
+       ★2本 空けて おく ので、人が おした 札は 待たされずに 先へ 行ける。
+     ★ 裏面（トランプ裏赤）は 盤に すぐ 要る ので、それが 届いてから 流し始める。
+     ★ 「読み込み中」の 文字も、進み具合の 棒も 出さない（設計図 §5.5）。
+     ============================================================ */
+  var warmImg = {}, warmQueue = [], warmRun = 0, warmDone = 0, warmGo = false;
+  var posOfName = {};        // 配りごとの 「名前 → 場所」
+
+  function warmNext() {
+    while (warmRun < TUNE.WARM_PAR && warmQueue.length) {
+      (function (name) {
+        var im = new Image();
+        warmImg[name] = im;
+        try { im.fetchPriority = 'low'; } catch (e) {}
+        warmRun++;
+        im.onload = im.onerror = function () {
+          warmRun--; warmDone++;
+          handFace(name);      // ★読めたら すぐ その場所の 札に わたす
+          warmNext();
+        };
+        im.src = cardSrc(name);
+      })(warmQueue.shift());
+    }
+  }
+  /* ★★ 読み終えた 絵を、盤の 札に わたす ★★
+     ------------------------------------------------------------
+     ★ ここが 大事：裏で 読み終えただけでは **盤の img は まだ 空**。
+       その ままでは「めくる 時点で img が 出せる」ことを 言い切れない。
+     ★ だから 読めた その 瞬間に 盤の img へ src を 入れる。
+       ★裏向きの 札の 中に そっと 入るだけ なので、画面は 1pxも 変わらない。
+     ★ こうして おくと、おした ときには img が **もう 出せる**
+       ―― めくる 判断は 1msも 待たずに 済む（＝ T79 と 同じ 速さ）。 */
+  function handFace(name) {
+    var p = posOfName[name];
+    if (p === undefined || !G || !cardEl[p]) return;
+    var w = warmImg[name];
+    if (!w || !w.complete || !w.naturalWidth) return;
+    var f = cardEl[p].firstChild.firstChild;
+    if (!f.getAttribute('src')) f.src = cardSrc(name);
+  }
+  function handAllFaces() {
+    posOfName = {};
+    if (!G) return;
+    for (var p = 0; p < N; p++) posOfName[nameOf(G.card[p])] = p;
+    for (var c = 0; c < N; c++) handFace(nameOf(c));
+  }
+  function warmStart() {
+    for (var c = 0; c < N; c++) warmQueue.push(nameOf(c));
+    var back = new Image();
+    function go() { if (warmGo) return; warmGo = true; warmNext(); }
+    back.onload = back.onerror = go;
+    back.src = BACK_SRC;                 // ★盤の 裏面が 先。同じ URL なので 読み直しには ならない
+    setTimeout(go, 1500);                // 念のため（裏面が いつまでも 来なくても 先へ 進む）
+  }
+  /* ★「もう 出せる」か ―― ここが true なら 待ちは 1msも 挟まない。
+     ★★ 見るのは **盤の img そのもの** だけ。★「裏で 読めているはず」で 済ませない。
+       （裏で 読めていても 盤の img が 空なら、めくった 瞬間は まだ 白い。
+         そこは handFace() が 先に 埋めて ある ―― だから ここは これで 足りる）*/
+  function faceHere(p, f) {
+    if (f.complete && f.naturalWidth > 0) return true;               // その札の 絵が 出せる
+    if (cardEl[p].firstChild.querySelector('.fallback')) return true; // 文字の 札が 出ている
+    return false;
+  }
+
+  /* ============================================================
+     ★★ 絵が 手元に 来てから めくる（T80 §7 の 直し）★★
+     ------------------------------------------------------------
+     ★ 速い回線 ―― faceHere が true なので **その場で** cb を 呼ぶ（同期）。
+       ★setTimeout も Promise も 通さない ＝ T79 と 1msも 変わらない。
+     ★ 遅い回線 ―― 絵が 来るまで **めくらない**。
+       ★0.15秒 以上 待たせる ときは、その札を 上下に ゆらす
+         （★光でも 色でも ない ―― 黙って 止まって 見えない ように する ため）。
+       ★6秒 待っても 来なければ 文字の 札で 必ず 見せる。試合は 止めない。
+     ============================================================ */
+  var gen = 0, waiting = {};
+
+  function clearWaits() {
+    gen++;
+    for (var k in waiting) if (waiting.hasOwnProperty(k)) waiting[k]();
+    waiting = {};
+  }
+
+  function faceReady(p, cb) {
+    var f = cardEl[p].firstChild.firstChild;
+    var name = nameOf(G.card[p]);
+    if (!f.getAttribute('src')) {
+      try { f.fetchPriority = 'high'; } catch (e) {}   // ★おされた 札が 先読みを 追い越す
+      f.src = cardSrc(name);
+    }
+    if (faceHere(p, f)) { cb(); return; }              // ★ここが ふだんの 道（同期）
+
+    var my = gen, graceId = 0, capId = 0, fin = false;
+    function finish() {
+      if (fin) return;
+      fin = true;
+      clearTimeout(graceId); clearTimeout(capId);
+      f.removeEventListener('load', finish);
+      f.removeEventListener('error', finish);
+      delete waiting[p];
+      cardEl[p].classList.remove('is-wait');
+      if (my !== gen) return;                          // ★配り直された → もう 何も しない
+      cb();
+    }
+    waiting[p] = finish;
+    f.addEventListener('load', finish);
+    f.addEventListener('error', finish);
+    graceId = setTimeout(function () {
+      if (fin || my !== gen) return;
+      cardEl[p].style.setProperty('--sx', slotX(p) + 'px');
+      cardEl[p].style.setProperty('--sy', slotY(p) + 'px');
+      cardEl[p].classList.add('is-wait');
+    }, TUNE.FACE_GRACE);
+    capId = setTimeout(function () {
+      if (fin || my !== gen) return;
+      fallback(p, cardEl[p].firstChild);               // ★必ず 見せる（白いまま 戻さない）
+      finish();
+    }, TUNE.FACE_WAIT_MAX);
+  }
+
   /* ── 並べる ───────────────────────────────── */
   var lastTf = [];
   function place(p, x, y, z, up, scale) {
@@ -640,17 +822,27 @@
   function tapPos(p) {
     if (G.gone[p]) return;                 // ★取られた 場所には 何も 無い
     if (p === sel1) { shakeNo(p); return; } // ★すでに めくれている 1枚め → ぷるっと ゆれる
-    reveal(p);
-    if (sel1 < 0) { sel1 = p; return; }     // 1枚め ―― めくれる こと自体が「えらんだ」
-    var a = sel1; sel1 = -1;
-    judge(a, p, 0);                         // 2枚め ―― 判定
+    var a = sel1;
+    /* ★絵が 手元に 来るまで 盤を 止める。★おしは ためない（onDown で 弾く ＝ T79 の まま）。
+       ★ふだんは この busy は 同じ 行の うちに 元へ 戻る（＝ 何も 変わらない）。 */
+    busy = true;
+    reveal(p, function () {
+      if (a < 0) { sel1 = p; busy = false; return; }  // 1枚め ―― めくれる こと自体が「えらんだ」
+      sel1 = -1;
+      judge(a, p, 0);                                 // 2枚め ―― 判定
+    });
   }
 
-  /* ★ めくる（★人が めくっても、ロボットも 同じ 画面を 見ている）*/
-  function reveal(p) {
-    faceUp[p] = true;
-    place(p, slotX(p), slotY(p), 20, true, 1);
-    memSee(botMem, p, rankOf(G.card[p]));   // ★ロボットが 知るのは「見た札」だけ
+  /* ★ めくる（★人が めくっても、ロボットも 同じ 画面を 見ている）
+     ★★ memSee は「めくれた 瞬間」に 呼ぶ ―― ★人に 見えなかった 札を
+        ロボットだけが 覚えている、が **起こりようが ない**（T80 §7）。 */
+  function reveal(p, done) {
+    faceReady(p, function () {
+      faceUp[p] = true;
+      place(p, slotX(p), slotY(p), 20, true, 1);
+      memSee(botMem, p, rankOf(G.card[p]));   // ★ロボットが 知るのは「見た札」だけ
+      if (done) done();
+    });
   }
   function hide(p) {
     faceUp[p] = false;
@@ -708,15 +900,17 @@
     busy = true;
     var f = firstPick(botMem, G.gone, G.rnd);
     if (f.a < 0) { G.turn = 0; busy = false; return; }
-    reveal(f.a);
-    later(function () {
-      if (!G || over) return;
-      var p2 = (f.b >= 0) ? f.b
-             : secondPick(botMem, G.gone, f.a, rankOf(G.card[f.a]), G.rnd);
-      if (p2 < 0) { G.turn = 0; busy = false; return; }
-      reveal(p2);
-      judge(f.a, p2, 1);
-    }, TUNE.FLIP + TUNE.BOT_GAP);
+    /* ★0.9秒の 間は「1枚めが **見えてから**」数える。
+       ★人は その1枚を 見て 覚える ので、絵が 出る 前から 数え始めては いけない。 */
+    reveal(f.a, function () {
+      later(function () {
+        if (!G || over) return;
+        var p2 = (f.b >= 0) ? f.b
+               : secondPick(botMem, G.gone, f.a, rankOf(G.card[f.a]), G.rnd);
+        if (p2 < 0) { G.turn = 0; busy = false; return; }
+        reveal(p2, function () { judge(f.a, p2, 1); });
+      }, TUNE.FLIP + TUNE.BOT_GAP);
+    });
   }
 
   /* ── 決着 ─────────────────────────────────
@@ -794,14 +988,14 @@
   function setLevel(i) {
     if (!(i >= 0 && i < TUNE.LEVELS.length)) return state.level;
     state.level = i;
-    try { localStorage.setItem(STORE_KEY, String(i)); } catch (e) {}
+    try { localStorage.setItem(STORE_KEY, String(TUNE.LEVELS[i].cap)); } catch (e) {}
     syncLevelSelects();
     return state.level;
   }
 
   /* ── 試合の 出し入れ ──────────────────────────── */
   function cancelAll() {
-    cancelPress(); clearTimers();
+    cancelPress(); clearTimers(); clearWaits();
     $('happyCat').classList.remove('is-jump');
     hideResult();
     busy = false; over = false; sel1 = -1; streak = 0;
@@ -818,8 +1012,10 @@
       var fb = cardEl[p].querySelector('.fallback');
       if (fb) fb.parentNode.removeChild(fb);
       cardEl[p].classList.remove('is-no');
+      cardEl[p].classList.remove('is-wait');
       cardEl[p].style.display = '';
     }
+    handAllFaces();          // ★もう 読めている 絵は、この 場で 札に わたして おく
     $('titleScreen').classList.add('hidden');
     $('playScreen').classList.remove('hidden');
     layout(); render(true);
@@ -830,6 +1026,7 @@
   function boot() {
     build();
     buildLevelSelects();
+    warmStart();          // ★はじめの画面が 出た その 瞬間から、裏で 52枚を 読み始める
     $('btnStart').addEventListener('click', function () { newGame(false); });
     $('btnAgain').addEventListener('click', function () { if (!locked) newGame(true); });
     $('btnHowto').addEventListener('click', function () { $('helpDialog').showModal(); });
@@ -900,11 +1097,11 @@
     return out;
   }
 
-  /* ★ 4段階 × 人の もの覚え の 表（勝率の 測定・トライへ）*/
+  /* ★ 5段階 × 人の もの覚え の 表（勝率の 測定・トライへ）*/
   function rates(n) {
     n = n || 2000;
     var out = {}, i, h;
-    var HUM = [2, 4, 6, 8, 10, 12, 16];
+    var HUM = [2, 4, 6, 7, 8, 9, 10, 11, 12];
     for (i = 0; i < HUM.length; i++) {
       h = HUM[i];
       var row = [];
@@ -1031,6 +1228,32 @@
     autoPlay: autoPlay,
     rates: rates,
     verify: verify,
+    /* ★ 盤が 止まっていないか（★たしかめ 専用・画面には 出さない）*/
+    flow: function () {
+      var w = 0, k;
+      for (k in waiting) if (waiting.hasOwnProperty(k)) w++;
+      return { '盤が 止まっている（busy）': busy, '決着ずみ': over,
+               'めくっている1枚め': sel1, '手番': G ? (G.turn === 0 ? '自分' : 'ロボット') : '―',
+               '★絵を 待っている札': w, '動いている 時計': timers.length };
+    },
+    /* ★ 絵が どこまで 手元に 来ているか（★たしかめ 専用・画面には 出さない）*/
+    images: function () {
+      var here = 0, ng = 0, waitN = 0, k;
+      for (var c = 0; c < N; c++) {
+        var w = warmImg[nameOf(c)];
+        if (!w) continue;
+        if (w.complete && w.naturalWidth > 0) here++;
+        else if (w.complete) ng++;
+      }
+      for (k in waiting) if (waiting.hasOwnProperty(k)) waitN++;
+      return {
+        '手元に ある札': here + ' / ' + N,
+        'まだ 読んでいない': warmQueue.length,
+        'いま 読んでいる': warmRun,
+        '読めなかった': ng,
+        '★いま 絵を 待っている札': waitN
+      };
+    },
     screen: screenInfo,
     geo: function () { return geo; },
     seed: function (n) {
