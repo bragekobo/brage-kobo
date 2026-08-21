@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>スパイダー ― ブラゲ工房</title>
+  <meta name="description" content="1人で じっくり。K から A まで そろえて、8組 消そう！ ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       既存7本と おなじ 書き方。絶対URL で 書く。
+       ⚠️ まとめサイトに ならべる ときに og:url を もう一度 見なおすこと。
+          ★「パソコン向け」の 印を つけるのは まとめサイト側＝アイの 持ち場。
+            ここ（ゲームの 中）には 言い訳を 1文字も 書かない（社長裁定1b）。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="スパイダー ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="1人で じっくり。K から A まで そろえて、8組 消そう！ ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/spider/" />
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%B9%E3%83%9A%E3%83%BC%E3%83%89K.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="419" />
+  <meta property="og:image:height" content="635" />
+  <meta property="og:image:alt" content="トランプのスペードのキング" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="スパイダー ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="1人で じっくり。K から A まで そろえて、8組 消そう！ 開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%B9%E3%83%9A%E3%83%BC%E3%83%89K.png" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存7本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存7本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       もどる道と 名前、そして 遊んでいる間の ボタン 2つ（ソリティアと 同じ 形）。
+       ★ ボタンを 別の 帯に せず ここに 入れたのは、たての 40px を
+         場札に まわす ため（パソコンでは 札の 大きさを たてが 決める）。 -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>スパイダー</span>
+    </div>
+    <div class="tools hidden" id="tools">
+      <button class="tool" type="button" id="btnUndo">もどす</button>
+      <button class="tool" type="button" id="btnNew">新しく 配る</button>
+    </div>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★ 社長裁定3：難しさは えらばせる。初期値は「やさしい」。
+         設計図 §5.5 の 例外は **1ゲームに 1つまで** ―― この 1つを ここに 使う。
+         だから ほかの プルダウン・設定は 1つも 置かない。 -->
+  <section class="title-screen" id="titleScreen">
+    <p class="title-lead">K から A まで そろえて、8組 消そう！</p>
+    <label class="level-pick" for="levelTitle">
+      <span class="level-pick-name">むずかしさ</span>
+      <select class="level-select" id="levelTitle"></select>
+    </label>
+    <button class="start-button" type="button" id="btnStart">
+      <span>はじめる <b>▶</b></span><small>札は つまんで 運ぼう</small>
+    </button>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       置き場は 19か所（山札1・そろった組8・場札10）。
+       中身（下じきと 104枚の札）は game.js が 作って 置き場所を 計算する
+       ―― 寸法は TUNE 1か所から しか 出てこない。 -->
+  <section class="play-screen hidden" id="playScreen">
+    <div class="board" id="board"></div>
+  </section>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方（画面の 一番下・1行に まとめる）
+       ⚠️ ハッピーは 全ゲーム・全ページに 必ず 出す（設計図 §9.5）。
+          画面の 言葉は ここ 1か所だけ から 出る。
+       ★★ ハッピーは うそを つかない（社長裁定4）★★
+          クリアできる 配りの 保証を 作って いない ので、
+          「この配り、ちゃんと クリアできるよ」も「まだ いけるよ」も 言わせない。 -->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap">
+      <svg class="happy-cat" id="happyCat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">1人で じっくり。8組 そろえて 消そう！</p>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </div>
+
+</main>
+
+<!-- 札が 降る 演出（仕様 §8-2）。タップで 飛ばせる・6秒で 止まる。 -->
+<canvas class="fall-canvas hidden" id="fallCanvas" aria-hidden="true"></canvas>
+
+<!-- ── 勝ち／止まった ときの 画面 ──────────────────
+     ⚠️ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（game.js）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="result-title" id="resultTitle">8組 ぜんぶ 消えた！</p>
+    <p class="result-say" id="resultSay"></p>
+    <!-- ★ ここにも 同じ プルダウン（T64 スピードの 形）。
+         止まった 直後に「もっと やさしく」「もっと むずかしく」を
+         その場で えらび直せる ように する ため。 -->
+    <label class="level-pick" for="levelResult">
+      <span class="level-pick-name">むずかしさ</span>
+      <select class="level-select" id="levelResult"></select>
+    </label>
+    <div class="result-buttons">
+      <button class="dialog-ok" type="button" id="btnMain">新しく 配る <b>▶</b></button>
+      <button class="dialog-ok alt hidden" type="button" id="btnSub">新しく 配る</button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ★ カタカナ英語を 1つも 使わない ため、♠♥♦♣ は **記号そのもの**で 書く
+       （設計図 §9.6・ルル §11-1）。「マーク」という 言葉は 出さない。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">K から A まで そろえると 消える。8組 消したら 勝ち！</p>
+  <ol class="help-list">
+    <li>数字が <b>1つ 小さければ</b>、どの札の 上にも 重ねられる。</li>
+    <li id="helpSuit">♠ だけ。数字が つづいて いれば まとめて 動かせる。</li>
+    <li>同じ ものが <b>K から A まで</b> そろうと、その 13枚が 消える。</li>
+  </ol>
+  <p class="help-note">札は <b>つまんで 運ぶ</b>。置けない ところなら 元に もどるよ。<br>
+    左上の <b>山札を おす</b>と、ぜんぶの 列に 1枚ずつ 配られる。<br>
+    <b>空の 列が あると 配れない</b>。まず 何か 置こう。<br>
+    <b>「もどす」は 何回でも</b> おせる。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<script src="game.js"></script>
+</body>
+</html>
