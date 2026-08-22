@@ -369,13 +369,58 @@
        ③ 空き場から 列へ 戻せる札が 1つもない
        ④ 組札へ 上げられる札が 1つもない
      ★ ソリティアの「山札を 1周 だまって めくる」は 要らない（山札が 無い）。
-     ⚠️ 組札→場札（ルール5）は 数えに 入れない ―― 入れると 組札に 1枚でも
-        あれば ほぼ 必ず 手が あることに なり、詰みが 一生 出ない。
      ⚠️ ゲームは「もう 勝てない」とは ぜったいに 言わない。
         言うのは「1手も ない」ときだけ。★保証が あるので、詰み ＝ 自分の手 が 悪かった。
+
+     ★★ ⑤ 組札から 引っぱって もどす 手（ルール5）も 数える（T86・T85 §5-6）★★
+        T84 では これを まるごと 数えて いなかった。理由は
+        「入れると 組札に 1枚でも あれば ほぼ 必ず 手が あることに なり、詰みが 一生 出ない」。
+        ★ところが あそびかたには「右上に 上げた札は、引っぱって もどせる。」と 書いてある。
+        ★書いて ある 手が まだ 使えるのに「1手も ない」と 言うのは、画面が うそを つくこと。
+        → そこで 数える。ただし **数え方を 決めて** 甘く なりすぎない ように する（下）。
      ============================================================ */
   function hasPlay(g) { return legalMoves(g, { found: false }).length > 0; }
-  function isStuck(g) { return !isWin(g) && !hasPlay(g); }
+
+  /* ============================================================
+     ★★★ 何を もって「手が ある」と するか（T86・ここが 全部）★★★
+     ------------------------------------------------------------
+       組札から 1枚 下ろして みる。★その1手を 打った あとに
+       ★「いま 下ろした その札を もう一度 動かす」以外の 手が 1つでも 生まれたら
+       ―― その ときだけ「手が ある」と 数える。
+
+     ★ なぜ この 線引きか（＝ なぜ 甘く なりすぎないか）
+       ・詰み ＝「この場面から **前に 進む** 手が ない」。★下ろして 上げ直す、
+         下ろして 別の列へ ずらす ―― これは 進んで いない（堂々めぐり）。
+         だから 下ろした その札を さわる だけ の 手は、手として 数えない。
+       ・数えるのは ★下ろした札が「置き場」に なって、★ほかの札が 動けるように
+         なった とき だけ。それは 本当に 場面が 変わって いる。
+       ・★先読みは 1手だけ。生まれた 手を さらに 打って みたり しない。
+         だから「いつまでも 詰まない」に ならない（実測は logs/T86 に）。
+       ・空き場が 1つでも 空いて いる 場面は そもそも hasPlay で 手が あるので、
+         ここへは 来ない。ここへ 来るのは 本当に 行きづまった 場面だけ。
+
+     ⚠️ 本物の 場面（G）は 1ミリも さわらない ―― かならず 写し（cloneState）で 試す。
+        T84 の 🔴2（下見の 関数が 札を 消した）と 同じ 事故を 二度と 起こさない ため。
+     ============================================================ */
+  function ftRevives(g) {
+    var mvs = legalMoves(g), i, j, mv, sim, after, m;
+    for (i = 0; i < mvs.length; i++) {
+      mv = mvs[i];
+      if (mv.k !== 'FT') continue;
+      sim = cloneState(g);                              // ★写しの うえで 1手 打つ
+      doMove(sim, mv, { hist: false });
+      after = legalMoves(sim, { found: false });        // ★さらに 下ろす 手は 見ない（1手だけ）
+      for (j = 0; j < after.length; j++) {
+        m = after[j];
+        /* いま 下ろした 札を もう一度 動かす だけ の 手（上げ直す・別の列へ ずらす・
+           空き場へ 逃がす）は 数えない。★from が 空き場の 手（CT・CF）は 別物なので 除く。 */
+        if ((m.k === 'TT' || m.k === 'TF' || m.k === 'TC') && m.from === mv.to) continue;
+        return true;                                    // ★ほかの札が 動ける ＝ 前に 進める
+      }
+    }
+    return false;
+  }
+  function isStuck(g) { return !isWin(g) && !hasPlay(g) && !ftRevives(g); }
 
   /* ============================================================
      ★★ 自動で 全部 上げて よい 条件（仕様 §5-5・★証明つき）★★
@@ -671,6 +716,7 @@
     }
     return {
       seed: seed, won: isWin(g), stuck: isStuck(g), moves: g.moves, maxCol: maxCol,
+      end: g,                                            // ★終わった 場面（T86 の 検算で 使う）
       err: err, capped: i >= cap,
       blockAll: blockAll, blockNo: blockNo, spots: spots, spotsWithBlock: spotsWithBlock,
       autoAt: autoAt
@@ -687,7 +733,7 @@
     canStack: canStack, canToFound: canToFound, runLen: runLen, isRun: isRun,
     freeCount: freeCount, emptyCount: emptyCount, maxMove: maxMove,
     legalMoves: legalMoves, applyMove: applyMove, doMove: doMove, undoMove: undoMove,
-    isWin: isWin, isStuck: isStuck, hasPlay: hasPlay, countAll: countAll,
+    isWin: isWin, isStuck: isStuck, hasPlay: hasPlay, ftRevives: ftRevives, countAll: countAll,
     allSorted: allSorted, foundMove: foundMove, cloneState: cloneState, stateKey: stateKey,
     solve: solve, replay: replay, playOne: playOne, safeUp: safeUp, safeCard: safeCard,
     blockedCount: blockedCount
@@ -1757,6 +1803,28 @@
       var stuck = isStuck(G);
       if (stuck) showResult('stop');
       return { 詰みと判定した: stuck, 場に手がある: hasPlay(G), 札の合計: countAll(G) + '枚' };
+    },
+
+    /* ★ T86：トライが 言った 場面を そのまま 出す ―― たしかめ 専用。
+       「列や 空き場では 1手も ない。でも 組札から 引っぱって もどせば まだ 続く」場面。
+       ★直す前は ここで 詰みの 箱が 出て いた。いまは 出ない（＝ 盤が 生きている）。
+       配りは ロボットに 行きづまる まで 打たせて 取った 本物の 場面（54・75・94・135・219）。 */
+    stuckFT: function (seed) {
+      seed = seed == null ? 54 : seed;
+      cancelAll();
+      var r = playOne(seed, 1200);
+      G = r.end;
+      openBoard();
+      var stuck = isStuck(G);
+      if (stuck) showResult('stop');
+      return {
+        配り: seed,
+        '列や空き場での手': legalMoves(G, { found: false }).length + '手（0なら 直す前は 詰み）',
+        '組札から もどす手': legalMoves(G).filter(function (m) { return m.k === 'FT'; }).length + '手',
+        '★手が あると 数えたか': ftRevives(G),
+        '★詰みの箱を 出したか': stuck,
+        札の合計: countAll(G) + '枚'
+      };
     },
 
     /* ★ 勝つ 直前（「どの列も 下ほど 小さい」・あと left枚）を そのまま 出す。
