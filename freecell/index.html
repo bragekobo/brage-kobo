@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>フリーセル ― ブラゲ工房</title>
+  <meta name="description" content="52枚 ぜんぶ 見えている。かくれた札は 1枚も なし。A から K まで きれいに そろえよう！ ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       既存10本と おなじ 書き方。絶対URL で 書く。
+       ⚠️ まとめサイトに ならべる ときに og:url を もう一度 見なおすこと。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="フリーセル ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="52枚 ぜんぶ 見えている。かくれた札は 1枚も なし。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/freecell/" />
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%90%E3%83%BCA.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="280" />
+  <meta property="og:image:height" content="424" />
+  <meta property="og:image:alt" content="トランプのクローバーのエース" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="フリーセル ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="52枚 ぜんぶ 見えている。かくれた札は 1枚も なし。開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%90%E3%83%BCA.png" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存10本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存10本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       もどる道と 名前、そして 遊んでいる間の ボタン 2つ（仕様 §6-3）。
+       ★ ボタンを 別の 帯に せず ここに 入れたのは、たての 40px を
+         場札に まわす ため（仕様 §1-5：1列19枚が 入る 大きさを 守る）。 -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>フリーセル</span>
+    </div>
+    <div class="tools hidden" id="tools">
+      <button class="tool" type="button" id="btnUndo">もどす</button>
+      <button class="tool" type="button" id="btnNew">新しく 配る</button>
+    </div>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★ 社長裁定3：難しさは 選ばせない。プルダウンは 1つも 置かない。 -->
+  <section class="title-screen" id="titleScreen">
+    <p class="title-lead">A から K まで、4つの 山を そろえよう！</p>
+    <button class="start-button" type="button" id="btnStart">
+      <span>はじめる <b>▶</b></span><small>札は つまんで 運ぼう</small>
+    </button>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       置き場は 16か所（左上4・右上4・下8）。中身（下じきと 52枚の札）は
+       game.js が 作って 置き場所を 計算する ―― 寸法は TUNE 1か所から しか 出てこない。 -->
+  <section class="play-screen hidden" id="playScreen">
+    <div class="board" id="board"></div>
+  </section>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方（画面の 一番下・1行に まとめる）
+       ⚠️ ハッピーは 全ゲーム・全ページに 必ず 出す（設計図 §9.5）。
+          画面の 言葉は ここ 1か所だけ から 出る。 -->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap">
+      <svg class="happy-cat" id="happyCat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">52枚 ぜんぶ 見えているよ。じっくり いこう！</p>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </div>
+
+</main>
+
+<!-- 札が 降る 演出（仕様 §7-3）。タップで 飛ばせる・6秒で 止まる。 -->
+<canvas class="fall-canvas hidden" id="fallCanvas" aria-hidden="true"></canvas>
+
+<!-- ── 勝ち／止まった ときの 画面 ──────────────────
+     ⚠️ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（game.js）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="result-title" id="resultTitle">ぜんぶ そろった！</p>
+    <p class="result-say" id="resultSay"></p>
+    <div class="result-buttons">
+      <button class="dialog-ok" type="button" id="btnMain">新しく 配る <b>▶</b></button>
+      <button class="dialog-ok alt hidden" type="button" id="btnSub">新しく 配る</button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ★★ ここに「いちど運べる枚数」の 説明を 足さない こと（仕様 §4-5・§7-5）★★
+       あれは 文字では なく **動きで 伝える** と 決めた ルール。
+       まとめて 運ぶ とき、札が 左上を 通っていくのが 見える ―― それが 説明。
+       ここに 1行 書いた 瞬間、その 賭けが 消える。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">52枚 全部を 右上に 積んだら 勝ち！</p>
+  <ol class="help-list">
+    <li>右上の 4つに、<b>A から K まで</b> 同じマークを 順に 積んだら 勝ち。</li>
+    <li>下の 8列では、<b>赤と黒を かわりばんこに</b>、1つずつ 小さい順に 重ねられる。</li>
+    <li>左上の 4つには、札を <b>1枚ずつ にがせる</b>。</li>
+  </ol>
+  <p class="help-note">札は <b>つまんで 運ぶ</b>。置けない ところなら 元に もどるよ。<br>
+    <b>2回 続けて おす</b>と 右上へ。<b>「もどす」は 何回でも</b> おせる。<br>
+    空いた 列には <b>どの札でも</b> 置ける。<br>
+    右上に 上げた札は、<b>引っぱって もどせる</b>。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<script src="game.js"></script>
+</body>
+</html>
