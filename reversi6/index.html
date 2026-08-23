@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>リバーシ ― ブラゲ工房</title>
-  <meta name="description" content="はさんで ひっくり返そう！ 多く とった方の 勝ち ― ブラゲ工房" />
+  <title>6×6リバーシ ― ブラゲ工房</title>
+  <meta name="description" content="小さい 6×6で すぐ 勝負！ はさんで ひっくり返そう ― ブラゲ工房" />
   <meta name="theme-color" content="#BCEBF0" />
 
   <!-- ============================================================
        SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
-       既存11本と おなじ 書き方。絶対URL で 書く。
+       既存12本と おなじ 書き方。絶対URL で 書く。
        ⚠️ まとめサイトに ならべる ときに og:url を もう一度 見なおすこと。
 
        ★★ この1本だけ og:image が ありません ★★
-         既存11本は「トランプ1枚の 絵」を 出していました。
+         既存11本は「トランプ1枚の 絵」を 出していました（8×8も 出していません）。
          ★ リバーシは トランプを 1枚も 使いません（設計図 §9 は かかりません・ルル §1-1）。
          ★ うそに なる ので、他の ゲームの 札を 借りません。
          ★ 絵が 要るなら 🎨アトが この ゲーム用に 1枚 作って、ここに 足すこと。
@@ -21,26 +21,27 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="ブラゲ工房" />
   <meta property="og:locale" content="ja_JP" />
-  <meta property="og:title" content="リバーシ ― ブラウザですぐ遊べる｜ブラゲ工房" />
-  <meta property="og:description" content="はさんで ひっくり返そう！ 多く とった方の 勝ち。ダウンロードはいりません。開いたらすぐ遊べます。" />
-  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/reversi/" />
+  <meta property="og:title" content="6×6リバーシ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="小さい 6×6で すぐ 勝負！ はさんで ひっくり返そう。多く とった方の 勝ち。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/reversi6/" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="リバーシ ― ブラウザですぐ遊べる｜ブラゲ工房" />
-  <meta name="twitter:description" content="はさんで ひっくり返そう！ 多く とった方の 勝ち。開いたらすぐ遊べます。" />
+  <meta name="twitter:title" content="6×6リバーシ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="小さい 6×6で すぐ 勝負！ はさんで ひっくり返そう。開いたらすぐ遊べます。" />
 
-  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存11本と おなじ。 -->
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存12本と おなじ。 -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
 
-  <!-- ★★ 中身は 2つの ゲームで 1本を 分けあいます（T92・13本目の 6×6）★★
+  <!-- ★★ 中身は 8×8（../reversi/）と 1本を 分けあいます（T92）★★
        office/games/reversi.css / reversi-core.js / reversi-game.js の 3本は、
-       8×8（このページ）と 6×6（../reversi6/）が **同じ 1本**を 読みます。
-       ★ どちらにも 8 も 6 も 書いていないので、2か所に 同じ物を 書かずに 済みます。
+       8×8と このページが **同じ 1本**を 読みます。★ここには 写しが 1つも ありません。
+       ★ 3本の どれにも 8 も 6 も 書いていないので、盤の 大きさが ちがっても
+         同じ 1本で 動きます（＝ 直す 所が 2か所に ならない）。
        ★ ポーカーと ホールデムが ../poker-core.js を 分けあうのと 同じ 置き方です。 -->
   <link rel="stylesheet" href="../reversi.css" />
 </head>
 <body>
 
-<!-- ハッピー（看板ねこ）の かお。既存11本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<!-- ハッピー（看板ねこ）の かお。既存12本から そのまま 持ちこみ（設計図 §9.5）。 -->
 <svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
   <defs>
     <symbol id="happy-head" viewBox="0 0 150 112">
@@ -81,7 +82,7 @@
     <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
     <div class="brand">
       <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
-      <span>リバーシ</span>
+      <span>6×6リバーシ</span>
     </div>
     <div class="topbar-pad"></div>
   </header>
@@ -89,7 +90,7 @@
   <!-- ── はじめの 画面 ──────────────────────────────
        ★ 置くものは 3つだけ ―― ひとこと ／ つよさの プルダウン ／ はじめる。
        ★ 選ばせるのは **つよさ 1つだけ**（設計図 §5.5 の 例外を ここに 使い切る）。
-         ★ 盤の 大きさは 選ばせません（6×6は 別の 1本・社長裁定1）。
+         ★ 盤の 大きさは 選ばせません（8×8は 別の 1本 ../reversi/ ・社長裁定1）。
        ★ 初期値は 一番下の「弱い」（社長裁定3）。 -->
   <section class="title-screen" id="titleScreen">
     <p class="title-lead">はさんで ひっくり返そう！<br>多く とった方の 勝ち</p>
@@ -103,15 +104,16 @@
   </section>
 
   <!-- ── 遊ぶ 画面 ────────────────────────────────
-       置き場は **3か所だけ**（盤・石の数の 帯・その 下の「石の数」1行）＝ 12本で いちばん 少ない。
+       置き場は **3か所だけ**（盤・石の数の 帯・その 下の「石の数」1行）＝ 13本で いちばん 少ない。
        ★ 山札も 取った札の 置き場も ありません（そもそも 札が ない）。
        ★ 盤の マスも 石も 帯も、中身は game.js が 作って 大きさを 計算する
          ―― 寸法は reversi-core.js の DIM と fitBoard() の 1か所から しか 出てこない。
-       ★★ 盤の 上に 読む 文字は 1つも ありません（12本で 初めて）。 -->
+       ★★ 盤の 上に 読む 文字は 1つも ありません（8×8と 同じ）。 -->
   <section class="play-screen hidden" id="playScreen">
     <div class="stage" id="stage">
-      <!-- ★ 緑の わく（既存11本と 同じ 見た目）。★ここの 内がわが ルル §1-2 の「器の中身」
-           ―― 375px で 355×674px。その 実寸を game.js が 測って 1マスを 決める。 -->
+      <!-- ★ 緑の わく（既存12本と 同じ 見た目）。★ここの 内がわが ルル §1-2 の「器の中身」
+           ―― 375px で 355×674px。その 実寸を reversi-game.js が 測って 1マスを 決める。
+           ★6×6は マスが 64→36 に 減る ぶん、1マスが 44px → 58px に なる（ルル §1-3）。 -->
       <div class="board-frame" id="boardFrame">
         <div class="board" id="board"><div class="board-in" id="boardIn"></div></div>
       </div>
@@ -165,6 +167,8 @@
 <!-- ── 勝ち／負け／引き分け の 画面 ──────────────────
      ⚠️ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（game.js）。
      ★ 引き分けは 30試合に 1回 出る（実測）。だから 専用の 言葉を 出す。
+     ★★ 6×6は「盤が 埋まらずに 終わる」ことが 7〜10試合に 1回 ある（ルル §1-5）。
+        ★そのときも ここが そのまま 出る ―― 長い方の 勝ち。それだけ（ルル §8-2）。
      ★ ここにも 同じ プルダウンを 置く（スピード T64・神経衰弱 T79 と 同じ 作法）。
         負けた その場で 1段 動かせる ように する ため。 -->
 <div class="result-wrap hidden" id="resultWrap">
@@ -183,7 +187,7 @@
 </div>
 
 <!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
-     ★ ルールは 3行。ただし 12本で 一番 重い 3行（ルル §0-3）。
+     ★ ルールは 3行。ただし 13本で 一番 重い 3行（ルル §0-3）。
        「はさむ」＝ 8つの 向きを 目で 追う ―― だから 置ける所を 光らせる（社長裁定4）。
      ⚠️ ★ どこが 良い 所かは、ここでも 1文字も 教えません（設計図 追記②・社長裁定5）。 -->
 <dialog id="helpDialog">
@@ -203,14 +207,16 @@
 </dialog>
 
 <!-- ============================================================
-     ★★★ 盤の 大きさは、この 1行 だけ ★★★
-       ここが 8 なら 8×8、6 なら 6×6。
-       reversi-core.js にも game.js にも、8 も 6 も 1つも 書いていない
-       （盤の 一辺・はじめの 石・角・1マスのpx・石の 大きさ・光りの 大きさ ―― 全部 計算で 出る）。
-       ★ 13本目（6×6リバーシ）は、この 1行を 6 に した ../reversi6/index.html です。
-         ★ 読む 3本（css・core・game）は そこと 同じ 物を 分けあっています。
+     ★★★ 8×8 と ちがうのは、この 1行 だけ ★★★
+       ../reversi/index.html は ここが 8。このページは 6。
+       ★ それ以外は 読む 3本も 中身も まったく 同じ 物です。
+       reversi-core.js にも reversi-game.js にも reversi.css にも、
+       8 も 6 も 1つも 書いていない ―― 盤の 一辺・はじめの 石・角の 4か所・
+       1マスのpx・石の 大きさ・光りの 大きさ・帯・読みきりの 線・保存の 名前は
+       ★ぜんぶ この 6 から 計算で 出ます。
+       ★ たしかめの 窓口は window.REVERSI6（8×8は REVERSI8。どちらも REVERSI でも 呼べる）。
      ============================================================ -->
-<script>window.REVERSI_SIZE = 8;</script>
+<script>window.REVERSI_SIZE = 6;</script>
 <script src="../reversi-core.js"></script>
 <script src="../reversi-game.js"></script>
 </body>

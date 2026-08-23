@@ -910,4 +910,11 @@
     core: C
   };
 
+  /* ★★ 盤の 大きさ ちがいの 呼び名（T92・13本目の 6×6）★★
+     ------------------------------------------------------------
+     8×8 は REVERSI8、6×6 は REVERSI6 でも 呼べる ように する。
+     ★ ここにも 8 も 6 も 書かない ―― SIZE を そのまま つなげる だけ。
+     ★ 上の root.REVERSI は そのまま 残す（8×8の たしかめ手順を 変えない ため）。 */
+  root['REVERSI' + SIZE] = root.REVERSI;
+
 })(typeof globalThis !== 'undefined' ? globalThis : this);
