@@ -699,9 +699,14 @@ function renderHand() {
 /* ルールが はつどうした ときの おしらせ（★ desc は RULES から もってくる）
    extra … 「いま なにが 起きたか」の ぐたいてきな 1行（♠しばり！ など）。
            ルールの せつめい文とは べつ ものなので、ここで 足す（RULES は よごさない）。 */
+/* けんしょう用の のぞきあな（ふだんは null。window.DF.hook から さす）。
+   ゲームの うごきは 1ミリも 変えない。数を かぞえる ためだけ。 */
+const HOOK = { play:null, rule:null };
+
 function fireRule(id, extra, retry) {
   const r = RULE(id);
   if (!r) return;
+  if (!retry && HOOK.rule) HOOK.rule(id);
 
   /* ★ おしらせの ゆうせん（第2段B）
      「きをつける ルール」と「かいと かいを つなぐ ルール」の おしらせは、
@@ -926,20 +931,70 @@ function beginTurn() {
   later(cpuTurn, SPEED.think);
 }
 
-/* ロボットの しこう（第2段A：だせる うち いちばん よわい ものを だす。
-   つよさの ちょうせい ＝ よわい／ふつう／つよい は 第4段の しごと） */
+/* ============================================================
+   ★ ロボットの しこう ―― 第4段（T96）「まとめて 出す」
+   ------------------------------------------------------------
+   ★むかしの ロボット（第2段A）は こう だった：
+       いちばん 弱い 手 → おなじ 強さなら **まいすうが 少ないほう**
+   ★これだと ばが からっぽの とき、かならず「いちばん 弱い ふだ 1まい」を 出す。
+     すると ばが 1まいに なり、次の人も 1まいしか 出せない。それが 最後まで つづく。
+   ★トライの しらべ（T94 §12）：**1,921手の うち 1まい出しが 100.0%**。
+     その せいで **革命・かいだん・かいだんかくめい・ジョーカーワイルドの 4つが、
+     60試合で 1回も 出なかった**。15この ルールの うち 4つが ねむったまま だった。
+
+   ★直したのは 1か所だけ ―― **ばが からっぽの ときの えらび方**。
+   「弱い ふだから 出す」は そのまま。**おなじくらい 弱いなら まとめて 出す**に した。
+
+       てん ＝ その かたちの つよさ － dump × (まいすう－1)   ← 小さいほど えらばれる
+
+   ★ばに ふだが ある ときは **1文字も かえていない**（＝いちばん 弱い 手で こたえる）。
+     まいすうは ばと 同じに しばられる ので、かえる 必要が ない。
+
+   ------------------------------------------------------------
+   ★★ CPU の 2つの 数（ここを さわると ロボットの 強さが 変わる）
+
+   dump    … 「1まい よけいに 出せる ことの ねうち」。大きいほど まとめて 出す。
+   minHand … てふだが これより 少なく なったら、まとめ出しを やめて 1まいずつ 出す。
+             （＝しょうばんは まとめて、おわりぎわは ていねいに、という 人の くせ）
+
+   ★1.2 と 6 は **12,000試合の 実測で えらんだ**（T96 の 作業メモに 表）。
+     人の 1位率（1枚しか出さない人）が いちばん 下がらず、
+     それでいて 4つの ルールが ちゃんと 出る 組み合わせ。
+
+   ⚠️ **むかしの ロボットに もどしたい ときは `minHand` を 99 に する**（それだけ）。
+   ⚠️ dump を 上げると ロボットが 強くなる。子どもが 勝てなく なるので かるく さわらない。
+   ============================================================ */
+const CPU = { dump: 1.2, minHand: 6 };
+
+function cpuPick(p, plays) {
+  if (!plays.length) return null;
+  /* ジョーカーは てふだが へるまで とっておく（第2段Aから かえていない） */
+  const noJoker = plays.filter(x => !x.cards.some(c => c.joker));
+  if (noJoker.length && p.cards.length > 3) plays = noJoker;
+
+  /* ★ばが からっぽ ＝ かたちを じぶんで 決められる。ここで まとめ出しの 目が うまれる */
+  if (!state.field && p.cards.length >= CPU.minHand) {
+    const score = (x) => meldPower(x.meld) - CPU.dump * (x.cards.length - 1);
+    let best = Infinity;
+    plays.forEach(x => { const s = score(x); if (s < best) best = s; });
+    const same = plays.filter(x => score(x) === best);
+    return same[Math.floor(Math.random() * same.length)];
+  }
+
+  /* ばに ふだが ある／のこりが 少ない ときは むかしの まま */
+  plays = plays.slice().sort((a, b) => meldPower(a.meld) - meldPower(b.meld) || a.cards.length - b.cards.length);
+  const top = plays[0];
+  const same = plays.filter(x => meldPower(x.meld) === meldPower(top.meld) && x.cards.length === top.cards.length);
+  return same[Math.floor(Math.random() * same.length)];
+}
+
 function cpuTurn() {
   if (state.over) return;
   const p = state.players[state.turn];
-  let plays = legalPlays(p);
+  const plays = legalPlays(p);
   if (!plays.length) return pass(p);
-  /* ジョーカーは てふだが へるまで とっておく */
-  const noJoker = plays.filter(x => !x.cards.some(c => c.joker));
-  if (noJoker.length && p.cards.length > 3) plays = noJoker;
-  plays.sort((a, b) => meldPower(a.meld) - meldPower(b.meld) || a.cards.length - b.cards.length);
-  const top = plays[0];
-  const same = plays.filter(x => meldPower(x.meld) === meldPower(top.meld) && x.cards.length === top.cards.length);
-  const pick = same[Math.floor(Math.random() * same.length)];
+  const pick = cpuPick(p, plays);
+  if (!pick) return pass(p);
   playCards(p, pick.cards, pick.meld);
 }
 
@@ -948,6 +1003,9 @@ function playCards(player, cards, meld) {
   /* ★ あがりきんし 3だんめ：きんしの ふだで あがったら「いちばん下」の しるし。
      じゅんいの けいさんは endGame() 1か所だけで やる（ばらばらに しない）。 */
   const foul = (player.cards.length === cards.length) && isBanFinish(cards, meld, player);
+
+  if (HOOK.play) HOOK.play({ count: cards.length, kind: meld.kind,
+                             who: player.name, human: !!player.human });
 
   const keys = cards.map(c => c.key);
   player.cards = player.cards.filter(c => !keys.includes(c.key));
@@ -1448,6 +1506,11 @@ window.DF = {
   /* まえの かいの じゅんいを 仕こむ（みやこおち・カードこうかんの たしかめ） */
   setRank(arr)      { state.lastRank = arr.slice(); state.crown = arr[0]; state.nextStarter = arr[3]; return state.lastRank; },
   plays(i, withBan) { return legalPlays(state.players[i || 0], Boolean(withBan)).map(p => ({ k:p.cards.map(c => c.key), kind:p.meld.kind })); },
+  /* ★ T96：ロボットの しこうを そのまま よぶ／数を かぞえる のぞきあな */
+  hook: HOOK,
+  cpu: CPU,
+  cpuNow() { cpuTurn(); },
+  pickFor(i) { const p = state.players[i || 0]; const c = cpuPick(p, legalPlays(p)); return c && c.cards.map(x => x.key); },
   places()          { return state.players.map(p => ({ name:p.name, place:p.place, foul:!!p.foul })); },
   /* あそびかたの ぎょうすう を かぞえる（そう1 / そう2 / そう3） */
   helpLines() {
