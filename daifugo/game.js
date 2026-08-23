@@ -703,24 +703,83 @@ function renderHand() {
    ゲームの うごきは 1ミリも 変えない。数を かぞえる ためだけ。 */
 const HOOK = { play:null, rule:null };
 
-function fireRule(id, extra, retry) {
+/* ★ おしらせの 順番待ち（T97）
+   ------------------------------------------------------------
+   もんだい：同じ 一瞬に 2つ以上の ルールが はつどうする 手が 14.5% ある。
+     いままでは あとから 来た ほうが まえの おしらせを **上書き** していたので、
+     まえの おしらせが 3ミリ秒しか 出ず、1文字も 読めない ことが あった。
+     じっさいに ♠9♥9♦9♣9 を 出すと「革命！」が 一度も 画面に 出なかった
+     （すぐ あとの「9リバース」に 消されて いた）。
+
+   なおし方：**上書きを やめて、順番待ちに する。**
+     ・まえの おしらせが 出ている あいだに 来た ものは、消さずに ならばせる。
+     ・まっている ものが ある あいだは、いま 出ている ほうを 早めに 切りあげる
+       （はじめて 出す ぶんは 説明の 全文が 入って いるので 1.4秒、
+         2回目からは みじかい 1行 なので 0.9秒 まで。だれも まって いなければ 今までどおり）。
+     ・**捨てない。** 順番を 変えるだけ。捨てたら それは また
+       「出ないまま 消えた おしらせ」に なって、なおした ことに ならない。
+     ・ならんだ 中から 出す 順は「つよさが かわる」ほうが さき：
+
+         3 … つよさが かわる（革命・階段革命・Jバック・スペ3返し）
+         2 … きをつける／かいを つなぐ（縛り・上がり禁止・都落ち・カード交換）
+         1 … それ以外（場が うごく だけ）
+
+     ・同じ ばんごう なら、さきに 起きた ほうから。
+
+   ⚠️ ゲームの はやさ（SPEED）は 1ミリも さわらない。
+      おしらせは ゲームの ながれを 止めない ので、試合の 長さは 変わらない。
+   ⚠️ 画面に 出す 文字は ふやさない。**出す 順番だけ** の なおし（設計図 §5.5）。 */
+const FLASH_PRI = { power:3, care:2, link:2 };
+/* first/again … だれも まって いない ときの ふつうの 長さ（ここは 今までどおり）
+   holdFirst/hold … うしろが つかえて いる ときの 最短。ここまでは かならず 出しきる */
+const FLASH_MS  = { first:2000, again:1100, holdFirst:1400, hold:900 };
+/* 順番待ちの 上かぎり（あんぜん弁）。
+   ふつうに 遊んで いれば ここまで たまらない（300試合 21万手 で 一度も 出番なし）。
+   万一 あふれた ときだけ、いちばん 下の いちばん 古い ものから 落とす。 */
+const FLASH_MAX = 8;
+const flashQ = [];        // 順番待ち { id, extra, pri, at }
+let flashFrom  = 0;       // いま 出ている おしらせが 出はじめた 時こく
+let flashUntil = 0;       // いま 出ている おしらせが 消える 時こく
+let flashMin   = 0;       // いま 出ている おしらせを 切りあげて いい 最短の 長さ
+let flashTimer = 0;
+
+function flashReset() {
+  flashQ.length = 0;
+  flashFrom = flashUntil = flashMin = 0;
+  window.clearTimeout(flashTimer);
+  const box = $('ruleFlash');
+  if (box) box.classList.remove('show');
+}
+
+function fireRule(id, extra) {
   const r = RULE(id);
   if (!r) return;
-  if (!retry && HOOK.rule) HOOK.rule(id);
+  if (HOOK.rule) HOOK.rule(id);
 
-  /* ★ おしらせの ゆうせん（第2段B）
-     「きをつける ルール」と「かいと かいを つなぐ ルール」の おしらせは、
-     あとから 来た ふつうの こうか（9リバースなど）に 上書きさせない。
-     見えないと ただの 事故に なる ルールなので、ここだけは ゆずらない。
-     おされた ほうは、まえの おしらせが 消えてから 出る（ゲームの はやさは かえない）。
-     ⚠️ まちなおしは 1回だけ（retry）。むげんに まわらない ように。 */
-  const pri = (r.group === 'care' || r.group === 'link') ? 2 : 1;
   const now = Date.now();
-  if (!retry && pri < (fireRule.pri || 0) && now < (fireRule.until || 0)) {
-    window.setTimeout(() => fireRule(id, extra, true), fireRule.until - now);
+  if (now < flashUntil) {
+    flashQ.push({ id, extra, pri: FLASH_PRI[r.group] || 1, at: now });
+    while (flashQ.length > FLASH_MAX) {
+      let w = 0;                        // いちばん 下の いちばん 古い もの
+      for (let i = 1; i < flashQ.length; i++) if (flashQ[i].pri < flashQ[w].pri) w = i;
+      flashQ.splice(w, 1);
+    }
+    /* まっている ものが できたので、いま 出ている ほうを 切りあげる
+       （ただし flashMin は かならず 出しきる。0ミリ秒で 消える 事故を なくす のが 目的） */
+    const cut = Math.max(flashFrom + flashMin, now);
+    if (cut < flashUntil) {
+      flashUntil = cut;
+      window.clearTimeout(flashTimer);
+      flashTimer = window.setTimeout(flashNext, cut - now);
+    }
     return;
   }
+  showFlash(id, extra);
+}
 
+function showFlash(id, extra) {
+  const r = RULE(id);
+  if (!r) return;
   const first = !state.fired[id];
   state.fired[id] = true;
   const line = first ? descOf(r) : (r.flash || '');
@@ -729,11 +788,33 @@ function fireRule(id, extra, retry) {
     + (extra ? `<span class="flash-extra">${extra}</span>` : '')
     + (line ? `<span>${line}</span>` : '');
   box.classList.add('show');
-  const ms = first ? 2000 : 1100;
-  fireRule.pri = pri;
-  fireRule.until = now + ms;
-  window.clearTimeout(fireRule.timer);
-  fireRule.timer = window.setTimeout(() => box.classList.remove('show'), ms);
+  /* うしろが つかえて いない ときは ふつうの 長さ。つかえて いる ときだけ 切りあげる。
+     はじめて 出す ぶんは 説明の 全文が 入って いるので、切りあげても 長めに のこす。 */
+  const full = first ? FLASH_MS.first : FLASH_MS.again;
+  const now = Date.now();
+  flashMin  = Math.min(full, first ? FLASH_MS.holdFirst : FLASH_MS.hold);
+  flashFrom = now;
+  flashUntil = now + (flashQ.length ? flashMin : full);
+  window.clearTimeout(flashTimer);
+  flashTimer = window.setTimeout(flashNext, flashUntil - now);
+}
+
+function flashNext() {
+  const box = $('ruleFlash');
+  if (!flashQ.length) {
+    if (box) box.classList.remove('show');
+    flashUntil = 0;
+    return;
+  }
+  /* ★ ならんだ 中から「つよさが かわる」ほうを 先に 出す。
+     ⚠️ 古いから といって 捨てない。捨てたら それは また
+        「出ないまま 消えた おしらせ」に なって、なおした ことに ならない。 */
+  let b = 0;
+  for (let i = 1; i < flashQ.length; i++) {
+    if (flashQ[i].pri > flashQ[b].pri) b = i;      // 同じなら さきに 来た ほう
+  }
+  const n = flashQ.splice(b, 1)[0];
+  showFlash(n.id, n.extra);
 }
 
 /* ───────── ルール設定の 画面（器） ───────── */
@@ -810,6 +891,7 @@ function startGame(keepScore) {
   }
   state.field = null; state.finished = []; state.selected = []; state.altIndex = 0;
   state.busy = false; state.over = false; state.fired = {};
+  flashReset();          /* ★ まえの ゲームの おしらせが 順番待ちに のこらない ように */
   state.revolution = false; state.jackBack = false; state.revDir = false;
   state.pending = null; state.after = null;
   state.lock = null; state.warnKey = '';
