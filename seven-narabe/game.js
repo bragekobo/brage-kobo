@@ -6,8 +6,26 @@ const SUITS = [
 ];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const SPEEDS = { slow: { think: 1500, next: 1050 }, normal: { think: 800, next: 650 }, fast: { think: 350, next: 280 } };
-const state = { players: [], board: {}, current: 0, rule: 'normal', speed: 'normal', finishOrder: [], busy: false, finished: false };
+const state = { players: [], board: {}, current: 0, rule: 'normal', speed: 'normal', finishOrder: [], busy: false, finished: false, epoch: 0 };
 const $ = (id) => document.getElementById(id);
+
+/* ============================================================
+   ★ later() ― 手番を すすめる タイマーは かならず これを つかう
+   （大富豪から 持ってきた しくみ。T94 §4 の 手番の 横取りを 止める）
+   ------------------------------------------------------------
+   もんだい：「↻ 最初から」を おした とき、まえの 試合の タイマーが
+   まだ のこっている。ふつうは state.finished で 止まるが、
+   新しい 試合が はじまると finished は false に もどる ので、
+   ★ふるい タイマーが 新しい 試合の 中で うごき出して しまう。
+   すると 手番が 2本 同時に すすみ、自分の 番が 静かに 飛ぶ。
+
+   なおし方：試合を はじめる／やめる たびに state.epoch を 1 ふやし、
+   よやく した ときの epoch と ちがったら ★なにも しない。
+   ============================================================ */
+function later(fn, ms) {
+  const e = state.epoch;
+  return window.setTimeout(() => { if (e === state.epoch) fn(); }, ms);
+}
 
 function createDeck() { return SUITS.flatMap(s => RANKS.map((rank, index) => ({ ...s, rank, value:index + 1, key:`${s.id}-${index + 1}` }))); }
 function shuffle(cards) { for (let i = cards.length - 1; i; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; } return cards; }
@@ -79,6 +97,10 @@ function isPlayable(card) {
 function setMessage(text) { $('message').textContent = text; }
 function activePlayers() { return state.players.filter(p => !p.eliminated && !p.done); }
 function startGame() {
+  /* ★ まえの 試合の タイマーを ぜんぶ 無効に する（later() を 見てね）。
+     ここを わすれると、まえの 回の 手番が 新しい 回に 割りこんで、
+     自分の 番が 1回 まるごと 飛ぶ。 */
+  state.epoch += 1;
   state.players = [{ name:'あなた', human:true, cards:[], passes:0, eliminated:false, done:false }];
   const count = Number($('cpuCount').value);
   for (let i=1;i<=count;i++) state.players.push({ name:`ロボット${i}`, human:false, cards:[], passes:0, eliminated:false, done:false });
@@ -121,6 +143,9 @@ function forceCardsToBoard(player) {
   player.eliminated = true;
 }
 function pass(player) {
+  /* ★ 5回目の パスを 受けつけない（T94 §3）。
+     4回で おしまいなので、それ いじょう 数を ふやさない。 */
+  if (player.eliminated || player.done || player.passes >= 4) return false;
   player.passes++;
   if (player.passes >= 4) {
     forceCardsToBoard(player);
@@ -128,16 +153,41 @@ function pass(player) {
   } else {
     setMessage(`${player.name}は パスした（${player.passes}/4）`);
   }
+  return true;
 }
-function humanPlay(event) { const b=event.target.closest('[data-key]'); if (!b || state.current !== 0 || state.busy || state.finished) return; if (playCard(state.players[0],b.dataset.key)) { render(); window.setTimeout(nextTurn, SPEEDS[state.speed].next); } }
-function humanPass() { if (state.current !== 0 || state.busy || state.finished) return; pass(state.players[0]); render(); window.setTimeout(nextTurn, SPEEDS[state.speed].next); }
+/* ★ 人の 1手（T94 §2・§3 の 🔴 2件は ここが 原因だった）
+   ------------------------------------------------------------
+   出す／パスが 通ったら ★その場で state.busy = true。
+   すると renderHand の isTurn が false に なって 手札も パスボタンも
+   おせなく なり、★1回の 手番で 出せるのは 1枚・パスは 1回 だけに なる。
+   ⚠️ busy を false に もどすのは beginTurn の しごと（1か所に まとめる）。
+      ここで もどすと、手番が まだなのに おせる すきまが できる。
+   ⚠️ ★手が「消える」ことは ない：手番が 来た しゅんかん beginTurn が
+      busy を false に するので、★ゆっくり おした ぶんは 今までどおり 全部 通る。
+      止めているのは「同じ 手番の 2手目 いこう」だけ。
+   ★大富豪の onPlay / onPass と まったく 同じ 形。 */
+function humanPlay(event) {
+  const b = event.target.closest('[data-key]');
+  if (!b || state.current !== 0 || state.busy || state.finished) return;
+  if (!playCard(state.players[0], b.dataset.key)) return;
+  state.busy = true;
+  render();
+  later(nextTurn, SPEEDS[state.speed].next);
+}
+function humanPass() {
+  if (state.current !== 0 || state.busy || state.finished) return;
+  if (!pass(state.players[0])) return;
+  state.busy = true;
+  render();
+  later(nextTurn, SPEEDS[state.speed].next);
+}
 function beginTurn() {
   if (state.finished) return; const p=state.players[state.current];
   if (p.eliminated || p.done) return nextTurn();
   state.busy = !p.human; render();
   if (p.human) { state.busy=false; render(); setMessage('光ってるカードを選んでね。なければ パス！'); return; }
   setMessage(`${p.name}は考え中…`);
-  window.setTimeout(() => { if (state.finished) return; const choices=p.cards.filter(isPlayable); if (choices.length) { const centerChoices=choices.sort((a,b)=>Math.abs(a.value-7)-Math.abs(b.value-7)); playCard(p, centerChoices[Math.floor(Math.random()*Math.min(2,centerChoices.length))].key); } else pass(p); render(); window.setTimeout(nextTurn, SPEEDS[state.speed].next); }, SPEEDS[state.speed].think);
+  later(() => { if (state.finished) return; const choices=p.cards.filter(isPlayable); if (choices.length) { const centerChoices=choices.sort((a,b)=>Math.abs(a.value-7)-Math.abs(b.value-7)); playCard(p, centerChoices[Math.floor(Math.random()*Math.min(2,centerChoices.length))].key); } else pass(p); render(); later(nextTurn, SPEEDS[state.speed].next); }, SPEEDS[state.speed].think);
 }
 function nextTurn() { if (state.finished) return; if (activePlayers().length <= 1) return finishGame(); let checks=0; do { state.current=(state.current+1)%state.players.length; checks++; } while ((state.players[state.current].eliminated || state.players[state.current].done) && checks <= state.players.length); beginTurn(); }
 function finishGame() {
@@ -153,7 +203,16 @@ function finishGame() {
   }).join('');
   const humanPlace = ranking.indexOf(state.players[0]) + 1;
   $('resultContent').innerHTML = `<h2>🏆 順位発表！</h2><p class="winner">あなたは ${humanPlace}位だったよ！</p><ol class="ranking">${rows}</ol>`;
-  window.setTimeout(()=>$('resultDialog').showModal(), 300);
+  later(()=>$('resultDialog').showModal(), 300);
 }
 
-$('startBtn').addEventListener('click', startGame); $('humanHand').addEventListener('click', humanPlay); $('passBtn').addEventListener('click', humanPass); $('restartBtn').addEventListener('click', () => { $('gameScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); }); $('resultRestart').addEventListener('click', () => { $('resultDialog').close(); $('gameScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); }); $('howtoBtn').addEventListener('click', ()=>$('helpDialog').showModal()); document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).close()));
+/* ★ 最初の画面に もどる ―― ここで epoch を ふやして、
+   まえの 試合の のこり タイマーを ぜんぶ 無効に する（大富豪の backToStart と 同じ）。 */
+function backToStart() {
+  state.finished = true;
+  state.busy = true;
+  state.epoch += 1;
+  $('gameScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden');
+}
+
+$('startBtn').addEventListener('click', startGame); $('humanHand').addEventListener('click', humanPlay); $('passBtn').addEventListener('click', humanPass); $('restartBtn').addEventListener('click', backToStart); $('resultRestart').addEventListener('click', () => { $('resultDialog').close(); backToStart(); }); $('howtoBtn').addEventListener('click', ()=>$('helpDialog').showModal()); document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).close()));

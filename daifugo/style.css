@@ -101,7 +101,9 @@ button { font-family:inherit; cursor:pointer; }
 .rule-note { margin:8px 2px 0; font-size:11px; color:#9b8ba2; }
 
 .start-button {
-  margin-top:20px; width:min(340px,100%); display:grid; gap:1px; padding:12px 26px 10px;
+  /* display:grid は ブロックの 箱なので、親の text-align:center では 中央に 来ない。
+     上の 2つの 箱（プリセット・ルール）と 同じ 幅いっぱいに そろえる（＝中央ぞろえも 不要になる）。 */
+  margin-top:20px; width:100%; display:grid; gap:1px; padding:12px 26px 10px;
   background:linear-gradient(180deg,var(--pink),var(--pink-deep)); border:0; border-radius:50px;
   color:#fff; font-weight:900; font-size:21px; box-shadow:0 7px 0 var(--pink-dark);
 }
