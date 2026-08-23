@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>リバーシ ― ブラゲ工房</title>
+  <meta name="description" content="はさんで ひっくり返そう！ 多く とった方の 勝ち ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       既存11本と おなじ 書き方。絶対URL で 書く。
+       ⚠️ まとめサイトに ならべる ときに og:url を もう一度 見なおすこと。
+
+       ★★ この1本だけ og:image が ありません ★★
+         既存11本は「トランプ1枚の 絵」を 出していました。
+         ★ リバーシは トランプを 1枚も 使いません（設計図 §9 は かかりません・ルル §1-1）。
+         ★ うそに なる ので、他の ゲームの 札を 借りません。
+         ★ 絵が 要るなら 🎨アトが この ゲーム用に 1枚 作って、ここに 足すこと。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="リバーシ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="はさんで ひっくり返そう！ 多く とった方の 勝ち。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/reversi/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="リバーシ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="はさんで ひっくり返そう！ 多く とった方の 勝ち。開いたらすぐ遊べます。" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存11本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存11本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       ★ 遊んでいる間の ボタンは 2つだけ ―― 「◀ ゲームを選ぶ」と「？ 遊び方」。
+         「もどす」も「新しく 配る」も 作りません（ルル §7-3）：
+           ・もどせる と、ロボットの 返しを 見てから 自分の手を 決められる ＝ ずる
+           ・そもそも「配り」が 存在しない（はじめの 形は いつも 同じ）
+       ★ 対戦の 6本（七並べ・大富豪・ホールデム・ポーカー・スピード・神経衰弱）に そろえます。 -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>リバーシ</span>
+    </div>
+    <div class="topbar-pad"></div>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★ 置くものは 3つだけ ―― ひとこと ／ つよさの プルダウン ／ はじめる。
+       ★ 選ばせるのは **つよさ 1つだけ**（設計図 §5.5 の 例外を ここに 使い切る）。
+         ★ 盤の 大きさは 選ばせません（6×6は 別の 1本・社長裁定1）。
+       ★ 初期値は 一番下の「弱い」（社長裁定3）。 -->
+  <section class="title-screen" id="titleScreen">
+    <p class="title-lead">はさんで ひっくり返そう！<br>多く とった方の 勝ち</p>
+    <label class="level-pick" for="levelTitle">
+      <span class="level-pick-name">ロボットの つよさ</span>
+      <select class="level-select" id="levelTitle"></select>
+    </label>
+    <button class="start-button" type="button" id="btnStart">
+      <span>はじめる <b>▶</b></span><small>光った 所に 置けるよ</small>
+    </button>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       置き場は **3か所だけ**（盤・石の数の 帯・その 下の「石の数」1行）＝ 12本で いちばん 少ない。
+       ★ 山札も 取った札の 置き場も ありません（そもそも 札が ない）。
+       ★ 盤の マスも 石も 帯も、中身は game.js が 作って 大きさを 計算する
+         ―― 寸法は reversi-core.js の DIM と fitBoard() の 1か所から しか 出てこない。
+       ★★ 盤の 上に 読む 文字は 1つも ありません（12本で 初めて）。 -->
+  <section class="play-screen hidden" id="playScreen">
+    <div class="stage" id="stage">
+      <!-- ★ 緑の わく（既存11本と 同じ 見た目）。★ここの 内がわが ルル §1-2 の「器の中身」
+           ―― 375px で 355×674px。その 実寸を game.js が 測って 1マスを 決める。 -->
+      <div class="board-frame" id="boardFrame">
+        <div class="board" id="board"><div class="board-in" id="boardIn"></div></div>
+      </div>
+      <!-- 石の数の 帯（つな引き）。自分は 左から 右へ、ロボットは 右から 左へ 伸びる。
+           ★ まん中の 線は 引きません ―― 盤が 埋まらずに 終わる ことが あり、
+             線を 引くと そのとき うそを つく（ルル §1-5）。長い方が 勝ち、それだけ。
+           ★ 帯の 上の 小さい 丸が「いま 打つ人」。★これが パスを 文字ゼロで 伝えます。 -->
+      <div class="band" id="band">
+        <div class="band-track" id="bandTrack"></div>
+        <div class="band-fill me"  id="bandMe"></div>
+        <div class="band-fill bot" id="bandBot"></div>
+        <div class="band-dot" id="bandDot"></div>
+      </div>
+      <!-- ★★ 石の数（T91・社長指示）★★
+           社長の 言葉：「ゲージの下に 石の数ってのが 分かるように
+           『石の数』の 文字と 数字を 入れて」
+           ------------------------------------------------------------
+           ★ 帯の すぐ下に 1行だけ。黒と 白の 石の 数を 出す。
+             どちらが どちらかは、数字の 左の **丸**（本物の 石と 同じ 色）で 分かる。
+           ★ 数字は 帯と **同じ 時間で** 動く（game.js の syncTally が
+             伸びている 帯の 実寸を 毎フレーム 読んで 数字に する ＝ ずれようが ない）。
+           ⚠️ ここに 出るのは **石の数 だけ**。
+              手数も、何手 先を 読んでいるかも、どちらが 勝ちそうかの 評価値も
+              1つも 出さない（ルル §3-2・裁定2、および T89 の 申し送り）。
+              ★ 先に 答えが 見えると、終盤で ごっそり 返る 実演が 死ぬ。 -->
+      <div class="tally" id="tally">
+        <span class="tally-name">石の数</span>
+        <span class="tally-one me"><i class="tally-stone me"></i><b id="tallyMe">2</b></span>
+        <span class="tally-one bot"><i class="tally-stone bot"></i><b id="tallyBot">2</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方（画面の 一番下・1行に まとめる）
+       ⚠️ ハッピーは 全ゲーム・全ページに 必ず 出す（設計図 §9.5）。
+          画面の 言葉は ここ 1か所だけ から 出る。
+       ★★ 遊んでいる 最中、ハッピーは 1回も しゃべりません（ルル §6-3・§8-3）。
+       ★★ そして 社長裁定5 ―― ★遊んだ あとも、ハッピーは 角の ことを 1文字も 言いません。
+          「たくさん 取っても 勝てない」は、ロボットの 帯が 説明ゼロで 実演します。 -->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap">
+      <svg class="happy-cat" id="happyCat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">はさんで ひっくり返そう！　多く とった方の 勝ちだよ</p>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </div>
+
+</main>
+
+<!-- ── 勝ち／負け／引き分け の 画面 ──────────────────
+     ⚠️ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（game.js）。
+     ★ 引き分けは 30試合に 1回 出る（実測）。だから 専用の 言葉を 出す。
+     ★ ここにも 同じ プルダウンを 置く（スピード T64・神経衰弱 T79 と 同じ 作法）。
+        負けた その場で 1段 動かせる ように する ため。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="result-title" id="resultTitle">勝ち！</p>
+    <p class="result-say" id="resultSay"></p>
+    <label class="level-pick" for="levelResult">
+      <span class="level-pick-name">ロボットの つよさ</span>
+      <select class="level-select" id="levelResult"></select>
+    </label>
+    <div class="result-buttons">
+      <button class="dialog-ok" type="button" id="btnAgain">もう1回 <b>▶</b></button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ★ ルールは 3行。ただし 12本で 一番 重い 3行（ルル §0-3）。
+       「はさむ」＝ 8つの 向きを 目で 追う ―― だから 置ける所を 光らせる（社長裁定4）。
+     ⚠️ ★ どこが 良い 所かは、ここでも 1文字も 教えません（設計図 追記②・社長裁定5）。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">はさんで ひっくり返そう！</p>
+  <ol class="help-list">
+    <li>自分の 石で 相手の 石を <b>はさむ 所</b>に 置く。</li>
+    <li>はさんだ 石は、<b>ぜんぶ 自分の 色</b>に なる。</li>
+    <li><b>石が 多い方</b>の 勝ち。</li>
+  </ol>
+  <p class="help-note">たてよこ ななめ、どの 向きでも はさめる。<br>
+    <b>光った 所</b>に 置けるよ。おして 置こう。<br>
+    置ける所が 1つも ない ときは、<b>番が 相手に うつる</b>。<br>
+    ロボットの <b>つよさ</b>は、最初の 画面で えらべる。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<!-- ============================================================
+     ★★★ 盤の 大きさは、この 1行 だけ ★★★
+       ここが 8 なら 8×8、6 なら 6×6。
+       reversi-core.js にも game.js にも、8 も 6 も 1つも 書いていない
+       （盤の 一辺・はじめの 石・角・1マスのpx・石の 大きさ・光りの 大きさ ―― 全部 計算で 出る）。
+       ★ 13本目（6×6リバーシ）は、この 1行を 6 に した index.html を 1枚 作るだけ。
+     ============================================================ -->
+<script>window.REVERSI_SIZE = 8;</script>
+<script src="reversi-core.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
