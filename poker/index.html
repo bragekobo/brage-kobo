@@ -249,7 +249,12 @@
 (function () {
   'use strict';
   var MAX = 100;   /* 絵に できる 上限（社長指示）*/
-  var PER = 10;    /* 柱1本ぶんの 枚数 */
+  /* ★ T105（アト）：柱1本ぶんの 枚数を 10 → 5 に した。
+     コインの 絵も 数字も 消していない ―― 山の 形を たてから よこに しただけ。
+     ねらいは たての 高さ（375×667で はみ出していた）。
+     ⚠️ style.css の `.chips-pile { height:calc(var(--chip-step) * 4 + ...) }` と
+        かならず そろえる こと（4 ＝ PER − 1）。 */
+  var PER = 5;     /* 柱1本ぶんの 枚数 */
   var last = {};   /* さっきの 枚数。ふえた ぶんだけ そっと 落とす ため */
 
   /* コインの 大きさ・数字の ばしょ取り（画面はばに 合わせる）*/
@@ -420,7 +425,20 @@
         if (pot > 0) {
           var pw = coinWidth('pot');
           var pc = Math.ceil(Math.min(pot, MAX) / PER);
-          slot.appendChild(makePile(pot, 'pot', 'pot', pw, pitchOf('pot', pw, pc, slot.clientWidth)));
+          /* ★ T105（アト）：ポットの ふだと コインの山は 横1行に ならぶ ように なった。
+             ここで「のこりの はば」を 数えて わたす と、コインが 何枚 つもっても
+             1行に おさまる（＝ テーブルが 2行に なって 28px のびる のを 防ぐ）。
+             もとは slot.clientWidth を わたしていたが、直前に innerHTML を 空に
+             している ので いつも 0 で、はばの 計算が きいて いなかった。 */
+          var box  = slot.parentNode;
+          var bcs  = box ? getComputedStyle(box) : null;
+          var room = box
+            ? box.clientWidth - parseFloat(bcs.paddingLeft) - parseFloat(bcs.paddingRight)
+              - potEl.offsetWidth - 14
+            : 0;
+          if (!(room > pw + 12)) room = 0;   /* 数えられない ときは これまで どおり */
+          slot.appendChild(makePile(pot, 'pot', 'pot', pw,
+            pitchOf('pot', pw, pc, room ? room + SIZE.pot.reserve : 0)));
         } else { last.pot = pot; }
       }
     }
