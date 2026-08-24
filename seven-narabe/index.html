@@ -92,9 +92,14 @@
         <h1 id="gameTitle">七並べ <span>♠</span></h1>
         <p class="intro">7から並べて、手札をなくそう！</p>
         <div class="settings">
+          <!-- ★えらばせるのは 1つだけ（設計図 §5.5「1ゲームにつき、選ばせるのは1つまで」）。
+               ロボットの数だけ のこす ＝ 人数が かわると 1人の手札の枚数と 場の進み方が
+               かわるので、これは「難しさそのもの」。
+               ・ルール（AとKがつながる）… 難しさではなく「別の遊び」。えらばせない → ふつうで固定
+               ・はやさ … 遊びの中身ではなく「待ち時間」。えらばせない → いちばん速い側で固定
+               どちらも game.js の しくみは のこしてあるので、<select> を ここに 戻すだけで
+               また えらべるように なる（game.js の startGame を 見てね）。 -->
           <label><span>ロボットの数</span><select id="cpuCount" aria-label="ロボットの数"><option value="2">2人</option><option value="3" selected>3人</option><option value="4">4人</option></select></label>
-          <label><span>ルール</span><select id="ruleMode" aria-label="ルール"><option value="normal" selected>ふつう</option><option value="special">特別（AとKがつながる）</option></select></label>
-          <label><span>はやさ</span><select id="gameSpeed" aria-label="はやさ"><option value="slow">おそい</option><option value="normal" selected>ふつう</option><option value="fast">はやい</option></select></label>
         </div>
         <button class="start-button" id="startBtn" type="button"><span>ゲームを始める <b>▶</b></span><small>カードを配るよ</small></button>
         <p class="tip">パスは3回まで。4回目でおしまいだよ</p>
@@ -220,7 +225,7 @@
     </section>
   </main>
 
-  <dialog id="helpDialog"><button class="close-dialog" data-close="helpDialog" type="button">×</button><h2>🐾 遊び方</h2><p class="dialog-lead">手札が早くなくなった人が勝ち！</p><ol><li>真ん中の7から、同じマークのカードを並べるよ。</li><li>置けるのは、並んでるカードの となりの数だけ。</li><li>パスは3回まで。4回目でおしまい。<span class="nb">手札は場に並ぶよ。</span></li><li>「特別」ルールなら、Aの となりにKも置けるよ！</li></ol><button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button></dialog>
+  <dialog id="helpDialog"><button class="close-dialog" data-close="helpDialog" type="button">×</button><h2>🐾 遊び方</h2><p class="dialog-lead">手札が早くなくなった人が勝ち！</p><ol><li>真ん中の7から、同じマークのカードを並べるよ。</li><li>置けるのは、並んでるカードの となりの数だけ。</li><li>パスは3回まで。4回目でおしまい。<span class="nb">手札は場に並ぶよ。</span></li></ol><button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button></dialog>
   <dialog id="resultDialog"><div id="resultContent"></div><p class="cheer">また遊ぼうね！</p><button class="dialog-ok" id="resultRestart" type="button">もう一度遊ぶ</button></dialog>
   <script src="game.js"></script>
 

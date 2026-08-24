@@ -6,7 +6,16 @@ const SUITS = [
 ];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const SPEEDS = { slow: { think: 1500, next: 1050 }, normal: { think: 800, next: 650 }, fast: { think: 350, next: 280 } };
-const state = { players: [], board: {}, current: 0, rule: 'normal', speed: 'normal', finishOrder: [], busy: false, finished: false, epoch: 0 };
+/* ★えらばせるのは「ロボットの数」だけ（設計図 §5.5）。
+   ルールと はやさは 画面から 外して、ここで 固定する。
+   ・rule  = 'normal' … AとKは つながらない（ふつうの 七並べ）
+   ・speed = 'fast'   … いちばん 速い。待ち時間は 遊びの中身では ないので えらばせない
+   しくみ（SPEEDS・rule の 判定）は そのまま のこしてある ので、
+   index.html に <select id="ruleMode"> / <select id="gameSpeed"> を 戻せば
+   また えらべるように なる（startGame を 見てね）。 */
+const FIXED_RULE  = 'normal';
+const FIXED_SPEED = 'fast';
+const state = { players: [], board: {}, current: 0, rule: FIXED_RULE, speed: FIXED_SPEED, finishOrder: [], busy: false, finished: false, epoch: 0 };
 const $ = (id) => document.getElementById(id);
 
 /* ============================================================
@@ -104,7 +113,10 @@ function startGame() {
   state.players = [{ name:'あなた', human:true, cards:[], passes:0, eliminated:false, done:false }];
   const count = Number($('cpuCount').value);
   for (let i=1;i<=count;i++) state.players.push({ name:`ロボット${i}`, human:false, cards:[], passes:0, eliminated:false, done:false });
-  state.board = {}; state.current = 0; state.rule = $('ruleMode').value; state.speed = $('gameSpeed').value; state.finishOrder = []; state.finished = false; state.busy = false;
+  /* ★ふだんは 画面に <select> が ないので、固定の 値が そのまま 入る。
+     戻したく なったら index.html に <select> を 足すだけで よい。 */
+  const ruleEl = $('ruleMode'), speedEl = $('gameSpeed');
+  state.board = {}; state.current = 0; state.rule = ruleEl ? ruleEl.value : FIXED_RULE; state.speed = speedEl ? speedEl.value : FIXED_SPEED; state.finishOrder = []; state.finished = false; state.busy = false;
   const deck = shuffle(createDeck());
   deck.forEach((c,i) => state.players[i % state.players.length].cards.push(c));
   state.players.forEach(p => { p.cards.sort((a,b) => SUITS.findIndex(s => s.id === a.id) - SUITS.findIndex(s => s.id === b.id) || a.value - b.value); });
@@ -114,8 +126,12 @@ function startGame() {
   render(); beginTurn();
 }
 function render() { renderBoard(); renderPlayers(); renderHand(); updateTurn(); }
+/* ★盤は「置ける ばしょ」を 先に 光らせない（設計図 §5.5・社長裁定）。
+   まえは 空いた ますごとに isPlayable を 計算して .playable を つけていたが、
+   その しるしは 遊ぶ人の 判断に 使われて いなかった（73%は 自分の 手札に ない 札の ばしょ）。
+   ★出せる 札の しるしは 手札の .can-play だけ。そちらは renderHand に のこして ある。 */
 function renderBoard() {
-  $('board').innerHTML = SUITS.map(s => `<div class="board-row">${Array.from({length:13},(_,i) => { const key=`${s.id}-${i+1}`, c=state.board[key]; const available=!c && isPlayable({ ...s, value:i+1, rank:RANKS[i], key }); return `<div class="board-cell ${available ? 'playable':''}">${c ? cardHTML(c, false, false, isGhost(c)) : ''}</div>`; }).join('')}</div>`).join('');
+  $('board').innerHTML = SUITS.map(s => `<div class="board-row">${Array.from({length:13},(_,i) => { const c=state.board[`${s.id}-${i+1}`]; return `<div class="board-cell">${c ? cardHTML(c, false, false, isGhost(c)) : ''}</div>`; }).join('')}</div>`).join('');
 }
 function renderPlayers() {
   $('cpuArea').innerHTML = state.players.filter(p => !p.human).map(p => `<div class="cpu ${p.eliminated ? 'eliminated':''}"><div class="cpu-name">🤖 ${p.name}<small>${p.done ? 'ゴール！' : `パス ${p.passes}/4 ・ ${p.cards.length}枚`}</small></div><div class="cpu-cards">${Array.from({length:Math.min(p.cards.length,14)},()=>'<span class="cpu-card"></span>').join('')}</div></div>`).join('');
