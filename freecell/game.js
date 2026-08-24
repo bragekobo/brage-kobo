@@ -75,6 +75,14 @@
     RESULT_LOCK: 600,
     RESULT_QUIET: 250,
 
+    /* ★★ 絵の 先読み（T103）★★
+       裏で 一度に 流す 本数。★神経衰弱（T81）と 同じ 4本。
+       ★まとめて 52本 出しては いけない ―― 細い線では 52枚とも
+         「同時に 少しずつ」進み、★終わりまで 1枚も 出そろわない。
+         4本ずつ なら 1枚ずつ 順に 届く ＝ 盤が 上から 埋まっていく。
+       ★ブラウザが 同じ 相手に 開ける 線は 6本。2本 空けておく。 */
+    WARM_PAR:      4,
+
     /* 寸法（仕様 §1-5。★1か所に まとめる ―― ばらまかない こと）*/
     CARD_MAX:     96,   // 札の はばの 上限
     OVER_UP:    0.25,   // つかむ帯の **下限**（隅の 数字と マークが 見える 最小・T68実測）
@@ -961,6 +969,24 @@
       var f = document.createElement('img'); f.className = 'cf'; f.alt = ''; f.draggable = false;
       f.onerror = (function (cc, el) { return function () { fallback(cc, el); }; })(c, inn);
       inn.appendChild(f);
+      /* ★★ 文字の 札を **最初から** かぶせて おく（T103）★★
+         ------------------------------------------------------------
+         ★ フリーセルは 配った 瞬間に 52枚 ぜんぶ 表 ―― 絵が 届くまで 待つ
+           という 逃げ道が 無い（神経衰弱は 1枚ずつ めくるので 待てた）。
+         ★ だから **待たせない**。絵が 来る 前でも、その札が 何の札かは
+           これが 見せている ＝ 盤は 1msも 白く ならず、★そのまま 遊べる。
+         ★ 絵の **上に** かぶせる（下に 敷かない）。理由は 2つ：
+           ① ブラウザは 絵を「届いた ぶんだけ」描く ことが ある
+              → 上半分だけ 絵・下半分は 白、という 札を 見せない
+           ② ★絵を opacity 0 で 消すと、**持ち上がった かげも 消える**
+              （かげは 絵に かかって いる ―― `.card.is-drag img`）。
+              ★かげは この ゲームで たった 1つの 手ごたえ なので、消しては いけない。
+              かぶせる 形なら 絵は 出たまま ＝ ★かげは ちゃんと 出る。
+         ★ 絵が そろったら この 札を **外す**（faceOn）。
+           ★外した あとの 盤は、直す 前と まったく 同じ 中身に なる。
+         ★ 新しい 部品は 作っていない ―― 元から あった
+           「絵が 届かなかった ときの 下じき」を **先に 出しておく** だけ。 */
+      fallback(c, inn);
       d.appendChild(inn);
       boardIn.appendChild(d);
       cardEl.push(d);
@@ -981,13 +1007,94 @@
     boardIn.addEventListener('animationend', onAnimEnd);
   }
 
-  /* 画像が 届かなかった ときだけ（ふだんは 一度も 通らない）*/
+  /* ★ 文字の 下じき。★T103から build() が **最初に 1回** 敷く（絵の 下）。
+     絵が 読めなかった ときの onerror も ここへ 来るが、もう 敷いて あるので
+     その ときは 何も しない（＝ 白い札に ならない のは 同じ）。 */
   function fallback(c, inn) {
     if (inn.querySelector('.fallback')) return;
     var d = document.createElement('div');
     d.className = 'fallback ' + (isRed(c) ? 'red' : 'black');
     d.textContent = (isRed(c) ? (suitOf(c) === 1 ? '♥' : '♦') : (suitOf(c) === 0 ? '♠' : '♣')) + RANKS[rankOf(c)];
     inn.appendChild(d);
+  }
+
+  /* ============================================================
+     ★★ 絵の 先読み（T103・裏で こっそり）★★
+     ------------------------------------------------------------
+     ★ トライ T85 §🟢5 ―― 電波の 弱い所で「はじめる」を おすと、そこから
+       52枚（1.83MB）を まとめて 読みに 行き、盤が 白いまま だった。
+     ★ 直し方は 神経衰弱（T81）と 同じ **B（先読み）＋ A（絵が 来てから 出す）**。
+       ただし A の 中身が ちがう ―― フリーセルには「めくる」瞬間が 無く、
+       ★配った 瞬間に 52枚 ぜんぶ 要る ので「来るまで 待つ」が できない。
+       ★だから A の 代わりに **下じきを 先に 出しておく**（build を 見る）。
+       ★時計と 競争しない ぶん、フリーセルの ほうが 素直に 直せる。
+
+     ★ ここで やる ことは 3つ だけ：
+       ① はじめの画面が 出た 瞬間から 裏で 読み始める（「はじめる」を 待たない）
+       ② ★4本ずつ しか 流さない ―― まとめて 52本 出すと、細い線では
+          ★52枚とも 終わりに ならないと 1枚も 出そろわない（全部 同時に 少しずつ 進む）。
+          4本ずつ なら **1枚ずつ 順に 出てくる** ＝ 盤が 上から 埋まっていく。
+       ③ 配りが 決まったら、残りを ★盤の 読む順（上の段から 下へ）に ならべ直す
+     ★ 「読み込み中」の 文字は 1つも 出さない（設計図 §5.5）。
+       ★進み具合の 棒も 出さない。★出るのは 盤が 埋まっていく 動きだけ。
+     ============================================================ */
+  var warmQueue = [], warmRun = 0, warmDone = 0, warmFail = 0, warmT0 = 0, warmT1 = 0;
+  var warmSent = {};                 // 読み始めた 札（重ねて 出さない ため）
+
+  /* ★絵が **ぜんぶ 届いてから** 文字の 札を 外す（＝ 絵が 出る）。
+     ★薄く 出す 動き（transition）には しない ―― 動きは 走らない ことが ある
+       （画面が 裏に まわると 止まる）。★止まったら 絵が 出ない ままに なる。
+       ★外すのは 1行なので **必ず 効く**。
+     ★これで 絵が そろった 後の 盤は、直す 前と **まったく 同じ 中身**に なる。
+     ★絵が 読めなかった 札（onerror）には ここが 来ない ので 文字の 札が 残る
+       ―― 白い札に ならない のは 前と 同じ。
+     ★速い回線では 盤を 開く 前に 終わって いる ので 1度も 目に 入らない。 */
+  function faceOn(c) {
+    var inn = cardEl[c] && cardEl[c].firstChild;
+    if (!inn) return;
+    var fb = inn.querySelector('.fallback');
+    if (fb) inn.removeChild(fb);
+  }
+
+  function warmNext() {
+    while (warmRun < TUNE.WARM_PAR && warmQueue.length) {
+      (function (c) {
+        var f = cardEl[c].firstChild.querySelector('img');
+        if (warmSent[c]) { return; }
+        warmSent[c] = 1; warmRun++;
+        f.addEventListener('load', function () {
+          warmRun--; warmDone++; faceOn(c);
+          if (!warmQueue.length && !warmRun) warmT1 = Date.now();
+          warmNext();
+        });
+        f.addEventListener('error', function () {
+          warmRun--; warmFail++;
+          if (!warmQueue.length && !warmRun) warmT1 = Date.now();
+          warmNext();
+        });
+        f.src = cardSrc(nameOf(c));
+      })(warmQueue.shift());
+    }
+  }
+  function warmStart() {
+    warmT0 = Date.now();
+    for (var c = 0; c < 52; c++) warmQueue.push(c);
+    warmNext();
+  }
+  /* 配りが 決まった とき ―― まだ 来ていない 札を「盤の 読む順」に ならべ直す。
+     ★上の 段から 下へ、左から 右へ。★人の 目が なぞる 順に 埋まる ので、
+       「まだ 来ている 途中」だと ひとめで 分かる（★文字は 1つも 使わない）。
+     ★すでに 読み始めた 札は そのまま（読み直しは 1回も しない）。 */
+  function warmOrder() {
+    if (!G || !warmQueue.length) return;
+    var want = [], i, k, seen = {};
+    for (i = 0; i < 4; i++) if (G.free[i] >= 0) want.push(G.free[i]);
+    for (k = 0; k < TUNE.MAX_COL; k++) {
+      for (i = 0; i < 8; i++) if (G.cols[i].length > k) want.push(G.cols[i][k]);
+    }
+    for (i = 0; i < want.length; i++) seen[want[i]] = 1;
+    var rest = warmQueue.filter(function (c) { return !seen[c]; });
+    warmQueue = want.filter(function (c) { return warmQueue.indexOf(c) >= 0; }).concat(rest);
   }
 
   function placeSpots() {
@@ -1032,8 +1139,10 @@
     }
     lastPos[c] = [x, y];
     el.style.zIndex = String(z);
-    var f = el.firstChild.firstChild;
-    if (!f.getAttribute('src')) f.src = cardSrc(nameOf(c));
+    /* ★T103：絵は 先読み（warmStart）が 面倒を 見る。
+       ここで 52枚 まとめて src を 入れると、せっかくの 4本ずつが 崩れる。
+       ★念のための 保険 ―― 何かの 拍子に 列から 落ちていたら 積み直すだけ。 */
+    if (!warmSent[c] && warmQueue.indexOf(c) < 0) { warmQueue.push(c); warmNext(); }
   }
 
   function render(instant) {
@@ -1580,6 +1689,7 @@
   function newDeal() {
     cancelAll();
     G = makeDeal(pickSeed());
+    warmOrder();                       // ★まだ 来ていない 絵を「盤の 読む順」に ならべ直す（T103）
     openBoard();
     say('この配り、ちゃんと クリアできるよ！');
   }
@@ -1596,6 +1706,7 @@
   /* ── つなぐ ─────────────────────────────────── */
   function boot() {
     build();
+    warmStart();          // ★はじめの画面が 出た その 瞬間から、裏で 52枚を 読み始める（T103）
     $('btnStart').addEventListener('click', newDeal);
     $('btnNew').addEventListener('click', newDeal);
     $('btnUndo').addEventListener('click', undoOne);
@@ -1743,10 +1854,29 @@
     autoPlay: autoPlay,
     verify: verify,
     band: band,
+
+    /* ★ 絵が どこまで 届いているか（T103・画面には 1つも 出ない）*/
+    images: function () {
+      var on = 0, blank = 0, i, f;
+      for (i = 0; i < cardEl.length; i++) {
+        f = cardEl[i].firstChild.querySelector('img');
+        if (f.complete && f.naturalWidth > 0) on++;
+        else if (!cardEl[i].firstChild.querySelector('.fallback')) blank++;
+      }
+      return {
+        '★出せる絵': on + ' / 52',
+        '★白い札（下じきも 絵も 無い）': blank,
+        '読み終えた': warmDone, '読めなかった': warmFail,
+        'いま流している': warmRun, '待っている': warmQueue.length,
+        'かかった時間': warmT1 ? (warmT1 - warmT0) + 'ms' : (Date.now() - warmT0) + 'ms（まだ 途中）',
+        '一度に流す本数': TUNE.WARM_PAR
+      };
+    },
     seed: function (n) {
       if (n == null) return G ? G.seed : null;
       cancelAll();
       G = makeDeal(n >>> 0);
+      warmOrder();
       openBoard();
       say('この配り、ちゃんと クリアできるよ！');
       return G.seed;
