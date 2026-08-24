@@ -218,9 +218,13 @@
         <div class="table-corner c1">🐾</div><div class="table-corner c2">🐾</div>
       </section>
       <section class="hand-area">
-        <div class="hand-heading"><span>あなたの手札</span><small id="handCount">0枚</small></div>
+        <!-- T109：見出し「あなたの手札」の 行（16px）を まるごと 消しました。
+             すぐ 下に 表むきの 札が ならんでいて、表むきの 手札は 画面に これ1つ だけ。
+             ★ただし 枚数の「◯枚」は 消さずに、下の パスの 行に うつしました
+               （スマホでは 手札が よこに スクロールして 数えにくいので、数字は のこす）。
+               行が 1つ 減っただけで、字は 1つも 消えていません。 -->
         <div class="hand" id="humanHand" aria-label="あなたの手札"></div>
-        <div class="actions"><button class="pass-button" id="passBtn" type="button">パスする <small id="passText">残り3回</small></button><div class="pass-bubbles" id="passBubbles" aria-label="あなたのパスの回数"></div></div>
+        <div class="actions"><small class="hand-count" id="handCount" aria-label="あなたの手札の枚数">0枚</small><button class="pass-button" id="passBtn" type="button">パスする <small id="passText">残り3回</small></button><div class="pass-bubbles" id="passBubbles" aria-label="あなたのパスの回数"></div></div>
       </section>
     </section>
   </main>
