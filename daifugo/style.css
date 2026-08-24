@@ -159,19 +159,22 @@ button { font-family:inherit; cursor:pointer; }
 .flag small { font-size:10px; font-weight:700; opacity:.85; }
 .flag-order { font-family:Georgia,serif; letter-spacing:.4px; color:#6b5f74; }
 .flag-order.rev { background:#3C2D4E; border-color:#2A1E38; color:#FFE690; }
-.flag-rev { background:linear-gradient(180deg,#FFD86B,#F5A623); border-color:#C97C0C; color:#4a3208;
-  animation:flagPop .45s ease-out; }
+.flag-rev { background:linear-gradient(180deg,#FFD86B,#F5A623); border-color:#C97C0C; color:#4a3208; }
 .flag-back { background:var(--mint-soft); border-color:var(--mint); color:#22694a; }
 .flag-dir { background:#EAF3FB; border-color:#B8D2E6; color:#3c6083; }
 .flag-dir.on { background:#4F86C6; border-color:#33608F; color:#fff; }
-@keyframes flagPop { from { transform:scale(.6); } to { transform:scale(1); } }
+/* ★T102：ここに あった `animation:flagPop` を けした。
+   renderFlags() は 1手ごとに #flagRow の innerHTML を まるごと 作り直す ので、
+   バッジ本体に アニメを つけると 毎手 さいせいされて「ぴこぴこ」に なる（T101・社長指摘）。
+   ⚠️ バッジが うごいて よいのは「出た しゅんかん・中身が かわった しゅんかん」だけ。
+      その 1回は `.flag.is-new`（①-1 の badgeIn）が うけもつ。ここには 二度と 書かない こと。 */
 
 /* ★ しばり バッジ（第2段B・ルルの じょうけん）
    「いま なにに しばられているか」を つねに 見せる。
-   ⚠️ これを 消すなら しばりの ルールも 消すこと（バッジが しばりの 半分）。 */
+   ⚠️ これを 消すなら しばりの ルールも 消すこと（バッジが しばりの 半分）。
+   ★T102：`animation:flagPop` を けした（りゆうは 上の .flag-rev の コメント）。 */
 .flag-lock {
   background:linear-gradient(180deg,#C9A7F0,#9B6BD8); border-color:#7A49B8; color:#fff;
-  animation:flagPop .45s ease-out;
 }
 .flag-lock small { color:#F2E6FF; }
 
