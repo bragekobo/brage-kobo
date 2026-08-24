@@ -229,6 +229,10 @@
       <div class="table-ribbon">⭐ 前の人より強いカードを出そう ⭐</div>
       <div class="field" id="field"></div>
       <p class="field-who" id="fieldWho"></p>
+      <!-- ★T100①（アト）：ルールはつどうの おしらせ箱を、場の「上のふち」に くっつける ため、
+           場（table-wrap）の 中に 引っこした。中身の 組み立て（game.js の box.innerHTML）と
+           T99 の 点滅は そのまま。位置は style.css が 決める（場の 札とは かさならない）。 -->
+      <div class="rule-flash" id="ruleFlash" aria-live="polite"></div>
     </section>
 
     <section class="hand-area">
@@ -244,8 +248,8 @@
   </section>
 </main>
 
-<!-- ルールが はつどうした ときの まんなかの おしらせ（文は RULES から つくる） -->
-<div class="rule-flash" id="ruleFlash" aria-live="polite"></div>
+<!-- ルールが はつどうした ときの おしらせ箱は、場の 上のふちに 出す ため
+     table-wrap の 中へ 引っこした（★T100①・アト）。 -->
 
 <!-- ============================================================
      あそびかた ― ルルの 3層せっけい（企画書 §6-1）

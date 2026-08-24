@@ -175,10 +175,11 @@ button { font-family:inherit; cursor:pointer; }
 }
 .flag-lock small { color:#F2E6FF; }
 
-/* ★ みやこおち バッジ（じぶんが ねらわれている とき） */
+/* ★ みやこおち バッジ（じぶんが ねらわれている とき）
+   ★T101：登場アニメは 付けない。renderFlags() が 1手ごとに innerHTML を 作り直す ため、
+   アニメが あると 毎回 再生されて「ぴこぴこ」に 見える（ロボット側で 社長指摘）。静止で 出しっぱなし。 */
 .flag-crown {
   background:linear-gradient(180deg,#FFD86B,#F08A2E); border-color:#C4620B; color:#4a2c08;
-  animation:flagPop .45s ease-out;
 }
 .flag-crown small { color:#5c3a10; }
 
@@ -188,11 +189,11 @@ button { font-family:inherit; cursor:pointer; }
 .cpu.is-turn { border-color:var(--gold); background:#FFFBEA; }
 .cpu.is-rest { opacity:.5; filter:grayscale(.7); }
 .cpu.is-done { opacity:.85; background:var(--mint-soft); border-color:var(--mint); }
-/* ★ みやこおち：ねらわれている ロボットの 上に つねに 出す バッジ（§8-2） */
+/* ★ みやこおち：ねらわれている ロボットの 上に つねに 出す 印（§8-2）
+   ★T101（社長指示）：文字入りの ふだ を やめ、王冠👑だけ。背景・わく も 無し。 */
 .crown-warn {
-  display:block; margin:0 auto 3px; width:fit-content; max-width:100%;
-  padding:2px 8px; border-radius:999px; font-size:10px; font-weight:900; white-space:nowrap;
-  background:linear-gradient(180deg,#FFD86B,#F08A2E); border:2px solid #C4620B; color:#4a2c08;
+  display:block; margin:0 auto 3px; width:fit-content;
+  font-size:16px; line-height:1;
 }
 .cpu-name { font-size:13px; font-weight:900; }
 .cpu-name small { display:block; color:#ef5c86; font-size:11px; font-weight:700; }
@@ -306,7 +307,14 @@ button { font-family:inherit; cursor:pointer; }
 
 /* ── ルールが はつどうした ときの おしらせ ── */
 .rule-flash {
-  position:fixed; left:50%; top:38%; transform:translate(-50%,-50%) scale(.8);
+  /* ★T100①（社長指示）：まえは 画面まん中（position:fixed・top:38%）に 出て いて、
+     場の 札に かぶって いた（実測 41%・T98 §6-2）。場（table-wrap）の 中に 引っこして、
+     「場の 上のふち」に くっつける。box の 下のはしが 場のわく 28px の ところ ＝
+     みどりの 布の 札には とどかない（★T100-2で 場が 1.5倍に なり、わく〜札まで 59px。
+     白い ふちかざり 6px を 見こんでも 25px あく）。
+     上へは ロボットの 伏せ札に
+     かぶるが、あれは 裏むきの 札 ＝ 読む ものが ない ので かぶって よい。 */
+  position:absolute; left:50%; bottom:calc(100% - 28px); transform:translateX(-50%) scale(.8);
   z-index:60; display:grid; gap:4px; text-align:center; pointer-events:none;
   padding:16px 26px; border-radius:22px; background:var(--white);
   border:5px solid var(--gold); box-shadow:0 12px 30px rgba(60,40,20,.3);
@@ -316,7 +324,12 @@ button { font-family:inherit; cursor:pointer; }
 .rule-flash span { font-size:13px; color:#6d6076; max-width:280px; }
 /* いま なにが 起きたか の ぐたいてきな 1行（♠しばり！／みやこおち！ など） */
 .rule-flash .flash-extra { font-size:14px; font-weight:900; color:#3f3348; }
-.rule-flash.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+.rule-flash.show { opacity:1; transform:translateX(-50%) scale(1); }
+/* ★T99①：おしらせが 入れかわる ときは、いったん 完全に 消えてから 次を 出す。
+   消えないと「何回 起きたか」が かぞえられない（革命が 2回 起きても 1回に 見える）。
+   game.js の すきま 120ミリ秒に 間に あうよう、★消える ときだけ 早める。
+   ⚠️ これは 箱の 濃さ の 話で、光らせ ものを ふやして いない（設計図 §5.5）。 */
+.rule-flash:not(.show) { transition:opacity .11s, transform .11s; }
 
 /* ── ダイアログ ───────────────────────── */
 dialog {
@@ -607,21 +620,23 @@ body {
 
 /* 👑 みやこおち ―― 「ねらわれてる」緊張は 出すが、こわくは しない。
    赤ではなく あたたかい 金色。ふちを 白く して やわらかく 見せる。 */
-.flag-crown, .crown-warn {
+.flag-crown {
   background:linear-gradient(180deg,#FFDE7B,#F5942F);
   border:3px solid #fff; color:#5A3406;
   box-shadow:0 3px 0 #C4620B, 0 0 0 3px rgba(245,148,47,.35);
 }
 .flag-crown small { color:#6B4210; }
 /* ⚠️ バッジが 出た人だけ 下に ずれる のを 直す（コーダの 申し送り）。
-   3人ぶん つねに 場所を 空けて おいて、バッジは その 中に 浮かせる。
+   3人ぶん つねに 場所を 空けて おいて、印は その 中に 浮かせる。
    ＝ 出ても 出なくても、ロボット3人の 高さが そろう。 */
 .cpu { padding-top:20px; }
+/* ★T101（社長指示）：ロボットの 印は 王冠👑だけ・静止。
+   ⚠️ 登場アニメ（badgeIn）は 付けない こと。renderCpu() が 1手ごとに innerHTML を
+   作り直す ので、アニメが あると 毎回 濃さ0から 出直して「ぴこぴこ」に 見える（社長指摘の 原因）。 */
 .crown-warn {
-  position:absolute; left:50%; top:0; transform:translateX(-50%); margin:0;
-  font-size:11px; padding:2px 9px; border-width:2px; border-radius:999px;
-  box-shadow:0 2px 0 #C4620B, 0 0 0 2px rgba(245,148,47,.32);
-  animation:badgeIn .42s cubic-bezier(.2,.9,.3,1.2);
+  position:absolute; left:50%; top:1px; transform:translateX(-50%); margin:0;
+  font-size:17px; line-height:1; padding:0; border:0; background:none; box-shadow:none;
+  filter:drop-shadow(0 2px 1px rgba(90,52,6,.28));
 }
 
 /* ⚡ 強さが ぎゃく ―― ものさしの「見出し」。
@@ -696,6 +711,21 @@ body {
 .hand .card:disabled { filter:grayscale(.85) brightness(1.04) contrast(.88); opacity:.62; }
 .hand .card.can-play { box-shadow:0 0 0 3px var(--gold-soft), 0 4px 0 rgba(198,140,30,.35), 1px 3px 2px rgba(49,41,42,.3); }
 .hand .card.can-join { box-shadow:0 0 0 3px var(--mint-soft), 0 4px 0 rgba(60,150,100,.3), 1px 3px 2px rgba(49,41,42,.3); }
+
+/* ★T99②：みどりの ふだが 出た しゅんかん、1回だけ ぴょこんと 上がる（6px・1回きり）
+   ------------------------------------------------------------
+   トライの 実測（T98 §3-2）：えらんだ ふだは 14px 持ち上がるのに、みどりは 1pxも
+   うごかなかった。★とくに 場が からっぽの ときは「1枚出す」で 押せて しまう ので、
+   気づかない 人は みどりを 見ないまま 1枚 だけ 出して しまう（自分の番の 18%）。
+   ★人の 目は「うごいた もの」に 勝手に 行く。だから 説明では なく うごきで 直す。
+   ⚠️ 色も 光りも ふやして いない（うごきだけ）。みどりは えらんだ あとにしか 出ない ので、
+      金色とは 同じ画面に 出ない ＝ 設計図 §5.5「強調は 1種類まで」は 破って いない。 */
+@keyframes joinPop {
+  0%   { transform:translateY(0); }
+  45%  { transform:translateY(-6px); }
+  100% { transform:translateY(0); }
+}
+.hand .card.can-join.join-pop { animation:joinPop .34s ease-out 1; }
 
 /* ============================================================
    ③ 世界観 ―― 1本目・2本目と そろえる
@@ -848,13 +878,14 @@ body {
    ・入ってくる ときだけ 動く（0.35秒）＝ 何回 起きても うるさくない
    ============================================================ */
 .rule-flash {
-  top:44%; padding:18px 28px; border-radius:24px; border-width:5px;
+  /* ★T100①：位置は 上の 基本ブロック（場の 上のふち）に まかせる。ここでは top を 出さない。 */
+  padding:18px 28px; border-radius:24px; border-width:5px;
   background:var(--white);
   box-shadow:0 14px 34px rgba(60,40,20,.34), 0 0 0 6px rgba(255,255,255,.7);
-  transform:translate(-50%,-50%) scale(.86) rotate(-2deg);
+  transform:translateX(-50%) scale(.86) rotate(-2deg);
   transition:opacity .2s ease, transform .28s cubic-bezier(.2,.9,.3,1.3);
 }
-.rule-flash.show { transform:translate(-50%,-50%) scale(1) rotate(0); }
+.rule-flash.show { transform:translateX(-50%) scale(1) rotate(0); }
 .rule-flash b { font-size:25px; letter-spacing:.5px; text-shadow:0 2px 0 #FFE3EF; }
 .rule-flash span { color:var(--ink-soft); font-weight:700; max-width:310px; }
 /* おしらせの 中の マークは 字の 色だけ（白い カードの 上なので まるふだは いらない） */
@@ -936,13 +967,74 @@ body {
   .mascot { position:relative; right:auto; bottom:auto; align-self:flex-end; margin:6px 6px 0 0; width:104px; }
   .mascot .bubble { font-size:12px; padding:5px 10px; border-width:2px; max-width:min(190px,52vw); }
   .cpu { padding-top:20px; }
-  .crown-warn { font-size:9.5px; padding:1px 6px; }
+  /* ★T101：ふだ→王冠👑だけに なったので、せまい画面も 絵文字の 大きさで（旧ふだ用の 9.5px＋padding は 廃止） */
+  .crown-warn { font-size:14px; padding:0; }
   .rule-group h4 { font-size:12px; }
   .rule-name { font-size:13px; }
   .rule-desc { font-size:11px; }
-  .rule-flash { top:46%; padding:14px 18px; }
+  /* ★T100①：せまい画面の くいこみは 24px（★T100-2で 場が 伸びて、わく〜札まで 42px（320px級は 35px）。
+     白い ふちかざり 6px を 見こんでも 5px 以上 あく） */
+  .rule-flash { bottom:calc(100% - 24px); padding:14px 18px; }
   .rule-flash b { font-size:20px; }
   .ranking li:nth-child(1) { font-size:14px; }
+}
+
+/* ============================================================
+   ★T100 ― 社長の 3指摘の 直し（🎨 アト・2026-08-24）
+   ------------------------------------------------------------
+   ① おしらせ箱の 位置 → 上の .rule-flash（場の 上のふち に 固定）
+   ② パスするの「押せる 色」→ ここ（はっきりした 水色〜青）
+   ③ 場の みどりの 高さ 固定・「出した ◯枚」の 表示 とりやめ → ここ
+   ゲームの 中身（SPEED・ルール判定・ロボット）には 1文字も さわって いない。
+   ============================================================ */
+
+/* ── ② パスする：押せる ときだけ 青（社長指示「わかりやすい 青か 水色」）──
+   ・押せない ときは いままで どおり（うすい グレー ＝ :disabled の filter が 効く）
+   ・青は「押せる／押せない」の 状態表示。金色（出せる札）・みどり（一緒に出せる札）とは
+     役わりが ちがう ので、§5.5「強調は 1種類まで」には 数えない。
+   ・色みは 9リバースの バッジ（flag-dir.on）と 同じ 青の 家族 ＝ 画面の 色数を ふやさない。
+   ・白い 字との 濃さの 差（コントラスト比）：下の 色 #1B6FAE で 5.3:1、
+     まん中 あたりで 3.9:1（18px 太字の 基準 3:1 を こえる）。 */
+.pass-button:not(:disabled) {
+  background:linear-gradient(180deg,#3D9EDF,#1B6FAE);
+  box-shadow:0 6px 0 #134F80, 0 10px 16px rgba(27,111,174,.22);
+}
+.pass-button:active:not(:disabled) { box-shadow:0 3px 0 #134F80; }
+
+/* ── ③-1 場の みどりの 高さを 固定（札が あっても なくても 1pxも 変えない）──
+   ★T100-2（社長指示）：「詰まってる感が いなめない。縦を 1.5倍くらいに して ゆとりを。
+   茶色の わくは そのまま」→ 高さだけ 1.5倍に した（わく・内よはくは 1pxも 変えて いない）。
+   高さ ＝ 札93.97px × 1.5 ≒ 141px ＋ 内よはく20px ＋ わく6px ＝ 約180px（もとは 120px）。
+   札は align-items:center で まん中の まま ＝ 上下に 均等の ゆとりが つく。
+   ページの 下に 余って いた 余白（1000×900で 約200px）を 使う だけ なので、はみ出さない。
+   6枚をこえる 長い 階段で 横に あふれる ときは、しずかに 見切れる
+   （設計図 §5.5 追記「まれな 最悪ケースに 画面を 合わせない」。場の 札は 触る ものではない）。 */
+.table-wrap .field {
+  height:calc(var(--card-h) + 86px);
+  min-height:0;
+  flex-wrap:nowrap;
+  overflow:hidden;
+}
+
+/* ── ③-2 「◯◯が出した 2枚」の 行は 出さない（社長：言わなくても わかる）──
+   game.js 側も 文字を 入れない ように した。行 そのものを たたむ ことで、
+   下の 茶色が 上の 茶色（11px）と 同じ あつさに なる（③-3）。 */
+.field-who { display:none; }
+
+@media (max-width:650px) {
+  /* せまい画面の 場：★T100-2 で 1.5倍（86px → 130px）。内よはく14px＋わく4px は そのまま。
+     375×812の 実測：ボタンの 下の 余白 144px（バッジが いちばん 多い ときでも 67px）＞ 伸ばし幅 44px。 */
+  .table-wrap .field { height:calc(var(--card-h) + 62px); }
+}
+
+@media (max-width:340px) {
+  /* ★320px級 だけ 1.12倍（86px → 96px）に おさえる（＝1.5倍に しない。理由は 実測）：
+     320×812は 配りなおしの 直後（手札14枚 ＝ 3段）に 下の 余白が 11px しか ない。
+     ＋30px（1.35倍）でも 縦に 19px はみ出した。「はみ出しを 悪化させない」が 条件 なので、
+     余白 11px に 収まる ＋10px が 上限。375px からは ちゃんと 1.5倍に なる。 */
+  .table-wrap .field { height:calc(var(--card-h) + 28px); }
+  /* 場が ひくい ぶん、おしらせ箱の くいこみも あさく（わく〜札 27px。ふちかざり6px を 見こむ） */
+  .rule-flash { bottom:calc(100% - 16px); }
 }
 
 /* 動きが にがてな人には 動かさない（OSの せっていに したがう） */
@@ -950,7 +1042,10 @@ body {
   .cat, .cat-eyes, .cat-tail,
   .flag-order.is-flip, .flag-order.is-flip .ord-chip,
   .flag.is-new, .crown-warn, .flag-dir.is-flip .dir-arrow,
-  .hand .card.cant-finish.is-shake { animation:none !important; }
+  .hand .card.cant-finish.is-shake,
+  .hand .card.can-join.join-pop { animation:none !important; }
   .rule-flash { transition:opacity .18s !important; }
-  .rule-flash, .rule-flash.show { transform:translate(-50%,-50%) !important; }
+  /* ★T99①：うごきは 止めても「消えて、また 出た」は 残す（濃さ だけ なので） */
+  .rule-flash:not(.show) { transition:opacity .11s !important; }
+  .rule-flash, .rule-flash.show { transform:translateX(-50%) !important; }
 }

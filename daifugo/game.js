@@ -177,7 +177,9 @@ const state = {
   totals: [],           // [{ stars, firsts }] ブラウザを とじたら きえる（社長決定）
   preset: 'normal',
   ruleOn: {},
-  fired: {},            // そのゲームで もう はつどうした ルール
+  fired: {},            // そのゲームで もう「説明の 全文」を 出しきった ルール
+  tried: {},            // ★T99：全文を 出そうとして 切りあげられた 回数（ルールごと）
+  longAt: {},           // ★T99：全文を さいごに 出そうとした 時こく（ルールごと）
   nextStarter: null,    // つぎの ゲームの さいしょの人（＝まえの かいの さいかい）
   lastRank: null,       // ★まえの かいの じゅんい（players の ばんごう。0番が 1い）
   crown: null,          // ★まえの かいの 1い（みやこおち の ねらわれる人）
@@ -602,9 +604,11 @@ function renderCpu() {
       ? (p.foul ? 'ルールで下がった' : (p.cards.length ? title : `ゴール！ ${title}`))
       : (p.passed ? 'お休み中' : `${p.cards.length}枚`);
     const backs = Array.from({ length: Math.min(p.cards.length, 14) }, () => '<span class="cpu-card"></span>').join('');
-    /* ★ みやこおち：ねらわれている人には つねに バッジ（§8-2） */
+    /* ★ みやこおち：ねらわれている人には つねに バッジ（§8-2）。
+       ★T101（社長指示）：文字は消して 王冠👑だけ。「前の回の1位」の 印として 静かに 出しっぱなしに する。
+       （判定の 条件は 1文字も 変えて いない。見た目の 中身だけ） */
     const crown = (ruleLive('fallDown') && state.crown === idx && !p.done && !state.over)
-      ? '<span class="crown-warn">👑 ねらわれてる！</span>' : '';
+      ? '<span class="crown-warn">👑</span>' : '';
     return `<div class="${cls.join(' ')}">${crown}<div class="cpu-name">🤖 ${p.name}<small>${sub}</small></div>`
          + `<div class="cpu-cards">${backs}</div></div>`;
   }).join('');
@@ -618,8 +622,8 @@ function renderField() {
   }
   const tags = f.meld.assign || {};
   $('field').innerHTML = f.cards.map(c => cardHTML(c, undefined, tags[c.key])).join('');
-  const kind = f.meld.kind === 'stairs' ? 'の階段' : '枚';
-  $('fieldWho').textContent = `${f.by}が出した ${f.meld.count}${kind}`;
+  /* ★T100③（社長指示）：「◯◯が出した 2枚」の 表示は 消した（言わなくても わかる）。
+     f.meld.count（数える 処理 そのもの）は ルールの 判定で 使うので、1文字も さわって いない。 */
 }
 
 let handSig = '';
@@ -640,8 +644,22 @@ function renderHand() {
     box.querySelectorAll('[data-key]').forEach(el => {
       const k = el.dataset.key;
       const m = map[k];
+      /* ★T99②：みどり（いっしょに だせる）に なった しゅんかん、1回だけ ぴょこんと 上げる。
+         えらんだ ふだは 14px 上がるのに、みどりは 1pxも うごかなかった（T98 §3-2）。
+         ★場が からっぽの ときは「1枚出す」で 押せて しまう ので、
+           気づかない 人は みどりを 見ないまま 1枚で 出して しまう（自分の番の 18%）。
+         うごく のは 6px・1回きり。★文字は 1文字も ふえない。 */
+      const wasJoin = el.classList.contains('can-join');
       el.classList.toggle('can-play', m === 'play');
       el.classList.toggle('can-join', m === 'join');
+      if (m === 'join') {
+        if (!wasJoin) {
+          if (el.classList.contains('join-pop')) { el.classList.remove('join-pop'); void el.offsetWidth; }
+          el.classList.add('join-pop');
+        }
+      } else if (el.classList.contains('join-pop')) {
+        el.classList.remove('join-pop');
+      }
       el.classList.toggle('selected', m === 'sel');
       el.classList.toggle('cant-finish', m === 'stop');
       el.disabled = (m === 'no');
@@ -734,18 +752,45 @@ const FLASH_PRI = { power:3, care:2, link:2 };
    holdFirst/hold … うしろが つかえて いる ときの 最短。ここまでは かならず 出しきる */
 const FLASH_MS  = { first:2000, again:1100, holdFirst:1400, hold:900 };
 /* 順番待ちの 上かぎり（あんぜん弁）。
-   ふつうに 遊んで いれば ここまで たまらない（300試合 21万手 で 一度も 出番なし）。
-   万一 あふれた ときだけ、いちばん 下の いちばん 古い ものから 落とす。 */
-const FLASH_MAX = 8;
+   あふれた ときだけ、いちばん 下の いちばん 古い ものから 落とす。
+   ★T99：8 → 16 に 上げた。
+   T97 は「300試合で 一度も 出番なし」と 書いたが、★実は ぎりぎり だった ――
+   種を 6つ・打ち方を 3つ で はかると、直す前でも 深さは すでに **8**（＝上かぎり ちょうど）
+   まで 来て いた（90210×naive／31337×mirror）。★T99 の 点滅（120ミリ秒）で 9 に なり、
+   ★おしらせが 1件 捨てられた（＝T97 の「消えた 0回」が こわれた）。
+   実測の いちばん 深い ところ 9 の 倍を とって 16。★あふれる ための 弁では なく、
+   万一 かぎりなく たまった ときの 安全弁 なので、大きくても 害は ない。 */
+const FLASH_MAX = 16;
+/* ★T99①：おしらせが 入れかわる ときは、いったん 箱を 消してから 次を 出す。
+   T98（トライ）の 実測 ―― 箱は 濃さ 1.00 の まま 文字だけ 入れかわる ので、
+   ★おしらせの 39〜57%（最長 5連続）の「押しのけ」が ぜんぶ 1つに 見えていた。
+   ★革命が 2回 起きても 1回に 見える。
+   人は「消えて、また 出た」で 数を かぞえる ので、消えない かぎり 数えられない。
+   120ミリ秒は「点滅」として 見える いちばん 短い 長さ（T98 §6-3）。
+   ⚠️ おしらせは ゲームの ながれを 止めない ので、試合の 長さは 変わらない。 */
+const FLASH_GAP = 120;
+/* ★T99③：説明の 全文が 1.4秒に 切りあげられた ときは fired を 立てず、
+   つぎに 同じ ルールが 起きた とき もう一度 全文の チャンスを 出す（T98 §4-5）。
+   ⚠️ ただし「一度は 最後まで 見せる」が ねらい で、「毎回 出す」ではない（社長の 指示）。
+      しばりは 60試合で 285回も 起きる ので、上かぎりが ないと 全文が 出つづける。
+      ここまで 試して だめなら あきらめて、みじかい 1行に 切りかえる。 */
+const FLASH_TRY = 3;
+/* ★T99③の 手綱：全文を もう一度 出すのは、まえに 出そうとして から
+   これだけ たって から。★「一度は 最後まで 見せる」が ねらい で、「毎回 出す」ではない。
+   これが 無いと 9リバース・8切りの 全文が ★1.5秒 おきに 2回 出た（実測）。
+   20秒 に すると、1試合（約75秒）の 中で 同じ 説明は 多くて 2〜3回・20秒 いじょう あく。 */
+const FLASH_COOL = 20000;
 const flashQ = [];        // 順番待ち { id, extra, pri, at }
 let flashFrom  = 0;       // いま 出ている おしらせが 出はじめた 時こく
 let flashUntil = 0;       // いま 出ている おしらせが 消える 時こく
 let flashMin   = 0;       // いま 出ている おしらせを 切りあげて いい 最短の 長さ
 let flashTimer = 0;
+let flashCur   = null;    // ★いま 出ている おしらせ { id, first, full }
 
 function flashReset() {
   flashQ.length = 0;
   flashFrom = flashUntil = flashMin = 0;
+  flashCur = null;
   window.clearTimeout(flashTimer);
   const box = $('ruleFlash');
   if (box) box.classList.remove('show');
@@ -757,7 +802,11 @@ function fireRule(id, extra) {
   if (HOOK.rule) HOOK.rule(id);
 
   const now = Date.now();
-  if (now < flashUntil) {
+  /* ★T99①：まだ 箱が 出ている（flashCur）なら、たとえ 時間切れ ちょうど でも
+     直に 書きかえない。かならず flashNext を 通して 点滅を はさむ。
+     （ここを now < flashUntil だけに すると、同じ 1ミリ秒に 重なった とき
+       1.2% だけ「文字だけ 入れかわる」が のこった） */
+  if (flashCur || now < flashUntil) {
     flashQ.push({ id, extra, pri: FLASH_PRI[r.group] || 1, at: now });
     while (flashQ.length > FLASH_MAX) {
       let w = 0;                        // いちばん 下の いちばん 古い もの
@@ -774,14 +823,27 @@ function fireRule(id, extra) {
     }
     return;
   }
-  showFlash(id, extra);
+  showFlash(id, extra, true);   /* ★静かな とき ＝ うしろに 何も ならんで いない */
 }
 
-function showFlash(id, extra) {
+function showFlash(id, extra, quiet) {
   const r = RULE(id);
   if (!r) return;
-  const first = !state.fired[id];
-  state.fired[id] = true;
+  /* ★T99③：ここでは まだ fired を 立てない。
+     「最後まで 出しきれたか」が わかる 消える とき（flashDone）に 立てる。
+     ★ただし 直前に 全文を 出そうとした ばかり なら、今回は みじかい 1行に する
+       （同じ 説明が 短い あいだに 何度も 出ない ように）。 */
+  const now0 = Date.now();
+  const cool = state.longAt[id] !== undefined && (now0 - state.longAt[id]) < FLASH_COOL;
+  /* ★2回目 いこうの チャンスは「静かな とき」だけ 使う。
+     おしらせが 続けざまに 起きて いる さいちゅうに 全文を 出しても、
+     また 1.4秒で 切りあげられて 読めない うえ、★うしろの 待ちを のばす だけ
+     （ここを 見ないと 順番待ちが あふれて、おしらせが 1件 消えた ―― 実測）。
+     ★静かな とき なら 2.0秒 まるごと 読める。
+     （はじめての 1回は 今までどおり、つかえて いても 出す） */
+  const room = quiet || state.tried[id] === undefined;
+  const first = !state.fired[id] && !cool && room;
+  if (first) state.longAt[id] = now0;
   const line = first ? descOf(r) : (r.flash || '');
   const box = $('ruleFlash');
   box.innerHTML = `<b>${r.name}！</b>`
@@ -795,17 +857,46 @@ function showFlash(id, extra) {
   flashMin  = Math.min(full, first ? FLASH_MS.holdFirst : FLASH_MS.hold);
   flashFrom = now;
   flashUntil = now + (flashQ.length ? flashMin : full);
+  flashCur = { id, first, full };
   window.clearTimeout(flashTimer);
   flashTimer = window.setTimeout(flashNext, flashUntil - now);
 }
 
+/* ★T99③：いま 出ていた おしらせが 消える とき、全文を 出しきれたか を 見る。
+   出しきれた       → もう 全文は 出さない（今までどおり）
+   切りあげられた   → fired を 立てない ＝ つぎに もう一度 全文の チャンス
+   ただし FLASH_TRY 回 だめだったら あきらめる（同じ 全文が 出つづけない ように） */
+function flashDone() {
+  const cur = flashCur;
+  flashCur = null;
+  if (!cur) return;
+  if (!cur.first) return;                       // みじかい 1行 ＝ もう fired 済み
+  if (Date.now() - flashFrom >= cur.full - 20) { state.fired[cur.id] = true; return; }
+  const t = (state.tried[cur.id] || 0) + 1;
+  state.tried[cur.id] = t;
+  if (t >= FLASH_TRY) state.fired[cur.id] = true;
+}
+
 function flashNext() {
+  flashDone();
   const box = $('ruleFlash');
   if (!flashQ.length) {
     if (box) box.classList.remove('show');
     flashUntil = 0;
     return;
   }
+  /* ★T99①：入れかわる ときは いったん 箱を 消す（120ミリ秒）。
+     この あいだも「まだ ふさがっている」ことに して おく ＝ あとから 来た ものは
+     割りこまずに 順番待ちに 入る（T97 の「捨てない」を こわさない）。 */
+  if (box) box.classList.remove('show');
+  const now = Date.now();
+  flashFrom = now; flashMin = FLASH_GAP; flashUntil = now + FLASH_GAP;
+  window.clearTimeout(flashTimer);
+  flashTimer = window.setTimeout(flashPick, FLASH_GAP);
+}
+
+function flashPick() {
+  if (!flashQ.length) { flashUntil = 0; return; }
   /* ★ ならんだ 中から「つよさが かわる」ほうを 先に 出す。
      ⚠️ 古いから といって 捨てない。捨てたら それは また
         「出ないまま 消えた おしらせ」に なって、なおした ことに ならない。 */
@@ -890,7 +981,7 @@ function startGame(keepScore) {
     state.crown = null;
   }
   state.field = null; state.finished = []; state.selected = []; state.altIndex = 0;
-  state.busy = false; state.over = false; state.fired = {};
+  state.busy = false; state.over = false; state.fired = {}; state.tried = {}; state.longAt = {};
   flashReset();          /* ★ まえの ゲームの おしらせが 順番待ちに のこらない ように */
   state.revolution = false; state.jackBack = false; state.revDir = false;
   state.pending = null; state.after = null;
