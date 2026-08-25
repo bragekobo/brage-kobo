@@ -210,7 +210,9 @@ function later(fn, ms) {
 /* ───────── カードの 絵札（設計図 §9・厳守） ─────────
    ・かならず office/games/cards/ の 社長の 画像を つかう。CSSや 記号で 自作しない。
    ・ファイル名が 日本語なので URL には encodeURIComponent() を 通す。
-   ・全55枚で 約11MB あるので、先読みは しない。てふだ・ばに 出た ぶんだけ 読む。 */
+   ・つかう 絵は 54枚（52枚＋ジョーカー2枚）。うら面は つかわない
+     ―― ロボットの うら向きの 札は CSSの しかく（.cpu-card）で 描いて いる。
+   ・★先読みに ついては すぐ下の warmStart() を 見る（T120）。 */
 const CARD_DIR = '../cards/';
 const cardSrc  = (file) => CARD_DIR + encodeURIComponent(file) + '.png';
 
@@ -233,6 +235,124 @@ function shuffle(cards) {
     [cards[i], cards[j]] = [cards[j], cards[i]];
   }
   return cards;
+}
+
+/* ============================================================
+   ★ 絵札の 先読み（T120）― ロボットの 札が「2段階」に 見えていた
+   ------------------------------------------------------------
+   ★なにが 起きていたか（社長の 見つけた こと）
+     自分の 札 … 配られた ときから 表 ＝ その 絵は もう 読み込みずみ
+                 → 出しても すぐ 絵が 出る
+     ロボットの札… ずっと うら向き ＝ その 絵は **一度も 読んで いない**
+                 → 出した しゅんかんに 読みに 行く
+                 → 文字の 仮の札（fallback）→ PNGが とどく → 絵 ＝ **2段階**
+
+   ★実測（4Mbps・50ms・冷たい じょうたい・3回・ロボットが 初めて 出した 札）
+                                   前            後
+     仮の札が 見えていた 時間 まん中  166.2ms  →   0.3ms
+     　　　　　　　　　　　　 いちばん長い 416.8ms  →   3.9ms
+     　　　　　　　　　　　　 16ms を こえた  55/55  →   0/56
+     出した しゅんかんに 絵が あった  0/55    →  56/56
+     （自分の 札は 前も 後も まん中 0.5〜0.7ms・絵あり ぜんぶ ―― ★変わって いない）
+
+   ★どう 直したか
+     ① はじめの画面から 54枚を うらで 読んでおく（4本ずつ）
+     ② ★配った あとは **自分の 手札を いちばん 前** に ならべ直し、
+        読みかけの ほかの 札は その場で **止める**
+        → 自分の 手札は 回線を 1本も とられない ＝ **1msも 遅く ならない**
+        → ロボットの 札は「自分の 手札が 読み終わってから」うらで 続きを 読む
+     ③ ロボットの ぶんは「よわい 札から」ならべる（cpuPick が よわい 札から 出す ため）
+
+   ★神経衰弱（T81）・フリーセル（T103）との ちがい
+     神経衰弱 … 絵が 来てから めくる（めくる 時計と 競争する ので 待たせる）
+     フリーセル… 配った しゅんかん 52枚 ぜんぶ 表（待てないので 全部 先読み）
+     ★大富豪 … 配った しゅんかんに 要るのは **自分の 14枚だけ**。
+                ロボットの 絵が 要るのは **出した しゅんかん**（＝ ずっと あと）。
+                ★「間に合わせる 時間」が いちばん 長い ので、
+                  **自分の 手札を さきに 通して、残りを あとから 読む** が いちばん 良い。
+                ★T103 のように「文字の 札を かぶせる」必要は ない
+                  ―― ここは 元から fallback が 先に 出る 作りで、白い札に ならない。
+
+   ★大きさ：54枚で 2.01MB（うら面を 入れて 55枚 2.10MB）。
+     設計図§9 の「約11MB」は T83 の 軽量化 まえの 古い 数字。
+   ============================================================ */
+const WARM_PAR = 4;                      /* 同時に 流す 本数。ブラウザの 6本より 少なくして 2本 あけておく */
+const warmDone = Object.create(null);    /* file → true（読み終えた／読めなかった） */
+const warmLive = Object.create(null);    /* file → Image（いま 流している） */
+const warmKeep = Object.create(null);    /* file → Image（読み終えた ものを 持っておく。捨てられない ように） */
+let   warmQueue = [];
+let   warmLiveN = 0;
+let   warmOn    = false;
+
+/* つかう 絵は この 54枚 だけ（うら面は 読まない） */
+function faceFiles() { return createDeck().map(c => c.file); }
+
+function warmPump() {
+  if (!warmOn) return;
+  while (warmLiveN < WARM_PAR && warmQueue.length) {
+    const f = warmQueue.shift();
+    if (warmDone[f] || warmLive[f]) continue;
+    const img = new Image();
+    warmLive[f] = img; warmLiveN += 1;
+    img.decoding = 'async';
+    img.onload = () => {
+      delete warmLive[f]; warmLiveN -= 1; warmDone[f] = true;
+      /* ★ 読んだ ものを 持っておく ＝ あとで <img> が 作られた ときに
+         もう一度 読みに 行かなくて すむ（メモリに のこる のは 圧縮された 2MBぶん）。 */
+      warmKeep[f] = img;
+      warmPump();
+    };
+    img.onerror = () => {
+      delete warmLive[f]; warmLiveN -= 1; warmDone[f] = true;   /* 何度も 読み直さない */
+      warmPump();
+    };
+    img.src = cardSrc(f);
+  }
+}
+
+/* はじめの画面で 走りだす。ゲームの ながれは 1msも 待たない。 */
+function warmStart() {
+  if (warmOn) return;
+  warmOn = true;
+  warmQueue = faceFiles();
+  warmPump();
+}
+
+/* ★ 配った あとに よぶ ―― 自分の 手札を いちばん 前に ならべ直す。
+   ★ここが この 直しの 心臓：読みかけの「自分の 手札で ない」札を その場で 止めて、
+     回線を 自分の 14枚に あける。だから 自分の 札は 遅く ならない。 */
+function warmFocus() {
+  if (!state.players.length) return;
+  const mine = state.players[0].cards.map(c => c.file);
+  const keep = Object.create(null);
+  mine.forEach(f => { keep[f] = true; });
+
+  Object.keys(warmLive).forEach(f => {
+    if (keep[f]) return;                 /* 自分の 手札なら そのまま 流しつづける */
+    const img = warmLive[f];
+    img.onload = null; img.onerror = null;
+    img.removeAttribute('src');          /* 読みかけを その場で 止める */
+    delete warmLive[f]; warmLiveN -= 1;
+    warmQueue.unshift(f);                /* あとで 読み直す */
+  });
+
+  /* ロボットの 手札は「よわい ほうから」1枚ずつ 交互に ＝ ばに 出る 順に 近い */
+  const rows = state.players.slice(1).map(p =>
+    p.cards.slice().sort((a, b) => strength(a) - strength(b)).map(c => c.file));
+  const rest = [];
+  for (let i = 0; ; i++) {
+    let any = false;
+    rows.forEach(r => { if (i < r.length) { rest.push(r[i]); any = true; } });
+    if (!any) break;
+  }
+
+  const seen = Object.create(null);
+  warmQueue = mine.concat(rest, warmQueue, faceFiles()).filter(f => {
+    if (seen[f] || warmDone[f]) return false;
+    seen[f] = true; return true;
+  });
+  warmOn = true;
+  warmPump();
 }
 
 /* ============================================================
@@ -1025,6 +1145,10 @@ function startGame(keepScore) {
   const deck = shuffle(createDeck());
   deck.forEach((c, i) => state.players[i % 4].cards.push(c));
   state.players.forEach(sortHand);
+  /* ★T120：くばりが きまった しゅんかんに 先読みの じゅんばんを 入れかえる。
+     ★render() より **さきに** よぶ ―― 読みかけの ほかの 札を 止めてから
+     自分の 手札の <img> を 出す ので、自分の 14枚が 回線を ひとりじめ できる。 */
+  warmFocus();
 
   /* 1ゲームめは ♦3の 人から。2ゲームめ いこうは まえの かいの さいかいから（§5-2）。 */
   if (state.nextStarter != null) state.turn = state.nextStarter;
@@ -1045,6 +1169,8 @@ function startGame(keepScore) {
        おなじ 手番で 2回 出せて しまい、ゲームが 止まる。
        手番を わたすのは beginTurn の しごと ―― 1か所に まとめる。 */
     state.busy = true;
+    /* ★T120：カードこうかんで 手札が 入れかわった ぶんを 入れ直す（同じ ものを 二度 読まない） */
+    warmFocus();
     setMessage(`${state.players[state.turn].name}から スタート！`);
     render();
     later(beginTurn, SPEED.step);
@@ -1624,6 +1750,9 @@ function backToStart() {
 
 /* ───────── はじめの ひもづけ ───────── */
 applyPreset('normal');
+/* ★T120：はじめの画面が 出た その 場から、54枚を うらで 読みはじめる。
+   ★ゲームの ながれは 1msも 待たない（どこにも load を 待つ ところは 無い）。 */
+warmStart();
 
 $('presetRow').addEventListener('click', (e) => {
   const b = e.target.closest('[data-preset]');
@@ -1713,6 +1842,14 @@ window.DF = {
   /* まえの かいの じゅんいを 仕こむ（みやこおち・カードこうかんの たしかめ） */
   setRank(arr)      { state.lastRank = arr.slice(); state.crown = arr[0]; state.nextStarter = arr[3]; return state.lastRank; },
   plays(i, withBan) { return legalPlays(state.players[i || 0], Boolean(withBan)).map(p => ({ k:p.cards.map(c => c.key), kind:p.meld.kind })); },
+  /* ★ T120：絵札の 先読みが どこまで 来ているか（画面には 1文字も 出ない） */
+  warm() {
+    const all = faceFiles();
+    const ok = all.filter(f => warmKeep[f]).length;
+    return { ぜんぶ: all.length, 読み終えた: Object.keys(warmDone).length, 絵が使える: ok,
+             流している: warmLiveN, 待っている: warmQueue.length,
+             まだの札: all.filter(f => !warmDone[f]).length };
+  },
   /* ★ T96：ロボットの しこうを そのまま よぶ／数を かぞえる のぞきあな */
   hook: HOOK,
   cpu: CPU,
