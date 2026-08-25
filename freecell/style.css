@@ -75,15 +75,34 @@ button { font-family:inherit; cursor:pointer; }
 .brand-cat { width:30px; height:23px; flex:0 0 auto; }
 .brand span { font-weight:900; font-size:16px; color:#3f5a70; white-space:nowrap; }
 
-.tools { flex:0 0 auto; display:flex; gap:6px; }
+/* ★T118：「もどす」と「新しく 配る」の すきま。
+   前は 6px しか なく、指が 2mm ずれると 盤が 全部 消えて いた（T112）。
+   ★ここを 広げても たては 1pxも 増えない（横に ある 名前が ちぢむ だけ）。 */
+.tools { flex:0 0 auto; display:flex; gap:22px; }
 .tool {
+  position:relative;                   /* ★T118：下の 押し代（::after）の 親 */
   min-height:36px; padding:0 13px; border-radius:999px; white-space:nowrap;
   background:var(--white); border:3px solid var(--gold-soft);
   color:#7a5205; font-size:13px; font-weight:900;
 }
+/* ★T118：見えない 押し代 ―― 触る所を たてに ±4px 広げて 44px に する。
+   ------------------------------------------------------------------
+   ★見た目の 大きさ（36px）は 1pxも 変えない。位置も 変えない。
+     絶対位置の 箱は 親の 大きさに 入らない ので、上の帯も 盤も 1pxも 動かない。
+   ★はみ出す 先は 上＝ページの ふち(8px)・下＝上の帯と 盤の あいだ(8px)。
+     どちらも 何も 置いて いない すきま なので、札の つかみを 1mmも 取らない。
+   ★横には 広げない（広げると 2つの ボタンが また くっつく）。
+   ⚠️ top/bottom で ±4px と 書くと **ふち（border）の 内がわ が 基準**に なる ため、
+      ふちの 太さぶん(2〜3px) だけ 足りなく なる（375pxで 40pxしか 出なかった。実測ずみ）。
+      だから 高さを 44px と 決め打ちして まん中ぞろえに する。ふちの 太さに 左右されない。 */
+.tool::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
+}
 .tool:hover { border-color:var(--gold); }
 .tool:active { transform:translateY(2px); }
 .tool[disabled] { opacity:.4; cursor:default; transform:none; }
+.tool[disabled]::after { display:none; }   /* 灰色の ときは 押し代も 消す */
 
 /* せまい 画面では もどる の 文字を たたんで ◀ だけに する */
 @media (max-width:520px) {
@@ -91,12 +110,17 @@ button { font-family:inherit; cursor:pointer; }
   .back { padding:0 11px; }
   .brand span { font-size:15px; }
   .tool { padding:0 10px; font-size:12.5px; border-width:2px; }
+  .tools { gap:18px; }                 /* ★T118 */
 }
 @media (max-width:360px) {
   .app-shell { gap:6px; }
   .brand-cat { display:none; }
   .brand span { font-size:13px; }
   .tool { padding:0 8px; font-size:12px; }
+  /* ★T118：320px は 横が いちばん きつい。それでも 6px の 倍以上は 空ける。
+     ★押し代は 44px の まま。上の帯(38px)の 下は すきま 6px・盤は そこから 始まる ので、
+       44px は 上の帯から 上下 3pxずつ しか はみ出さない（＝盤に かぶらない。実測ずみ）。 */
+  .tools { gap:14px; }
 }
 
 /* ── はじめの 画面 ────────────────────────────── */
@@ -303,9 +327,17 @@ button { font-family:inherit; cursor:pointer; }
   word-break:keep-all;               /* 言葉の まん中で 折らない（分かち書きの すきまで 折る）*/
 }
 .howto {
+  position:relative;                   /* ★T118：下の 押し代（::after）の 親 */
   flex:0 0 auto; padding:8px 12px; border-radius:999px;
   background:var(--white); border:3px solid var(--pink-soft);
   color:var(--pink-dark); font-size:12.5px; font-weight:900; white-space:nowrap;
+}
+/* ★T118：「？ 遊び方」も 44px に 届いていなかった（T112：320px で 29px ＝ 会社で 最小）。
+   ★はみ出す 先は 下じき（白い 帯）の 内がわの すきま だけ。
+     盤にも ハッピーにも 1pxも かぶらない ので、札の つかみは 変わらない。 */
+.howto::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
 }
 .howto:hover { border-color:var(--pink); }
 @media (max-width:360px) {

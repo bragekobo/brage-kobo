@@ -869,6 +869,43 @@
   /* ── 部品 ─────────────────────────────────── */
   var G = null, boardEl = null, boardIn = null, cardEl = [], spotEl = {}, built = false;
   var busy = false, autoTimer = 0, fallStop = null, shakeTimer = 0;
+
+  /* ============================================================
+     ★★ 配り直しの 取り消し（T118）★★
+     ------------------------------------------------------------
+     「もどす」の 6px となりに「新しく 配る」が ある。押しまちがえると
+     積み上げた 盤が 消えて、確認も 無い ―― 取り返しが つかない 事故。
+
+     ★ ここで やるのは「もどす の 意味を 変える」ことでは ない。
+       いまの updateTools() は
+
+           $('btnUndo').disabled = !G || !G.hist.length || busy;
+
+       なので、**配り直した 直後の「もどす」は 必ず 灰色**（押しても 何も 起きない）。
+       事故は まさに その 瞬間に 起きる。
+       ★つまり「もどす が 今まで 何も していなかった 一瞬」だけに 仕事を 足す。
+         今まで 何かを していた 操作は 1つも 変わらない。
+
+     ★ 迷子に ならない ための 線：
+       控えは「新しい 盤で まだ 1枚も 動かして いない 間」だけ 持つ。
+       人が 1手 打ったら 捨てる（play() の 先頭）。
+       → もどす を 押し続けて いつのまにか 前の 配りに 出ている、は 起きない。
+
+     ★ 控えを 取らない 場面（取る 意味が 無い）：
+       ・前の 盤が 0手（失う ものが 無い ＝ そもそも 事故で ない）
+       ・前の 盤が 勝ち（戻しても やる ことが 無い）
+       ・1回目の 配り（G が まだ 無い）
+     ============================================================ */
+  var prevG = null;
+
+  /* 盤の 丸ごと 控え。中身は 数と 素の 物だけ なので 深い コピーで 足りる
+     （52枚ぶん ＝ 数キロバイト。毎回 作っても 重く ならない）。 */
+  function snapGame(g) {
+    if (!g) return null;
+    try { return JSON.parse(JSON.stringify(g)); } catch (e) { return null; }
+  }
+  /* 守る 値打ちが ある 盤か（無いなら 控えない ＝ もどす は 灰色の まま）*/
+  function worthKeeping(g) { return !!(g && g.hist && g.hist.length && !g.won); }
   var geo = { cw: 43, ch: 65, gap: 1, ovUp: 29, rowGap: 8, x0: 0, lift: 30, colH: 0 };
 
   function say(t) { $('happyBubble').textContent = t; }
@@ -1501,6 +1538,9 @@
 
   /* ── 1手 打つ（★人の 手は かならず ここを 通る）───────── */
   function play(mv, g0) {
+    /* ★T118：新しい 盤で 人が 1手 打った ＝ その 配りを 受け入れた。
+       前の 盤の 控えは ここで 捨てる（もどす が 前の 配りへ 飛ぶ ことは 無い）。 */
+    prevG = null;
     /* まとめて 運ぶ ときは、出発の 場所を 先に 覚えて おく（空き場を 通る 動き 用）*/
     var relayCards = null, startPos = null;
     if (mv.k === 'TT' && mv.n >= 2) {
@@ -1521,7 +1561,9 @@
   }
 
   function updateTools() {
-    $('btnUndo').disabled = !G || !G.hist.length || busy;
+    /* ★T118：控えが ある 間（＝配り直した 直後）も おせる ように する。
+       それ 以外の 判定は 前と 1文字も 変えて いない。 */
+    $('btnUndo').disabled = !G || (!G.hist.length && !prevG) || busy;
   }
 
   /* ============================================================
@@ -1668,6 +1710,10 @@
 
   /* ── 試合の 出し入れ ──────────────────────────── */
   function cancelAll() {
+    /* ★T118：盤を 入れかえる 前は かならず ここを 通る ので、控えも ここで 捨てる。
+       ★使う 2か所（newDeal・undoOne）は、呼ぶ 前に 自分の 手元へ 移してから 呼ぶ。
+       こうして おくと、あとで たしかめ用の 窓口が 増えても 古い 控えが 残らない。 */
+    prevG = null;
     cancelDrag();
     lastTap.c = -1;
     clearTimeout(autoTimer);
@@ -1687,7 +1733,16 @@
   }
 
   function newDeal() {
+    /* ★T118：配る 前に、値打ちの ある 盤だけ 控える（押しまちがえの 取り消し用）。
+       cancelAll() が 控えを 消す ので、手元に よけて から 呼ぶ。
+       ★「: prevG」の ところ ―― まだ 1手も 打って いない 盤を 配り直した ときは、
+         **前から 持っている 控えを そのまま 持ち越す**。
+         こう しないと「押しまちがえ → もう一度 押しまちがえ」で 盤が 消える
+         （トライの 15連打の 意地悪が まさに これ）。持ち越しても 動きは 増えない ――
+         もどす は どちらに しても 灰色の ままの 場所 だから。 */
+    var keep = worthKeeping(G) ? snapGame(G) : prevG;
     cancelAll();
+    prevG = keep;
     G = makeDeal(pickSeed());
     warmOrder();                       // ★まだ 来ていない 絵を「盤の 読む順」に ならべ直す（T103）
     openBoard();
@@ -1696,7 +1751,19 @@
 
   function undoOne() {
     if (!G) return;
+    var back = prevG;                  // ★cancelAll() が 控えを 消す ので 先に よける
     cancelAll();                       // ← 箱を 閉じる・止まったを 解く のは ここ
+    /* ★T118：もどせる 手が 1つも 無く、控えが ある ＝ 配り直した 直後。
+       ここは 前まで「灰色で 何も 起きない」場所 だった ので、
+       盤ごと 戻しても 今までの 動きを 1つも 変えない。控えは 使い切り。 */
+    if (!G.hist.length && back) {
+      G = back;
+      G.over = false; G.won = false;
+      warmOrder();                     // ★まだ 来ていない 絵を 戻した 盤の 読む順に ならべ直す（T103）
+      openBoard();
+      say('さっきの 盤に もどしたよ。つづきから どうぞ！');
+      return;
+    }
     G.over = false; G.won = false;
     if (G.hist.length) undoMove(G);
     render();
@@ -1895,6 +1962,12 @@
     },
     deals: function () { return { 数: DEAL_LIST.length, 先頭10: DEAL_LIST.slice(0, 10) }; },
     geo: function () { return geo; },
+
+    /* ★T118 たしかめ用：盤の 名札（配りの番号 ＋ 場面 ＋ 手数）。
+       配り直しの 取り消しで「同じ 盤に 戻ったか」を 1本の 文字列で くらべる ため。 */
+    key: function () { return G ? (G.seed + '@' + G.hist.length + '#' + stateKey(G)) : null; },
+    /* ★T118 たしかめ用：いま「もどす」で 盤ごと 戻せるか（＝控えを 持っているか）*/
+    canUndoDeal: function () { return !!prevG; },
 
     /* ★ 本当に 1手も ない 場面を 出す ―― たしかめ 専用（仕様 §5-6）。
        空き場 4つとも 埋まり、列の 一番下は どれも 置き場が なく、A も 出ていない。 */
