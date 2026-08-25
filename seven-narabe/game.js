@@ -136,9 +136,50 @@ function renderBoard() {
 function renderPlayers() {
   $('cpuArea').innerHTML = state.players.filter(p => !p.human).map(p => `<div class="cpu ${p.eliminated ? 'eliminated':''}"><div class="cpu-name">🤖 ${p.name}<small>${p.done ? 'ゴール！' : `パス ${p.passes}/4 ・ ${p.cards.length}枚`}</small></div><div class="cpu-cards">${Array.from({length:Math.min(p.cards.length,14)},()=>'<span class="cpu-card"></span>').join('')}</div></div>`).join('');
 }
+/* ============================================================
+   ★ fitHand() ― 手札を かならず 箱の 中に おさめる（T115）
+   ------------------------------------------------------------
+   もんだい（実測・320×568）：手札の 箱は 284px、17枚 ならべると 716px。
+   **432px が 右に かくれていた**。しかも かくれていることを 知らせる ものが
+   何も 無い。出せる札が その中に 全部 いると、画面の 上では
+   「光ってる札が 1枚も ない」ように 見えて、出せるのに パスして しまう。
+   パスは 4回で 脱落なので、**負けに 直結する 故障**だった。
+
+   なおし方：入りきらない ぶんだけ、札を **かさねて 詰める**。
+   トランプを 手に 持ったときと 同じ形。設計図 追記③ の
+   「①静かに詰める（気づかれない）→ それでも無理なら見切れる」の ①。
+
+   ★札は 小さく しない。38×57.58px の まま。けずるのは すきまだけ。
+   ★入りきる ときは 何も しない（--fan = 0）＝ 大きい画面・終盤は 今までと 同じ。
+   ★どの札も 左はしの 角（数字と マークの 所）は かならず 出るので、
+     どの札を 持っているかは ぜんぶ 読める。オレンジの 光りも 左べりと
+     上べりに 出る ので、出せる札は かさなっていても 分かる。
+   ★ここは 見た目だけ。手番・busy・epoch には いっさい さわらない。
+   ============================================================ */
+function fitHand() {
+  const hand = $('humanHand');
+  const n = hand.children.length;
+  hand.style.setProperty('--fan', '0px');
+  if (n < 2) return;
+  const cs = getComputedStyle(hand);
+  const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+  const gap = parseFloat(cs.columnGap) || 0;
+  const cardW = hand.firstElementChild.getBoundingClientRect().width;
+  if (!cardW) return;
+  /* 2回まで やり直す：1回目で スクロールバーが 消えると 箱の はばが
+     広がる ことが ある（パソコン）。その ぶんを 見て 計算し直す。 */
+  for (let i = 0; i < 2; i++) {
+    const avail = hand.clientWidth - pad;
+    const over = (cardW * n + gap * (n - 1)) - avail;
+    if (over <= 0.5) { hand.style.setProperty('--fan', '0px'); return; }
+    hand.style.setProperty('--fan', (Math.ceil((over / (n - 1)) * 100) / 100) + 'px');
+    if (hand.scrollWidth <= hand.clientWidth + 0.5) return;
+  }
+}
 function renderHand() {
   const human = state.players[0]; const isTurn = !state.finished && state.current === 0 && !state.busy;
   $('humanHand').innerHTML = human.cards.map(c => cardHTML(c,true,isTurn && isPlayable(c))).join('');
+  fitHand();
   $('handCount').textContent = `${human.cards.length}枚`;
   $('passBtn').disabled = !isTurn;
   // のこり0かい＝つぎの パスで おしまい。押せるままにして、言葉だけで しらせる。
@@ -231,4 +272,7 @@ function backToStart() {
   $('gameScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden');
 }
 
+/* 画面を まわしたり 幅が 変わったら、詰め直す（T115）。
+   ここは 見た目だけ。手番にも state にも さわらない。 */
+window.addEventListener('resize', fitHand);
 $('startBtn').addEventListener('click', startGame); $('humanHand').addEventListener('click', humanPlay); $('passBtn').addEventListener('click', humanPass); $('restartBtn').addEventListener('click', backToStart); $('resultRestart').addEventListener('click', () => { $('resultDialog').close(); backToStart(); }); $('howtoBtn').addEventListener('click', ()=>$('helpDialog').showModal()); document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).close()));
