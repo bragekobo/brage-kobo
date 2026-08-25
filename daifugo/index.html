@@ -160,8 +160,12 @@
   <!-- ============ ゲーム画面 ============ -->
   <section class="game-screen hidden" id="gameScreen" aria-label="大富豪ゲーム">
     <div class="status-line">
+      <!-- ★T114（アト）：「1ゲーム目 ・ ⭐0」は 場の 上のふち（もとの おびの 場所）へ 引っこした。
+           ふだ「あなたの番！」と「ルール ▾」は 見た目だけ 消してある（style.css の T114）。
+           ・「あなたの番！」… となりの ふきだし・光る手札・おせる ボタンが 同じ ことを 言っている
+           ・「ルール ▾」   … 中身は「？ 遊び方」の そう3 そのもの（同じ 画面に 入口が 2つ）
+           どちらも HTMLには のこす（下の script が 中身を 読んで ハッピーの かおを きめる ため）。 -->
       <div class="turn-badge" id="turnBadge">あなたの番！</div>
-      <div class="score-chip" id="scoreChip">1ゲーム目 ・ ⭐0</div>
       <button class="mini-btn" id="rulesBtn" type="button">ルール ▾</button>
       <button class="mini-btn" id="quitBtn" type="button">↻ やめる</button>
 
@@ -226,7 +230,12 @@
     <div class="players" id="cpuArea" aria-label="ロボットたち"></div>
 
     <section class="table-wrap" aria-label="場のカード">
-      <div class="table-ribbon">⭐ 前の人より強いカードを出そう ⭐</div>
+      <!-- ★T114（アト）：ここに あった おび「⭐ 前の人より強いカードを出そう ⭐」は 消した。
+           おなじ ことを「？ 遊び方」の 1行目・「出す」ボタンの 中の 小さい字・光る手札が 言っている
+           （設計図 §5.5「常設の 解説パネルは 原則 作らない」）。
+           空いた この 場所へ、上の 行に あった「1ゲーム目 ・ ⭐0」を 引っこした
+           ＝ 上の 行が 1つ 減って、ふきだしが 上に あがる。 -->
+      <div class="score-chip" id="scoreChip">1ゲーム目 ・ ⭐0</div>
       <div class="field" id="field"></div>
       <p class="field-who" id="fieldWho"></p>
       <!-- ★T100①（アト）：ルールはつどうの おしらせ箱を、場の「上のふち」に くっつける ため、
@@ -236,7 +245,11 @@
     </section>
 
     <section class="hand-area">
-      <div class="hand-heading"><span>あなたの手札</span><small id="handCount">0枚</small></div>
+      <!-- ★T114（アト）：見出し「あなたの手札」は 消した。すぐ 下に 表むきの 札が ならんで いて、
+           表むきの 手札は 画面に これ ひとつ しか ない（＝ 言わなくても わかる）。
+           「◯枚」は 消さずに、手札の 箱の 右上の ふちに のせた（行を 1つ 減らす だけ・字は そのまま）。
+           ―― 2本目（七並べ T109③）と 同じ 手当て。 -->
+      <small class="hand-count" id="handCount">0枚</small>
       <div class="hand" id="hand" aria-label="あなたの手札"></div>
       <!-- ジョーカーが なにに なるか、ほかの かいしゃくも ある ときだけ 出る（§3-8） -->
       <button class="alt-button hidden" id="altBtn" type="button">🃏 別の形にする</button>
