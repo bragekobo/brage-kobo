@@ -695,10 +695,39 @@ function renderHand() {
   const warn = ok && isBanFinish(sel, meld, me);
   $('playBtn').disabled = !ok;
   $('playBtn').classList.toggle('is-warn', Boolean(warn));
+
+  /* ★T116：「まだ出せないよ」が、ぜんぜん ちがう 2つの ばめんで 共通に なって いた。
+       ① まいすうが たりない（場は2枚組・えらんだのは1枚）… まだ 進める道が ある
+       ② まいすうは 合って いるが 弱い／形が ちがう      … ほんとうに 出せない
+     ①で「まだ出せないよ」と 出すと、となりの「出せない ときは これ」と そろって
+     2つとも パスを 指す（トライ計測：全手番の 9.7%・71%の 試合で 1回は 来る）。
+     出口は「もう1枚 えらぶ」なのに、それを 言う 文字が どこにも 無かった。
+
+     見わけ方：えらんだ ふだを **ぜんぶ ふくむ** だせる かたちが plays の 中に あるか。
+       ある  → ①（あと n枚 えらべば 出せる）
+       ない  → ②（そのまま「まだ出せないよ」）
+     ★ここは みどり（can-join）の ハイライトと **同じ plays を 見て いる**ので、
+       文字と みどりが かならず 同じ ことを 言う（handStates() の 'join' と 出どころが 同じ）。
+     ★n は いちばん 少なく すむ かたちで 数える（場が ある ときは どの かたちも
+       f.meld.count まいなので ふつうは 1つに きまる。かいだん・ジョーカーワイルドで
+       ふえた ぶんも、この 数え方なら うそに ならない）。
+     ★②まで「あと◯枚」に すると うそに なる ので、たりない ときだけ 言いかえる。 */
+  const selKeys = sel.map(c => c.key);
+  let grow = 0;
+  if (!ok && selKeys.length) {
+    for (const p of plays) {
+      const keys = p.cards.map(c => c.key);
+      if (!selKeys.every(k => keys.includes(k))) continue;
+      const n = keys.length - selKeys.length;
+      if (n > 0 && (grow === 0 || n < grow)) grow = n;
+    }
+  }
+
   $('playText').textContent = !isMyTurn() ? '待ってね'
     : (!sel.length ? 'カードを選んでね'
     : (warn ? 'これで あがると一番下！'
-    : (ok ? (meld.kind === 'spade3' ? '♠3で返す！' : `${sel.length}枚出す`) : 'まだ出せないよ')));
+    : (ok ? (meld.kind === 'spade3' ? '♠3で返す！' : `${sel.length}枚出す`)
+    : (grow ? `あと ${grow}枚選んでね` : 'まだ出せないよ'))));
 
   /* ジョーカーの かいしゃくが 2つ いじょう ある ときだけ 出す（§3-8） */
   $('altBtn').classList.toggle('hidden', cands.length < 2);
@@ -711,7 +740,12 @@ function renderHand() {
   /* ばが からっぽの ときは パスできない（かならず だす） */
   const canPass = isMyTurn() && Boolean(state.field);
   $('passBtn').disabled = !canPass;
-  $('passText').textContent = state.field ? '出せない ときは これ' : '場が からっぽ。出そう！';
+  /* ★T116：①（まいすうが たりない）の あいだだけ 言いかえる。
+     「出せない ときは これ」は ②では 正しい。でも ①では「あと1枚選んでね」と
+     真っ向から けんかして、しかも うそに なる（ほんとうは 出せる）。
+     ①では 出せる のに 出さない を えらぶ 場面なので、そう 書く。②は そのまま。 */
+  $('passText').textContent = !state.field ? '場が からっぽ。出そう！'
+    : (grow ? '出さないで 休む' : '出せない ときは これ');
 }
 
 /* ルールが はつどうした ときの おしらせ（★ desc は RULES から もってくる）
