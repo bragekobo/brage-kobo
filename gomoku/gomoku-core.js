@@ -4,7 +4,7 @@
    仕様は logs/T133_五目並べ_仕様_ルル.md ＋ 社長の裁定4つ が 正。
 
    ★★ 社長の裁定（4つ・厳守）★★
-     判断1 ★★ 指を 置いた 所より **12mm 上**に ねらい（白い 輪）が 出る。
+     判断1 ★★ 指を 置いた 所より **14mm 上**に ねらい（白い 輪）が 出る。
               ★ すべらせて 直せる。★はなした 所に 置かれる。★マウスは ずらさない
      判断2 ★ 盤は **15路 × 15路**（320pxで 1目 20px）
      判断3 ★ **最後の 1手に 赤い丸**（★1つだけ・手の 番号は 付けない）
@@ -102,14 +102,23 @@
 
     /* ★★★ 判断1 ―― ねらいを 指の 何mm 上に 出すか ★★★
        ------------------------------------------------------------
-       ★★ この 数字は ここ 1か所 だけ です。★ほかの 場所に 12 も 74 も 76 も 書きません。
-       ★ 【見立て】です。★トライが 本物の 指で 8mm でも 16mm でも 直せます（ルル §10 の 1番）。
-       ★ 実寸（mm）で 決める 理由：★指の 大きさは 路数でも 画面の 大きさでも 変わらないから。 */
-    AIM_LIFT_MM: 12,
+       ★★ この 数字は ここ 1か所 だけ です。★ほかの 場所に 14 も 86 も 89 も 書きません。
+       ★ 実寸（mm）で 決める 理由：★指の 大きさは 路数でも 画面の 大きさでも 変わらないから。
 
-    /* ★ 1pxの 実寸（T68 §3-2・会社の 実測）。★12mm を pxに 直す ために だけ 使う。
+       ★★ 12 → 14 に した 理由（T135・トライの 実測と 社長の 裁定）★★
+         ★ 12mm の とき、輪の 下ふち（74 − 9 ＝ 65px ＝ 10.5mm）と
+           ★「見えない はんい」（半径 8mm ＝ 49px）の すきまが **2.6mm しか ない**。
+         ★ 14mm なら 輪の 下ふち ＝ 86 − 9 ＝ 77px ＝ 12.5mm。★指先が 12mm 隠す 人でも 外に 出る。
+         ⚠️★ **15mm 以上は パソコンの verify ⑬ が 割れます**（トライ実測）。★14 が 上限 です。
+       ★ 直すのは ここ 1か所 だけ。★合わなければ 12 に 戻せます。 */
+    AIM_LIFT_MM: 14,
+
+    /* ★ 1pxの 実寸（T68 §3-2・会社の 実測）。★14mm を pxに 直す ために だけ 使う。
        ★ 320pt … 0.162mm ／ 375pt以上 … 0.157mm
-       → ★12 ÷ 0.162 ＝ 74px（320px）／ 12 ÷ 0.157 ＝ 76px（375px）＝ ルル §3-3 の 表と 一致 */
+       → ★14 ÷ 0.162 ＝ **86px**（320px）／ 14 ÷ 0.157 ＝ **89px**（375px 以上）
+       （★12mm の ときは 74px ／ 76px でした ―― ルル §3-3 の 表）
+       ⚠️★ さわれる パソコン・タブレットの 1pxの 実寸は 持って いません（T134 §3-6）。
+          ★ そこでは 0.157 を 使う ので、★実寸より 少し 大きめに ずらします（安全側）。 */
     MM_PER_PX_SMALL: 0.162,
     MM_PER_PX:       0.157,
     SMALL_W: 340
@@ -117,24 +126,57 @@
 
   /* ★ 画面の はばから「1pxが 何mmか」を 出す（T68 §3-2 の 2つの 実測値だけ）*/
   function mmPerPx(vw) { return (vw <= DIM.SMALL_W) ? DIM.MM_PER_PX_SMALL : DIM.MM_PER_PX; }
-  /* ★★ 12mm が 何px に なるか（★ここ だけが AIM_LIFT_MM を 読む）*/
+  /* ★★ 14mm が 何px に なるか（★ここ だけが AIM_LIFT_MM を 読む）*/
   function liftPx(vw) { return Math.round(DIM.AIM_LIFT_MM / mmPerPx(vw)); }
 
-  /* 器の 中身（W×H）から 1目を 出す。★路 いがいの 数字は 上の DIM から しか 来ない。 */
-  function fitBoard(W, H, lines) {
+  /* ★★ 盤の 下ふちより **下**に 何px 要るか（★受け皿の 深さ）★★
+     ------------------------------------------------------------
+     ★ 一番 下の 行（15行目）の 交点は、盤の 下ふちから 半目 上に あります。
+     ★ そこを ねらう 指は その ずらしぶん 下 ―― ★＝ 盤の 外に (ずらし − 半目) だけ 出ます。
+     ★ だから 要る 受け皿は「ずらし ぜんぶ」では なく「ずらし − 半目」です。 */
+  function trayNeed(cell, lift) { return Math.max(0, Math.ceil(lift - cell / 2)); }
+
+  /* 器の 中身（W×H）から 1目を 出す。★路 いがいの 数字は 上の DIM から しか 来ない。
+
+     ★★★ T137 ―― 第4引数 lift（★指の ずらし px。★マウスだけの 端末は 0）★★★
+     ------------------------------------------------------------
+     ★ T135 で トライが 見つけた 事故：
+       ★ たてで 1目が 決まる 画面（タブレット 横向き・窓の 低い パソコン）では、
+         ★盤が たてを 使いきり、★余りは 帯（BAR）が 食べ、★★受け皿が 0 に なる。
+       → ★ ずらしが 黙って 10〜14px に 縮み、★輪が 指の 下に 出る。
+     ★ 直し：★**受け皿ぶんも たての 予算に 入れてから 1目を 決める。**
+       ★ 入らなければ 1目を 1pxずつ 下げる（★盤が 少し 小さくなる）。
+       ⚠️★ **lift が 0 の とき（＝ マウスだけの 端末・横向き）は 1pxも 変わりません。**
+          ★ マウスは ずらさない ので、★盤を 小さくする 理由が ありません（T135 §3-6）。 */
+  function fitBoard(W, H, lines, lift) {
     var side = H < DIM.SIDE_BAR_H;
+    lift = side ? 0 : Math.max(0, lift | 0);          /* ★ 横向きは ずらさない（ルル §3-5）*/
     var availW = side ? (W - DIM.BAR - DIM.GAP) : W;
     var availH = side ? H : (H - DIM.BAR - DIM.GAP);
     var byW = Math.floor(availW / lines);
     var byH = Math.floor(availH / lines);
     /* ★ 上限（CELL_MAX）を かけてから 下限（CELL_MIN）で 受ける。★上限が 先（T130 と 同じ 作法）。 */
     var cell = Math.max(DIM.CELL_MIN, Math.min(byW, byH, DIM.CELL_MAX));
+
+    /* ★★ 受け皿が 取れるまで 1目を 下げる（★lift が 0 なら 1度も 回りません）★★
+       ★ 帯は いちばん 太くなった とき（石の 大きさ）で 見ます ―― ★甘く 見積もらない ため。 */
+    var shrunk = 0;
+    if (lift > 0) {
+      while (cell > DIM.CELL_MIN) {
+        var barMax = Math.max(Math.round(cell * DIM.STONE_RATE), 16);
+        if (barMax + DIM.GAP + cell * lines + trayNeed(cell, lift) <= H) break;
+        cell--; shrunk++;
+      }
+    }
+
     var bw = cell * lines, bh = cell * lines;
     var stone = Math.round(cell * DIM.STONE_RATE);
 
-    /* ★ 盤が 使わなかった 余りを、帯に まわす（★盤は 1pxも やせない・設計図 追記③）*/
+    /* ★ 盤が 使わなかった 余りを、帯に まわす（★盤は 1pxも やせない・設計図 追記③）
+       ⚠️★ ただし **受け皿ぶんは 先に よけて おく** ―― ★帯に 食べられると 事故が 戻ります。 */
+    var need = trayNeed(cell, lift);
     var used = DIM.BAR + DIM.GAP + (side ? bw : bh);
-    var slack = Math.max(0, (side ? W : H) - used);
+    var slack = Math.max(0, (side ? W : H) - used - (side ? 0 : need));
     var bar = Math.min(Math.max(stone, 16), DIM.BAR + slack);
 
     return {
@@ -143,8 +185,9 @@
       aim:  Math.round(cell * DIM.AIM_RATE),
       star: Math.max(3, Math.round(cell * DIM.STAR_RATE)),
       bar: bar, gap: DIM.GAP, side: side, slack: slack,
+      lift: lift, trayNeed: need, shrunk: shrunk,
       needW: side ? (bw + DIM.GAP + bar) : bw,
-      needH: side ? bh : (bh + DIM.GAP + bar)
+      needH: side ? bh : (bh + DIM.GAP + bar + need)
     };
   }
 
@@ -594,7 +637,7 @@
 
   root.GOMOKU_CORE = {
     NEED: NEED, DIM: DIM, LEVELS: LEVELS, LEVEL_START: LEVEL_START,
-    rng: rng, fitBoard: fitBoard, mmPerPx: mmPerPx, liftPx: liftPx,
+    rng: rng, fitBoard: fitBoard, mmPerPx: mmPerPx, liftPx: liftPx, trayNeed: trayNeed,
     makeCore: makeCore, makeRobot: makeRobot, makeHumans: makeHumans,
     simGame: simGame, runMany: runMany, newStat: newStat
   };

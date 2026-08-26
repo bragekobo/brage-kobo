@@ -4,7 +4,7 @@
    仕様は logs/T133_五目並べ_仕様_ルル.md ＋ 社長の裁定4つ が 正。
 
    ★★ 社長の裁定（4つ・厳守）★★
-     判断1 ★★ 指を 置いた 所より **12mm 上**に ねらい（白い 輪）が 出る。
+     判断1 ★★ 指を 置いた 所より **14mm 上**に ねらい（白い 輪）が 出る。
               ★ すべらせて 直せる。★はなした 所に 置かれる。★マウスは ずらさない
      判断2 ★ 盤は **15路 × 15路**（320pxで 1目 20px）
      判断3 ★ **最後の 1手に 赤い丸**（★1つだけ・手の 番号は 付けない）
@@ -15,7 +15,7 @@
      （＝ 勝率を 数える 側と 遊ぶ 側の ロボットが 同じ 1本の コード・ルル §9-4）。
      ★ 盤の 大きさは index.html の 1行（GOMOKU_LINES）だけ。
 
-   ★★★ この 1本で いちばん 新しい ところ ＝ 12mm ずらし（判断1）★★★
+   ★★★ この 1本で いちばん 新しい ところ ＝ 14mm ずらし（判断1）★★★
      ------------------------------------------------------------
      ★ 320px・15路の 1目は **20px**（★44pxの 45%）。★15本で いちばん 小さい。
      ★ 1回 おす 形なら 68.0% が ちがう 交点に 置かれます【ルル §3-1 の 計算】。
@@ -23,13 +23,13 @@
        ★★ 四目並べは 浮いた コマが **盤の 外**に 出るから 見えた。
        ★★ 五目並べは **指の 真下**。★指の 下に 交点が およそ 35個 入ります【見立て】。
        ★ ＝「はなす 前に 直せる」が 動かない。★直す ための 目が ない。
-     ★ だから ―― ★★ねらいを 指の **12mm 上**に ずらします（★15本で 初めて）。
-       ① 盤に 指を 置く → ② 12mm 上の 交点に 白い 輪（★指の 外なので 見える）
-       → ③ すべらせる と 輪も ついてくる（ずれ幅は ずっと 12mm）
+     ★ だから ―― ★★ねらいを 指の **14mm 上**に ずらします（★15本で 初めて）。
+       ① 盤に 指を 置く → ② 14mm 上の 交点に 白い 輪（★指の 外なので 見える）
+       → ③ すべらせる と 輪も ついてくる（ずれ幅は ずっと 14mm）
        → ④ 指を はなす → その 交点に 石が 置かれる
      ★ マウスは ずらしません（★やじるしは 何も 隠さない・T131 と 同じ 分け方）。
-     ★ 横向きは ずらしません（★盤が たて いっぱいで、下に 12mmの 受け皿が 取れない・ルル §3-5）。
-     ⚠️ 12mm の 数字は gomoku-core.js の DIM.AIM_LIFT_MM ただ 1つ です。
+     ★ 横向きは ずらしません（★盤が たて いっぱいで、下に 14mmの 受け皿が 取れない・ルル §3-5）。
+     ⚠️ 14mm の 数字は gomoku-core.js の DIM.AIM_LIFT_MM ただ 1つ です。
         ★ トライが 実物の 指で 8mm でも 16mm でも 直せます。
 
    ⚠️ 外部の ライブラリ・フォント・画像は 0。外への 通信も 0。
@@ -53,10 +53,20 @@
      ★ 数字（TUNE）― 調整する 数字は ここ 1か所だけ
      ============================================================ */
   var TUNE = {
-    /* ★ ロボットの 番の 長さ（★手加減では ない ―― 人が 盤を 読む ぶん）。
-       ★ 考える 時間が 短くても 長くても、★手番の 長さは いつも これに そろえます。 */
-    BOT_TURN: 600,
-    /* ★ 考えはじめるまでの 間（★人の 石が 置かれる 動き 150ms を 見せてから 考える）*/
+    /* ★★ ロボットの 番の 長さ（★手加減では ない ―― 人が 盤を 読む ぶん）。
+       ★ 考える 時間が 短くても 長くても、★手番の 長さは いつも これに そろえます。
+
+       ★★★ T137 ―― 数え落ちを 直しました（★時間は 1msも 変えて いません）★★★
+         ★ T134 の メモは「120 ＋ 考える ＝ 0.6秒」と 書いて いましたが、
+           ★★その **前**に PUT_MS(150ms) が 直列で 入ります（★人の 石が 置かれる 動き）。
+         ★ トライの 実測は 745〜755ms（T135 §2-2）。★＝ メモの 足し算だけが まちがい でした。
+         ★ そこで **測った 値 750 を そのまま 定数に** しました。
+           ★ 待ち ＝ 750 − 150 − 120 − 考えた 時間 ＝ 480 − 考えた 時間（★前と 1msも 同じ）。
+         ⚠️★ 0.6秒に 縮めなかった 理由：★トライが 10試合 遊んで「遅く 感じない」と 出し、
+            ★ルルの 見立て（1手 0.8秒）の 中に 入って います。★遊びが 困って いない ものは 動かしません。
+       ★ 足し算は verify ⑭ が 毎回 見張ります（★もう 数え落ちは できません）。 */
+    BOT_TURN_TOTAL: 750,
+    /* ★ 考えはじめるまでの 間（★人の 石が 置かれる 動きの あと・盤を 見せる ため）*/
     BOT_LEAD: 120,
 
     /* ★★★ 安全弁（ルル §6-5・★必須）★★★
@@ -64,8 +74,8 @@
        ⚠️ 私の パソコンでの【実測】：弱い 0.03ms／ふつう 0.27／強い 0.82／
           とても 強い 11.65（最悪 38.5）／★最強 29.61ms（最悪 86.0ms）。
           ★ スマホは 3〜5倍 おそいと 見て 最悪 258〜430ms ―― ★この 450ms の 中。
-       ★ BOT_LEAD 120 ＋ 450 ＝ 570ms ＜ BOT_TURN 600ms なので、
-         ★★手番の 長さは どんな 端末でも 0.6秒の まま です。 */
+       ★ PUT_MS 150 ＋ BOT_LEAD 120 ＋ 450 ＝ 720ms ＜ BOT_TURN_TOTAL 750ms なので、
+         ★★手番の 長さは どんな 端末でも 0.75秒の まま です（★verify ⑭）。 */
     BOT_BUDGET: 450,
 
     /* ★ 石が 置かれる 動き（ルル §7-2）*/
@@ -111,7 +121,31 @@
   var rand = C.rng(20260826);
   var geo = { cell: 20, stone: 17, aim: 18, star: 3, bar: 17, gap: 8, side: false,
               W: 0, H: 0, boardW: 0, boardH: 0, topPad: 0, slack: 0,
-              lift: 0, liftWant: 0, below: 0 };
+              lift: 0, liftWant: 0, below: 0, coarse: false, shrunk: 0, liftShort: false };
+
+  /* ============================================================
+     ★★ 指の 端末か（★T137）★★
+     ------------------------------------------------------------
+     ★ ずらしは **指の ため** の しかけです。★マウスだけの 端末では 1pxも ずらしません。
+     ★ だから **受け皿の ために 盤を 小さくするのも、指の 端末の ときだけ** です
+       （★T135 §3-6・トライ「マウスの 端末では 引かない こと」）。
+     ★ さわれる ノートパソコンは 指の 端末に 入れます（★指で 触られる かも しれない ので）。
+     ⚠️★ forceCoarse は **たしかめ 専用**（verify / sizeTest）。★遊ぶ 画面では ずっと null。
+     ============================================================ */
+  var forceCoarse = null;
+  function isCoarse() {
+    if (forceCoarse != null) return !!forceCoarse;
+    try {
+      if (window.matchMedia && window.matchMedia('(any-pointer: coarse)').matches) return true;
+    } catch (e) {}
+    /* ⚠️★ ここで `'ontouchstart' in window` を 使っては いけません ―― ★私は 1度 使って 失敗しました。
+       ★ ふつうの パソコンの Chrome でも **true に なる** ので、★指の 無い パソコンで 盤が 小さく なります。
+       ★ maxTouchPoints は 指の 無い パソコンで ちゃんと 0 です【実測】。 */
+    return (navigator.maxTouchPoints || 0) > 0;
+  }
+  /* ★ たしかめの ときだけ「この 画面の はば だ」と 思わせる（★sizeTest）*/
+  var simVW = 0;
+  function vwNow() { return simVW || window.innerWidth || document.documentElement.clientWidth; }
   var inRect = null;                // 盤の 実位置（交点を 決める ものさし）
   var stat = { plies: 0, botWorst: 0, botTotal: 0, botMoves: 0, cuts: 0, winLines: 0, maxRun: 0 };
 
@@ -162,9 +196,16 @@
      ★ 数字は gomoku-core.js の DIM と fitBoard() から しか 来ない。
        ここで px を 手で 書かない こと。
      ★★ そして ここが 判断1 の 土台です ――
-        ★ 盤の **下**に 12mm ぶんの 受け皿を 残します（★盤は 1pxも やせません）。
-        ★ 余りが 12mm の 2倍 以上 ある ときは、上下 まん中に 置きます（375px・パソコン）。
-        ★ 余りが 足りない ときだけ、盤を 上に 寄せます（★320px：余り 100px → 上 26・下 74）。
+        ★ 盤の **下**に 14mm ぶんの 受け皿を 残します。
+        ★ 余りが たっぷり ある ときは、上下 まん中に 置きます（375px・パソコン）。
+        ★ 余りが 足りない ときだけ、盤を 上に 寄せます（★320px：余り 111px → 上 21・下 90）。
+     ★★★ T137 ―― 受け皿は 器の 余りに 頼りません ★★★
+        ★ たてで 1目が 決まる 画面（タブレット 横向き・窓の 低い パソコン）では 余りが 0 で、
+          ★★ずらしが 黙って 10〜14px に 縮んで いました（T135 §3-6）。
+        ★ いまは **fitBoard に ずらしぶんを 渡して、たての 予算に 先に 入れて** います。
+          ★ 入らなければ 1目が 少し 小さく なります（★指の 端末の ときだけ）。
+        ★ それでも 足りなかった ときは geo.liftShort が true に なり、★verify ⑬ が NG を 出します。
+          ★★ 黙って 縮む ことは もう ありません。
      ============================================================ */
   function layout() {
     if (!built) return;
@@ -176,7 +217,12 @@
                  parseFloat(fs.borderTopWidth) + parseFloat(fs.borderBottomWidth);
     var W = Math.floor(r.width - insetX), H = Math.floor(r.height - insetY);
 
-    var f = C.fitBoard(W, H, LINES);
+    /* ★★ 先に「ずらしたい 長さ」を 決めて、★それごと 盤の たての 予算に 入れる（T137）★★
+       ★ 指の 端末だけ。★マウスだけの 端末は 0 ＝ 盤は 1pxも 変わりません。 */
+    geo.coarse = isCoarse();
+    var liftWish = geo.coarse ? C.liftPx(vwNow()) : 0;
+
+    var f = C.fitBoard(W, H, LINES, liftWish);
     geo.W = W; geo.H = H;
     geo.cell = f.cell; geo.stone = f.stone; geo.aim = f.aim; geo.star = f.star;
     geo.bar = f.bar; geo.gap = f.gap; geo.side = f.side;
@@ -198,21 +244,27 @@
     boardEl.style.width  = f.boardW + 'px';
     boardEl.style.height = f.boardH + 'px';
 
-    /* ★★ 盤の 下に 12mm の 受け皿を 残す（★判断1 の ため）★★ */
+    /* ★★ 盤の 下に 14mm の 受け皿を 残す（★判断1 の ため）★★ */
     stageEl.style.paddingTop = '0px';
     stageEl.style.alignItems = f.side ? 'center' : 'flex-start';
     var holdH = holdEl.getBoundingClientRect().height;
     var slack = Math.max(0, Math.round(r.height - holdH));
-    geo.liftWant = f.side ? 0 : C.liftPx(window.innerWidth || document.documentElement.clientWidth);
-    var topPad = f.side ? 0 : Math.max(0, Math.min(Math.floor(slack / 2), slack - geo.liftWant));
+    geo.liftWant = f.lift;                            /* ★ 横向きは fitBoard が 0 に して 返す */
+    geo.shrunk = f.shrunk;                            /* ★ 受け皿の ために 1目を 下げた 回数 */
+    /* ★ 盤の 下ふちより 下に 要る 長さ（★半目ぶんは 盤の 中に あるので 引く）*/
+    var need = C.trayNeed(f.cell, geo.liftWant);
+    var topPad = f.side ? 0 : Math.max(0, Math.min(Math.floor(slack / 2), slack - need));
     stageEl.style.paddingTop = topPad + 'px';
-    geo.topPad = topPad; geo.slack = slack;
+    geo.topPad = topPad; geo.slack = slack; geo.trayNeed = need;
 
-    /* ★ 実際に 使える ずらし幅（★受け皿より 大きくは しない ―― でないと 一番下の 交点に 届かない）*/
+    /* ★ 実際に 使える ずらし幅（★受け皿より 大きくは しない ―― でないと 一番下の 交点に 届かない）
+       ★ 受け皿 ＋ 半目 が 使える 長さ です（★上の trayNeed と 同じ 考え方）。 */
     inRect = boardEl.getBoundingClientRect();
     var sr = stageEl.getBoundingClientRect();
     geo.below = Math.max(0, Math.round(sr.bottom - inRect.bottom));
-    geo.lift = Math.min(geo.liftWant, geo.below);
+    geo.lift = Math.min(geo.liftWant, Math.floor(geo.below + f.cell / 2));
+    /* ★★ 黙って 縮ませない ―― 縮んだ ことを 必ず 残す（★verify ⑬ が ここを 見ます）★★ */
+    geo.liftShort = (geo.lift < geo.liftWant);
 
     /* ★ 結果の 箱の たけの 天井 ＝ 盤の 上ふちより 上（★光った 5つに かぶらせない）*/
     css.setProperty('--result-max', Math.max(60, Math.round(inRect.top - 16)) + 'px');
@@ -378,7 +430,8 @@
      ⚠️ 渡すのは「いまの 盤・自分の 色・段・さいころ・待てる 時間」だけ。
         ★人の 次の手も、人の 打ち方も、1つも 渡していません（ルル §6-8）。
      ★★ 安全弁：BOT_BUDGET(450ms) を 過ぎたら、そこまでに 読み終えた 深さで 打ちます。
-     ★ 手番の 長さは いつも BOT_TURN(0.6秒)。★速い 端末でも 遅い 端末でも 同じ。 */
+     ★ 手番の 長さは いつも BOT_TURN_TOTAL(0.75秒)。★速い 端末でも 遅い 端末でも 同じ。
+       ★ 内わけ：PUT_MS 150（石が 置かれる 動き）＋ BOT_LEAD 120（盤を 見せる）＋ 考える ＋ 待ち。 */
   function botMove() {
     if (over || !g) return;
     var t0 = Date.now();
@@ -388,7 +441,8 @@
     if (dt > stat.botWorst) stat.botWorst = dt;
     if (robot.cut()) stat.cuts++;
     if (p == null || p < 0 || g.bd[p]) { finish(0); return; }
-    var wait = Math.max(0, TUNE.BOT_TURN - TUNE.BOT_LEAD - dt);
+    /* ★ 手番 ぜんたい（750ms）から、すでに 使った 3つを 引く ―― ★足し算は ここ 1か所 だけ */
+    var wait = Math.max(0, TUNE.BOT_TURN_TOTAL - TUNE.PUT_MS - TUNE.BOT_LEAD - dt);
     later(function () { if (!over && g) playAt(p, BOT); }, wait);
   }
 
@@ -468,7 +522,7 @@
   /* ============================================================
      ★★★ 操作 ―― 判断1 の 本体 ★★★
      ------------------------------------------------------------
-     ★ 1. 盤（や その まわり）に 指を 置く → ★12mm 上の 交点に 白い 輪が 出る
+     ★ 1. 盤（や その まわり）に 指を 置く → ★14mm 上の 交点に 白い 輪が 出る
      ★ 2. 指を すべらせる → 輪も ついてくる（★何度でも 直せる）
      ★ 3. 指を はなす → ★その 交点に 石が 置かれる
      ★ 指を 置いて すぐ はなせば「1回 おす」と 同じ 手数。★遅くしません。
@@ -477,17 +531,17 @@
         ★そして その あいだの おしは **ためない**（T62 §2-A の 事故。
           ★1試合に 最大 24回 この 待ちが 入ります）。
      ============================================================ */
-  /* ★★ ずらす 量（★マウスは 0・指は 12mm）★★
+  /* ★★ ずらす 量（★マウスは 0・指は 14mm）★★
      ★ 12 という 数字は ここには 書きません。★core の DIM.AIM_LIFT_MM 1か所だけ。 */
   function liftFor(type) { return (type === 'mouse') ? 0 : geo.lift; }
 
-  /* ★★ 指を 受ける ところ（★盤 ＋ そのまわり 1目 ＋ ★下は 12mm の 受け皿）★★
+  /* ★★ 指を 受ける ところ（★盤 ＋ そのまわり 1目 ＋ ★下は 14mm の 受け皿）★★
      ------------------------------------------------------------
      ⚠️★ .stage は のこり ぜんぶ なので、パソコンでは 盤の 左右に 170px ほど 余ります。
         ★ そこを おしても 石が 置かれると、★遊ぶ人の つもりと ちがう 手に なります
           （★実際に 遊んで 気づきました ―― T134 §つまずき）。
      ★ だから「受ける ところ」を 盤の まわりに かぎります。
-       ★ ★下だけ 12mm ぶん 広い ―― ★そこが 一番下の 交点への 入口 だからです。
+       ★ ★下だけ 14mm ぶん 広い ―― ★そこが 一番下の 交点への 入口 だからです。
      ★ ⚠️ここは「どの 交点か」を 1つも 見ません。★ただの 四角の 内か 外かだけ。 */
   function inZone(x, y, type) {
     if (!inRect) return false;
@@ -498,7 +552,7 @@
 
   /* ★ どの 交点を さわっているか
      ★ 盤の 外へ 出たら いちばん 近い 交点に つく（ルル §3-6 の 5番）
-       ―― ★盤の 下 12mm も 受け皿。★そこが 一番下の 交点への 入口 です。 */
+       ―― ★盤の 下 14mm も 受け皿。★そこが 一番下の 交点への 入口 です。 */
   function hitAt(clientX, clientY, type) {
     if (!inRect) return 0;
     var cx = Math.floor((clientX - inRect.left) / geo.cell);
@@ -519,7 +573,7 @@
     if (!inZone(e.clientX, e.clientY, e.pointerType)) return;   // ★ 盤から うんと 離れた 所は 受けない
     e.preventDefault();
     press = { id: e.pointerId, type: e.pointerType };
-    /* ★★ ここが 判断1 の 入口 ―― ★指の 12mm 上に 輪が 出る（★まだ 置かれない）★★ */
+    /* ★★ ここが 判断1 の 入口 ―― ★指の 14mm 上に 輪が 出る（★まだ 置かれない）★★ */
     aimAt(hitAt(e.clientX, e.clientY, e.pointerType));
     try { stageEl.setPointerCapture(e.pointerId); } catch (err) {}
   }
@@ -679,8 +733,8 @@
       '★1目': geo.cell + 'px',
       '★44pxに対して': (geo.cell / 44 * 100).toFixed(0) + '%',
       '石': geo.stone + 'px', '星': geo.star + 'px',
-      '★12mm ずらし（したい）': geo.liftWant + 'px',
-      '★12mm ずらし（実際）': geo.lift + 'px' + (geo.side ? '（★横向きは ずらさない）' : ''),
+      '★14mm ずらし（したい）': geo.liftWant + 'px',
+      '★14mm ずらし（実際）': geo.lift + 'px' + (geo.side ? '（★横向きは ずらさない）' : ''),
       '★盤の 下の 受け皿': geo.below + 'px',
       '盤の 上の あそび': geo.topPad + 'px（余り ' + geo.slack + 'px）',
       '次の石（帯）': geo.bar + 'px' + (geo.side ? '・右よこ' : '・盤の 上'),
@@ -758,7 +812,135 @@
       '横スクロールが 出た場面': sx, '縦スクロールが 出た場面': sy
     };
     if (offTotal) out['画面外に 出た もの'] = Object.keys(names);
+    /* ★★ T137 ―― ここで 18画面ぶんの ずらしも 見る（★6サイズしか 見て いなかった 反省）★★ */
+    var st = sizeTest(true), fc = fitCheck(true);
+    out['★ほかの 画面の ずらし'] = st['★NG'] ? ('NG ' + st['★NG'] + '件：' + st['★ずらしが 縮んだ 画面'].join('／'))
+                                             : ('OK（' + SCREENS.length + '画面）');
+    out['★総当たりの 受け皿'] = (fc['★受け皿が 取れなかった'] === '0件') ? ('OK（' + fc['★調べた 器の 大きさ'] + '）') : fc['★受け皿が 取れなかった'];
     console.log('[五目並べ] fitTest', out);
+    return out;
+  }
+
+  /* ============================================================
+     ★★★ T137 ―― 「黙って 縮む」を 二度と 起こさない ための 見張り 2つ ★★★
+     ------------------------------------------------------------
+     ★ T135 で トライが 見つけた 事故は「見張りが 弱かった」のでは ありません。
+       ★★**私が 6サイズしか 見て いなかった** から です。
+     ★ そこで 見る 画面を 増やしました ―― ★2つの やり方で。
+
+       ① fitCheck() … ★★総当たり。★DOM を 使わない 数字だけの 検算。
+                       ★ 器の たてを 1pxずつ 動かして、★受け皿が 取れる ことを 全部 たしかめる。
+                       ★★画面の 一覧に 「たまたま 入って いなかった」が 起きません。
+       ② sizeTest() … ★18画面の 読める 表（1目・受け皿・ずらし）。★本物の 画面を まねて 測る。
+     ============================================================ */
+
+  /* ★ ②で まねる 画面（★T135 §3-6 の 3つを 先頭に）
+     ⚠️★ ここに 入れて よいのは **はば 520px より 大きく・たて 430px より 高い** 画面 だけ です。
+        ★ それより 小さい 画面は CSS の @media で 余白が 変わる ので、まねても 数字が ずれます。
+        ★★スマホ（320〜430px）と 横向きは、★その 画面で verify を 走らせて 実測します。
+        ★ どの みち ① の 総当たりが、どんな たての 画面でも 受け皿を 見張って います。 */
+  var SCREENS = [
+    [1024, 768,  '★タブレット 横（T135）'], [1180, 820, '★タブレット 横（T135）'],
+    [1280, 800,  '★窓の 低い パソコン（T135）'], [1280, 720, '★窓の 低い パソコン'],
+    [1024, 700,  '★窓の 低い パソコン'], [900, 600, '★窓の 低い パソコン'],
+    [1112, 834,  'タブレット 横'], [1080, 810, 'タブレット 横'],
+    [1366, 768,  'ノートパソコン'], [1440, 900, 'パソコン'], [1512, 945, 'パソコン'],
+    [1280, 910,  'パソコン'], [960, 1000, 'パソコン たて長'],
+    [768, 1024,  'タブレット たて'], [810, 1080, 'タブレット たて'],
+    [834, 1112,  'タブレット たて'], [820, 1180, 'タブレット たて'],
+    [700, 500,   '★とても 低い 窓']
+  ];
+
+  /* ★★① 総当たり ―― 受け皿が 取れる ことを 数字だけで たしかめる ★★
+     ★ 見る こと 3つ：
+       a. ★指の 端末：★帯 ＋ すきま ＋ 盤 ＋ 受け皿 が 器の たてに 収まる
+       b. ★マウスの 端末：★1目が **前と 1pxも 変わって いない**（★盤を 小さく しない）
+       c. ★横向き（side）：★ずらしは 0（ルル §3-5） */
+  function fitCheck(quiet) {
+    var Ws = [306, 355, 366, 390, 430, 520, 600, 700, 840, 960];
+    var badFit = [], badMouse = [], badSide = [], tight = 999, tightAt = '', tested = 0, small = 0;
+    for (var wi = 0; wi < Ws.length; wi++) {
+      var W = Ws[wi];
+      for (var H = 160; H <= 1200; H++) {
+        tested++;
+        var lift = C.liftPx(W < 340 ? 320 : 400);          /* ★ 器の はばから 素直に 引く */
+        var f = C.fitBoard(W, H, LINES, lift);
+        var f0 = C.fitBoard(W, H, LINES, 0);
+        /* c. 横向きは ずらさない */
+        if (f.side && f.lift !== 0) { if (badSide.length < 3) badSide.push(W + '×' + H); continue; }
+        /* b. ★マウスの 端末は 1目が 変わらない（★f0 が 前の 作りと 同じ 式）*/
+        if (f0.cell !== Math.max(C.DIM.CELL_MIN,
+              Math.min(Math.floor((f0.side ? (W - C.DIM.BAR - C.DIM.GAP) : W) / LINES),
+                       Math.floor((f0.side ? H : (H - C.DIM.BAR - C.DIM.GAP)) / LINES),
+                       C.DIM.CELL_MAX))) {
+          if (badMouse.length < 3) badMouse.push(W + '×' + H + ' → ' + f0.cell + 'px');
+        }
+        if (f.side) continue;
+        /* a. ★指の 端末：受け皿が 取れているか */
+        var room = H - (Math.max(f.stone, 16) + C.DIM.GAP + f.boardH + C.trayNeed(f.cell, lift));
+        if (room < 0) {
+          if (f.cell <= C.DIM.CELL_MIN) small++;            /* ★ 1目が 下限。★これ以上は 縮められない */
+          else if (badFit.length < 5) badFit.push(W + '×' + H + '（' + room + 'px 足りない・1目 ' + f.cell + 'px）');
+        } else if (room < tight) { tight = room; tightAt = W + '×' + H; }
+      }
+    }
+    var out = {
+      '★調べた 器の 大きさ': tested + '通り（はば ' + Ws.length + ' × たて 160〜1200px）',
+      '★受け皿が 取れなかった': badFit.length ? badFit : '0件',
+      '★マウスの 端末で 盤が 変わった': badMouse.length ? badMouse : '0件（★1pxも 変わらない）',
+      '★横向きで ずらして しまった': badSide.length ? badSide : '0件',
+      '★いちばん きわどい 所': tight + 'px あまり（' + tightAt + '）',
+      '★1目が 下限まで 縮んでも 入らない 器': small + '通り（★せますぎる 画面）'
+    };
+    if (!quiet) console.log('[五目並べ] fitCheck', out);
+    return out;
+  }
+
+  /* ★★② 18画面を まねて 測る ★★
+     ★ 器（.app-shell）の 大きさを その 画面に して、★layout() を 通します。
+     ★ 指の 端末の ふりを して 測ります（★ずらしは 指の ためだけの しかけ なので）。 */
+  function sizeTest(quiet) {
+    var shell = document.querySelector('.app-shell');
+    if (!shell || !built) return { '★まだ 遊ぶ 画面が 出ていない': true };
+    var keepW = shell.style.width, keepH = shell.style.height, keepMax = shell.style.maxWidth;
+    var keepSim = simVW, keepCoarse = forceCoarse;
+    var rows = [], shrink = [], bad = [];
+    forceCoarse = true;
+    for (var i = 0; i < SCREENS.length; i++) {
+      var w = SCREENS[i][0], h = SCREENS[i][1];
+      shell.style.maxWidth = Math.min(w, 1000) + 'px';
+      shell.style.width = w + 'px';
+      shell.style.height = h + 'px';
+      simVW = w;
+      layout();
+      var was = C.fitBoard(geo.W, geo.H, LINES, 0).cell;    /* ★ ずらしを 入れない ときの 1目 */
+      rows.push({
+        '画面': w + '×' + h + '（' + SCREENS[i][2] + '）',
+        '1目': geo.cell + 'px' + (was !== geo.cell ? '（★ずらし 無しなら ' + was + 'px）' : ''),
+        '受け皿': geo.below + 'px',
+        '★ずらし（実際／したい）': geo.lift + ' / ' + geo.liftWant + 'px',
+        '判定': (geo.side || (!geo.liftShort && geo.lift > 0)) ? 'OK' : '★NG'
+      });
+      /* ⚠️★ geo.liftShort **だけ**に 頼らない こと ―― ★そこが 消されたら 見張りが 死にます。
+         ★ 実際の 数と したい 数を、ここで もう1度 くらべます（★T137 で わざと 壊して 気づきました）。 */
+      if (!geo.side && (geo.liftShort || geo.lift <= 0 || geo.lift !== geo.liftWant)) {
+        bad.push(w + '×' + h + '：ずらし ' + geo.lift + ' / ' + geo.liftWant + 'px');
+      }
+      if (was !== geo.cell) shrink.push(w + '×' + h + '：' + was + ' → ' + geo.cell + 'px');
+    }
+    shell.style.width = keepW; shell.style.height = keepH; shell.style.maxWidth = keepMax;
+    simVW = keepSim; forceCoarse = keepCoarse;
+    layout();
+    if (g) { paintAll(); setAim(held); setLast(g.last); }
+    var out = {
+      '★調べた 画面': SCREENS.length + '画面（★指の 端末の ふりで）',
+      '★ずらしが 縮んだ 画面': bad.length ? bad : undefined,
+      '★NG': bad.length,
+      '★受け皿の ぶん 1目が 小さく なった 画面': shrink.length ? shrink : '0件',
+      '表': rows
+    };
+    if (!bad.length) delete out['★ずらしが 縮んだ 画面'];
+    if (!quiet) console.log('[五目並べ] sizeTest', out);
     return out;
   }
 
@@ -808,7 +990,7 @@
        ⑩ ★5つ 以上の 並びは 全部 数えている（★長連も・1つ 見つけて 止めていない）
        ⑪ ★しるしが 盤の 外・画面の 外に 出ていない
        ⑫ ★★結果の 箱が 盤に 1pxも かぶらない（★光った 5つを 隠さない）
-       ⑬ ★★12mm ずらしが 効いている ＆ 一番下の 交点に 指が 届く
+       ⑬ ★★14mm ずらしが 効いている ＆ 一番下の 交点に 指が 届く
      ============================================================ */
   function verify(n) {
     n = n || 200;
@@ -846,7 +1028,7 @@
        ④ ★★盤で 光るのは「ねらいの 輪 1つ」と「最後の 1手 1つ」だけ ★★
          ④-a ★試合の 途中に .is-win / .is-dim が 1つも 無い
          ④-b ★ねらいの 輪は 同時に 1つまで
-         ④-c ★★輪の 場所が「指の 12mm 上の 交点」と 1pxも ちがわない（★本物の hitAt を 通す）
+         ④-c ★★輪の 場所が「指の 14mm 上の 交点」と 1pxも ちがわない（★本物の hitAt を 通す）
          ④-d ★もう 石が ある 交点を ねらった とき、輪は 0個
          ④-e ★ロボットの 番・置いている 最中・試合の あとに 0個
          ④-f ★盤の 部品に :hover / :active の 決まりが 1つも 無い
@@ -855,7 +1037,7 @@
        ★ ④-b〜④-e は ★**本物の setAim() / hitAt() を 通して** 試します
          （★式を 書き写すと、中身が 変わった ときに 気づけない ―― T131 と 同じ 作法）。
        ============================================================ */
-    var lit = 0, litCSS = [], bad4 = [];
+    var lit = 0, litCSS = [], bad4 = [], aimLift4 = 0, aimLift13 = 0;
     var lst = stonesEl ? stonesEl.querySelectorAll('.is-win,.is-dim') : [];
     if (!over) lit = lst.length;                                      // ④-a
     if (lit) ng.push('★試合の 途中なのに 光っている 石が ' + lit + '個 ある');
@@ -863,6 +1045,11 @@
     if (aimEl && lastEl && g && boardEl && playScreen && !playScreen.classList.contains('hidden')) {
       var keepHeld = held, keepBusy = busy, keepTurn = turn, keepOver = over, keepPress = press;
       press = null;
+      /* ★★ T137：★ここも **指の 端末の ふり**で 通します。
+         ★ そうしないと、マウスの パソコンで 調べた ときに ずらしが 0px の まま 通って しまい、
+         ★★「輪が 指の 14mm 上に 出る」ことを 1度も 見ないで OK に なります。 */
+      var keepCoarse4 = forceCoarse;
+      forceCoarse = true; layout();
       var aimN  = function () { return document.querySelectorAll('.aim.is-on').length; };
       var lastN = function () { return document.querySelectorAll('.last-mark.is-on').length; };
       busy = false; over = false; turn = ME;
@@ -872,7 +1059,7 @@
       var lift = geo.lift, missAim = 0, offAim = 0;
       for (var p4 = 0; p4 < G.N; p4++) {
         var cc = p4 % LINES, rr = (p4 / LINES) | 0;
-        /* ★ その 交点の まん中を ねらう 指の 位置 ＝ 交点の 12mm 下 */
+        /* ★ その 交点の まん中を ねらう 指の 位置 ＝ 交点の 14mm 下 */
         var fx = inRect.left + cc * geo.cell + geo.cell / 2;
         var fy = inRect.top + rr * geo.cell + geo.cell / 2 + lift;
         var got = hitAt(fx, fy, 'touch');
@@ -890,7 +1077,7 @@
           if (gotL !== wantL || gotT !== wantT) offAim++;                        // ④-c
         }
       }
-      if (missAim) bad4.push('★★指の 12mm 上の 交点と ちがう 所を ねらった：' + missAim + '個');
+      if (missAim) bad4.push('★★指の 14mm 上の 交点と ちがう 所を ねらった：' + missAim + '個');
       if (offAim)  bad4.push('★★輪の 場所が 交点と ちがう：' + offAim + '個');
 
       /* ④-e ―― ロボットの 番・置いている 最中・試合の あと */
@@ -922,6 +1109,9 @@
         over = false;
       }
 
+      aimLift4 = geo.lift;                          /* ★ ④-c を 通した ときの ずらし（★表示 用）*/
+      forceCoarse = keepCoarse4; layout();
+      inRect = boardEl.getBoundingClientRect();
       held = keepHeld; busy = keepBusy; turn = keepTurn; over = keepOver; press = keepPress;
       setAim(held); setLast(g.last);
     }
@@ -1025,12 +1215,18 @@
       if (offBox) { boxNG = 'NG'; ng.push('★結果の 箱が 画面から はみ出している'); }
     }
 
-    /* ⑬ ★★12mm ずらし ―― ★指と マウスで 分かれているか・一番下の 交点に 届くか ★★ */
-    var liftNG = [];
+    /* ⑬ ★★14mm ずらし ―― ★指と マウスで 分かれているか・一番下の 交点に 届くか ★★
+       ★★ T137：★**指の 端末の ふり**を して 見ます。
+          ★ そうしないと、マウスの パソコンで 調べた ときに この 項目が 素通りに なります
+            （★T135 §3-6 の 事故は「見張りが 弱い」のでは なく「見て いなかった」でした）。 */
+    var liftNG = [], aimSide13 = false;
     if (playScreen && !playScreen.classList.contains('hidden')) {
+      var keepCoarse13 = forceCoarse;
+      forceCoarse = true; layout();
       if (!geo.side) {
         if (geo.lift <= 0) liftNG.push('★指の ずらしが 0px に なっている');
-        if (geo.lift !== geo.liftWant) liftNG.push('★受け皿が 足りず ずらしが ' + geo.lift + 'px に 削られた（したい ' + geo.liftWant + 'px）');
+        if (geo.liftShort) liftNG.push('★★受け皿が 足りず ずらしが 黙って ' + geo.lift + 'px に 縮んだ（したい ' + geo.liftWant + 'px）');
+        if (geo.lift !== geo.liftWant) liftNG.push('★ずらしが したい 長さと ちがう（' + geo.lift + ' ／ ' + geo.liftWant + 'px）');
       }
       if (liftFor('mouse') !== 0) liftNG.push('★マウスまで ずらしている');
       if (!geo.side && liftFor('touch') !== geo.lift) liftNG.push('★指が ずれていない');
@@ -1050,8 +1246,41 @@
       if (inZone(inRect.left - geo.cell * 3, inRect.top + 10, 'touch')) liftNG.push('★盤から うんと 左に 離れた 所を 受けている');
       if (inZone(inRect.right + geo.cell * 3, inRect.top + 10, 'touch')) liftNG.push('★盤から うんと 右に 離れた 所を 受けている');
       if (inZone(midX, inRect.bottom + geo.lift + geo.cell * 3, 'touch')) liftNG.push('★受け皿より ずっと 下を 受けている');
+
+      /* ★★ たくさんの 画面で 見る（★T135 §3-6 の 3画面を 含む・→ sizeTest）★★ */
+      var st13 = sizeTest(true);
+      if (st13['★ずらしが 縮んだ 画面']) liftNG.push('★★' + st13['★ずらしが 縮んだ 画面'].join('／'));
+
+      /* ★★ そして 総当たり（★画面の 一覧に 入れ忘れる ことが 起きない ように）★★ */
+      var fc13 = fitCheck(true);
+      if (fc13['★受け皿が 取れなかった'] !== '0件') liftNG.push('★★受け皿が 取れない 器：' + fc13['★受け皿が 取れなかった'].join('／'));
+      if (fc13['★マウスの 端末で 盤が 変わった'] !== '0件（★1pxも 変わらない）') liftNG.push('★マウスの 端末で 盤が 小さく なった：' + fc13['★マウスの 端末で 盤が 変わった'].join('／'));
+      if (fc13['★横向きで ずらして しまった'] !== '0件') liftNG.push('★横向きで ずらして いる：' + fc13['★横向きで ずらして しまった'].join('／'));
+
+      aimLift13 = geo.lift; aimSide13 = geo.side;
+      forceCoarse = keepCoarse13; layout();
+      inRect = boardEl.getBoundingClientRect();
+      if (g) { paintAll(); setAim(held); setLast(g.last); }
     }
-    if (liftNG.length) ng.push('★12mm ずらし：' + liftNG.join('／'));
+    if (liftNG.length) ng.push('★14mm ずらし：' + liftNG.join('／'));
+
+    /* ⑭ ★★ロボットの 手番の 足し算が 合っているか（★T135 §2-3 の 数え落ち よけ）★★
+       ★ 実際に 使う 式 そのもの（★書き写した 式では ない ―― 中身が 変わったら 気づける ように）*/
+    var turnNG = [];
+    var sumWorst = TUNE.PUT_MS + TUNE.BOT_LEAD + TUNE.BOT_BUDGET;
+    if (sumWorst > TUNE.BOT_TURN_TOTAL) {
+      turnNG.push('★いちばん 遅い とき ' + sumWorst + 'ms ＞ 手番 ' + TUNE.BOT_TURN_TOTAL + 'ms');
+    }
+    var botSrc = String(botMove);
+    if (botSrc.indexOf('BOT_TURN_TOTAL') < 0 || botSrc.indexOf('PUT_MS') < 0 || botSrc.indexOf('BOT_LEAD') < 0) {
+      turnNG.push('★待ち時間の 式が 3つ（PUT_MS・BOT_LEAD・BOT_TURN_TOTAL）から 出て いない');
+    }
+    /* ★ 考える 時間 0ms の とき、★足すと ちょうど 手番の 長さに なるか */
+    var wait0 = Math.max(0, TUNE.BOT_TURN_TOTAL - TUNE.PUT_MS - TUNE.BOT_LEAD - 0);
+    if (TUNE.PUT_MS + TUNE.BOT_LEAD + 0 + wait0 !== TUNE.BOT_TURN_TOTAL) {
+      turnNG.push('★足し算が 手番の 長さに ならない');
+    }
+    if (turnNG.length) ng.push('★ロボットの 手番：' + turnNG.join('／'));
 
     var out = {
       '盤': LINES + '路 × ' + LINES + '路（1目 ' + geo.cell + 'px）',
@@ -1061,16 +1290,19 @@
       '②ロボットは 人の 打ち方を 知らない': leak.length ? 'NG' : 'OK',
       '③★置く 前に 5つを 出す 経路が 無い': bad3 ? 'NG' : 'OK',
       '④★盤の しるしは 輪 1つ ＋ 赤い 輪 1つ だけ':
-        (lit || bad4.length || litCSS.length) ? 'NG' : 'OK（225の 交点 ぜんぶ 通した）',
+        (lit || bad4.length || litCSS.length) ? 'NG' : ('OK（225の 交点 ぜんぶ・★指の 端末の ふりで ずらし ' + aimLift4 + 'px）'),
       '⑤画面に 手数・%・秒 が 無い': badNum ? 'NG' : 'OK',
       '⑥★言っては いけない 言葉が 無い': (badWord || kanaBad) ? 'NG' : 'OK（「並べ」は 漢字）',
       '⑦盤の 大きさは 定数 1つ': (G.lines === LINES) ? 'OK' : 'NG',
-      '⑧★寸法が 表どおり': dimNG.length ? 'NG' : 'OK（49 / 47 / 23 / 20 / 15px）',
+      /* ⚠️★ この 15px は ルルの 表の【計算】値（器の たて 225px）。
+            ★ 実機の 横向きは 器の たてが 255px なので **17px** です（T135 §8-1）。 */
+      '⑧★寸法が 表どおり': dimNG.length ? 'NG' : 'OK（49 / 47 / 23 / 20 / ★15px＝ルルの計算値・実機の横向きは17px）',
       '⑨★操作は pointer': ptr ? 'OK' : 'NG',
       '⑩★5つ 以上の 並びは 全部 数える': lineOK,
       '⑪★しるしが 盤・画面から はみ出さない': outMark.length ? 'NG' : 'OK',
       '⑫★結果の 箱が 盤に かぶらない': boxNG ? 'NG' : 'OK',
-      '⑬★12mm ずらし': liftNG.length ? 'NG' : ('OK（指 ' + geo.lift + 'px ／ マウス 0px' + (geo.side ? '・横向きは ずらさない' : '') + '）'),
+      '⑬★14mm ずらし': liftNG.length ? 'NG' : ('OK（指 ' + aimLift13 + 'px ／ マウス 0px' + (aimSide13 ? '・横向きは ずらさない' : '') + '・★' + SCREENS.length + '画面 ＋ 総当たり）'),
+      '⑭★ロボットの 手番の 足し算': turnNG.length ? 'NG' : ('OK（' + TUNE.PUT_MS + ' ＋ ' + TUNE.BOT_LEAD + ' ＋ 考える ＋ 待ち ＝ ' + TUNE.BOT_TURN_TOTAL + 'ms）'),
       '★5つ以上の 並びが 2つ以上 できた 試合': (r1.twoLines / n * 100).toFixed(1) + '%（最大 ' + r1.maxLines + '本・いちばん 長い 並び ' + r1.maxRun + '個）',
       'かかった時間': ((Date.now() - t0) / 1000).toFixed(1) + '秒'
     };
@@ -1106,7 +1338,7 @@
       '★安全弁が 効いた 手': stat.cuts,
       '勝敗': over ? (G.winLines(g).who === ME ? '勝ち' : (G.winLines(g).who === BOT ? '負け' : '引き分け')) : '進行中',
       '★5つ以上の 並び': over ? (stat.winLines + '本・いちばん 長い ' + stat.maxRun + '個') : '―',
-      '★1目': geo.cell + 'px（★12mm ずらし ' + geo.lift + 'px）'
+      '★1目': geo.cell + 'px（★14mm ずらし ' + geo.lift + 'px）'
     };
   }
 
@@ -1181,7 +1413,7 @@
     }
 
     /* ★★ 指を 受けるのは .stage（★盤 だけでは ない）★★
-       ★ 判断1 の ため、★盤の 下 12mm も 受け皿に します（ルル §3-6 の 5番）。
+       ★ 判断1 の ため、★盤の 下 14mm も 受け皿に します（ルル §3-6 の 5番）。
        ★ pointerdown / pointermove / pointerup で 作る。★click は 使わない（14本の 作法）。 */
     stageEl.addEventListener('pointerdown', onDown);
     stageEl.addEventListener('pointermove', onMove);
@@ -1208,6 +1440,15 @@
     verify: verify,
     screen: screenInfo,
     fitTest: fitTest,
+    sizeTest: sizeTest,     /* ★ T137：18画面の ずらしを まとめて 見る */
+    fitCheck: fitCheck,     /* ★ T137：受け皿の 総当たり（数字だけ・DOM なし）*/
+    /* ★ 指の 端末の ふりを させる（★たしかめ 専用。★null で 元に もどす）*/
+    coarse: function (v) {
+      if (v === undefined) return { '指の 端末と 見ているか': isCoarse(), 'ふり': forceCoarse };
+      forceCoarse = (v == null) ? null : !!v;
+      layout(); if (g) { paintAll(); setAim(held); setLast(g.last); }
+      return { '指の 端末と 見ているか': isCoarse(), '★1目': geo.cell + 'px', '★ずらし': geo.lift + 'px' };
+    },
     words: wordCount,
     geo: function () { return geo; },
     level: function (i) {
