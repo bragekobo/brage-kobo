@@ -89,7 +89,8 @@
      ============================================================ */
   var $ = function (id) { return document.getElementById(id); };
   var titleScreen, playScreen, stageEl, holdEl, nextRow, frameEl, boardEl,
-      backEl, piecesEl, gridEl, flierEl, resultWrap, resultBox;
+      backEl, piecesEl, gridEl, flierEl, resultWrap, resultBox,
+      brandEl, padEl;
 
   var pieceEl = [];                 // 場所 → コマの span（無ければ null）
   var b = null, h = null;           // 盤（0＝空 1＝人 2＝ロボット）／ 積み上がり
@@ -98,7 +99,8 @@
   var timers = [];
   var rand = C.rng(20260826);
   var geo = { cell: 44, piece: 36, hole: 39, bar: 24, gap: 8, side: false,
-              W: 0, H: 0, inX: 0, inY: 0, boardW: 0, boardH: 0 };
+              W: 0, H: 0, inX: 0, inY: 0, boardW: 0, boardH: 0,
+              frameY: 0, holdTop: 0 };
   var inRect = null;                // 格子の 実位置（列を 決める ものさし）
   var stat = { plies: 0, botWorst: 0, botTotal: 0, botMoves: 0, budgetHits: 0, winLines: 0 };
 
@@ -177,6 +179,17 @@
     css.setProperty('--gap',   f.gap + 'px');
 
     holdEl.classList.toggle('is-side', f.side);
+    /* ★★ 横向きの ときだけ、上の帯の 名前を 右はしへ どかす（T129）★★
+       ★ 横向きは 持っている コマが 上の帯と 同じ 高さを 通ります（→ overLine）。
+         ★ まん中に 名前が あると、4〜6列目を 持った ときに 文字と 重なります
+           【実測 812×375：名前 x393〜472／5列目の コマ x410〜444 ＝ まるかぶり】。
+       ★ 名前は **消しません。どかすだけ**（★文字は 1つも 減っていません）。
+         ★どかす 先は 盤の 右がわの 空き【実測：812px で x585〜804・667px で x513〜659】。
+       ⚠️★ たて向き・パソコンでは 何も しません（'' に 戻す）。
+       ⚠️★ CSS の ファイルは 1文字も さわりません ―― ★同じ 時間に 🎨アトが
+          結果の 箱の CSS を さわる ので、ぶつからない よう JS 側で 済ませます。 */
+    if (brandEl) brandEl.style.justifyContent = f.side ? 'flex-end' : '';
+    if (padEl)   padEl.style.width            = f.side ? '0px' : '';
     boardEl.style.width = f.boardW + 'px';
     boardEl.style.height = f.boardH + 'px';
     boardEl.style.borderWidth = f.frame + 'px';
@@ -186,9 +199,16 @@
     inRect = piecesEl.getBoundingClientRect();
     geo.inX = inRect.left - hr.left;
     geo.inY = inRect.top - hr.top;
+    geo.frameY = frameEl.getBoundingClientRect().top - hr.top;   // ★ 青い わくの 上ふち
+    geo.holdTop = hr.top;                                        // ★ 画面の 上ふちから ここまで
     var nr = nextRow.getBoundingClientRect();
     geo.restX = nr.left - hr.left + (nr.width - f.bar) / 2;
     geo.restY = nr.top - hr.top + (nr.height - f.bar) / 2;
+    /* ★★ 横向き（帯が 右よこ）の ときは、待ち場所も 下の overLine() に そろえる ★★
+       ★ そろえないと、待ち場所（右の まん中）から 列の 上へ 動く 線が
+         ★★盤の 中を ななめに 横切ります（0.12秒 だけ 盤の 上に コマが 出る）。
+       ★ 同じ 高さに そろえて おけば、動きは いつも 盤の 外の 横1本の 線の 上だけ。 */
+    if (f.side) geo.restY = overLine();
 
     for (var p = 0; p < G.N; p++) if (pieceEl[p]) placeAt(pieceEl[p], p);
     setFlier(held, true);
@@ -236,6 +256,31 @@
         ★★ 勝てるか どうかは 1つも 出しません（社長裁定 判断3・ルル §6-4）。
         ★ 盤の 上の 光る／色が 変わる ものは、やはり **ゼロ**の ままです。
      ============================================================ */
+  /* ★★ 横向きの ときに、持っている コマを 置く たての 位置（T129）★★
+     ------------------------------------------------------------
+     ⚠️★ ここが T129 の 直しです。前は
+          `geo.inY + (geo.cell - geo.bar) / 2` ＝ **一番上の マスの ど真ん中**、
+          つまり **盤の 中** に 出していました。
+        ★ 遊ぶ人には「もう 置いた コマ」に 見え、★満杯の 列では 本物の コマと
+          1pxも ちがわず 重なりました（🧪トライ T128 の 🔴-1）。
+        ★★ 社長裁定 判断3「盤の 上の 強調は ゼロ」が、横向きでだけ 破れていた ところ です。
+
+     ★ 直し方：★たて向きと 同じで、**盤の 外（上）** に 出す。
+       ★ 横向きは たてが 258pxしか なく、盤の 上に 場所が ありません。
+       ★ そこで **盤の 外の 上（＝ 上の帯と 同じ 高さ）** を 使います。
+         ―― ★盤を 1pxも 小さくせず（設計図 追記③）、★盤の 中には 1pxも 入りません。
+     ★ 数字は 2つの 決まりだけ：
+       ① ふだんは 青い わくの 上ふちから すきま（gap）だけ 上（★たて向きと 同じ 見え方）
+       ② 画面の 上ふちから 4px は 空ける。★足りなければ わくに ぴったり 付くまで 下げる
+          ―― ★★それでも 盤の 中には 絶対に 入らない（下の Math.min が 保証）。 */
+  var SKY_EDGE = 4;   // ★ 画面の 上ふちから 空ける px
+  function overLine() {
+    var top = geo.frameY - geo.gap - geo.bar;     // ① わくの 上に すきま
+    var min = SKY_EDGE - geo.holdTop;             // ② 画面の 上ふちから 4px
+    if (top < min) top = Math.min(min, geo.frameY - geo.bar);
+    return top;
+  }
+
   function setFlier(col, instant) {
     if (!flierEl) return;
     if (instant) flierEl.classList.add('no-anim');
@@ -246,7 +291,7 @@
     if (col == null) { x = geo.restX; y = geo.restY; }
     else {
       x = geo.inX + col * geo.cell + (geo.cell - geo.bar) / 2;
-      y = geo.side ? (geo.inY + (geo.cell - geo.bar) / 2) : 0;
+      y = geo.side ? overLine() : 0;
     }
     flierEl.style.transform = 'translate(' + x + 'px,' + y + 'px)';
     if (instant) { void flierEl.offsetWidth; flierEl.classList.remove('no-anim'); }
@@ -652,7 +697,8 @@
        ⑦ ★盤の 大きさは 定数 2つ から しか 出ていない
        ⑧ ★寸法が ルルの 表と 合っている
        ⑨ ★盤に さわる 手は pointer で 作られている（click では ない）
-       ⑩ ★4つの 並びは 全部 数えている（1つ 見つけて 止めていない） */
+       ⑩ ★4つの 並びは 全部 数えている（1つ 見つけて 止めていない）
+       ⑪ ★★持っている コマが 盤の 中に 1pxも 入っていない（T129・横向きの 故障よけ） */
   function verify(n) {
     n = n || 200;
     var ng = [], t0 = Date.now();
@@ -734,6 +780,28 @@
     // ⑩ 4つの 並びを 全部 数えているか
     var allLines = !/return[^;]*true/.test(String(G.winLines)) && /out\.push/.test(String(G.winLines));
 
+    /* ⑪ ★★ 持っている コマが、盤の 中に 1pxも 入っていないか（T129）★★
+       ★ 🧪トライ T128 の 🔴-1 が、二度と 戻らない ように ここで 見張ります。
+       ★ 7列 ぜんぶ ＋ 待ち場所の 8か所を、★本物の setFlier() を 通して 測ります
+         （★式を ここに 書き写すと、setFlier が 変わった ときに 気づけない）。 */
+    var inside = [], offscr = [];
+    if (playScreen && !playScreen.classList.contains('hidden') && flierEl) {
+      var bdR = boardEl.getBoundingClientRect();
+      var keep = held;
+      var VW = document.documentElement.clientWidth, VH = document.documentElement.clientHeight;
+      for (var fc = -1; fc < COLS; fc++) {
+        setFlier(fc < 0 ? null : fc, true);
+        var fR = flierEl.getBoundingClientRect();
+        var name = fc < 0 ? '待ち場所' : (fc + 1) + '列目';
+        if (fR.right > bdR.left + 0.5 && fR.left < bdR.right - 0.5 &&
+            fR.bottom > bdR.top + 0.5 && fR.top < bdR.bottom - 0.5) inside.push(name);
+        if (fR.top < 0 || fR.left < 0 || fR.right > VW || fR.bottom > VH) offscr.push(name);
+      }
+      setFlier(keep, true);
+      if (inside.length) ng.push('★持っている コマが 盤の 中に 出ている：' + inside.join('・'));
+      if (offscr.length) ng.push('★持っている コマが 画面の 外に 出ている：' + offscr.join('・'));
+    }
+
     var out = {
       '盤': COLS + '列 × ' + ROWS + '段',
       '調べた試合': n,
@@ -748,6 +816,10 @@
       '⑧★寸法が ルルの 表どおり': dimNG.length ? 'NG' : 'OK（119 / 50 / 43 / 37px）',
       '⑨★操作は pointer': ptr ? 'OK' : 'NG',
       '⑩★4つの 並びは 全部 数える': allLines ? 'OK' : 'NG',
+      '⑪★持っている コマが 盤の 中に 入っていない':
+        (playScreen && !playScreen.classList.contains('hidden'))
+          ? ((inside.length || offscr.length) ? 'NG' : 'OK（7列 ＋ 待ち場所）')
+          : '―（遊ぶ 画面で 見てください）',
       '★4つの 並びが 2つ以上 できた 試合': (r1.twoLines / n * 100).toFixed(1) + '%（最大 ' + r1.maxLines + '本）',
       'かかった時間': ((Date.now() - t0) / 1000).toFixed(1) + '秒'
     };
@@ -835,6 +907,8 @@
     backEl = $('boardBack'); piecesEl = $('pieces'); gridEl = $('boardGrid');
     flierEl = $('flier');
     resultWrap = $('resultWrap'); resultBox = $('resultBox');
+    brandEl = document.querySelector('.brand');
+    padEl   = document.querySelector('.topbar-pad');
 
     loadLevel();
     fillLevelSelect($('levelTitle'));
