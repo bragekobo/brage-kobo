@@ -89,13 +89,20 @@
      ============================================================ */
   var $ = function (id) { return document.getElementById(id); };
   var titleScreen, playScreen, stageEl, holdEl, nextRow, frameEl, boardEl,
-      backEl, piecesEl, gridEl, flierEl, resultWrap, resultBox,
+      backEl, piecesEl, gridEl, flierEl, landEl, resultWrap, resultBox,
       brandEl, padEl;
 
   var pieceEl = [];                 // 場所 → コマの span（無ければ null）
   var b = null, h = null;           // 盤（0＝空 1＝人 2＝ロボット）／ 積み上がり
   var turn = ME, over = false, busy = true, built = false;
   var held = null;                  // ★ いま 指で 持っている 列（判断2）
+  /* ★★ マウスの 位置（T131・社長の ご指示①）★★
+     ★ 「押さなくても、マウスを 乗せただけで コマが 動く」ため に 覚えておく 1つの 数字。
+     ★ ★マウスの ときだけ 入れます（★指では null の まま ―― 指は 触れた ときだけ 動かす）。
+     ★ 覚えておく 理由：★ロボットの 番が 終わって 自分の 番に 戻った とき、
+       ★ マウスは 動いていないので pointermove が 1つも 来ません。
+       ★ そのままだと コマが 待ち場所に 戻ったきり、カーソルの 下に 帰って きません。 */
+  var hoverX = null;
   var timers = [];
   var rand = C.rng(20260826);
   var geo = { cell: 44, piece: 36, hole: 39, bar: 24, gap: 8, side: false,
@@ -212,6 +219,7 @@
 
     for (var p = 0; p < G.N; p++) if (pieceEl[p]) placeAt(pieceEl[p], p);
     setFlier(held, true);
+    setLanding(held);   // ★ T131：画面の 大きさが 変わっても、光りは 同じ 穴の 上に 乗り直す
   }
 
   /* ============================================================
@@ -297,6 +305,55 @@
     if (instant) { void flierEl.offsetWidth; flierEl.classList.remove('no-anim'); }
   }
 
+  /* ============================================================
+     ★★★ 落ちる 穴の 光り（T131・社長の ご指示②）★★★
+     ------------------------------------------------------------
+     ★ いま ねらっている 列の「いちばん 下の 空き」を 1つだけ 光らせます。
+     ★ 列を 変えれば 光りも 移り、盤から 出れば 消えます。
+
+     ⚠️★★ 社長裁定 判断3 を 破っていないか（★ここが いちばん 大事な ところ）★★
+        ★ ここで 見ているのは `G.landRow()` ―― ★★**重力だけ** です。
+          （★h ＝ 各列に 何個 積んであるか。★その 上に 1つ 乗る、それだけ）
+        ★ ★`winAt` も `winLines` も `own` も、この 関数からは 1度も 呼びません
+          （★verify ③が ここを 文字列で 見張ります）。
+        ★ ★つまり「そこに 落とすと 勝てるか」は 1ビットも 出ていません。
+        ★ 遊ぶ人が 考えるのは「どの 列に 落とすか」。★その 答えは 1つも 先取りしていません。
+
+     ★ 光らせない とき（＝ 光りは 0個）：
+       ・ねらっている 列が 無い（指を はなした・マウスが 盤の 外）
+       ・★満杯の 列（★落ちる 穴が そもそも 無い ―― ルル §6-4 の 4番「満杯の 列も 光らせない」）
+       ・ロボットの 番・コマが 落ちている あいだ（★ルル §6-4 の 5番）
+       ・試合が 終わった あと（★そこからは 勝った 4つの 光りの 時間）
+     ============================================================ */
+  function setLanding(col) {
+    if (!landEl) return;
+    var on = (col != null) && b && !over && !busy && turn === ME && G.canDrop(h, col);
+    if (!on) { landEl.classList.remove('is-on'); return; }
+    var row = G.landRow(h, col);                     // ★ 重力だけ。★これ以外 何も 見ない
+    var off = (geo.cell - geo.hole) / 2;
+    landEl.style.left = (col * geo.cell + off) + 'px';
+    landEl.style.top  = (row * geo.cell + off) + 'px';
+    landEl.classList.add('is-on');
+  }
+
+  /* ★ ねらっている 列を 1か所で 決める（★指も マウスも ここを 通る）*/
+  function aimAt(col) {
+    held = col;
+    setFlier(col);
+    setLanding(col);
+  }
+
+  /* ★★ マウスを 乗せただけの とき（T131・社長の ご指示①）★★
+     ★ 押していない ときだけ 効きます（★押している あいだは press が 正）。
+     ★ 自分の 番で ないと 何も しません（★ロボットの 番に 動く／光るのは ルル §6-4 の 5番 違反）。 */
+  function applyHover() {
+    if (press) return;
+    if (hoverX == null) { aimAt(null); return; }
+    if (!b || over || busy || turn !== ME) { aimAt(null); return; }
+    inRect = piecesEl.getBoundingClientRect();
+    aimAt(hitCol(hoverX));
+  }
+
   /* ★ 落とせない 列を さわった とき ―― 盤が ぷるっと ゆれるだけ（ルル §7-3）
      ★ 光でも 色でも ない ので 強調は 増えない。★文字は 1つも 出さない。 */
   function shakeNo() {
@@ -336,6 +393,7 @@
   function playCol(c, who) {
     busy = true;
     held = null;
+    setLanding(null);        // ★ T131：落ちはじめたら 光りは 消す（★落ちる 先は もう コマが 言っている）
     dropPiece(c, who, function (i) { afterDrop(i, who); });
     turn = 3 - who;
     setFlier(null);
@@ -354,8 +412,13 @@
      ============================================================ */
   function step() {
     if (over) return;
-    if (turn === ME) { busy = false; setFlier(null); }
-    else { busy = true; setFlier(null); later(botMove, TUNE.BOT_THINK); }
+    /* ★★ T131：自分の 番に 戻ったら、★マウスが 乗っている 列へ コマを 帰す ★★
+       ★ マウスは 動いていない ので pointermove が 1つも 来ません。
+         ★ applyHover() を ここで 呼ばないと、コマは 待ち場所に 戻ったきりで、
+           ★ 遊ぶ人は「1回 マウスを ゆらす」まで 追従が 死んで 見えます。
+       ★ 指（タップ）では hoverX が null なので、★今までどおり 待ち場所に 戻ります。 */
+    if (turn === ME) { busy = false; setFlier(null); setLanding(null); applyHover(); }
+    else { busy = true; setFlier(null); setLanding(null); later(botMove, TUNE.BOT_THINK); }
   }
 
   /* ★ ロボットの 1手
@@ -386,6 +449,7 @@
   function finish(who) {
     over = true; busy = true; held = null;
     setFlier(null);
+    setLanding(null);   // ★ T131：ここから 先は「勝った 4つ」の 光りの 時間。★2種類 出さない
     var wl = G.winLines(b);
     stat.winLines = wl.lines.length;
 
@@ -463,6 +527,7 @@
   }
   var press = null;
   function onDown(e) {
+    if (e.pointerType === 'mouse') hoverX = e.clientX;
     if (!b || over || busy || turn !== ME) return;   // ★ ここで press を 作らない ＝ おしを ためない
     if (press) return;
     if (e.isPrimary === false) return;
@@ -470,24 +535,42 @@
     e.preventDefault();
     inRect = piecesEl.getBoundingClientRect();
     press = { id: e.pointerId };
-    held = hitCol(e.clientX);
-    setFlier(held);
+    /* ★★ スマホ：ここが 社長の ご指示の「タップしたら 光る」★★
+       ★ 指を 置いた その 瞬間に、コマが 列の 上へ 出て、落ちる 穴が 光ります。
+       ★ ★まだ 落ちません。★指を すべらせれば 両方 ついてきます（判断2・そのまま）。 */
+    aimAt(hitCol(e.clientX));
     try { holdEl.setPointerCapture(e.pointerId); } catch (err) {}
   }
+  /* ★★ 動いた とき ―― 2つの 場合が あります（T131）★★
+       ① 押している（press あり）… 今までどおり。★指も マウスも。★はなした 列に 落ちる
+       ② ★押していない（press なし）… ★★マウスだけ。★乗せただけで コマが ついてくる
+     ⚠️★ ②を 指にも 効かせては いけません。★指は「触れている あいだ」しか pointermove を
+        出さない ので 実害は 出ませんが、★ペン等で 浮かせた ときに 動くのを 止める ため、
+        ★pointerType を 見て マウスの ときだけ hoverX を 覚えます。 */
   function onMove(e) {
-    if (!press || e.pointerId !== press.id) return;
+    if (!press) {
+      if (e.pointerType !== 'mouse') return;
+      hoverX = e.clientX;
+      if (!b || over || busy || turn !== ME) return;
+      var hc = hitCol(e.clientX);
+      if (hc !== held) aimAt(hc);
+      return;
+    }
+    if (e.pointerId !== press.id) return;
     e.preventDefault();
     var c = hitCol(e.clientX);
-    if (c !== held) { held = c; setFlier(held); }
+    if (c !== held) aimAt(c);
   }
   function onUp(e) {
+    if (e.pointerType === 'mouse') hoverX = e.clientX;
     if (!press || e.pointerId !== press.id) return;
     press = null;
     try { holdEl.releasePointerCapture(e.pointerId); } catch (err) {}
     var c = held;
     held = null;
-    if (!b || over || busy || turn !== ME || c == null) { setFlier(null); return; }
-    if (!G.canDrop(h, c)) { shakeNo(); setFlier(null); return; }   // ★ 満杯の 列 ―― ゆれるだけ
+    if (!b || over || busy || turn !== ME || c == null) { setFlier(null); setLanding(null); applyHover(); return; }
+    /* ★ 満杯の 列 ―― ★ゆれるだけ。★光りは そもそも 出ていません（setLanding が 断っている）*/
+    if (!G.canDrop(h, c)) { shakeNo(); setFlier(null); setLanding(null); applyHover(); return; }
     playCol(c, ME);
   }
   function onCancel(e) {
@@ -496,6 +579,17 @@
     held = null;
     try { holdEl.releasePointerCapture(e.pointerId); } catch (err) {}
     setFlier(null);
+    setLanding(null);
+    applyHover();          // ★ マウスなら カーソルの 下に 戻る／指なら 待ち場所へ
+  }
+  /* ★★ マウスが 盤から 出た とき（T131）★★
+     ★ 社長の ご指示：「盤から 外れたら、コマは 待ち場所へ 戻り、光りも 消える」。
+     ⚠️★ 指では 呼ばれても 害が ありません（hoverX は もともと null）。 */
+  function onLeave(e) {
+    if (e && e.pointerType && e.pointerType !== 'mouse') return;
+    if (press) return;                 // ★ 押したまま 外へ 出るのは 判断2 の「いちばん 近い 列」
+    hoverX = null;
+    aimAt(null);
   }
 
   /* ============================================================
@@ -691,7 +785,7 @@
        ① 反則0・途中で 止まる0・重力が 守られている
        ② ★ロボットに「人の 打ち方」が 1度も 渡っていない
        ③ ★指を はなす 前に「4つ 並ぶか」を 出す 経路が 1本も 無い（社長裁定 判断3）
-       ④ ★盤の 上に 光っている ものが 1つも 無い（★試合中）
+       ④ ★★盤の 上で 光るのは「落ちる 穴 1つ」だけ（T131 で 書き直し・中身は 6つ）
        ⑤ ★画面に 手数・%・秒 の 数字が 1つも 無い
        ⑥ ★言っては いけない 言葉が 1つも 無い（商品名・リーチ・まん中・角）
        ⑦ ★盤の 大きさは 定数 2つ から しか 出ていない
@@ -728,27 +822,86 @@
     if (leak.length) ng.push('★ロボットの 中に 人の 打ち方が 入っている：' + leak.join('・'));
 
     // ③ ★指を はなす 前の 経路に「4つ 並ぶか」が 混じっていないか（社長裁定 判断3）
+    /* ★ T131：★新しく できた 4つ（setLanding / aimAt / applyHover / onLeave）も ここに 入れます。
+       ★★ 落ちる 穴の 光りが「4つ 並ぶか」を 1ビットも 見ていない ことを、★文字列で 見張ります。 */
     var uiSrc = String(onDown) + String(onMove) + String(onUp) + String(setFlier) +
-                String(hitCol) + String(layout) + String(step) + String(paintAll) + String(placeAt);
+                String(hitCol) + String(layout) + String(step) + String(paintAll) + String(placeAt) +
+                String(setLanding) + String(aimAt) + String(applyHover) + String(onLeave);
     var bad3 = uiSrc.match(/winAt|winLines|threatCols|evalDiff|\bown\b|negamax|solve|LINES/g);
     if (bad3) ng.push('★指を はなす 前の 経路に ' + bad3.join('・') + ' が ある');
 
-    // ④ ★盤の 上に 光っている ものが 1つも 無いか
-    var lit = 0, litCSS = [];
+    /* ============================================================
+       ④ ★★★ 盤の 上に 光っている ものは「落ちる 穴 1つ」だけ（T131 で 書き直し）★★★
+       ------------------------------------------------------------
+       ⚠️★ T130 までの ④は「盤の 上に 光っている ものが **1つも** 無い」でした。
+          ★ T131 で 社長が「次に 置かれる 穴を 光らせて」と 決められた ので、
+            ★★ 見張りを **甘くする のでは なく、正しい 形に 書き直します**。
+       ★ 新しい ④が 見る のは 6つ：
+         ④-a ★試合の 途中に .is-win / .is-dim が 1つも 無い（★勝った 4つは 試合後だけ）
+         ④-b ★光っている 穴は **同時に 1つまで**（★2つ 光ったら 強調が 2種類 ＝ §5.5 違反）
+         ④-c ★★その 光りの 場所が「重力どおりの 穴」と **1pxも ちがわない**
+              （★★ちがったら、それは 重力 以外の 何かを 教えて いる ＝ 判断3 違反）
+         ④-d ★満杯の 列を ねらった とき、光りは **0個**（ルル §6-4 の 4番）
+         ④-e ★ロボットの 番に 光りが **0個**（ルル §6-4 の 5番）
+         ④-f ★盤の 部品に :hover / :active の 決まりが 1つも 無い
+              （★どの 列を ねらっているかは JS が 決める。★CSS に させると スマホで 誤発光する）
+       ★ ④-b〜④-d は、★**本物の setLanding() を 通して** 7列 ぜんぶ 試します
+         （★式を 書き写すと、setLanding が 変わった ときに 気づけない ―― ⑪番と 同じ 作法）。
+       ============================================================ */
+    var lit = 0, litCSS = [], lit4 = [];
     var lst = piecesEl ? piecesEl.querySelectorAll('.is-win,.is-dim') : [];
-    if (!over) lit = lst.length;
+    if (!over) lit = lst.length;                                      // ④-a
+    if (lit) ng.push('★試合の 途中なのに 光っている コマが ' + lit + '個 ある');
+
+    if (landEl && b && piecesEl) {
+      var keep4 = held, keepBusy = busy, keepTurn = turn, keepOver = over;
+      var glowN = function () { return document.querySelectorAll('.landing.is-on').length; };
+      /* ④-b・④-c・④-d ―― 7列 ぜんぶ */
+      busy = false; over = false; turn = ME;
+      for (var lc = 0; lc < COLS; lc++) {
+        setLanding(lc);
+        var n4 = glowN();
+        if (n4 > 1) lit4.push((lc + 1) + '列目で 光りが ' + n4 + '個');           // ④-b
+        if (!G.canDrop(h, lc)) {
+          if (n4 !== 0) lit4.push('★満杯の ' + (lc + 1) + '列目が 光っている');   // ④-d
+        } else {
+          if (n4 !== 1) lit4.push((lc + 1) + '列目で 光りが ' + n4 + '個');
+          else {
+            var wantR = G.landRow(h, lc);
+            var offL = (geo.cell - geo.hole) / 2;
+            var gotL = Math.round(parseFloat(landEl.style.left));
+            var gotT = Math.round(parseFloat(landEl.style.top));
+            var wantL = Math.round(lc * geo.cell + offL);
+            var wantT = Math.round(wantR * geo.cell + offL);
+            if (gotL !== wantL || gotT !== wantT) {                               // ④-c
+              lit4.push('★' + (lc + 1) + '列目の 光りが 重力の 穴と ちがう（' +
+                        gotL + ',' + gotT + ' ／ 重力どおりは ' + wantL + ',' + wantT + '）');
+            }
+          }
+        }
+      }
+      /* ④-e ―― ロボットの 番・落ちている 最中・試合の あと */
+      turn = BOT; setLanding(0); if (glowN() !== 0) lit4.push('★ロボットの 番に 光っている');
+      turn = ME; busy = true; setLanding(0); if (glowN() !== 0) lit4.push('★落ちている 最中に 光っている');
+      busy = false; over = true; setLanding(0); if (glowN() !== 0) lit4.push('★試合が 終わった あとに 光っている');
+      /* ★ 元に 戻す */
+      held = keep4; busy = keepBusy; turn = keepTurn; over = keepOver;
+      setLanding(held);
+    }
+    if (lit4.length) ng.push('★落ちる 穴の 光りが おかしい：' + lit4.join('／'));
+
     try {
       for (var s = 0; s < document.styleSheets.length; s++) {
         var rules = document.styleSheets[s].cssRules || [];
         for (var q = 0; q < rules.length; q++) {
           var sel = rules[q].selectorText || '';
           /* ⚠️ 「.back」は 上の帯の「◀ ゲームを選ぶ」です。★盤の 部品では ありません。
-                だから ここでは 盤の 部品の 名前だけを 見ます（board-back / piece / hole / grid / flier）。 */
-          if (/:hover|:active/.test(sel) && /\.(piece|hole|grid|board|cell|flier|board-back)\b/.test(sel)) litCSS.push(sel);
+                だから ここでは 盤の 部品の 名前だけを 見ます
+                （board-back / piece / hole / grid / flier ／ ★T131 で landing を 足した）。 */
+          if (/:hover|:active/.test(sel) && /\.(piece|hole|grid|board|cell|flier|board-back|landing)\b/.test(sel)) litCSS.push(sel);
         }
       }
     } catch (e) {}
-    if (lit) ng.push('★試合の 途中なのに 光っている コマが ' + lit + '個 ある');
     if (litCSS.length) ng.push('★盤の 部品に 指を 置くと 変わる 決まりが ある：' + litCSS.join('・'));
 
     // ⑤ 手数・%・秒 の 数字
@@ -812,7 +965,10 @@
       '①反則0・詰まり0・重力': (r1.illegal === 0 && r1.stall === 0 && grav === 'OK') ? 'OK' : 'NG',
       '②ロボットは 人の 打ち方を 知らない': leak.length ? 'NG' : 'OK',
       '③★はなす 前に 4つを 出す 経路が 無い': bad3 ? 'NG' : 'OK',
-      '④★盤の 上に 光っている ものが 無い': (lit || litCSS.length) ? 'NG' : 'OK',
+      /* ★ T131：意味が 変わりました ―― 「1つも 無い」→「落ちる 穴 1つ だけ」。
+         ★ 見張りを 甘くしたのでは なく、★★中身は 6つに 増えて います（→ ④の 注意書き）。 */
+      '④★盤で 光るのは 落ちる 穴 1つ だけ':
+        (lit || lit4.length || litCSS.length) ? 'NG' : 'OK（穴 1つ・重力どおり・満杯は 0個）',
       '⑤画面に 手数・%・秒 が 無い': badNum ? 'NG' : 'OK',
       '⑥★言っては いけない 言葉が 無い': badWord ? 'NG' : 'OK',
       '⑦盤の 大きさは 定数 2つ': (G.cols === COLS && G.rows === ROWS) ? 'OK' : 'NG',
@@ -909,7 +1065,7 @@
     stageEl = $('stage'); holdEl = $('hold'); nextRow = $('nextRow');
     frameEl = $('boardFrame'); boardEl = $('board');
     backEl = $('boardBack'); piecesEl = $('pieces'); gridEl = $('boardGrid');
-    flierEl = $('flier');
+    flierEl = $('flier'); landEl = $('landing');
     resultWrap = $('resultWrap'); resultBox = $('resultBox');
     brandEl = document.querySelector('.brand');
     padEl   = document.querySelector('.topbar-pad');
@@ -944,6 +1100,16 @@
     holdEl.addEventListener('pointermove', onMove);
     holdEl.addEventListener('pointerup', onUp);
     holdEl.addEventListener('pointercancel', onCancel);
+    /* ★★ T131：マウスを 乗せただけで コマが 追いてくる ―― その 出口 ★★
+       ★ pointerleave は 中の 部品から あがって こない ので、.hold ぜんぶから 出た ときだけ 鳴ります。
+       ★ ★CSS の :hover では 作りません（★スマホで 指を 置いた だけで 光って しまう）。 */
+    holdEl.addEventListener('pointerleave', onLeave);
+    /* ★★ T131：結果の 箱が 消えた あと の ため ★★
+       ★ 「もう1回」を おすと、箱が 消えて、★カーソルの 下が いきなり 盤に なります。
+         ★ マウスは 動いていない ので pointermove は 来ません。
+         ★ ★pointerover は「下に ある ものが 変わった」ときに 鳴る ので、ここで 拾えます。
+       ⚠️★ 指では 鳴っても onMove が すぐ 返します（★マウス以外は 見ない）。 */
+    holdEl.addEventListener('pointerover', onMove);
 
     window.addEventListener('resize', function () { layout(); });
     window.addEventListener('orientationchange', function () { later(layout, 120); });
