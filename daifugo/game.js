@@ -59,6 +59,16 @@ const SPEED = { think: 720, step: 480, flow: 620 };
    の 3か所で つかいまわす。
    ⚠️ おなじ 文字れつを 2か所に 書いたら、その時点で 設計が こわれています。
 
+   ★T140（借金の 返済）：ルール名も おなじ あつかいに した。
+     画面に ルール名を 出す ところは かならず ruleName(id) を 通す。
+     文の 中で ほかの ルールを 呼ぶ ときは {ルールid} と 書く（fillNames が 名前に する）。
+     ⚠️ ルール名を そのまま 文字で 書いたら、その時点で 設計が こわれています。
+        たしかめかた ： DF.renameAll() で 名前を ぜんぶ 入れかえ、
+        画面の どこにも 古い 名前が のこらない ことを 見る。
+     ※ この ファイルの せつめい文（コメント）には 名前が 出て きますが、
+       あれは「どの ルールの 話か」を 言う ための 例で、画面には 出ません。
+       コメントは 配列を 見られない ので、そこは 直しても 追随しません。
+
      name    … 表示名
      desc    … 子どもが 読む 1行（★1か所しか 書かない）
      group   … 設定がめん・あそびかたの グループ（RULE_GROUPS の id）
@@ -91,9 +101,10 @@ const RULES = [
   { id:'jackBack',  name:'Jバック',                   desc:'Jを出すと、場が流れるまで強さが ぎゃくさま',
     group:'power', presets:['all'],                 ready:true,  flash:'場が流れるまで ぎゃく！' },
 
-  { id:'stairRev',  name:'階段革命',           desc:'階段を4枚以上出しても革命が 起きる',
+  /* ★T140：ほかの ルールの 名前は {id} で 呼ぶ（ここだけが 名前を 書く 場所では ない ため） */
+  { id:'stairRev',  name:'階段革命',           desc:'{stairs}を4枚以上出しても{revolution}が 起きる',
     group:'power', presets:['all'],                 ready:true,  needs:['stairs','revolution'],
-    flash:'階段で強さが ひっくり返った！' },
+    flash:'{stairs}で強さが ひっくり返った！' },
 
   { id:'lock',      name:'縛り',                    desc:'前と同じマークが続いたら、そのマークしか出せなくなる',
     group:'care',  presets:['all'],                 ready:true,  flash:'場が流れるまで そのマークだけ' },
@@ -130,6 +141,16 @@ const PRESETS = [
 ];
 
 const RULE = (id) => RULES.find(r => r.id === id);
+
+/* ★T140：ルール名の 出しぐち。画面に 名前を 出す ところは ぜんぶ ここを 通す。
+   ―― RULES の name を 直したら、画面が だまって ついてくる ように する ため。 */
+const ruleName = (id) => { const r = RULE(id); return r ? r.name : ''; };
+/* 文の 中の {ルールid} を、その ルールの 名前に 置きかえる。
+   知らない id は そのまま のこす（だまって 消えると 気づけない ため）。 */
+const fillNames = (s) => String(s || '').replace(/\{(\w+)\}/g, (m, id) => ruleName(id) || m);
+/* 「◯◯と◯◯が いるよ」の ◯◯（needs の ルール名を つなぐ） */
+const needNames = (r) => (r.needs || []).map(ruleName).join('と');
+
 /* 画面に 出す ON/OFF（社長が えらんだ もの） */
 const ruleOn = (id) => Boolean(state.ruleOn[id]);
 /* ほかの ルールが ONで ないと なりたたない もの（かいだんかくめい） */
@@ -144,8 +165,8 @@ function ruleLive(id) {
    スペ3がえしが OFF の ときは「あがり きんし」から ♠3 を 消す。
    もとの 文は RULES に 1回しか 書かない ―― ここは その 1本を けずるだけ。 */
 function descOf(r) {
-  if (r.id === 'noFinish' && !ruleOn('spade3')) return r.desc.replace('・♠3', '');
-  return r.desc;
+  if (r.id === 'noFinish' && !ruleOn('spade3')) return fillNames(r.desc.replace('・♠3', ''));
+  return fillNames(r.desc);
 }
 
 /* ───────── ゲームの じょうたい ───────── */
@@ -680,8 +701,8 @@ function renderStatus() {
 function renderFlags() {
   const rev = reversed();
   const causes = [];
-  if (state.revolution) causes.push('革命');
-  if (state.jackBack)   causes.push('Jバック');
+  if (state.revolution) causes.push(ruleName('revolution'));
+  if (state.jackBack)   causes.push(ruleName('jackBack'));
   let html = '';
   if (rev) {
     html += `<span class="flag flag-rev">⚡ 今 強さが ぎゃく！<small>${causes.join('＋')}中</small></span>`;
@@ -693,7 +714,7 @@ function renderFlags() {
      ここを 消したら しばり も 消すこと。 */
   if (ruleLive('lock') && state.lock && state.lock.length) {
     const m = lockMarks();
-    html += `<span class="flag flag-lock">🔒 ${m} 縛り中<small>${m}だけ出せるよ</small></span>`;
+    html += `<span class="flag flag-lock">🔒 ${m} ${ruleName('lock')}中<small>${m}だけ出せるよ</small></span>`;
   }
   html += `<span class="flag flag-order ${rev ? 'rev' : ''}">${rev ? ORDER_TEXT_REV : ORDER_TEXT}</span>`;
   if (ruleLive('nineRev')) {
@@ -998,7 +1019,8 @@ function showFlash(id, extra, quiet) {
   const room = quiet || state.tried[id] === undefined;
   const first = !state.fired[id] && !cool && room;
   if (first) state.longAt[id] = now0;
-  const line = first ? descOf(r) : (r.flash || '');
+  /* ★T140：みじかい 1行の 中の {ルールid} も 名前に する（全文は descOf が やる） */
+  const line = first ? descOf(r) : fillNames(r.flash);
   const box = $('ruleFlash');
   box.innerHTML = `<b>${r.name}！</b>`
     + (extra ? `<span class="flash-extra">${extra}</span>` : '')
@@ -1079,7 +1101,7 @@ function renderRulePanel() {
     const rows = RULES.filter(r => r.group === g.id).map(r => {
       const blocked = r.ready && !needsMet(r);        // §7-3 いぞんスイッチの はいいろ化
       const mark = !r.ready ? '<i class="soon">準備中</i>'
-                 : (blocked ? '<i class="soon">階段と革命を ONにしてね</i>' : '');
+                 : (blocked ? `<i class="soon">${needNames(r)}を ONにしてね</i>` : '');
       return `
       <label class="rule-row ${(r.ready && !blocked) ? '' : 'not-ready'}">
         <input type="checkbox" data-rule="${r.id}" ${state.ruleOn[r.id] ? 'checked' : ''} ${(r.ready && !blocked) ? '' : 'disabled'}>
@@ -1109,7 +1131,7 @@ function renderRuleList(target) {
     + (on.length ? on.map(r => {
         const blocked = r.ready && !needsMet(r);
         const mark = !r.ready ? '<i class="soon">準備中</i>'
-                   : (blocked ? '<i class="soon">階段と革命が いるよ</i>' : '');
+                   : (blocked ? `<i class="soon">${needNames(r)}が いるよ</i>` : '');
         const care = r.group === 'care' ? ' is-care' : '';
         return `<div class="live-rule${care} ${(r.ready && !blocked) ? '' : 'not-ready'}">`
              + `<b>${r.name}${mark}</b><span>${descOf(r)}</span></div>`;
@@ -1354,7 +1376,7 @@ function playCards(player, cards, meld) {
     if (a && b && a === b) {
       state.lock = suitsOf(cards, meld);
       const m = lockMarks();
-      fireRule('lock', `${m}縛り！ 場が流れるまで ${m}しか出せないよ`);
+      fireRule('lock', `${m}${ruleName('lock')}！ 場が流れるまで ${m}しか出せないよ`);
     }
   }
 
@@ -1435,7 +1457,7 @@ function runAfter() {
   state.after = null;
   if (a.cut) {
     fireRule('eightCut');
-    return later(() => flowField('8切りで場が流れたよ！', state.lastPlayer), SPEED.step);
+    return later(() => flowField(`${ruleName('eightCut')}で場が流れたよ！`, state.lastPlayer), SPEED.step);
   }
   if (a.skip) fireRule('fiveSkip');
   goNext(a.skip);
@@ -1452,8 +1474,8 @@ function startPending(player, type, n) {
     state.busy = false;
     render();
     setMessage(type === 'give'
-      ? `7渡し！ わたすカードを ${n}枚選んでね`
-      : `10捨て！ 捨てるカードを ${n}枚選んでね`);
+      ? `${ruleName('sevenGive')}！ わたすカードを ${n}枚選んでね`
+      : `${ruleName('tenDrop')}！ 捨てるカードを ${n}枚選んでね`);
     return;
   }
   /* ロボットは いちばん よわい ものから */
@@ -1523,9 +1545,9 @@ function goal(player) {
   state.finished.push(player);
   player.place = provisionalPlace(player);
   setMessage(player.foul
-    ? `${player.name}が ゴール！ でも 上がり禁止のカードだったので一番下。`
+    ? `${player.name}が ゴール！ でも ${ruleName('noFinish')}のカードだったので一番下。`
     : `${player.name}が ゴール！ ${TITLES[player.place - 1]}だよ。`);
-  if (player.foul) fireRule('noFinish', `${player.name}は 上がり禁止のカードで あがったので一番下`);
+  if (player.foul) fireRule('noFinish', `${player.name}は ${ruleName('noFinish')}のカードで あがったので一番下`);
   checkFallDown(player);
 }
 
@@ -1545,8 +1567,8 @@ function checkFallDown(justFinished) {
      じゅんいは 富豪（2位）、という ちぐはぐな 中身に なる。
      ルールで 下がった人の じゅんいは endGame() が 決めるので、ここでは 0。 */
   c.place = provisionalPlace(c);
-  fireRule('fallDown', `${c.name}は 都落ち！ 手札が残っていても一番下`);
-  setMessage(`${c.name}は 都落ち！ 1位を とれなかったので一番下だよ。`);
+  fireRule('fallDown', `${c.name}は ${ruleName('fallDown')}！ 手札が残っていても一番下`);
+  setMessage(`${c.name}は ${ruleName('fallDown')}！ 1位を とれなかったので一番下だよ。`);
 }
 
 /* いまの むき（9リバース）で steps 人ぶん すすんだ 席を かえす。
@@ -1849,6 +1871,21 @@ window.DF = {
     return { ぜんぶ: all.length, 読み終えた: Object.keys(warmDone).length, 絵が使える: ok,
              流している: warmLiveN, 待っている: warmQueue.length,
              まだの札: all.filter(f => !warmDone[f]).length };
+  },
+  /* ★T140：借金の 見はり ―― ルール名が ほんとうに RULES 1か所から 出ているか。
+     ぜんぶの 名前を 中身の ない しるしに 入れかえて 画面を えがき直す。
+     そのあと 画面の どこかに 古い 名前が のこって いたら、そこが 直書き。
+     （T131・T134 と 同じ「わざと こわして、見はりが 鳴るか 見る」やり方）
+       DF.renameAll()        … 名前を ぜんぶ「ルール0」「ルール1」… に する
+       DF.renameAll('もどす') … もとの 名前に もどす                       */
+  renameAll(back) {
+    RULES.forEach((r, i) => {
+      if (r.origName === undefined) r.origName = r.name;
+      r.name = (back === 'もどす') ? r.origName : ('ルール' + i);
+    });
+    renderRulePanel();
+    if (state.players.length) render();
+    return RULES.map(r => ({ id:r.id, name:r.name, もと:r.origName }));
   },
   /* ★ T96：ロボットの しこうを そのまま よぶ／数を かぞえる のぞきあな */
   hook: HOOK,
