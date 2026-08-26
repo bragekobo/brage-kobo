@@ -1,7 +1,7 @@
 /* ============================================================
-   四目ならべ（14本目）― 画面（UI）／ T127・コーダ
+   四目並べ（14本目）― 画面（UI）／ T127・コーダ
    ------------------------------------------------------------
-   仕様は logs/T126_四目ならべ_仕様_ルル.md ＋ 社長の裁定4つ が 正。
+   仕様は logs/T126_四目並べ_仕様_ルル.md ＋ 社長の裁定4つ が 正。
 
    ★★ 社長の裁定（4つ・厳守）★★
      判断1 ★ 初期値は **2段「ふつう」**（★ルルの推し「弱い」では ない）
@@ -32,7 +32,7 @@
   'use strict';
 
   var C = root.YONMOKU_CORE;
-  if (!C) { console.error('[四目ならべ] yonmoku-core.js が 読めていません'); return; }
+  if (!C) { console.error('[四目並べ] yonmoku-core.js が 読めていません'); return; }
 
   /* ★★★ 盤の 大きさは index.html の 2行 だけ ★★★ */
   var COLS = root.YONMOKU_COLS | 0;
@@ -602,13 +602,13 @@
     n = n || 100; opt = opt || {};
     var hn = opt.human || '＋ 止める';
     var hf = humans.list[hn];
-    if (!hf) { console.error('[四目ならべ] 人の 打ち方が ちがいます：' + hn + '（' + Object.keys(humans.list).join(' / ') + '）'); return null; }
+    if (!hf) { console.error('[四目並べ] 人の 打ち方が ちがいます：' + hn + '（' + Object.keys(humans.list).join(' / ') + '）'); return null; }
     var li = opt.level == null ? state.level : Math.max(0, Math.min(C.LEVELS.length - 1, opt.level | 0));
     var lv = C.LEVELS[li];
     var t0 = Date.now();
     var err = 0, r = null;
     try { r = C.runMany(G, robot, hf, lv, n, opt.seed == null ? 31337 : (opt.seed >>> 0)); }
-    catch (ex) { err++; console.error('[四目ならべ] autoPlay で エラー', ex); }
+    catch (ex) { err++; console.error('[四目並べ] autoPlay で エラー', ex); }
     if (!r) return { '★エラー': err };
     var out = {
       '盤': COLS + '列 × ' + ROWS + '段',
@@ -628,7 +628,7 @@
       '★人の 番に 相手の リーチが ある／試合': r.reachPerGame.toFixed(1) + '回（うち 2つ同時 ' + r.doublePerGame.toFixed(2) + '回）',
       'かかった時間': ((Date.now() - t0) / 1000).toFixed(1) + '秒'
     };
-    console.log('[四目ならべ] autoPlay', out);
+    console.log('[四目並べ] autoPlay', out);
     return out;
   }
 
@@ -644,7 +644,7 @@
       }
       out[HN[i]] = row;
     }
-    console.log('[四目ならべ] rates（' + games + '試合ずつ）', out);
+    console.log('[四目並べ] rates（' + games + '試合ずつ）', out);
     return out;
   }
 
@@ -671,7 +671,7 @@
       }
       out[lv.label] = '平均 ' + (tot / moves).toFixed(2) + 'ms ／ ★最大 ' + worst.toFixed(1) + 'ms（' + moves + '手）';
     }
-    console.log('[四目ならべ] speed（★実測・' + games + '試合ずつ）', out);
+    console.log('[四目並べ] speed（★実測・' + games + '試合ずつ）', out);
     return out;
   }
 
@@ -764,7 +764,7 @@
       '横スクロールが 出た場面': sx, '縦スクロールが 出た場面': sy
     };
     if (offTotal) out['画面外に 出た もの'] = Object.keys(names);
-    console.log('[四目ならべ] fitTest', out);
+    console.log('[四目並べ] fitTest', out);
     return out;
   }
 
@@ -984,7 +984,7 @@
       'かかった時間': ((Date.now() - t0) / 1000).toFixed(1) + '秒'
     };
     if (ng.length) out['NGの中身'] = ng;
-    console.log('[四目ならべ] verify', out);
+    console.log('[四目並べ] verify', out);
     return out;
   }
 
@@ -1049,7 +1049,7 @@
 
   /* ★★ もどす ―― ★作りません（ルル §7-4）★★
      ------------------------------------------------------------
-     ★ 四目ならべの もどすは「必ず ずる」です。
+     ★ 四目並べの もどすは「必ず ずる」です。
        ★ 落とせる 列は ほぼ いつも 7列。★7回 押し直せば **必ず 全部 試せます**。
        ★ それは 遊びでは なく 総当たりです。
      ★ そして 判断2 の 操作に すると、もどす 必要が ほとんど 消えます
