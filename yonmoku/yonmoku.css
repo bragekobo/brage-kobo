@@ -108,9 +108,15 @@ button { font-family:inherit; cursor:pointer; }
 /* ── 上の帯（もどる ／ 名前 ／ 遊び方）──────────────────
    ★ 遊んでいる間の ボタンは 2つだけ ―― 「◀ ゲームを選ぶ」と「？ 遊び方」。
      ★「もどす」は 作りません（ルル §7-4：7回 押し直せば 総当たりに なる ＝ 必ず ずる）。 */
-.topbar { flex:0 0 auto; display:flex; align-items:center; gap:6px; min-height:38px; }
+/* ★★ T130：パソコンでも 44px に しました（前は 38／36px）★★
+   ★ 前の 言い分は「パソコンは マウスだから 44pxの 話が かかりません。
+     ★上げると 1マスが 119 → 115px に 縮みます（追記③）」でした。
+   ★★ その 言い分は **T130 で 消えました** ―― ★1マスに 上限（101px）が ついたので、
+      パソコンでは たてが **18px 余って います**【計算 1512×945：天井 119px に 対して 101px】。
+      ★★ つまり ボタンを 8px 高くしても、盤は **1pxも 縮みません**【実測で 確認】。 */
+.topbar { flex:0 0 auto; display:flex; align-items:center; gap:6px; min-height:44px; }
 .back {
-  flex:0 0 auto; display:inline-flex; align-items:center; min-height:36px; padding:0 12px;
+  flex:0 0 auto; display:inline-flex; align-items:center; min-height:44px; padding:0 12px;
   background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
   color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
 }
@@ -364,8 +370,10 @@ button { font-family:inherit; cursor:pointer; }
   font-size:14.5px; font-weight:900; color:#5a4a63; line-height:1.45;
   word-break:keep-all;
 }
+/* ★ T130：ここも 44px（前は 35px）。★理由は 上の .topbar と 同じ。 */
 .howto {
-  flex:0 0 auto; padding:8px 12px; border-radius:999px;
+  flex:0 0 auto; display:inline-flex; align-items:center; min-height:44px;
+  padding:0 12px; border-radius:999px;
   background:var(--white); border:3px solid var(--pink-soft);
   color:var(--pink-dark); font-size:12.5px; font-weight:900; white-space:nowrap;
 }
@@ -377,21 +385,37 @@ button { font-family:inherit; cursor:pointer; }
   .log-row { padding:5px 7px; gap:6px; }
   /* ★ 360px以下でも 44px は 割らない（上の @media の min-height が 効いた まま）*/
 }
-/* ★ 横向きの 低い 画面では、下の 1行を うんと 薄く する（たてを 盤に まわす）
-   ⚠️★ ここだけ 44px の 基準を 割ります（back 30px）。★正直に 書きます。
-      ★理由：横向きは たてが 225〜258px しか なく、44pxを 守ると 盤が 1段ぶん やせます。
-      ★設計図 追記③「まれな 最悪ケースの ために、いつもの 画面を 小さくしない」の 側に つきました。
-      ★★ どのくらい つらいかは 🧪トライが 実機で 見ること（ルル §11 の 10番）。 */
+/* ★★ 横向きの 低い 画面 ―― T130 で 44px を 取り返しました ★★
+   ------------------------------------------------------------
+   ★ 前は ここだけ 44px を 割って いました（◀ 30px・？ 35px。🧪トライ T128 の 🟡-5）。
+     ★ 前の 言い分：「44pxに 上げると 盤が 1段ぶん やせる」。
+     ★★ 数字で 見ると そのとおりでした【計算】：
+        ◀ 30→44（＋12）と ？ 35→44（＋9）で **たてが 21px 足りない**
+        → 器が 258 → 237px → 1マス 42 → **39px**（★1列が 3px 細く なる）。
+
+   ★★ そこで、たては 1pxも 盤から 取らず、**行の まわりの 余分**から 21px を 集めました：
+     | どこ | 前 → 後 | もうけ |
+     | app-shell の 上下の よはく | 4px → 2px（×2） | ＋4px |
+     | 行と 行の すきま        | 5px → 2px（×2） | ＋6px |
+     | 下の 1行の ふち          | 3px → 2px（×2） | ＋2px |
+     | 下の 1行の 上下の よはく  | 3px → 0px（×2） | ＋6px |
+     | 盤の まわりの あそび      | 4px（器 258 に 対して 254 しか 要らない） | ＋4px |
+     　　　　　　　　　　　　　　　　　　　　　　　　　　　★合計 ＋22px ≧ 21px
+   ★★ ＝ **1列は 42px の まま。★盤は 1pxも やせて いません**【実測 §T130】。
+   ⚠️★ 「？ 遊び方」は 44px に なると 下の 1行の 高さを そのまま 決めます。
+      ★ だから この 行の ふち・よはくを 削る のが、いちばん 効きます。 */
 @media (max-height:430px) and (orientation:landscape) {
-  .app-shell { padding:4px 8px; gap:5px; }
-  .topbar { min-height:32px; }
-  .back { min-height:30px; }
-  .howto { min-height:30px; }
-  .level-select { min-height:34px; }
+  .app-shell { padding:2px 8px; gap:2px; }
+  .topbar { min-height:44px; }
+  .back { min-height:44px; }
+  .howto { min-height:44px; padding:0 12px; }
+  .level-select { min-height:44px; }
   .happy-cat { width:28px; height:21px; }
   .happy-name { display:none; }
   .happy-bubble { font-size:12px; }
-  .log-row { padding:3px 8px; }
+  .log-row { padding:0 8px; border-width:2px; }
+  /* ⚠️★ 横向きの「結果の 箱」の 決まりは、この 下の 結果の 箱の 節の **あと**に 置いて あります
+        （★同じ 強さの 決まりは 後ろが 勝つ ので、ここに 書くと 効きません。★1度 やらかしました）。 */
 }
 
 /* ハッピーが とびはねる（勝った ときだけ）*/
@@ -402,31 +426,89 @@ button { font-family:inherit; cursor:pointer; }
 }
 .happy-cat.is-jump { animation:happyJump .5s ease-in-out 6; }
 
-/* ── 勝ち／負け／引き分け の 画面 ───────────────────── */
+/* ── 勝ち／負け／引き分け の 画面 ─────────────────────
+   ★★★ T130・🧪トライ T128 の 🟡-3「勝った／負けた 所が、結果の 箱で 隠れる」★★★
+   ------------------------------------------------------------
+   ★ 前は 箱が 画面の まん中に 出て いました【トライ 実測】：
+       320×568 … ★**42/42マス**（盤 ぜんぶ）が 隠れる → 光る 4つが 見える 割合 **0.0%**
+       375×812 … 35/42マス → **1.3%**
+       横向き　 … ★**盤 ぜんぶ**（箱 226,64→586,312 ／ 盤 237,53→533,307・💻コーダ 実測）
+     ★★ ＝ このゲームで **ただ 1つの 光り**（4つが 順に 光る）を、0.6秒 見せた あと
+        二度と 見せない、という 作りに なって いました。
+     ★ とくに 効くのは **負けた とき**。★自分が 見ていなかった 4つを 0.6秒で 探せません。
+
+   ★★ 直し方は 3つ 重ねました。★どれも **足す** のでは なく **どかす・削る** 側です
+      （設計図 §5.5：新しい 光り・新しい 言葉・新しい ボタンは 1つも 作りません）。
+      ① ★**箱を 盤の 外へ どかす**（たて向き・パソコン ＝ 上／横向き ＝ 右）
+      ② ★**箱を 低くする**（ボタン 2つを 横ならびに ―― ★これだけで 47px 減る）
+      ③ ★**「やめる」も 44px に**（🧪トライ T128 の 🟡-4。★横ならびに した ついでに 直る）
+
+   ★ なぜ「上」か：★盤の 上には たてが いちばん 余って います
+     【実測 320×568：盤の 上 168px ／ 下 140px。★パソコン 1512×945：上 193px ／ 下 124px】。
+   ⚠️★ 上の帯（◀ ゲームを選ぶ）は 隠れますが、★もともと 箱が 出ている 間は
+      うしろの 幕（rgba）が 押しを 受け止める ので、押せない のは 前と 同じ です。 */
 .result-wrap {
-  position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
-  padding:16px; background:rgba(70,60,82,.42);
+  position:fixed; inset:0; z-index:80; display:flex;
+  align-items:flex-start;          /* ★ 盤の 上の 空きへ（まん中に 置かない）*/
+  justify-content:center;
+  padding:10px; background:rgba(70,60,82,.42);
 }
+/* ⚠️★ たけの 天井は 320×568 が 決めます【実測：盤の 上ふちまで 168px】。
+      ★ よはく 10px ＋ 箱 155px ＝ 165px ―― ★盤には 3px 手前で 止まります。 */
 .result-box {
-  width:min(360px,100%); padding:22px 20px 20px; text-align:center;
-  background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
-  box-shadow:0 10px 0 rgba(196,58,115,.16); max-height:100%; overflow-y:auto;
+  width:min(360px,100%); padding:8px 14px 10px; text-align:center;
+  background:var(--white); border:4px solid var(--pink-soft); border-radius:22px;
+  box-shadow:0 8px 0 rgba(196,58,115,.16); max-height:100%; overflow-y:auto;
 }
 @keyframes resultIn { 0% { transform:scale(.8); opacity:0; } 100% { transform:scale(1); opacity:1; } }
 .result-wrap:not(.hidden) .result-box { animation:resultIn .22s ease-out; }
-.result-title { margin:0 0 10px; font-size:26px; font-weight:900; color:var(--pink-dark); }
+.result-title { margin:0 0 4px; font-size:23px; font-weight:900; line-height:1.15; color:var(--pink-dark); }
 .result-title.is-quiet { color:#7f8fa0; }
-.result-buttons { display:flex; flex-direction:column; gap:9px; }
+/* ★ 結果の 箱の 中だけ、つよさの 帯を うすく する（★中身は 1文字も 変えて いません）*/
+.result-box .level-pick { margin:0 auto 5px; padding:1px 8px; border-width:2px; }
+/* ★★ T130：ボタンを たてならび → **よこならび**（★箱が 47px 低く なる）★★
+   ★ 「もう1回 ▶」が のこりぜんぶ、「やめる」は 中身の ぶんだけ。
+   ★★ たて 44px は 両方 守ります（🧪トライ 🟡-4：やめるは 38px でした）。 */
+.result-buttons { display:flex; flex-direction:row; align-items:stretch; gap:8px; }
 .dialog-ok {
-  display:block; width:100%; padding:13px 16px; border:none; border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  flex:1 1 auto; min-height:44px; width:100%; padding:8px 14px; border:none; border-radius:999px;
   background:var(--pink-deep); color:#fff; box-shadow:0 5px 0 var(--pink-dark);
   font-family:inherit; font-size:19px; font-weight:900; text-decoration:none; text-align:center;
 }
 .dialog-ok:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
 .dialog-ok.alt {
+  flex:0 0 auto; width:auto; min-width:88px;
   background:var(--white); color:var(--pink-dark);
   border:3px solid var(--pink-soft); box-shadow:0 4px 0 rgba(196,58,115,.10);
-  font-size:14px; padding:9px 14px;
+  font-size:14px; padding:8px 14px;
+}
+/* ★ 遊び方の 箱の 中の「分かった！」は 前と 同じ 見え方に 戻す（★横ならびは 結果の 箱だけ）*/
+#helpDialog .dialog-ok { display:block; }
+
+/* ★ たてに 余裕の ある 画面では、箱を 画面の 上ふちから 少し 下げる（★見た目だけ）。
+   ★ よはく 10px の ままだと、大きい 画面で 箱が 上ふちに 貼りついて 見えます。
+   ⚠️★ 320×568（たて 568px）は この 決まりに 入りません ―― ★あそこは 10px しか 余りが ない。 */
+@media (min-height:700px) {
+  .result-wrap { padding-top:20px; }
+}
+
+/* ★★ 横向きの 結果の 箱は「上」では なく「右」へ ★★
+   ------------------------------------------------------------
+   ★ 横向きは 盤の 上に **49px しか ありません**【実測 812×375：盤 237,59→533,313】。
+     ★ そのかわり **左右が うんと 空いて います**
+       【実測：画面 812 ― 盤の 右ふち 543 ＝ 右に 269px ／ 667 の ときは 196px】。
+   ★★ だから 横向きだけ、箱を **右の 空き**へ 縦まん中で 置きます。
+   ⚠️★ 667×375 が いちばん きつい（右の 空き 196px）ので、はばは 176px。
+      ★ 待ち場所（次の コマ）とは 重なりますが、★試合が 終わると あの コマは
+        消えて います（`.flier.is-off` ＝ opacity 0）。★**盤には 1pxも かぶりません**。
+   ⚠️★★ この 節は 上の @media（横向き）の 中では なく **ここ**に 置くこと。
+      ★ 同じ 強さの 決まりは 後ろが 勝つ ので、上に 書くと 効きません。 */
+@media (max-height:430px) and (orientation:landscape) {
+  .result-wrap { align-items:center; justify-content:flex-end; padding:8px; }
+  .result-box { width:176px; padding:8px 10px 10px; }
+  .result-buttons { flex-direction:column; align-items:stretch; }
+  .result-box .dialog-ok.alt { width:100%; min-width:0; }
 }
 
 /* ★ 箱が 出た 瞬間、指が まだ 動いている あいだは おせなく する（T62・T63 の 事故よけ）*/
