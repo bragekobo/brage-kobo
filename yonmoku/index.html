@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>四目ならべ ― ブラゲ工房</title>
+  <meta name="description" content="赤と 黄色を、たて よこ ななめに 4つ そろえよう ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       既存13本と おなじ 書き方。絶対URL で 書く。
+       ⚠️ まとめサイトに ならべる ときに og:url を もう一度 見なおすこと。
+
+       ★★ この1本も og:image が ありません ★★
+         ★ トランプを 1枚も 使いません（設計図 §9 は かかりません・ルル §1-1）。
+         ★ うそに なる ので、他の ゲームの 札を 借りません。
+         ★ 絵が 要るなら 🎨アトが この ゲーム用に 1枚 作って、ここに 足すこと。
+
+       ★★ よその 会社の 商品名は 1文字も 使いません（ルル §9-2）★★
+         ★ 画面・紹介文・タグ・フォルダ名 すべてで「四目ならべ」。
+         ★ リバーシ（T88）で「オセロ」を 使わなかったのと 同じ 判断です。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="四目ならべ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="赤と 黄色を、たて よこ ななめに 4つ そろえよう。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/yonmoku/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="四目ならべ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="赤と 黄色を、たて よこ ななめに 4つ そろえよう。開いたらすぐ遊べます。" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存13本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="yonmoku.css" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存13本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       ★ 遊んでいる間の ボタンは 2つだけ ―― 「◀ ゲームを選ぶ」と「？ 遊び方」。
+         ★「もどす」は 作りません（ルル §7-4）：
+           ・落とせる 列は ほぼ いつも 7列。★7回 押し直せば 必ず 全部 試せる ＝ 総当たり
+           ・そもそも「配り」が 存在しない（はじめは からっぽ）
+       ★ 対戦の 7本（七並べ・大富豪・ホールデム・ポーカー・スピード・神経衰弱・リバーシ）に そろえます。 -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>四目ならべ</span>
+    </div>
+    <div class="topbar-pad"></div>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★ 置くものは 3つだけ ―― ひとこと ／ つよさの プルダウン ／ はじめる。
+       ★ 選ばせるのは **つよさ 1つだけ**（設計図 §5.5 の 例外を ここに 使い切る）。
+         ★ 盤の 大きさも、先手・後手も、コマの 色も 選ばせません（ルル §4-1）。
+       ★★ 初期値は 2段「ふつう」（社長裁定 判断1 ＝ ②）。 -->
+  <section class="title-screen" id="titleScreen">
+    <p class="title-lead">たて よこ ななめ、<br>4つ そろえよう！</p>
+    <label class="level-pick" for="levelTitle">
+      <span class="level-pick-name">ロボットの つよさ</span>
+      <select class="level-select" id="levelTitle"></select>
+    </label>
+    <button class="start-button" type="button" id="btnStart">
+      <span>はじめる <b>▶</b></span><small>列を えらんで、コマを 落とそう</small>
+    </button>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       置き場は **2か所だけ**（盤・次の コマ）＝ 14本で いちばん 少ない。
+       ★ 山札も、取った札の 置き場も、下の トレイも ありません（社長裁定 判断4）。
+         ★ コマは 赤21個・黄21個 ＝ ちょうど 42個 で、盤の マスと 同じ 数。
+           ★「残り 何個」は 盤を 見れば 分かります。★1つも 教えて くれません。
+       ★ 石の数の 帯も 引きません ―― ★このゲームに 数える ものが ありません（ルル §1-5）。
+       ★★ 盤の 上に 読む 文字は 1つも ありません。
+       ★★ そして 盤の 上に 光る／色が 変わる ものも 1つも ありません（社長裁定 判断3）。 -->
+  <section class="play-screen hidden" id="playScreen">
+    <div class="stage" id="stage">
+      <!-- ★ .hold ＝ 指を 受ける ところ（次の コマ ＋ 盤）。
+           ★ ルル §7-1「盤（または 上の コマ）に 指を 置く」の とおり、まとめて 受けます。 -->
+      <div class="hold" id="hold">
+        <!-- 次の コマの 場所とり（★丸そのものは 下の .flier）-->
+        <div class="next-row" id="nextRow"></div>
+        <!-- ★ 青い わく（社長の 写真に 寄せる）。★ここの 内がわが ルル §1-2 の「器の中身」
+             ―― 375px で 355×674px。その 実寸を game.js が 測って 1列を 決める。 -->
+        <div class="board-frame" id="boardFrame">
+          <div class="board" id="board">
+            <div class="board-back" id="boardBack"></div>
+            <div class="pieces" id="pieces"></div>
+            <div class="grid"   id="boardGrid"></div>
+          </div>
+        </div>
+        <!-- ★★ 次の コマ ＝ 手番の しるし ＝ 指で 持つ コマ（社長裁定 判断2）★★
+             ・ふだんは 盤の まん中の 上で 待っている（＝ 赤の 番なら 赤い 丸）
+             ・指を 置くと、その 列の 上へ すべる。★指を はなす まで 落ちない
+             ・★何度でも 列を 選び直せる ＝ 押し間違いが 取り消せる -->
+        <span class="flier me" id="flier"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方（画面の 一番下・1行に まとめる）
+       ⚠️ ハッピーは 全ゲーム・全ページに 必ず 出す（設計図 §9.5）。
+       ★★ 遊んでいる 最中、ハッピーは 1文字も しゃべりません（ルル §8-4）。
+          ★ リーチのとき「あぶない！」も、3つ 並んだとき「あと 1つ！」も 言いません。
+          ★ どの 列が 良いかも、1文字も 言いません（★先手必勝の 知識を そのまま 渡す ことに なる）。
+          ★ 気づく その 1回が、この ゲームの「あ、そういうことか」です。 -->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap">
+      <svg class="happy-cat" id="happyCat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">たて よこ ななめ、4つ そろえよう！</p>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </div>
+
+</main>
+
+<!-- ── 勝ち／負け／引き分け の 画面 ──────────────────
+     ⚠️ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（game.js）。
+     ★ 引き分け（42マス ぜんぶ うまる）は めったに 出ませんが、ゼロでは ありません。
+       だから 専用の 言葉を 出します。
+     ★★ ここにも 同じ プルダウンを 置きます（スピード T60 の 社長の言葉・スピード／神経衰弱／
+        リバーシ2本と 同じ 作法）。★初期値が「ふつう」なので、
+        ★負けた その場で つよさを 下げられる ことが、はじめての人の 逃げ道です。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="result-title" id="resultTitle">勝ち！</p>
+    <label class="level-pick" for="levelResult">
+      <span class="level-pick-name">ロボットの つよさ</span>
+      <select class="level-select" id="levelResult"></select>
+    </label>
+    <div class="result-buttons">
+      <button class="dialog-ok" type="button" id="btnAgain">もう1回 <b>▶</b></button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ★ ルールは 3行。★14本で いちばん 軽い 3行です（ルル §0-3）。
+       「4つ 続いているか」を 見るだけ ―― ★たし算も 数え直しも 要りません。
+     ⚠️ ★ どの 列が 良いかは、ここでも 1文字も 教えません（設計図 追記②・ルル §3-4）。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">たて よこ ななめ、4つ そろえよう！</p>
+  <ol class="help-list">
+    <li>好きな <b>列</b>に、コマを 落とす。</li>
+    <li>コマは <b>いちばん 下の 空いた 所</b>に つもる。</li>
+    <li>たて・よこ・ななめ、<b>4つ 続いたら 勝ち</b>。</li>
+  </ol>
+  <p class="help-note">盤に 指を 置くと、その 列の 上に コマが 出る。<br>
+    <b>すべらせて 列を 変えられる</b>。はなした 列に 落ちるよ。<br>
+    列が いっぱいに なったら、その 列には 落とせない。<br>
+    ぜんぶ うまったら 引き分け。<br>
+    ロボットの <b>つよさ</b>は、はじめの 画面と、終わった あとに えらべる。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<!-- ============================================================
+     ★★★ 盤の 大きさは、この 2行 だけ ★★★
+       yonmoku-core.js にも yonmoku-game.js にも、列の数も 段の数も 1つも 書いていない
+       （4つ 続く 並びの 一覧・見る 順番・1列のpx・コマの 大きさ ―― 全部 計算で 出る）。
+       ★ 将来「小さい スマホむけの 6列版」を 出す ときは、下の 7 を 6 に した
+         index.html を もう1つ 作れば すみます（★リバーシの SIZE と 同じ 形）。
+     ============================================================ -->
+<script>window.YONMOKU_COLS = 7; window.YONMOKU_ROWS = 6;</script>
+<script src="yonmoku-core.js"></script>
+<script src="yonmoku-game.js"></script>
+</body>
+</html>
