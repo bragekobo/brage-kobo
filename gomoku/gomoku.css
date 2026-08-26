@@ -1,0 +1,517 @@
+/* ============================================================
+   五目並べ ― 見た目（T134・コーダ）
+   ------------------------------------------------------------
+   ・色・かたち・丸ゴシックは 既存14本と そろえてある（設計図 §9.5）。
+   ・★トランプを 1枚も 使いません（設計図 §9 は この1本には かかりません・ルル §1-1）。
+     ★読む 画像 ゼロ・★盤の 上の 文字 ゼロ。
+
+   ★★ 盤の 上に 出る しるしは 2つ だけ です（ルル §5-5）★★
+     ------------------------------------------------------------
+     ・★白い 輪（ねらい）… ★指を 置いている あいだ だけ。★指の 座標 だけから 出る
+                            ★★盤を 1つも 数えない ＝ 遊びの 情報では なく **操作の 返事**
+     ・★赤い 輪（最後の 1手）… ★相手が さっき 置いた 場所 1つ だけ（★社長裁定 判断3）
+                            ★★盤を 1つも 数えない ＝「もう 起きた こと」を 消さないだけ
+     ・★置ける所の 光り … 作りません（空いている 交点は ぜんぶ 置ける ＝ 光らせる ものが ない）
+     ・★リーチの 光り　 … 作りません（★このゲームの 遊びの 中身 そのもの・ルル §5-4）
+     ・★5つ 並ぶ 所　　 … 作りません（★自分の ぶんも 相手の ぶんも）
+     ・★星（碁盤の 点） … ★位置の 目じるし。★どこにでも ある もので、値打ちを 1つも 言わない
+     → ★だから 盤の 部品に :hover も :active も 1行も 書いていません
+       （★どこを ねらっているかは JS が 決めます。★CSS の :hover には させません
+         ―― ★CSS に 任せると、指を のせただけの スマホでも 光って しまいます）。
+     ★ もう1つの 光りは「勝ったときの 5つ」。★それは 試合が **終わってから** 出ます。
+     ★★ 試合が 終わる とき、白い 輪も 赤い 輪も 消します。
+        ★ 設計図 §5.5「1画面に 強調は 1種類まで」は いつも 守られています。
+
+   ★★ 盤の 作り（★交点に 置く ―― 14本と ちがう ところ）★★
+     ------------------------------------------------------------
+       ① .board-wood  … 木目の 板
+       ② .board-grid  … 細い 格子（★線は 盤の 半目 内がわ から 引く）
+       ③ .board-stars … ★碁盤の 星 5つ（ルル §7-5）
+       ④ .aim         … ★白い 輪（ねらい）
+       ⑤ .stones      … 石（★線と 線の 交わる 所）
+       ⑥ .last-mark   … ★赤い 輪（最後の 1手）
+     ★ 盤ぜんたい ＝ 1目 × 路。★外がわの 交点にも 置く ので 半目ずつの ふちが 要る（ルル §1-3）。
+
+   ★★ 寸法の 決めごと ★★
+     ・1目の px は CSS では 決めません。
+       gomoku-core.js の fitBoard() が 盤の 実寸から 計算して
+       --cell / --stone / --aim / --star / --bar / --span / --half に 入れます。
+     ・★ CSS が 決めるのは「器の かたち」だけ。
+       ⚠️ 下の 余白（app-shell・board-frame）を 動かすと、
+          ルルの 寸法表（49/47/23/20/15px）が まるごと ずれます。
+
+   ・1280×910・1000×900・375px・320px・横向き の どれでも スクロールを 出さない。
+   ・仕上げは 🎨アトが やります。部品ごとに 見出しを 入れてあります。
+   ============================================================ */
+
+:root {
+  --ink:#463c52;
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+  --white:     #ffffff;
+  --cream:     #fff9ea;
+  --gold:      #F1A426;
+  --gold-soft: #FFE690;
+
+  /* ★★ 盤（木目）と 2人の 石（★社長の 絵に 寄せる。★§9.5 の パステルに 寄せた 木目）★★
+     ★★ 明るさの 比を 数字で 確かめました【計算】★★
+        木目 #E5BC80 … 明るさ 0.543
+        黒石 #3E3846 … 明るさ 0.039  → ★木目 と 黒石 ＝ 6.68 : 1
+        白石 #FFFDF7 … 明るさ 0.988  → ★木目 と 白石 ＝ 1.77 : 1
+        ★★ 黒石 と 白石 ＝ 11.8 : 1（★色の 見分けが つきにくい人でも、明るさで はっきり 分かれる）
+        ⚠️★ 白石 と 木目の 1.77 は 高く ありません。★だから 石には こい ふちを 付けます
+           （★形で 分ける ―― T131 で 効いたのと 同じ 手）。 */
+  --wood:      #E5BC80;
+  --wood-hi:   #F2D3A0;
+  --wood-dark: #C99B5C;
+  --line:      #8A6136;   /* 格子の 線 */
+  --star-ink:  #6E4A24;   /* 碁盤の 星 */
+
+  --st-b:      #3E3846;   /* 黒石 */
+  --st-b-hi:   #8C86A0;
+  --st-b-dark: #201C27;
+  --st-w:      #FFFDF7;   /* 白石 */
+  --st-w-hi:   #FFFFFF;
+  --st-w-dark: #C9C0B2;
+
+  /* ★★ 最後の 1手の 赤い 輪（社長裁定 判断3）★★
+     ★ 木目 #E5BC80 に 対して 2.45 : 1【計算】。★どちらの 石の 色でも ない。 */
+  --last:      #E23B3B;
+
+  --font-main:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","M PLUS Rounded 1c","Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;
+
+  /* ★ 大きさは game.js（＝ gomoku-core.js の fitBoard）が 入れる。CSS からは 決めない。 */
+  --cell:  20px;
+  --half:  10px;   /* ★ 1目の 半分（★盤の ふち ―― 外がわの 交点の ぶん）*/
+  --span:  281px;  /* ★ 格子の はば ＝ 1目 ×（路 − 1）＋ 1px */
+  --stone: 17px;
+  --aim:   18px;
+  --star:  3px;
+  --bar:   17px;
+  --gap:   8px;
+  --lastw: 2px;    /* ★ 赤い 輪の 太さ */
+  --lasts: 19px;   /* ★ 赤い 輪の 大きさ */
+}
+
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  margin:0; min-width:320px; color:var(--ink); font-family:var(--font-main);
+  background:linear-gradient(180deg,#bcebf0 0 190px,#fff7e8 190px);
+  overflow:hidden;                     /* ★ スクロールは ぜったいに 出さない */
+  overscroll-behavior:none;            /* ★ 指が ぶれても、引っぱって 読み込み直しに ならない */
+  -webkit-text-size-adjust:100%;
+  -webkit-touch-callout:none;          /* ★ 長おしの メニューを 出さない */
+}
+button { font-family:inherit; cursor:pointer; }
+.hidden { display:none !important; }
+.sprite-defs { position:absolute; width:0; height:0; overflow:hidden; }
+
+/* ★ たて 1画面ぴったりに 積む。盤だけが のびちぢみ する。
+   ⚠️ padding を 動かすと ルルの 寸法表が ずれる（→ 器の中身 960／355／306px）。 */
+.app-shell {
+  height:100vh; height:100svh;
+  max-width:1000px; margin:0 auto; padding:8px 10px;
+  display:flex; flex-direction:column; gap:8px;
+}
+
+/* ── 上の帯（もどる ／ 名前 ／ 遊び方）──────────────────
+   ★ 遊んでいる間の ボタンは 2つだけ ―― 「◀ ゲームを選ぶ」と「？ 遊び方」。
+     ★「もどす」は 作りません（ルル §7-6：★1回 もどせば 相手の 返事が 見える ＝ もっと 悪い ずる）。
+   ⚠️ 盤の 奥の 板に .back という 名前を 付けない こと（★T127 の 事故：
+      上の帯の「◀ ゲームを選ぶ」が .back。★ぶつかると 画面が まるごと こわれる）。 */
+.topbar { flex:0 0 auto; display:flex; align-items:center; gap:6px; min-height:44px; }
+.back {
+  flex:0 0 auto; display:inline-flex; align-items:center; min-height:44px; padding:0 12px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
+  color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
+}
+.back:hover { border-color:var(--pink); }
+.brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
+.brand-cat { width:30px; height:23px; flex:0 0 auto; }
+.brand span { font-weight:900; font-size:16px; color:#3f5a70; white-space:nowrap; }
+.topbar-pad { flex:0 0 auto; width:96px; }
+
+/* ★★ 指で さわる 画面（520px以下）では、押す ところを 44px 以上に する ★★
+   ★ 会社の 基準は 44px（T62以来）。
+   ⚠️★ この1本だけ、**1目 20px** という 承知のうえの 例外が あります（★44pxの 45%）。
+      ★ だから §3 の「12mm ずらし」が あります。★ボタンの 方は 1つも 44pxを 割りません。 */
+@media (max-width:520px) {
+  .back span { display:none; }
+  .back { padding:0 11px; min-height:44px; min-width:44px; justify-content:center; }
+  .topbar { min-height:44px; }
+  .brand span { font-size:15px; }
+  .topbar-pad { width:40px; }
+  .howto { display:inline-flex; align-items:center; min-height:44px; }
+}
+@media (max-width:360px) {
+  .app-shell { gap:6px; }
+  .brand-cat { display:none; }
+  .brand span { font-size:13px; }
+  .topbar-pad { width:34px; }
+}
+
+/* ── はじめの 画面 ──────────────────────────────
+   ★ 置くものは 3つだけ ―― ひとこと ／ つよさの プルダウン ／ はじめる。
+   ★ 選ばせるのは **つよさ 1つだけ**（設計図 §5.5 の 例外を ここに 使い切る・ルル §6-1）。
+     ★ 路数も、先手・後手も、禁じ手も、石の 色も 選ばせません。 */
+.title-screen {
+  flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+  padding:24px 18px; background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  text-align:center; box-shadow:0 7px 0 rgba(196,58,115,.10); min-height:0;
+}
+.title-lead { margin:0; font-size:clamp(17px,4.4vw,23px); font-weight:900; color:#5a4a63; line-height:1.6; }
+.start-button {
+  display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+  min-width:250px; padding:15px 26px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 6px 0 var(--pink-dark);
+  font-size:20px; font-weight:900;
+}
+.start-button small { font-size:12px; font-weight:700; opacity:.9; }
+.start-button:active { transform:translateY(3px); box-shadow:0 3px 0 var(--pink-dark); }
+
+/* ── ロボットの つよさ（★この ゲームで ただ1つの 設定）────── */
+.level-pick {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px 10px;
+  max-width:100%; margin:0 auto 14px; padding:7px 10px;
+  background:var(--cream); border:3px solid var(--gold-soft); border-radius:20px;
+}
+.title-screen .level-pick { margin:0; }
+.level-pick-name { font-size:13px; font-weight:900; color:#7a5205; white-space:nowrap; }
+.level-select {
+  max-width:100%; min-height:44px; padding:5px 10px;
+  background:var(--white); border:3px solid var(--gold); border-radius:999px;
+  color:var(--ink); font-family:inherit; font-size:15px; font-weight:900; cursor:pointer;
+}
+.level-select:focus-visible { outline:3px solid var(--pink); outline-offset:2px; }
+
+/* ── 遊ぶ 画面 ────────────────────────────────
+   ★★ .stage が「指を 受ける ところ」です（★14本と ちがう ところ）★★
+     ------------------------------------------------------------
+     ★ 判断1（12mm ずらし）の ため、★★盤の 下にも 指を 置ける 場所が 要ります
+       ―― ★一番 下の 交点を ねらう には、指を その 12mm 下に 置く から です。
+     ★ だから 盤（.hold）では なく、★のこり ぜんぶ（.stage）で 指を 受けます。
+     ★ 上の あそび（padding-top）は game.js が 計算して 入れます
+       ―― ★★盤の 下に 12mm ぶん 残す ため。★盤は 1pxも やせません。 */
+.play-screen { flex:1 1 auto; min-height:0; display:flex; }
+.stage {
+  position:relative; flex:1 1 auto; min-height:0; min-width:0;
+  display:flex; align-items:flex-start; justify-content:center;
+  touch-action:none;                   /* ★ 盤の 上では ページを 1mmも 動かさない */
+}
+.hold { display:flex; flex-direction:column; align-items:center; gap:var(--gap); }
+/* ★ 横向きの 低い 画面だけ、次の 石を 盤の 右よこへ（たてを 食わせない・ルル §2-5）*/
+.hold.is-side { flex-direction:row; align-items:center; }
+.hold.is-side .next-row { order:2; }
+
+/* ★ 次の 石 ＝ そのまま 手番の しるし（ルル §7-4）
+   ★★「あなたの番です。」の 文字は 1文字も 出しません
+      ―― ★黒い 丸なら あなた、白い 丸なら ロボット。★文字 ゼロ で 同じ ことを 言っています。 */
+.next-row {
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+  height:var(--bar); width:var(--bar);
+}
+.hold:not(.is-side) .next-row { width:100%; }
+.hold.is-side       .next-row { height:100%; }
+.next-stone {
+  width:var(--bar); height:var(--bar); border-radius:50%;
+  box-shadow:inset 0 0 0 calc(var(--bar) * .07) rgba(20,10,10,.34), 0 2px 4px rgba(40,34,50,.22);
+  transition:opacity .15s ease-out;
+}
+.next-stone.me  { background:radial-gradient(circle at 34% 28%, var(--st-b-hi) 0 12%, var(--st-b) 58%, var(--st-b-dark) 100%); }
+.next-stone.bot { background:radial-gradient(circle at 34% 28%, var(--st-w-hi) 0 12%, var(--st-w) 58%, var(--st-w-dark) 100%); }
+.next-stone.is-off { opacity:0; }
+
+.hold, .board-frame, .board, .board-wood, .board-grid, .board-stars, .stones { touch-action:none; }
+
+/* ★★ 盤の わく ★★
+   ★ この わくの **内がわ** が、ルル §1-2 の「器の中身」です。
+     375px … 余白4（app-shell）＋わく3＋内3 ＝ 片側10px → 中身 355px → ★1目 23px
+     320px … 余白3＋わく2＋内2 ＝ 片側 7px → 中身 306px → ★1目 20px
+     1000px … 余白10＋わく4＋内6 ＝ 片側20px → 中身 960px → ★1目 41px（上限）
+   ⚠️ ここの 数字を 動かすと、ルルの 寸法表が まるごと ずれます。 */
+.board-frame {
+  flex:0 0 auto; padding:6px; border:4px solid var(--wood-dark); border-radius:18px;
+  background:linear-gradient(180deg,var(--wood-hi),var(--wood-dark));
+  box-shadow:0 6px 0 rgba(120,84,44,.24);
+}
+.board {
+  position:relative; overflow:hidden; border-radius:6px;
+  background:var(--wood);
+}
+
+/* ① 木目の 板 */
+.board-wood {
+  position:absolute; inset:0; pointer-events:none;
+  background:
+    repeating-linear-gradient(96deg, rgba(255,255,255,.16) 0 2px, rgba(255,255,255,0) 2px 9px),
+    repeating-linear-gradient(92deg, rgba(140,94,44,.10) 0 3px, rgba(140,94,44,0) 3px 17px),
+    linear-gradient(160deg, var(--wood-hi), var(--wood) 55%, var(--wood-dark));
+}
+
+/* ② 細い 格子（★線は 盤の 半目 内がわ から 引く ―― 交点に 置く ゲームの かたち）
+   ★ px は 1つも 書きません。★路の 数も 書きません（--span は game.js が 入れる）。 */
+.board-grid {
+  position:absolute; left:var(--half); top:var(--half);
+  width:var(--span); height:var(--span); pointer-events:none;
+  background:
+    repeating-linear-gradient(to right,  var(--line) 0 1px, rgba(0,0,0,0) 1px var(--cell)),
+    repeating-linear-gradient(to bottom, var(--line) 0 1px, rgba(0,0,0,0) 1px var(--cell));
+  opacity:.75;
+}
+
+/* ③ ★碁盤の 星（ルル §7-5：5つ・世の中の 15路盤と 同じ 場所）
+   ⚠️★ 星は 石より うんと 小さく。★320pxで 石 17px・星 3px。★星が 石に 見えたら 事故。 */
+.board-stars { position:absolute; inset:0; pointer-events:none; }
+.star {
+  position:absolute; width:var(--star); height:var(--star); border-radius:50%;
+  background:var(--star-ink); opacity:.8;
+}
+
+/* ★★★ ねらいの 白い 輪（★社長裁定 判断1）★★★
+   ------------------------------------------------------------
+   ★ いま ねらっている 交点に、輪が 1つだけ 出ます。
+     ★★ 指の ときは 指の **12mm 上**、マウスの ときは カーソルの 真下。
+     ★ すべらせれば ついてきます。★指を はなすと、その 交点に 石が 置かれます。
+
+   ★★ 判断3（リーチ・5つ並び・置ける所は 光らせない）を 破っていません ★★
+     ・★出しているのは **指の 座標** だけ。★盤を 1つも 数えていません
+     ・★「そこに 置くと 勝てるか」は 1ミリも 出しません
+     → ★これは 遊びの 情報では なく、★★**操作の 返事**（指が どこを 指しているか）です
+
+   ★★ かたち：**輪（リング）**。★丸く ぬりつぶしません（T131 の 教訓）★★
+     ・★ぬりつぶすと「もう 置いた 白石」に 見えます（★T128 🔴-1 と 同じ 事故）
+     ・★輪なら まん中は 木目の まま。★★石に 暗い／木目の まん中は ありません
+   ⚠️★ 色は 白（T131 で 社長が 通された 色）。★ただし この 1本の 盤は **明るい 木目**で、
+      ★白石 と 木目は 1.77 : 1 しか ありません【計算】。
+      ★★ そこで 輪の 外がわに **細い こい ふち**を 足しました（★新しい 色は 増やして いません）。 */
+.aim {
+  position:absolute; width:var(--aim); height:var(--aim); border-radius:50%;
+  pointer-events:none;                 /* ★ 指を 1mmも うばわない */
+  opacity:0; transition:opacity .1s ease-out;
+  box-shadow:
+    0 0 0 1px rgba(60,38,14,.55),                              /* ★ 外がわの こい ふち */
+    inset 0 0 0 calc(var(--aim) * .16) var(--white),            /* ★ 輪 そのもの */
+    inset 0 0 0 calc(var(--aim) * .18) rgba(60,38,14,.45);      /* ★ 内がわの こい ふち */
+}
+.aim.is-on { opacity:1; }
+
+/* ⑤ 石（★線と 線の 交わる 所）*/
+.stones { position:absolute; inset:0; pointer-events:none; }
+.stone {
+  position:absolute; width:var(--stone); height:var(--stone); border-radius:50%;
+  box-shadow:inset 0 0 0 calc(var(--stone) * .06) rgba(20,10,10,.42),
+             inset 0 calc(var(--stone) * -.08) calc(var(--stone) * .11) rgba(0,0,0,.20),
+             0 1px 2px rgba(60,38,14,.35);
+}
+.stone.me  { background:radial-gradient(circle at 34% 28%, var(--st-b-hi) 0 12%, var(--st-b) 58%, var(--st-b-dark) 100%); }
+.stone.bot { background:radial-gradient(circle at 34% 28%, var(--st-w-hi) 0 12%, var(--st-w) 58%, var(--st-w-dark) 100%); }
+
+/* ★ 置かれる 瞬間（ルル §7-2：0.15秒）*/
+@keyframes stoneIn {
+  0%   { transform:scale(.55); opacity:.35; }
+  70%  { transform:scale(1.06); opacity:1; }
+  100% { transform:scale(1); opacity:1; }
+}
+.stone.is-new { animation:stoneIn 150ms ease-out; }
+
+/* ★★★ 最後の 1手の 赤い 輪（★社長裁定 判断3）★★★
+   ------------------------------------------------------------
+   ★ いちばん 最後に 置かれた 石 **1つ だけ**。★どちらの 色の 石でも。
+   ★ 手の 番号は 付けません（★打った 順番が 読めると、相手の ねらいを 読み解く 材料に なる）。
+   ★ 2手前・3手前の 石にも 付けません（★履歴は 記録では なく 資料に なる）。
+   ★★ 盤を 1つも 数えて いません ―― ★「最後に 置いた 場所」は ただの 1つの 数字です。
+   ★ 試合が 終わったら 消します（★そこからは「勝った 5つ」の 光りの 時間 ―― §5.5）。 */
+.last-mark {
+  position:absolute; width:var(--lasts); height:var(--lasts); border-radius:50%;
+  pointer-events:none; opacity:0; z-index:2;
+  box-shadow:inset 0 0 0 var(--lastw) var(--last), 0 0 0 1px rgba(255,255,255,.45);
+  transition:opacity .12s ease-out;
+}
+.last-mark.is-on { opacity:1; }
+
+/* ★★ 勝ったときの 5つ（★このゲームで ただ1つの 光り・ルル §7-2）★★
+   ------------------------------------------------------------
+   ★ 試合が 終わってから 出ます（★追記② に 触れない）。
+   ★ 端から 順に 1つずつ ぴかっと 光る ―― ★同時に 光ると かたまりに 見えない。
+   ★ ほかの 石は うすくする。★足すのでは なく 引いて、5つを 目立たせる。
+   ⚠️ 6つ・7つ 続いた とき（長連）も 勝ちです。★続いている ぶん **全部** 光らせます。
+   ⚠️ 並びが 2つ 以上 できる ことも あります。★全部 光らせます。 */
+@keyframes winFlash {
+  0%   { transform:scale(1);    filter:brightness(1); }
+  40%  { transform:scale(1.18); filter:brightness(1.6); }
+  100% { transform:scale(1);    filter:brightness(1); }
+}
+.stone.is-win { animation:winFlash 360ms ease-out; z-index:3; box-shadow:inset 0 0 0 calc(var(--stone) * .06) rgba(20,10,10,.42), 0 0 0 2px var(--pink-deep); }
+.stone.is-dim { opacity:.30; transition:opacity .3s ease-out; }
+
+/* ★★「そこには 置けない」の ゆれ（ルル §3-6 の 6番）★★
+   ★ 光でも 色でも ない ので、★強調は 増えません。音も 鳴らしません。
+   ★「なぜ 置けないか」は 1文字も 言いません（★石が あるのは 見れば 分かる）。 */
+@keyframes shakeNo {
+  0%,100% { transform:translateX(0); }
+  20% { transform:translateX(-5px) rotate(-.6deg); }
+  45% { transform:translateX(4px) rotate(.6deg); }
+  70% { transform:translateX(-2px); }
+}
+.board-frame.is-no { animation:shakeNo .15s ease-in-out; }
+
+/* ★ スマホでは 器の わくを 削る（ルル §1-2 の 実測に 合わせる）*/
+@media (max-width:520px) {
+  .app-shell { padding:6px 4px; }
+  .board-frame { padding:3px; border-width:3px; border-radius:13px; }
+}
+@media (max-width:340px) {
+  .app-shell { padding:6px 3px; }
+  .board-frame { padding:2px; border-width:2px; border-radius:10px; }
+}
+
+/* ── ハッピー ＋ ふきだし ＋ 遊び方（画面の 一番下・1行）────
+   ★★ 遊んでいる 最中、ハッピーは 1文字も しゃべりません（ルル §7-7）。
+      ★ 相手の 三・四のとき「あぶない！」も 言いません（★遊びの 20ポイントを 取り上げる）。
+      ★ 自分が 三を 作ったとき「あと 2つ！」も 言いません。
+      ★ 「三を 作って 四に しよう」は ★このゲームで 最悪の 一言 です。 */
+.log-row {
+  position:relative; z-index:75;
+  flex:0 0 auto; display:flex; align-items:center; gap:9px;
+  padding:6px 10px; background:var(--white); border:3px solid var(--pink-soft); border-radius:18px;
+}
+.happy-wrap { flex:0 0 auto; text-align:center; }
+.happy-cat { width:42px; height:32px; display:block; }
+.happy-name { margin:0; font-size:10px; font-weight:900; color:#c9a24a; }
+.happy-bubble {
+  flex:1 1 auto; margin:0; min-width:0;
+  font-size:14.5px; font-weight:900; color:#5a4a63; line-height:1.45;
+  word-break:keep-all;
+}
+.howto {
+  flex:0 0 auto; display:inline-flex; align-items:center; min-height:44px;
+  padding:0 12px; border-radius:999px;
+  background:var(--white); border:3px solid var(--pink-soft);
+  color:var(--pink-dark); font-size:12.5px; font-weight:900; white-space:nowrap;
+}
+.howto:hover { border-color:var(--pink); }
+@media (max-width:360px) {
+  .happy-cat { width:34px; height:26px; }
+  .happy-bubble { font-size:12.5px; }
+  .howto { padding:7px 9px; font-size:11.5px; border-width:2px; }
+  .log-row { padding:5px 7px; gap:6px; }
+}
+/* ★★ 横向きの 低い 画面 ―― たては 1pxも 盤から 取らず、行の まわりの 余分から 集める
+   （★T130 で 四目並べに した のと 同じ 手）。 */
+@media (max-height:430px) and (orientation:landscape) {
+  .app-shell { padding:2px 8px; gap:2px; }
+  .topbar { min-height:44px; }
+  .back { min-height:44px; }
+  .howto { min-height:44px; padding:0 12px; }
+  .level-select { min-height:44px; }
+  .happy-cat { width:28px; height:21px; }
+  .happy-name { display:none; }
+  .happy-bubble { font-size:12px; }
+  .log-row { padding:0 8px; border-width:2px; }
+  /* ⚠️★ 横向きの「結果の 箱」の 決まりは、結果の 箱の 節の **あと**に 置いて あります
+        （★同じ 強さの 決まりは 後ろが 勝つ）。 */
+}
+
+/* ハッピーが とびはねる（勝った ときだけ）*/
+@keyframes happyJump {
+  0%,100% { transform:translateY(0) rotate(0); }
+  30% { transform:translateY(-9px) rotate(-7deg); }
+  60% { transform:translateY(0) rotate(5deg); }
+}
+.happy-cat.is-jump { animation:happyJump .5s ease-in-out 6; }
+
+/* ── 勝ち／負け／引き分け の 画面 ─────────────────────
+   ★★★ 光った 5つを、箱で 隠さない（★T130 で 100%（69本中69本）に した もの）★★★
+   ------------------------------------------------------------
+   ★ 盤が 大きく なりました（★320pxで 300×300）。★箱の 置き場は もう
+     「盤の 上の 空き」しか ありません【計算 320×568：盤の 上ふちまで およそ 109px】。
+   ★ だから ―― ★★箱は **盤の 上の 空き**に 置き、★たけの 天井を game.js が
+     ★**盤の 上ふちより 上**に 収まる 値に 入れます（--result-max）。
+     ★ ＝ ★★盤には 1pxも かぶりません（verify ⑫ が 毎回 見張ります）。
+   ★★ そのために 箱を 2行に 詰めました（ルル §7-2 の【計算】100px を 守る）：
+     ① 見出し ＋「ロボットの つよさ」の 見出し … 22px
+     ② もう1回 ▶ ／ やめる ／ つよさ（3つ とも 44px）… 44px
+     → ★合計 88px【計算】。★ルルの 天井 100px の 中。 */
+.result-wrap {
+  position:fixed; inset:0; z-index:80; display:flex;
+  align-items:flex-start;          /* ★ 盤の 上の 空きへ（まん中に 置かない）*/
+  justify-content:center;
+  padding:8px; background:rgba(70,60,82,.42);
+}
+.result-box {
+  width:min(380px,100%); padding:6px 8px; text-align:left;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:18px;
+  box-shadow:0 6px 0 rgba(196,58,115,.16);
+  max-height:var(--result-max,100%); overflow-y:auto;
+}
+@keyframes resultIn { 0% { transform:scale(.86); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+.result-wrap:not(.hidden) .result-box { animation:resultIn .22s ease-out; }
+.result-head { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin:0 0 4px; }
+.result-title { margin:0; font-size:19px; font-weight:900; line-height:1.15; color:var(--pink-dark); white-space:nowrap; }
+.result-title.is-quiet { color:#7f8fa0; }
+.result-lvname { font-size:11px; font-weight:900; color:#7a5205; white-space:nowrap; }
+.result-row { display:flex; flex-direction:row; align-items:stretch; gap:6px; }
+.dialog-ok {
+  display:flex; align-items:center; justify-content:center;
+  flex:1 1 auto; min-height:44px; padding:6px 12px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 5px 0 var(--pink-dark);
+  font-family:inherit; font-size:17px; font-weight:900; text-decoration:none; text-align:center;
+}
+.dialog-ok:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
+.dialog-ok.alt {
+  flex:0 0 auto; min-width:70px;
+  background:var(--white); color:var(--pink-dark);
+  border:3px solid var(--pink-soft); box-shadow:0 4px 0 rgba(196,58,115,.10);
+  font-size:13px; padding:6px 10px;
+}
+/* ★ 結果の 箱の 中の つよさは、帯を 外して プルダウンだけ（★たけを 44px に 収める）*/
+.result-row .level-select { flex:0 0 auto; min-height:44px; font-size:13px; padding:4px 6px; border-width:3px; }
+/* ★ 遊び方の 箱の 中の「分かった！」は 前と 同じ 見え方に 戻す */
+#helpDialog .dialog-ok { display:block; width:100%; }
+
+/* ★★ 横向きの 結果の 箱は「上」では なく「右」へ ★★
+   ★ 横向きは 盤が たて いっぱい（255×255）で、上に 場所が ありません。
+     ★ そのかわり 左右が うんと 空いて います。
+   ⚠️★ この 節は 上の @media（横向き）の 中では なく **ここ**に 置くこと。 */
+@media (max-height:430px) and (orientation:landscape) {
+  .result-wrap { align-items:center; justify-content:flex-end; padding:8px; }
+  .result-box { width:186px; padding:8px 10px; max-height:100%; }
+  .result-head { flex-direction:column; align-items:flex-start; gap:0; }
+  .result-row { flex-direction:column; align-items:stretch; }
+  .result-row .dialog-ok.alt { width:100%; }
+  .result-row .level-select { width:100%; }
+}
+
+/* ★ 箱が 出た 瞬間、指が まだ 動いている あいだは おせなく する（T62・T63 の 事故よけ）*/
+.result-row { transition:opacity .16s ease-out; }
+.result-box.is-locked .result-row { pointer-events:none; opacity:.4; }
+.result-box.is-locked .dialog-ok { box-shadow:none; transform:translateY(3px); }
+
+/* ── 遊び方の 中身 ──────────────────────────────
+   ★ ルールは 3行。★15本で いちばん 軽い 3行（ルル §0-3）。
+   ⚠️ ★ どこに 置くと よいかは、ここでも 1文字も 教えません（設計図 追記②・ルル §4-6）。 */
+dialog {
+  width:min(420px,92vw); padding:22px 20px 20px; border:none; border-radius:26px;
+  background:var(--white); color:var(--ink); font-family:var(--font-main);
+  box-shadow:0 12px 0 rgba(196,58,115,.16);
+}
+dialog::backdrop { background:rgba(70,60,82,.42); }
+dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-dark); text-align:center; }
+.dialog-lead { margin:0 0 14px; font-size:15px; font-weight:900; text-align:center; color:#5a4a63; }
+.close-dialog {
+  position:absolute; top:8px; right:10px; width:44px; height:44px; border-radius:50%;
+  border:3px solid var(--pink-soft); background:var(--white); color:var(--pink-dark);
+  font-size:17px; font-weight:900; line-height:1;
+}
+.help-list { margin:0 0 12px; padding-left:1.3em; }
+.help-list li { margin-bottom:8px; font-size:14.5px; font-weight:700; line-height:1.65; }
+.help-list b { color:var(--pink-dark); }
+.help-note {
+  margin:0 0 16px; padding:10px 12px; border-radius:16px;
+  background:var(--cream); border:3px solid var(--gold-soft);
+  font-size:13.5px; font-weight:700; line-height:1.7; color:#6b5522;
+}
+.help-note b { color:var(--pink-dark); }

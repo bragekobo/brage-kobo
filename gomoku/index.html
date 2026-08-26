@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>五目並べ ― ブラゲ工房</title>
+  <meta name="description" content="黒と 白を、たて よこ ななめに 5つ 並べよう ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       既存14本と おなじ 書き方。絶対URL で 書く。
+       ⚠️ まとめサイトに 並べる ときに og:url を もう一度 見なおすこと。
+
+       ★★ この1本も og:image が ありません ★★
+         ★ トランプを 1枚も 使いません（設計図 §9 は かかりません・ルル §1-1）。
+         ★ うそに なる ので、他の ゲームの 札を 借りません。
+         ★ 絵が 要るなら 🎨アトが この ゲーム用に 1枚 作って、ここに 足すこと。
+
+       ★★ 画面に 出す 言葉は すべて「五目並べ」★★
+         ★ 「並べ」は 漢字（★「並」は 小6・設計図 §9.6）。
+         ★ 「連珠」「ゴモク」「Gomoku」は 読む 文字に 1度も 出しません（ルル §8-2）。
+         ⚠️★ 下の og:url だけは **住所**です（★読む 文字では ありません）。
+            ★ フォルダ名は 四目並べ（yonmoku）と 同じ 作法の ローマ字に して います。
+            ★ verify ⑥ は URL を のぞいてから 言葉を 見ます。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="五目並べ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="黒と 白を、たて よこ ななめに 5つ 並べよう。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/gomoku/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="五目並べ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="黒と 白を、たて よこ ななめに 5つ 並べよう。開いたらすぐ遊べます。" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存14本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="gomoku.css" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存14本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       ★ 遊んでいる間の ボタンは 2つだけ ―― 「◀ ゲームを選ぶ」と「？ 遊び方」。
+         ★「もどす」は 作りません（ルル §7-6）：
+           ・★五目並べは「わな」で 決まる ゲーム。★自分の 手が わなに かかったかは
+             ★★ロボットの 次の 1手で 分かる ―― ★もどせば 1回で 打ち直せる ＝ もっと 悪い ずる
+           ・そもそも「配り」が 存在しない（はじめは からっぽ）
+       ★ 対戦の 8本（七並べ・大富豪・ホールデム・ポーカー・スピード・神経衰弱・リバーシ・四目並べ）
+         に そろえます。 -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>五目並べ</span>
+    </div>
+    <div class="topbar-pad"></div>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★ 置くものは 3つだけ ―― ひとこと ／ つよさの プルダウン ／ はじめる。
+       ★ 選ばせるのは **つよさ 1つだけ**（設計図 §5.5 の 例外を ここに 使い切る・ルル §6-1）。
+         ★ 路数（15路）も、先手・後手（人が 黒・先手）も、禁じ手（入れない）も、
+           石の 色も 選ばせません。
+       ★★ 初期値は 2段「ふつう」（社長裁定 判断4 ＝ ①）。 -->
+  <section class="title-screen" id="titleScreen">
+    <p class="title-lead">たて よこ ななめ、<br>5つ 並べよう！</p>
+    <label class="level-pick" for="levelTitle">
+      <span class="level-pick-name">ロボットの つよさ</span>
+      <select class="level-select" id="levelTitle"></select>
+    </label>
+    <button class="start-button" type="button" id="btnStart">
+      <span>はじめる <b>▶</b></span><small>線の 交わる 所に、石を 置こう</small>
+    </button>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       置き場は **2か所だけ**（盤・次の 石）＝ 15本で いちばん 少ない ならび。
+       ★ 点数も、帯（つな引き）も、下の トレイも ありません（★数える ものが ない ゲーム）。
+       ★★ 盤の 上に 読む 文字は 1つも ありません。
+       ★★ 盤の 上に 出る しるしは 2つ だけ：
+          ★ 白い 輪（★いま ねらっている 交点。★指の 12mm 上・社長裁定 判断1）
+          ★ 赤い 輪（★いちばん 最後に 置かれた 石 1つ・社長裁定 判断3）
+          ★ リーチ・5つ 並ぶ 所・置ける 所は、★1つも 光りません（ルル §5-4）。 -->
+  <section class="play-screen hidden" id="playScreen">
+    <!-- ★★ 指を 受けるのは .stage（★盤 だけでは ありません）★★
+         ★ 判断1 の 12mm ずらしの ため、★盤の 下にも 指を 置ける 場所が 要ります
+           ―― ★一番 下の 交点を ねらう には、指を その 12mm 下に 置く から です。 -->
+    <div class="stage" id="stage">
+      <div class="hold" id="hold">
+        <!-- ★ 次の 石 ＝ そのまま 手番の しるし（★「あなたの番です。」の 文字は 出さない）-->
+        <div class="next-row" id="nextRow"><span class="next-stone me" id="nextStone"></span></div>
+        <!-- ★ 木目の わく。★ここの 内がわが ルル §1-2 の「器の中身」
+             ―― 320px で 306×432px。その 実寸を game.js が 測って 1目を 決める。 -->
+        <div class="board-frame" id="boardFrame">
+          <div class="board" id="board">
+            <div class="board-wood"></div>
+            <div class="board-grid" id="boardGrid"></div>
+            <!-- ★ 碁盤の 星 5つ（ルル §7-5）。★位置の 目じるし。★値打ちを 1つも 言わない -->
+            <div class="board-stars" id="boardStars"></div>
+            <!-- ★★ ねらいの 白い 輪（社長裁定 判断1）★★ 中身は からっぽ・文字 0文字 -->
+            <span class="aim" id="aim"></span>
+            <div class="stones" id="stones"></div>
+            <!-- ★★ 最後の 1手の 赤い 輪（社長裁定 判断3）★★ 中身は からっぽ・文字 0文字 -->
+            <span class="last-mark" id="lastMark"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方（画面の 一番下・1行に まとめる）
+       ⚠️ ハッピーは 全ゲーム・全ページに 必ず 出す（設計図 §9.5）。
+       ★★ 遊んでいる 最中、ハッピーは 1文字も しゃべりません（ルル §7-7）。 -->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap">
+      <svg class="happy-cat" id="happyCat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">たて よこ ななめ、5つ 並べよう！</p>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </div>
+
+</main>
+
+<!-- ── 勝ち／負け／引き分け の 画面 ──────────────────
+     ⚠️ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（game.js）。
+     ★ 引き分け（225の 交点 ぜんぶ うまる）は めったに 出ませんが、ゼロでは ありません。
+       だから 専用の 言葉を 出します。
+     ★★ ここにも 同じ プルダウンを 置きます（スピード T60 の 社長の言葉・14本と 同じ 作法）。
+        ★初期値が「ふつう」なので、★負けた その場で つよさを 下げられる ことが、
+        はじめての人の 逃げ道です。
+     ★★ 箱は「盤の 上の 空き」に 出し、たけの 天井を game.js が 入れます
+        ―― ★光った 5つに 1pxも かぶらせない ため（verify ⑫）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result-head">
+      <p class="result-title" id="resultTitle">勝ち！</p>
+      <label class="result-lvname" for="levelResult">ロボットの つよさ</label>
+    </div>
+    <div class="result-row">
+      <button class="dialog-ok" type="button" id="btnAgain">もう1回 <b>▶</b></button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+      <select class="level-select" id="levelResult"></select>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ★ ルールは 3行。★15本で いちばん 軽い 3行です（ルル §0-3）。
+       「5つ 続いているか」を 見るだけ ―― ★落ちる 決まりも ありません。
+     ⚠️ ★ どこに 置くと よいかは、ここでも 1文字も 教えません（設計図 追記②・ルル §4-6）。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">たて よこ ななめ、5つ 並べよう！</p>
+  <ol class="help-list">
+    <li>線と 線の <b>交わる 所</b>に、石を 置く。</li>
+    <li><b>黒</b>（あなた）から 先に 置く。</li>
+    <li>たて・よこ・ななめ、<b>5つ 続いたら 勝ち</b>。</li>
+  </ol>
+  <p class="help-note">石が ある 所には 置けない。<br>
+    交わる 所が ぜんぶ うまったら 引き分け。<br>
+    ロボットの <b>つよさ</b>は、はじめの 画面と、終わった あとに えらべる。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<!-- ============================================================
+     ★★★ 盤の 大きさは、この 1行 だけ ★★★
+       gomoku-core.js にも gomoku-game.js にも、路の 数も 225 も 1つも 書いていない
+       （5つの まどの 一覧・星の 場所・1目のpx・石の 大きさ ―― 全部 計算で 出る）。
+     ★ 15路 ＝ 世の中の 五目並べの 標準（★社長裁定 判断2）。
+     ============================================================ -->
+<script>window.GOMOKU_LINES = 15;</script>
+<script src="gomoku-core.js"></script>
+<script src="gomoku-game.js"></script>
+</body>
+</html>
