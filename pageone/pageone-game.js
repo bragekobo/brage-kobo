@@ -577,7 +577,39 @@
        ・★引く … ★★山札を 押した ときだけ（★勝手に 引かない）
        ・★出せるか どうかの 判定・数える・まぜ直す … ★機械が やる（★肩代わりして よい 側）
      ★ 指を 置いた だけでは 決まりません。★**はなした ときに** 決まります。
+
+     ⚠️★★★ T157・🟡 の 直し ―― ★**はなした 所は、e.target では 分かりません** ★★★
+        ★ 指（touch）の ポインタは、★★**押した ものに くっつきます**
+          （★ブラウザの 決まり・implicit pointer capture）。
+        ★ ★＝ となりの 札の 上で はなしても、★pointerup の **e.target は 押した 札の まま**。
+          ★★ だから 下の「押した 札と はなした 札が ちがう」が **指では 1度も 効きません** でした。
+        ★ ★マウスは くっつかない ので、★PCでは ちゃんと 止まって いました
+          ―― ★★**指と マウスで 手ざわりが ちがう**、これが 正体です。
+        ★ ★実測（T157・375×812・本物の 指と 本物の マウス・10回ずつ）：
+          ★★ 指で すべらせて はなす … ★**10/10 で 何かが 起き、★7/10 で 札が 本当に 出た**
+          ★★ マウスで 同じ こと    … ★**0/10**（★1度も 起きない）
+        ★ → ★★**はなした 点の 座標から 引き直します**（`hitAt`）。★これで 指も マウスも 同じ 動きに。
+        ★ ★`hitAt` は ⑯（見張り）と ⑭ も 同じ ものを 使います ―― ★★目を 1つに して おきます。
+
+     ⚠️★★ **なぜ「はなした 所の 札が 出る」に しなかったか**（★もう 1つの 道でした）
+        ★ ★ババ抜き・五目並べ・四目ならべは「はなした 所」で 決めて います。★★でも あの 3本は
+          ★★ **すべって いる 間、どれが 選ばれて いるかが 画面に 見えて います**
+          （★ババ抜きの 浮き・★五目の 輪・★四目の 飛ぶ コマ）。
+        ★ ★ページワンには その 見え方が ありません。★見えない まま、はなした 所の 札が 出るのは
+          ★★ **「気づいて いない 予期せぬ 行動」** ―― ★★設計図 追記② そのもの です。
+        ★ ★★だから ページワンは「★すべったら 何も 起きない」。★ババ抜きの
+          ★「引く札は、指をはなすまで決まりません。」とは 食いちがいません ――
+          ★★ **どちらも「決まるのは はなした とき」。★ちがうのは、選び直せる かどうか だけ** です。
      ============================================================ */
+  /* ★ 押した／はなした 点 → ★本当に そこに ある もの → ★.card まで さかのぼる
+     ★★ onUp（本体）と ⑭⑯（見張り）が 使う、★この ゲームで ただ 1つの「目」。
+     ★ 画面の 外を さされたら null（★はなす 場所が 盤の 外 ＝ 何も 起きない）。 */
+  function hitAt(x, y) {
+    if (!(x >= 0) || !(y >= 0) || x > window.innerWidth || y > window.innerHeight) return null;
+    var t = document.elementFromPoint(Math.round(x), Math.round(y));
+    while (t && t !== cardsEl && !(t.classList && t.classList.contains('card'))) t = t.parentNode;
+    return (t && t !== cardsEl && t.classList && t.classList.contains('card')) ? t : null;
+  }
   function onDown(e) {
     if (busy || over || !g || g.over) return;
     var t = e.target;
@@ -589,8 +621,7 @@
     var id = pressId; pressId = 0;
     if (!id || busy || over || !g || g.over) return;
     if (waitSuit >= 0) return;                    /* ★ マークを 選んで いる 途中 */
-    var t = e.target;
-    while (t && t !== cardsEl && !t.classList.contains('card')) t = t.parentNode;
+    var t = hitAt(e.clientX, e.clientY);          /* ★★ e.target では ありません（★上の ⚠️）*/
     if (!t || t.slotId !== id) return;            /* ★ 押した 札と はなした 札が ちがう */
     var where = t.where;
     if (where === 'deck') { doDraw(); return; }
@@ -1176,25 +1207,31 @@
        ★★ **盤の 押せる ところを ぜんぶ 押して、1つも 動かなければ 鳴らします。**
      ★ ★状態は 1つ 残らず 元に 戻します（★T144 §7-5：見張りが 自分で 場面を こわす 事故）。
      ============================================================ */
-  function tapDom(el) {
+  /* ⚠️★★ T157：★**座標を 付けずに 送っては いけません。**
+     ★ onUp は はなした 点（e.clientX / e.clientY）で 札を 引き直す ように なりました。
+     ★★ 座標なしで 送ると、★どの 札を 押しても「(0,0) の 下」を 見に 行く ―― ★★見張りが
+     ★★ 自分で 誤って 鳴ります（★私は T155 でも 座標の 取りちがえで 1度 やって います）。
+     ★ ★x / y は **画面の 座標**（getBoundingClientRect の まま）を 渡します。 */
+  function tapDom(el, x, y) {
     if (!el) return false;
-    function mk(type) {
-      try { return new PointerEvent(type, { bubbles: true, cancelable: true }); }
+    function mk(type, px, py) {
+      var o = { bubbles: true, cancelable: true, clientX: px, clientY: py,
+                pointerId: 1, isPrimary: true, pointerType: 'touch' };
+      try { return new PointerEvent(type, o); }
       catch (e) {
-        var ev = document.createEvent('Event'); ev.initEvent(type, true, true); return ev;
+        var ev = document.createEvent('Event'); ev.initEvent(type, true, true);
+        ev.clientX = px; ev.clientY = py; ev.pointerType = 'touch'; return ev;
       }
     }
-    el.dispatchEvent(mk('pointerdown'));
-    el.dispatchEvent(mk('pointerup'));
+    var r = el.getBoundingClientRect();
+    var ax = (x === undefined) ? r.left + r.width / 2 : x;
+    var ay = (y === undefined) ? r.top + r.height / 2 : y;
+    el.dispatchEvent(mk('pointerdown', ax, ay));
+    el.dispatchEvent(mk('pointerup', ax, ay));
     return true;
   }
-  /* ★ 押す 点 → ★本当に そこに ある もの → ★.card まで さかのぼる（★onDown/onUp と 同じ 見かた）*/
-  function hitAt(x, y) {
-    if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) return null;
-    var t = document.elementFromPoint(Math.round(x), Math.round(y));
-    while (t && t !== cardsEl && !(t.classList && t.classList.contains('card'))) t = t.parentNode;
-    return (t && t !== cardsEl && t.classList && t.classList.contains('card')) ? t : null;
-  }
+  /* ★ hitAt は 上の「人の 操作」へ 引っこして あります（T157）。
+     ★★ ⑭ も onUp も **同じ 目**で 見ます ―― ★見張りと 本体が ずれない ように。 */
   function snapG() {
     var s = { hands: [], deck: g.deck.slice(), pile: g.pile.slice() }, p;
     for (p = 0; p < g.nP; p++) s.hands.push(g.hands[p].slice());
@@ -1300,7 +1337,7 @@
           var el = hitAt(pts[i][0], pts[i][1]);
           if (!el) continue;
           if (el.where === 'deck') hitDeck++;
-          tapDom(el);
+          tapDom(el, pts[i][0], pts[i][1]);      /* ★★ T157：★座標を 付けて 送る（★上の ⚠️）*/
           if (g.hands[0].length !== was.h || g.deck.length !== was.d || g.pile.length !== was.p ||
               g.over !== was.over || waitSuit !== was.wait || g.mixes !== was.mix) { moved = 1; break; }
         }
