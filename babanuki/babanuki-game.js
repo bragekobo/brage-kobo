@@ -189,6 +189,21 @@
     zoneMe.style.height = geo.handH + 'px';
     middleEl.style.top = (geo.padTop + geo.handH + C.FIT.PAD) + 'px';
     middleEl.style.height = geo.midH + 'px';
+    /* ★★ ロボットの 指を 器の 中へ 置き直す（★T145 で 見つけた 前からの 不具合）★★
+       ★ 指は 隠れて いる ときも、★前に 止まった 場所に 置きっぱなしに なります。
+       ★ ★画面を 小さく すると、★★その 座標が 器の そとに はみ出しました
+         【実測・320×568：指が 618〜643px ＝ 画面の 下 75px 分 はみ出し、
+          ★fitTest の「縦スクロール」が 120場面 ぜんぶで 立ちました】。
+       ★ body は overflow:hidden なので 遊ぶ人は 動かせませんが、★★見張りが 鳴る 形です。
+       ⚠️★ 0.6秒 にも、★指の 出かたにも、★手札の 大きさにも 1つも さわって いません
+          ―― ★動かすのは「隠れて いる ときの 置き場」だけ です。 */
+    if (fingerEl && !fingerEl.classList.contains('is-on')) {
+      fingerEl.style.transition = 'none';
+      fingerEl.style.left = Math.round(4 + geo.W / 2) + 'px';
+      fingerEl.style.top = Math.round(geo.padTop + geo.handH + C.FIT.PAD + geo.midH / 2) + 'px';
+      void fingerEl.offsetWidth;
+      fingerEl.style.transition = '';
+    }
     resultSpot();
     placeAll(true);
   }
@@ -252,6 +267,8 @@
       void cardsEl.offsetWidth;
       cardsEl.classList.remove('no-move');
     }
+    /* ★ 札が 動いた ＝ カーソルの 下の 札が 変わった かもしれない */
+    refreshEdge();
   }
   function putAt(id, where, i, n) {
     var e = cardEl[id];
@@ -319,6 +336,7 @@
   function newGame() {
     clearTimers(); dropCards();
     over = false; busy = true; held = 0; press = null; stepLog = [];
+    edgeOff();
     fingerEl.classList.remove('is-on');
     resultWrap.classList.add('hidden');
 
@@ -393,6 +411,7 @@
     if (g.over) { finish(); return; }
     if (g.turn === 1) { botTurn(); return; }
     busy = false;                 /* ★ ここで はじめて 人の 指を 受ける */
+    refreshEdge();                /* ★ 人の 番に なった ―― カーソルの 下の 札が また 光る */
   }
 
   /* ============================================================
@@ -426,6 +445,7 @@
 
   function botTurn() {
     busy = true; held = 0; press = null; paintLift();
+    refreshEdge();                      /* ★★ ロボットの 番 ―― ふちの 光りは 0個 */
     var ids = C.idsOf(g.me);
     var id = g.robot.pick(ids, rand);
     var at = C.indexOfId(g.me, id);
@@ -460,6 +480,7 @@
      ============================================================ */
   function doDraw(who, id) {
     busy = true;
+    refreshEdge();                      /* ★ 引いて いる 間は 0個 */
     var e = cardEl[id];
     var beforeBot = C.idsOf(g.bot);
     var r = C.drawOnce(g, who, id);
@@ -555,6 +576,61 @@
     }
   }
 
+  /* ============================================================
+     ★★★ ふちの 光り（T145・社長の ご指示・★パソコンだけ）★★★
+     ------------------------------------------------------------
+     ★ 社長の 言葉：「カーソルが 当たって いる トランプの ふちを 光らせて ほしい。
+       　　　　　　　 クリックする 前の 段階ね。★PC版だけでOK」
+
+     ★★ これは 追記② を 破りません（★四目並べ T131 と 同じ 線）：
+       ★「どの 札が ばばか」「引かれた 札の 行き先」 … ★★遊びの 情報 → 見せない
+       ★「いま 指して いるのは この 札だ」　　　　 … ★★操作の 返事 → 見せてよい
+       ★ ＝ ★どれを 指して いるかは、★★遊ぶ人が 自分で 決めた こと です。
+
+     ★★ 守って いる 線 4つ（★verify ⑤ が ぜんぶ 見張ります）★★
+       1. ★★光るのは 同時に **1枚だけ**（★複数は ぜったいに 出しません）
+       2. ★★**指の 端末では 0個**（★pointerType が 'mouse' の ときだけ）
+          ⚠️★ CSS の :hover では ここが 守れません ―― ★指で さわった 所に 残ります。
+       3. ★★ロボットの 番・動いて いる 間・結果の 箱が 出て いる 間は **0個**
+       4. ★★光るのは **ふち だけ**（★中身の 明るさは 1も 変わりません → CSS）
+
+     ★★ どの 札かを 決めるのは ―― ★★hitAt()。★引く ときと **まったく 同じ 関数** です。
+        → ★★「光った 札」と「はなしたら 引かれる 札」が ずれる ことが ありえません。
+        → ★★そして hitAt() は **座標しか 見ません** ―― ★札の 中身（.c）を 1度も 読みません。
+           ★ ＝ ばばだから 光る／当たりだから 光る、という ことは 起こりようが ない。
+     ============================================================ */
+  var edgeId = 0;      /* ★ いま ふちが 光って いる 札の id（0 ＝ なし）*/
+  var lastPt = null;   /* ★ さいごに カーソルが あった 所。★★座標と 端末の 種類 だけ 持ちます */
+
+  function paintEdge() {
+    for (var id in cardEl) if (cardEl.hasOwnProperty(id)) {
+      cardEl[id].classList.toggle('is-edge', (+id) === edgeId);
+    }
+  }
+  /* ★ いま 光らせて よいか（★中身は 1つも 見て いません）*/
+  function edgeAllowed() {
+    if (!lastPt || lastPt.kind !== 'mouse') return false;   /* ★★ 指の 端末では ここで 終わり */
+    if (!g || !geo || over || busy || g.turn !== 0) return false;
+    if (resultWrap && !resultWrap.classList.contains('hidden')) return false;
+    if (press !== null) return false;                       /* ★ 押して いる 間は 浮きの 番（強調は 1種類まで）*/
+    return true;
+  }
+  /* ★ 画面の 状態が 動いたら いつでも 呼べる（★手番・配りなおし・札の 移動・画面の 大きさ）*/
+  function refreshEdge() {
+    var want = 0;
+    if (edgeAllowed() && inBox(botZone(), lastPt.x, lastPt.y)) want = hitAt(lastPt.x, lastPt.y);
+    if (want !== edgeId) { edgeId = want; paintEdge(); }
+  }
+  function onHover(e) {
+    var q = localXY(e);
+    lastPt = { x: q.x, y: q.y, kind: e.pointerType || '' };
+    refreshEdge();
+  }
+  function edgeOff() {
+    lastPt = null;
+    if (edgeId) { edgeId = 0; paintEdge(); }
+  }
+
   function onDown(e) {
     if (!g || over) return;
     var q = localXY(e);
@@ -568,6 +644,7 @@
     press = e.pointerId; pressKind = e.pointerType || '';
     held = hitAt(q.x, q.y);
     paintLift();
+    refreshEdge();          /* ★ 押した ら ふちの 光りは 消える（★強調は 1種類まで）*/
     try { stageEl.setPointerCapture(e.pointerId); } catch (er) {}
     e.preventDefault();
   }
@@ -582,6 +659,7 @@
     if (press === null || e.pointerId !== press) return;
     var id = held;
     press = null; held = 0; paintLift();
+    refreshEdge();
     try { stageEl.releasePointerCapture(e.pointerId); } catch (er) {}
     if (!id || busy || over || g.turn !== 0) return;
     doDraw(0, id);
@@ -590,6 +668,7 @@
   function onCancel() {
     if (press === null) return;
     press = null; held = 0; paintLift();
+    refreshEdge();
   }
   function shake() {
     zoneMe.classList.remove('is-no');
@@ -606,6 +685,7 @@
      ============================================================ */
   function finish() {
     over = true; busy = true; held = 0; press = null; paintLift();
+    edgeOff();                          /* ★ 終わったら ふちの 光りは 消える */
     fingerEl.classList.remove('is-on');
     var win = (g.winner > 0);
     if (!win && g.me.length === 1) {
@@ -636,6 +716,14 @@
     stageEl.addEventListener('pointerup', onUp);
     stageEl.addEventListener('pointercancel', onCancel);
     stageEl.addEventListener('lostpointercapture', onCancel);
+    /* ★★ ふちの 光り（T145）★★
+       ★ onMove とは 別に 受けます ―― ★onMove は 押して いる 間しか 動かない から。
+       ★ 出て いく とき（pointerleave）と 窓から 外れた とき（blur）は 消す。 */
+    stageEl.addEventListener('pointermove', onHover);
+    stageEl.addEventListener('pointerover', onHover);
+    stageEl.addEventListener('pointerleave', edgeOff);
+    stageEl.addEventListener('pointercancel', edgeOff);
+    root.addEventListener('blur', edgeOff);
     stageEl.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     stageEl.addEventListener('dragstart', function (e) { e.preventDefault(); });
   }
@@ -691,6 +779,8 @@
       '★ロボットの 手札（枚数だけ）': g ? g.bot.length : '―',
       '★手番': g ? (g.over ? '終わり' : (g.turn ? 'ロボット' : 'あなた')) : '―',
       '★浮いている 札': held ? ('id ' + held) : 'なし',
+      '★ふちが 光って いる 札': edgeId ? ('id ' + edgeId) : 'なし',
+      '★カーソル': lastPt ? (lastPt.kind + '（' + Math.round(lastPt.x) + ',' + Math.round(lastPt.y) + '）') : 'なし',
       '★ロボットが 覚えている': g ? (g.robot.known() ? ('人の 手札の id ' + g.robot.known()) : 'なし') : '―',
       '★ばばは どちらに': g ? (C.hasJoker(g.me) ? 'あなた' : 'ロボット') : '―',
       '引いた 回数': g ? g.draws : 0,
@@ -882,7 +972,9 @@
        ②  ★★引かれた 札が まぜ直されて いない（★ならびを 前後で 並べて 見る・毎手番）
        ③  ★★ロボットの 手札を 並べ直す 行が 1本も 無い（★文字列で 走査）
        ④  ★★ロボットが 人の 手札の 中身を 見る 行が 1本も 無い（★文字列で 走査）
-       ⑤  ★★盤の 上に 光って いる ものが ゼロ（★「ここだよ」と 教えて いない）
+       ⑤  ★★光り ―― ★★T145 で 書き直しました（★詳しくは ⑤ の 所の 長い 注）
+           ★ ★遊びの 情報を 出す 光りは **0個**（★「ここだよ」と 教えて いない）
+           ★ ★ふちの 光りは「同時に 1枚・★マウスだけ・★人の 番だけ・★ふちだけ」
        ⑥  ★★ロボットの 指が 0.6秒 止まる（★本物の 時計の 表を 読む）
        ⑦  ★★最初の 画面に <select> が 1つも 無い（社長裁定 判断4）
        ⑧  ★寸法が ルルの 表どおり（97／89／48／41／37px）
@@ -939,17 +1031,120 @@
       ng.push('★ロボットの 番の 中で 人の 札の 中身に さわって いる');
     }
 
-    /* ⑤ ★★盤の 上に 光って いる ものが ゼロ ★★ */
+    /* ============================================================
+       ⑤ ★★★光り ―― ★★T145 で 中身を 書き直しました ★★★
+       ------------------------------------------------------------
+       ★★T144 まで、この ⑤ は こう でした：
+          「★光って いる もの **0個**／★札の 部品に :hover **0件**／★光りの box-shadow **0件**」
+
+       ★★T145 で 社長が こう 言われました：
+          「★カーソルが 当たって いる トランプの ふちを 光らせて ほしい。★PC版だけでOK」
+
+       ★★＝ この 見張りは、直した とたん NG を 出します。★★それが 正しい 動きでした。
+       ★★だから ―― ★★甘くせず（＝ 消さず・ゆるめず）、★★正しい 形に 書き直します。
+
+       ⚠️★ 甘くする（⑤ を 消す・条件を ゆるめる）のは かんたんです。★でも それを すると、
+          ★★「ばばの 札を 光らせる」も **同じ 穴から** 入って きます。
+          ★★＝ 見張りの 意味が 消えます。★だから 穴を 開けずに 作り直しました。
+
+       ★★見分けの 線（★四目並べ T131 で 通した もの）★★
+         | | ★見せない（＝ 遊びを 取り上げる）| ★見せてよい（＝ 操作の 返事）|
+         |---|---|---|
+         | 例 | ★どの 札が ばばか／引かれた 札の 行き先 | ★いま 指して いるのは この 札だ |
+         | 遊びに 効くか | ★この1本の **20.8ポイント そのもの** | ★**1ミリも 効かない** |
+
+       ★★新しい ⑤ は 8つ 見ます（a〜h）★★
+         a ★★遊びの 情報を 出す 光りは **0個**（★T144 の まま。★1つも ゆるめて いません）
+         b ★★ふちの 光りは 同時に **1枚まで**（★2枚 光ったら NG）
+         c ★★カーソルが どこにも 無い ときは **0個**
+         d ★★**指・ペンの 端末では 0個**（★本物の onHover に その 場面を 通して 測る）
+         e ★★ロボットの 番・動いて いる 間・結果の 箱・終わった あと は **0個**
+         f ★★光るのは **ふち だけ** ―― ★中身の 見え方が 光る 前と 後で **1も 変わらない**（実測）
+         g ★★どの 札を 光らせるかを 決める 行が、★札の **中身を 1度も 読んで いない**（1行ずつ 走査）
+         h ★★強調は 1種類まで（§5.5）―― ★浮き・ロボットの 指・ふちの 光りが **同時に 出ない**
+       ============================================================ */
+
+    /* ⑤-a ★★遊びの 情報を 出す 光りは 0個（★ここは 1つも ゆるめて いません）★★
+       ★ .is-edge は ここに 入れません ―― ★あれは 遊びの 情報では なく 操作の 返事 だから。
+       ★ かわりに、★★b〜h で もっと きつく 見張ります。 */
+    var css = cssRulesText();
     var lit = document.querySelectorAll('.is-win,.is-hint,.is-glow,.is-here,.is-mark');
     if (lit.length) ng.push('★光って いる ものが ' + lit.length + '個 ある');
-    var css = cssRulesText();
+
+    /* ★★★ 上の 1行は「いま この 瞬間」しか 見て いません ★★★
+       ⚠️★ T145 で わざと 壊して 気づきました【→ §6-4】：
+          ★★「ばばを 引いた ときだけ .is-glow を 付ける」を 入れたら、★★NG 0 で 通りました。
+          ★ 理由：★verify を 走らせた その 瞬間、まだ 誰も ばばを 引いて いなかった から。
+          ★★＝ T144 §7-4 と まったく 同じ わな（★「無い こと」を 数えるだけの 見張り）。
+       ★ → ★★だから「付ける 行が 1つでも 書いて あるか」を、★1行ずつ 走査します。
+            ★★これなら、★どんな 場面で しか 出ない 光でも 見つかります。 */
+    var litSrc = String(doDraw) + '\n' + String(botTurn) + '\n' + String(step) + '\n' +
+                 String(finish) + '\n' + String(newGame) + '\n' + String(placeAll) + '\n' +
+                 String(putAt) + '\n' + String(makeCard) + '\n' + String(faceUp) + '\n' +
+                 String(paintLift) + '\n' + String(paintEdge) + '\n' + String(refreshEdge) + '\n' +
+                 String(onDown) + '\n' + String(onMove) + '\n' + String(onUp) + '\n' +
+                 String(onHover) + '\n' + String(layout) + '\n' + String(fingerTo);
+    var litAdd = litSrc.match(/is-win|is-hint|is-glow|is-here|is-mark/g);
+    if (litAdd) ng.push('★★遊びの 情報を 出す 光りを 付ける 行が ある：' + litAdd.join('・'));
+    /* ★ CSS 側にも 決まりを 置いて いないか（★あちらから 光らせる 手も あります）*/
+    var litCss = css.match(/\.is-(win|hint|glow|here|mark)\b/g);
+    if (litCss) ng.push('★★遊びの 情報を 出す 光りの 決まりが CSS に ある：' + litCss.join('・'));
+
+    /* ★★:hover / :active は これからも 0件 ★★
+       ⚠️★ ここを ゆるめる のが、★T145 で いちばん やりたく なった 手 でした。
+          ★ でも :hover は ★★指の 端末でも 鳴ります（さわった 所に 残る「こびりつき hover」）。
+          ★ 社長は「★PC版だけでOK」と 言われました → ★★:hover では 守れません。
+          ★ だから JS で pointerType==='mouse' を 見ます。★この 行は そのまま 残します。 */
     var bad5 = css.match(/\.(card|zone|cards|finger)[^{,]*:(hover|active)/g);
     if (bad5) ng.push('★札の 部品に 指を 置くと 変わる 決まりが ある：' + bad5.join('・'));
-    /* ★ 光の 元に なる 決まりが 札に 付いて いないか */
-    if (/\.card[^{]*\{[^}]*(box-shadow:[^;}]*(rgba?\([^)]*\)\s+0\s+0|0 0 \d))/.test(css)) {
-      ng.push('★札に 光り（box-shadow の ぼかし）が 付いて いる');
-    }
-    /* ★ 浮く 札は 同時に 1つまで・★ロボットの 番には 0個 */
+
+    /* ★★光りの box-shadow を 書いて よいのは ―― ★★.card.is-edge の 1つ だけ ★★
+       ★ T144 は「札に ぼかしの 影が あったら NG」でした。★いまは 1つ だけ ゆるします。
+       ★ ★ゆるす 先を **名指し** して いるので、★ほかの 所に 光を 足したら 鳴ります。 */
+    var glowSel = [];
+    cssRuleList().forEach(function (r) {
+      if (!/box-shadow:/.test(r.text)) return;
+      if (!/\.card/.test(r.sel)) return;
+      /* ★ ぼかし（3つめの 値）か 広がり（4つめ）が ある ＝ 光り */
+      var m = r.text.match(/box-shadow:([^;}]*)/);
+      if (!m) return;
+      var soft = /\d+px\s+\d+px\s+[1-9]/.test(m[1]) || /0px\s+0px\s+0px\s+[1-9]/.test(m[1]) || /0 0 0 [1-9]/.test(m[1]);
+      if (!soft) return;
+      if (r.sel.indexOf('.is-edge') >= 0) return;      /* ★ ここ だけ ゆるす */
+      glowSel.push(r.sel);
+    });
+    if (glowSel.length) ng.push('★★ふちの 光り いがいの 所に 光りが ある：' + glowSel.join('・'));
+    /* ★ 逆の 見張り ―― ★ふちの 光りが **そもそも 書かれて いない** ときも 鳴らす
+       （★T144 §7-4 の 教訓：★見張りが「無い こと」だけ 見て いると、機能ごと 消えても 通る）*/
+    /* ⚠️★ はじめ この 行は /\.card\.is-edge/ でした。★★それだと `.card.is-edgeXX` にも
+          当たって しまい、★★決まりを 名前ごと 消しても 鳴りませんでした
+          【T145・わざと 壊して 見つけた 私の 失敗・→ §6-3】。★うしろを 見るように 直しました。 */
+    if (!/\.card\.is-edge(?![\w-])/.test(css)) ng.push('★★ふちの 光りの 決まりが CSS に 1行も 無い');
+    if (css.indexOf('--edge:') < 0) ng.push('★ふちの 光りの 色（--edge）が 決まって いない');
+
+    /* ⑤-b〜h ★★本物の onHover / refreshEdge / hitAt を 通して 測る ★★ */
+    var eg = edgeProbe();
+    if (eg.many > 1) ng.push('★★ふちが 同時に ' + eg.many + '枚 光った（★1枚まで）');
+    if (!eg.on) ng.push('★★マウスを 乗せても 1枚も 光らなかった（★試し方が おかしい／★機能が 死んで いる）');
+    if (eg.off) ng.push('★マウスを 乗せたのに 光らなかった 札が ' + eg.off + '枚 ある');
+    if (eg.wrong) ng.push('★★光った 札と、はなしたら 引かれる 札が ちがう（' + eg.wrong + '枚）');
+    if (eg.idle) ng.push('★カーソルが どこにも 無いのに ' + eg.idle + '枚 光って いる');
+    if (eg.outside) ng.push('★ロボットの 手札の 外に カーソルが あるのに ' + eg.outside + '枚 光って いる');
+    if (eg.touch) ng.push('★★指・ペンの 端末で ' + eg.touch + '枚 光った（★0枚 で なければ なりません）');
+    if (eg.myHand) ng.push('★★自分の 手札が ' + eg.myHand + '枚 光った（★引く 所では ありません）');
+    if (eg.botTurn) ng.push('★★ロボットの 番なのに ふちが ' + eg.botTurn + '枚 光った');
+    if (eg.busyOn) ng.push('★★動いて いる 途中なのに ふちが ' + eg.busyOn + '枚 光った');
+    if (eg.resultOn) ng.push('★★結果の 箱が 出て いるのに ふちが ' + eg.resultOn + '枚 光った');
+    if (eg.overOn) ng.push('★★試合が 終わったのに ふちが ' + eg.overOn + '枚 光った');
+    if (eg.withLift) ng.push('★★浮いた 札と ふちの 光りが 同時に 出た（設計図 §5.5：強調は 1種類まで）');
+    if (eg.withFinger) ng.push('★★ロボットの 指と ふちの 光りが 同時に 出た（§5.5：強調は 1種類まで）');
+    if (eg.inside) ng.push('★★★ふち だけの はずが 中身まで 変わった：' + eg.inside);
+    if (eg.dark) ng.push('★★ふちの 光りが そもそも 出て いない（★影が 光る 前と 同じ）');
+    if (eg.inset) ng.push('★★ふちの 光りが 内向き（inset）に なって いる ―― ★中身に かぶります');
+    if (eg.grew) ng.push('★ふちが 光ると 札の 大きさ／場所が 変わる（' + eg.grew + '）');
+    if (eg.peek) ng.push('★★どの 札を 光らせるかを 決める 所が 札の 中身を 見て いる：' + eg.peek);
+
+    /* ★ 浮く 札は 同時に 1つまで・★ロボットの 番には 0個（★T144 から そのまま）*/
     var stateOK = liftProbe();
     if (stateOK.many) ng.push('★浮いた 札が 同時に ' + stateOK.many + '個 出た');
     if (stateOK.botTurn) ng.push('★★ロボットの 番なのに 札が 浮いた（' + stateOK.botTurn + '回）');
@@ -957,8 +1152,9 @@
     /* ★ ロボットの 番の あいだ、手札を 効かなく して いるか（★おしを ためない・T62 §2-A）*/
     if (String(botTurn).indexOf('busy = true') < 0) ng.push('★ロボットの 番に 手札を 止めて いない');
     if (String(onDown).indexOf('busy') < 0) ng.push('★動いて いる 途中でも 指を 受けて いる');
-    note['⑤ 光り'] = '光って いる もの ' + lit.length + '個／浮く 札 同時に ' + (stateOK.many || 1) +
-                     'つまで／ロボットの 番に 浮いた ' + stateOK.botTurn + '回';
+    note['⑤ 光り'] = '★遊びの 情報の 光り ' + lit.length + '個／★ふちの 光り マウス ' + eg.on + '枚 中 同時に ' +
+                     (eg.many || 0) + '枚まで・指の 端末 ' + eg.touch + '枚・ロボットの 番 ' + eg.botTurn +
+                     '枚・中身の 変化 ' + (eg.inside ? eg.inside : 'なし') + '／浮く 札 同時に ' + (stateOK.many || 1) + 'つまで';
 
     /* ⑥ ★★ロボットの 指が 0.6秒 止まる ★★ */
     var plan = botPlan();
@@ -1069,6 +1265,22 @@
     return out;
   }
 
+  /* ★ CSS を「選択子 ＋ 中身」の 組で 返す（★T145：光りを **名指しで** ゆるす ため）*/
+  function cssRuleList() {
+    var out = [];
+    function walk(rs) {
+      for (var j = 0; j < rs.length; j++) {
+        var r = rs[j];
+        if (r.cssRules) { walk(r.cssRules); continue; }
+        if (r.selectorText) out.push({ sel: r.selectorText, text: r.cssText });
+      }
+    }
+    for (var i = 0; i < document.styleSheets.length; i++) {
+      try { walk(document.styleSheets[i].cssRules); } catch (e) {}
+    }
+    return out;
+  }
+
   function cssRulesText() {
     var s = '';
     for (var i = 0; i < document.styleSheets.length; i++) {
@@ -1112,6 +1324,160 @@
     return { bad: bad, grew: grew, notEnd: notEnd };
   }
 
+  /* ============================================================
+     ★★★ ふちの 光りの 見張り（T145）★★★
+     ------------------------------------------------------------
+     ★★ 大事：★★本物の onHover / refreshEdge / hitAt を そのまま 通します。
+        ★ 数字を 書き写しません。★中の 作りを 変えたら、ここが 必ず 鳴ります。
+     ★★ 測り終わったら、状態を 1つ 残らず 元に 戻します
+        （★T144 §7-5 の 失敗 ―― ★見張りが 自分で 場面を こわして 誤って 鳴った）。
+     ============================================================ */
+  function edgeProbe() {
+    var out = { many: 0, on: 0, off: 0, wrong: 0, idle: 0, outside: 0, touch: 0, myHand: 0,
+                botTurn: 0, busyOn: 0, resultOn: 0, overOn: 0, withLift: 0, withFinger: 0,
+                inside: '', inset: 0, dark: 0, grew: '', peek: '' };
+    if (!g || !cardsEl || !geo || !g.bot.length) return out;
+
+    /* ★ g … ★どの 札を 光らせるかを 決める 所が、★札の 中身を 1度も 読んで いないか（1行ずつ）*/
+    var src = String(onHover) + '\n' + String(refreshEdge) + '\n' + String(edgeAllowed) + '\n' +
+              String(paintEdge) + '\n' + String(edgeOff) + '\n' + String(hitAt) + '\n' +
+              String(botZone) + '\n' + String(localXY) + '\n' + String(inBox);
+    var peek = src.match(/\.c\b|JOKER|rankOf|suitOf|nameOf|cardName|hasJoker|known|\.face|isJoker/g);
+    if (peek) out.peek = peek.join('・');
+
+    var keepHeld = held, keepBusy = busy, keepTurn = g.turn, keepPress = press, keepOver = over;
+    var keepEdge = edgeId, keepPt = lastPt;
+    var keepFinger = fingerEl.classList.contains('is-on');
+    var keepHidden = resultWrap.classList.contains('hidden');
+
+    function nLit() { return document.querySelectorAll('.card.is-edge').length; }
+    function hoverCard(where, i, kind) {
+      var r = stageEl.getBoundingClientRect();
+      var n = (where === 'bot') ? g.bot.length : g.me.length;
+      var sp = spotOf(where, i, n);
+      onHover({ pointerType: kind, clientX: r.left + sp.x + geo.cw / 2, clientY: r.top + sp.y + geo.ch / 2 });
+    }
+    /* ★ 中身の 見え方（★光る 前 と 後で くらべる）*/
+    function skinOf(el) {
+      var inn = el.querySelector('.card-in'), im = el.querySelector('img.back');
+      var a = getComputedStyle(inn), b = getComputedStyle(im), r = im.getBoundingClientRect();
+      return {
+        inn: [a.filter, a.opacity, a.backgroundColor, a.backgroundImage, a.borderTopWidth,
+              a.borderTopColor, a.transform, a.mixBlendMode, a.borderTopLeftRadius].join('|'),
+        img: [b.filter, b.opacity, b.backgroundColor, b.mixBlendMode, b.objectFit,
+              Math.round(r.width * 100), Math.round(r.height * 100)].join('|'),
+        shadow: a.boxShadow,
+        box: (function () { var q = el.getBoundingClientRect();
+          return [Math.round(q.left * 100), Math.round(q.top * 100),
+                  Math.round(q.width * 100), Math.round(q.height * 100)].join(','); })()
+      };
+    }
+
+    still(function () {
+      fingerEl.classList.remove('is-on');
+      resultWrap.classList.add('hidden');
+      over = false; busy = false; g.turn = 0; press = null; held = 0; paintLift();
+
+      /* ── c … カーソルが どこにも 無い ときは 0個 ───────────── */
+      edgeOff();
+      out.idle = nLit();
+
+      /* ── f … 中身が 変わって いないか（★光る 前を 先に 写しとる）───── */
+      var el0 = cardEl[g.bot[0].id];
+      var before = el0 ? skinOf(el0) : null;
+
+      /* ── b・光った 札が 引かれる 札と 同じか（マウス）───────── */
+      for (var i = 0; i < g.bot.length; i++) {
+        hoverCard('bot', i, 'mouse');
+        var n = nLit();
+        if (n > out.many) out.many = n;
+        if (n === 1) {
+          out.on++;
+          /* ★★ 光った 札 ＝ hitAt が 返す 札 ＝ はなしたら 引かれる 札 */
+          if (g.bot[i].id !== edgeId) out.wrong++;
+          if (!cardEl[edgeId] || !cardEl[edgeId].classList.contains('is-edge')) out.wrong++;
+        } else if (n === 0) out.off++;
+      }
+
+      /* ── f … 光って いる 今 と、光る 前 を くらべる ────────── */
+      if (before && el0) {
+        hoverCard('bot', 0, 'mouse');
+        if (el0.classList.contains('is-edge')) {
+          var after = skinOf(el0);
+          if (after.inn !== before.inn) out.inside = '札の 中（' + before.inn + ' → ' + after.inn + '）';
+          else if (after.img !== before.img) out.inside = '絵（' + before.img + ' → ' + after.img + '）';
+          if (after.box !== before.box) out.grew = before.box + ' → ' + after.box;
+          if (/inset/.test(after.shadow)) out.inset = 1;
+          /* ★★ 逆の 見張り ―― ★光りが **そもそも 出て いない** ときも 鳴らす
+             （★T144 §7-4 と 同じ わな：★「無い こと」だけ 見て いると、機能ごと 消えても 通る）
+             ⚠️★ はじめ ここは out.inside に まぜて いました。★「中身が 変わった」という
+                まちがった 名前で 鳴って いたので、★別の 名前に 分けました【T145・→ §6-3】。 */
+          if (after.shadow === before.shadow) out.dark = 1;
+        }
+      }
+
+      /* ── ロボットの 手札の 外（★まん中の ハッピーの 所）── */
+      edgeOff();
+      (function () {
+        var r = stageEl.getBoundingClientRect();
+        var y = geo.padTop + geo.handH + C.FIT.PAD + geo.midH / 2;
+        onHover({ pointerType: 'mouse', clientX: r.left + geo.W / 2, clientY: r.top + y });
+        out.outside = nLit();
+      })();
+
+      /* ── 自分の 手札の 上（★引く 所では ありません）── */
+      edgeOff();
+      if (g.me.length) { hoverCard('me', 0, 'mouse'); out.myHand = nLit(); }
+
+      /* ── d … ★★指・ペンの 端末では 0個 ★★ ─────────────── */
+      var KINDS = ['touch', 'pen', ''];
+      for (var k = 0; k < KINDS.length; k++) {
+        edgeOff();
+        for (var j = 0; j < g.bot.length; j++) { hoverCard('bot', j, KINDS[k]); out.touch += nLit(); }
+      }
+
+      /* ── h … 浮きと 同時に 出ない（★押した 瞬間）───────────── */
+      edgeOff();
+      hoverCard('bot', 0, 'mouse');
+      (function () {
+        var r = stageEl.getBoundingClientRect();
+        var sp = spotOf('bot', 0, g.bot.length);
+        onDown({ pointerId: 992, pointerType: 'mouse', clientX: r.left + sp.x + geo.cw / 2,
+                 clientY: r.top + sp.y + geo.ch / 2, preventDefault: function () {} });
+        if (document.querySelectorAll('.card.is-lift').length && nLit()) out.withLift++;
+        press = null; held = 0; paintLift();
+      })();
+
+      /* ── e … ロボットの 番／動いて いる 間／結果の 箱／終わった あと ── */
+      edgeOff(); busy = false; g.turn = 1;
+      fingerEl.classList.add('is-on');
+      for (var a = 0; a < g.bot.length; a++) { hoverCard('bot', a, 'mouse'); out.botTurn += nLit(); }
+      if (out.botTurn) out.withFinger++;              /* ★ 指が 出て いる 間に 光った */
+      fingerEl.classList.remove('is-on');
+
+      edgeOff(); g.turn = 0; busy = true;
+      for (var b = 0; b < g.bot.length; b++) { hoverCard('bot', b, 'mouse'); out.busyOn += nLit(); }
+
+      edgeOff(); busy = false;
+      resultWrap.classList.remove('hidden');
+      for (var c = 0; c < g.bot.length; c++) { hoverCard('bot', c, 'mouse'); out.resultOn += nLit(); }
+      resultWrap.classList.add('hidden');
+
+      edgeOff(); over = true;
+      for (var d = 0; d < g.bot.length; d++) { hoverCard('bot', d, 'mouse'); out.overOn += nLit(); }
+
+      edgeOff();
+    });
+
+    /* ★ ぜんぶ 元に 戻す（★T144 §7-5 の 失敗を くり返さない）*/
+    held = keepHeld; busy = keepBusy; g.turn = keepTurn; press = keepPress; over = keepOver;
+    lastPt = keepPt; edgeId = keepEdge;
+    if (keepFinger) fingerEl.classList.add('is-on');
+    if (!keepHidden) resultWrap.classList.remove('hidden');
+    paintLift(); paintEdge();
+    return out;
+  }
+
   /* ★ 浮く 札・指の 決まりを たしかめる（★本物の onDown / paintLift を 通す）*/
   function liftProbe() {
     var out = { many: 0, botTurn: 0, both: 0 };
@@ -1148,7 +1514,7 @@
     });
     held = keepHeld; busy = keepBusy; g.turn = keepTurn; press = keepPress; over = keepOver;
     if (keepFinger) fingerEl.classList.add('is-on');
-    paintLift();
+    paintLift(); refreshEdge();
     return out;
   }
 
@@ -1214,6 +1580,8 @@
     verify: verify,
     fitTest: fitTest,
     fingerTest: fingerTest,
+    /* ★ ふちの 光り（T145）だけを 単体で 測る */
+    edgeTest: function () { var o = edgeProbe(); console.log('[ババ抜き] edgeTest', o); return o; },
     screen: screenInfo,
     words: wordCount,
     geo: function () { return geo; },
