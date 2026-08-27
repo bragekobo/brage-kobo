@@ -1403,6 +1403,145 @@
   }
 
   /* ============================================================
+     ★★★ ⑯ 押して・すべらせて・はなす ―― T157 で 足した 見張り ★★★
+     ------------------------------------------------------------
+     ⚠️★★ ⑭ は「★押して 動くか」までしか 見て いませんでした。
+        ★ ★★**押した 所と はなした 所が ちがう とき**を、★1度も 通して いません。
+        ★ ★そこに 🟡 が 隠れて いました（T155 §7・T157）：
+          ★★ 指の ポインタは 押した ものに くっつく ので、★e.target は いつまでも「押した 札」。
+          ★★ ＝ ★となりへ すべらせて はなしても、★★**押した 方の 札が 出て しまう。**
+     ★ ★★ここでは ―― ★**その くっつきを、そのまま 作って 通します**：
+       ```
+       ★ ①A（出せる 札）に pointerdown を 送る … ★座標は A の まん中
+       ★ ②★★A に pointerup を 送る … ★★★座標だけ B（となりの 札）の まん中
+            ★★ ＝ ★これが 指の くっつき そのもの（implicit pointer capture）
+       ★ ③手札が 減って いたら ―― ★★鳴らす
+       ```
+     ★ ★くらべを 2つ 置きます（★片方だけ だと「いつも 動かない」でも 通って しまう）：
+       ★ ★**まっすぐ**（A に down → A に up・座標も A）… ★★減らなければ 鳴らす（＝ 測り方が おかしい）
+       ★ ★**マウス**  （A に down → B に up・座標も B）… ★減ったら 鳴らす
+     ★ ★もう 1つの 目：★onUp の 中に `hitAt(` が 無い／`e.target` が ある なら 鳴らす（★③④と 同じ 作法）
+     ★ ★状態は 1つ 残らず 元に もどします（★52枚 きっちり 保った まま）。
+     ============================================================ */
+  /* ★ 「人の 番・出せる 札が 1枚 ある・手札が 2枚 以上」の 場面を、★いまの 52枚を 動かして 作る */
+  function makeCanPlay() {
+    var pool = g.deck.concat(g.pile).concat(g.hands[0]), i;
+    g.deck = []; g.pile = []; g.hands[0] = [];
+    var topAt = -1;
+    for (i = 0; i < pool.length; i++) {
+      if (g.rules.eight && C.rankOf(pool[i].c) === C.R_EIGHT) continue;
+      topAt = i; break;
+    }
+    if (topAt < 0) return false;
+    var top = pool.splice(topAt, 1)[0];
+    var ts = C.suitOf(top.c), tr = C.rankOf(top.c);
+    /* ★ ①出せる 札を 1枚（★同じ マーク・★8では ない ＝ マーク板を 出さない）*/
+    var okAt = -1;
+    for (i = 0; i < pool.length; i++) {
+      var c0 = pool[i].c;
+      if (C.suitOf(c0) === ts && !(g.rules.eight && C.rankOf(c0) === C.R_EIGHT)) { okAt = i; break; }
+    }
+    if (okAt < 0) return false;
+    g.hands[0].push(pool.splice(okAt, 1)[0]);
+    /* ★ ②出せない 札を 3枚（★となりに 置く 相手）*/
+    var rest = [];
+    for (i = 0; i < pool.length; i++) {
+      var c1 = pool[i].c;
+      var no = (C.suitOf(c1) !== ts && C.rankOf(c1) !== tr &&
+                !(g.rules.eight && C.rankOf(c1) === C.R_EIGHT));
+      if (no && g.hands[0].length < 4) g.hands[0].push(pool[i]); else rest.push(pool[i]);
+    }
+    if (g.hands[0].length < 2) return false;
+    g.deck = rest.splice(0, 5);
+    g.pile = rest.splice(0, 3).concat([top]);
+    for (i = 0; i < rest.length; i++) g.hands[g.nP - 1].push(rest[i]);   /* ★ 52枚 きっちり */
+    g.suit = ts; g.rank = tr;
+    g.cur = 0; g.pending = 0; g.over = false; g.winner = -1; g.byShort = false; g.stuck = false;
+    return C.canPlay(g, 0);
+  }
+  /* ★ A に down → （x,y）で up を 送る。★upEl を 変えると「くっつき」の 有り／無しを 作り分けられる */
+  function pressRelease(downEl, upEl, x, y) {
+    function mk(type, px, py) {
+      var o = { bubbles: true, cancelable: true, clientX: px, clientY: py,
+                pointerId: 1, isPrimary: true, pointerType: 'touch' };
+      try { return new PointerEvent(type, o); }
+      catch (e) {
+        var ev = document.createEvent('Event'); ev.initEvent(type, true, true);
+        ev.clientX = px; ev.clientY = py; ev.pointerType = 'touch'; return ev;
+      }
+    }
+    var r = downEl.getBoundingClientRect();
+    downEl.dispatchEvent(mk('pointerdown', r.left + r.width / 2, r.top + r.height / 2));
+    upEl.dispatchEvent(mk('pointerup', x, y));
+  }
+  function slideProbe() {
+    var out = { ok: 0, straight: '―', stuck: '―', mouse: '―', why: [] };
+    if (!g || !cardsEl || !geo || !built) { out.why.push('★場面を 作れない（★立ち上がって いない）'); return out; }
+    var snap = snapG();
+    var kBusy = busy, kOver = over, kTake = takeLeft, kWait = waitSuit, kMix = g.mixes;
+    var kResult = resultWrap.classList.contains('hidden');
+    var tMark = timers.length;
+
+    function scene() {
+      restoreG(snap);
+      busy = false; over = false; takeLeft = 0; waitSuit = -1;
+      resultWrap.classList.add('hidden');
+      if (!makeCanPlay()) return null;
+      rebuild(); placeAll(true); refreshDim();
+      var A = cardEl[g.hands[0][0].id];
+      if (!A) return null;
+      /* ★ B ＝ ★「その まん中を さすと **A では ない 札**が 返る」札。
+         ★★ 重なりで B の まん中が A に なる ことが ある ので、★本当に 引いて 確かめます。 */
+      for (var i = 1; i < g.hands[0].length; i++) {
+        var e2 = cardEl[g.hands[0][i].id];
+        if (!e2) continue;
+        var r2 = e2.getBoundingClientRect();
+        var bx = r2.left + r2.width / 2, by = r2.top + r2.height / 2;
+        var got = hitAt(bx, by);
+        if (got && got !== A && got.slotId !== A.slotId) return { A: A, x: bx, y: by, n: g.hands[0].length };
+      }
+      return null;
+    }
+
+    still(function () {
+      /* ★ (a) まっすぐ 押して はなす ―― ★★これが 通らなければ 測り方が おかしい */
+      var s = scene();
+      if (!s) { out.why.push('★★試し方が おかしい：★「出せる 札 ＋ となりの 札」の 場面を 作れなかった'); return; }
+      var rA = s.A.getBoundingClientRect();
+      pressRelease(s.A, s.A, rA.left + rA.width / 2, rA.top + rA.height / 2);
+      out.straight = (g.hands[0].length < s.n) ? '○ 出た' : '★✕ 出ない';
+      if (g.hands[0].length >= s.n) out.why.push('★★試し方が おかしい：★まっすぐ 押しても 札が 出ない');
+
+      /* ★ (b) ★★指の くっつき ―― ★A に down、★★A に up（座標だけ B）*/
+      s = scene();
+      if (!s) { out.why.push('★★試し方が おかしい：★2回目の 場面を 作れなかった'); return; }
+      pressRelease(s.A, s.A, s.x, s.y);
+      var slid = (g.hands[0].length < s.n);
+      out.stuck = slid ? '★★✕ 出て しまう' : '○ 出ない';
+      if (slid) out.why.push('★★★指で となりへ すべらせて はなしたのに、★押した 方の 札が 出た');
+
+      /* ★ (c) くらべ：マウス ―― ★A に down、★B に up（座標も B）*/
+      s = scene();
+      if (!s) { out.why.push('★★試し方が おかしい：★3回目の 場面を 作れなかった'); return; }
+      var upEl = hitAt(s.x, s.y) || s.A;
+      pressRelease(s.A, upEl, s.x, s.y);
+      var m = (g.hands[0].length < s.n);
+      out.mouse = m ? '★✕ 出て しまう' : '○ 出ない';
+      if (m) out.why.push('★★マウスで すべらせても 押した 方の 札が 出た');
+      out.ok = 1;
+    });
+
+    /* ★ 片づけ ―― ★この 見張りが 作った 待ち時間だけ 消して、★元の 試合に もどします */
+    for (var t = timers.length - 1; t >= tMark; t--) { clearTimeout(timers[t]); timers.splice(t, 1); }
+    restoreG(snap);
+    g.mixes = kMix;
+    busy = kBusy; over = kOver; takeLeft = kTake; waitSuit = kWait;
+    if (kResult) resultWrap.classList.add('hidden'); else resultWrap.classList.remove('hidden');
+    rebuild(); placeAll(true); refreshDim();
+    return out;
+  }
+
+  /* ============================================================
      ★★★ verify ―― この 1本ならではの 見張り ★★★
      ------------------------------------------------------------
        ①  ルールの 通り（反則0・詰まり0・★★終わらない 0件・札が 52枚 きっちり）
@@ -1420,6 +1559,7 @@
        ⑬  ★手札の 枠が 7枚ぶん ある・28枚でも 器から 出ない
        ⑭  ★★★人が さわれるか（T155）―― ★★「押す ものが 1つも ない」画面が 作れないか
        ⑮  ★★★マーク板を 出した ままの 画面（T155）―― ★4つの ボタンが 画面の 中に あるか
+       ⑯  ★★★押して・すべらせて・はなす（T157）―― ★★指の くっつきを 本物の 道で 通す
      ============================================================ */
   function verify(n) {
     n = n || 3000;
@@ -1688,6 +1828,22 @@
     note['⑮ ★マーク板を 出した まま'] = '板 ' + pf.top + '〜' + pf.bottom + 'px（画面の たて ' + pf.VH +
                                         'px）／置き直した ' + (pf.relaid ? '○' : '★✕') +
                                         '／画面外の ボタン ' + pf.btnOff + '個・押す ところ ' + pf.off + '件';
+
+    /* ============================================================
+       ⑯ ★★★押して・すべらせて・はなす（T157・🟡 の 見張り）★★★
+       ★ ★ここも 数えるのでは なく ―― ★★**指の くっつきを そのまま 作って 通します。**
+       ============================================================ */
+    var sp = slideProbe();
+    for (var i16 = 0; i16 < sp.why.length; i16++) ng.push(sp.why[i16]);
+    /* ★ 2つ目の 目 ―― ★onUp が「はなした 点」で 引き直して いるか（★行を 走査）*/
+    if (String(onUp).indexOf('hitAt(') < 0) {
+      ng.push('★★★onUp が はなした 点で 札を 引き直して いない（★hitAt が ない）');
+    }
+    if (/var\s+t\s*=\s*e\.target/.test(String(onUp))) {
+      ng.push('★★★onUp が e.target を 見て いる（★指では 押した 札の まま に なります）');
+    }
+    note['⑯ ★すべらせて はなす'] = 'まっすぐ ' + sp.straight + '／★指で すべらせる ' + sp.stuck +
+                                    '／マウスで すべらせる ' + sp.mouse;
 
     var out = {
       '★NG': ng.length, '中身': ng.length ? ng : 'ぜんぶ OK ✅',
