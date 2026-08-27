@@ -1,0 +1,367 @@
+/* ============================================================
+   ババ抜き ― 見た目（T144・コーダ）
+   ------------------------------------------------------------
+   ・色・かたち・丸ゴシックは 既存15本と そろえてある（設計図 §9.5）。
+   ・★札は 社長の 支給画像（設計図 §9・厳守）。★CSSでも 絵文字でも 自作しません。
+     ★★この 1本は **裏面が 主役**です（ロボットの 手札は ぜんぶ 裏向き・ルル §4-2）。
+
+   ★★ 画面の 強調は ゼロ です（ルル §7-6）★★
+     ------------------------------------------------------------
+     ・★置ける所の 光り … ありません（★どの 札も 引ける ＝ 光らせる 対象が ない）
+     ・★ばばの 合図　　 … ★★ぜったいに 作りません（追記②違反・ルル §2-3）
+     ・★「ここに 入ったよ」の 光り … ★★作りません
+        ★★ここが この 1本で いちばん 間ちがえやすい 所です ――
+        ★ ルルの 判断2は「★**見ていれば 追える**」であって「★教える」では ありません。
+        ★ 追える ように するのは **光り** では なく **動き** です：
+          ★ 札は 位置を CSS の うつり変わり（transition）で 動く ので、
+            ★★組が 消えて つめる ときも「どの 札が どこへ 動いたか」が 目で 追えます。
+          ★ ロボットの 手札に 入る 札は、★いつも **右はし**へ 飛びます。
+        ★ ＝ 光は 1つも 足して いません。
+     ・★浮く 札（指を 置いた 札）… ★これは 光では なく **操作の 返事**（しるし）。
+        ★ 指の 座標だけから 出る ―― ★手札の 中身を 1つも 数えません。
+     ・★ロボットの 指（○）… ★これも しるし。★★引く 札の 上で 0.6秒 止まる だけ。
+        ★ 自分の 手札は 元から 表向き ＝ ★情報は 1ミリも 増えていません（ルル §2-4）。
+     → ★だから 札の 部品に :hover も :active も 1行も 書いて いません。
+     ★ もう1つの しるしは「負けた ときの ばば 1枚」。★それは 試合が **終わってから** 出ます。
+
+   ★★ 寸法の 決めごと ★★
+     ・札の px は CSS では 決めません。
+       babanuki-core.js の pickLayout() が 器の 実寸から 計算して
+       --cw / --ch / --gap / --handh / --happy に 入れます。
+     ・★CSS が 決めるのは「器の かたち」だけ。
+       ⚠️ 下の 余白（app-shell・stage）を 動かすと、
+          ルルの 寸法表（97/89/48/41/37px）が まるごと ずれます。
+          ★320px で 器の はばが **306px** に なる ように 作って あります
+          （320 − 左右6 ＝ 314、stage の 左右4 ＝ 306）。
+
+   ・1512×945・1000×900・375px・320px・横向き の どれでも スクロールを 出さない。
+   ・仕上げは 🎨アトが やります。部品ごとに 見出しを 入れてあります。
+   ============================================================ */
+
+:root {
+  --ink:#463c52;
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+  --white:     #ffffff;
+  --cream:     #fff9ea;
+  --gold:      #F1A426;
+  --gold-soft: #FFE690;
+
+  /* ★ 手札の 台（★札が 白っぽいので、下に うすい 色を 敷いて 形を 立たせる）*/
+  --felt:      #CFEDE4;
+  --felt-in:   #E7F6F1;
+  --felt-line: #A9DACB;
+
+  /* ★ ロボットの 指（○の しるし）。★光では なく 線（ルル §2-4）*/
+  --finger:     #5B4A7A;
+  --finger-in:  rgba(255,255,255,.72);
+
+  --font-main:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","M PLUS Rounded 1c","Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;
+
+  /* ★ 大きさは game.js（＝ core の pickLayout）が 入れる。CSS からは 決めない。 */
+  --cw:    41px;   /* 札の はば */
+  --ch:    62px;   /* 札の たけ（★419:635 を 守る）*/
+  --gap:    3px;   /* 札と 札の 間 */
+  --handh:127px;   /* 手札 1つ分の たけ */
+  --happy: 68px;   /* ハッピーの たけ */
+  --handw:305px;   /* 手札 1つ分の はば */
+  --lift:  10px;   /* 指を 置いた 札が 浮く 高さ */
+  --result-max:100px;
+}
+
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  margin:0; min-width:320px; color:var(--ink); font-family:var(--font-main);
+  background:linear-gradient(180deg,#bcebf0 0 190px,#fff7e8 190px);
+  overflow:hidden;                     /* ★ スクロールは ぜったいに 出さない */
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+  -webkit-touch-callout:none;
+}
+button { font-family:inherit; cursor:pointer; }
+.hidden { display:none !important; }
+.sprite-defs { position:absolute; width:0; height:0; overflow:hidden; }
+
+/* ★ たて 1画面ぴったりに 積む。手札の 帯だけが のびちぢみ する。
+   ⚠️ padding を 動かすと ルルの 寸法表が ずれる（→ 器の はば 306／355px）。 */
+.app-shell {
+  height:100vh; height:100svh;
+  max-width:1500px; margin:0 auto; padding:6px 6px;
+  display:flex; flex-direction:column; gap:6px;
+}
+
+/* ── 上の帯（もどる ／ 名前 ／ 遊び方）──────────────────
+   ★ 遊んでいる間の ボタンは 2つだけ ―― 「◀ ゲームを選ぶ」と「？ 遊び方」（ルル §7-3）。
+     ★「もどす」は 作りません ―― ★ババ抜きの もどすは「ばばを 引き直す ボタン」です。
+       ★1回目から ずる（ルル §7-3）。
+   ⚠️ 盤の 部品に .back という 名前を 付けない こと（★T127 の 事故）。 */
+.topbar { flex:0 0 auto; display:flex; align-items:center; gap:6px; min-height:44px; }
+.back {
+  flex:0 0 auto; display:inline-flex; align-items:center; min-height:44px; padding:0 12px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
+  color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
+}
+.brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
+.brand-cat { width:30px; height:23px; flex:0 0 auto; }
+.brand span { font-weight:900; font-size:16px; color:#3f5a70; white-space:nowrap; }
+.howto {
+  flex:0 0 auto; display:inline-flex; align-items:center; min-height:44px; padding:0 12px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
+  color:var(--pink-dark); font-weight:900; font-size:13px; white-space:nowrap;
+}
+
+/* ★ 指で さわる 画面（520px以下）でも、押す ところは 44px 以上（会社の 基準・T62以来）*/
+@media (max-width:520px) {
+  .back span { display:none; }
+  .back { padding:0 11px; min-height:44px; min-width:44px; justify-content:center; }
+  .howto { padding:0 10px; font-size:12px; }
+  .brand span { font-size:15px; }
+}
+@media (max-width:360px) {
+  .app-shell { gap:5px; }
+  .brand-cat { display:none; }
+  .brand span { font-size:13px; }
+  .howto { padding:0 8px; }
+}
+/* ★★ 320px で 器の はばを **306px** に する（★ルルの 寸法表の ものさし）★★
+   ★ 320 − 左右3 ＝ 314 ／ .stage の 左右4 ＝ ★306px → ★札 41px（44pxの 93%）。
+   ⚠️★ ここを 1px 動かすと、★札が 41px → 40px に 落ちます（★T144 で 実際に 起きました）。 */
+@media (max-width:340px) {
+  .app-shell { padding:6px 3px; }
+}
+
+/* ── はじめの 画面 ──────────────────────────────
+   ★★ 置くものは 3つだけ ―― ハッピー ／ ひとこと ／「はじめる ▶」。
+   ★★★ <select> は **1つも ありません**（社長裁定 判断4）★★★
+      ★ スピード以来 6本 つづいた「つよさ 5段」が、★この1本で 初めて 途切れます。
+      ★ 理由：★ババ抜きに 段が 作れないから（ルル §3-1・§3-2）――
+        ★5段ぜんぶが 29.5〜29.8% で、★ばらつきは 0.3ポイント しか ありません。
+      ★ 設計図 §5.5 の 例外枠（選ばせるのは 1つまで）を、★この1本では **使いません**。 */
+.title-screen {
+  flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  padding:20px 16px; background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  text-align:center; box-shadow:0 7px 0 rgba(196,58,115,.10); min-height:0;
+}
+.title-happy { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.title-happy .happy-cat { width:76px; height:57px; }
+.title-lead { margin:0; font-size:clamp(16px,4.2vw,22px); font-weight:900; color:#5a4a63; line-height:1.6; }
+.start-button {
+  display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+  min-width:250px; min-height:44px; padding:15px 26px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 6px 0 var(--pink-dark);
+  font-size:20px; font-weight:900;
+}
+.start-button small { font-size:12px; font-weight:700; opacity:.9; }
+.start-button:active { transform:translateY(3px); box-shadow:0 3px 0 var(--pink-dark); }
+
+/* ── 遊ぶ 画面 ────────────────────────────────
+   ★★ 置き場は 2か所だけ（ロボットの手札・自分の手札）＋ まん中の ハッピー（ルル §5-3）★★
+     ★ すてた札の 置き場 … ★作りません（数える 必要が ない）
+     ★ 枚数の 数字　　　 … ★1つも 出しません（手札を 見れば 分かる）
+     ★ 山札　　　　　　　… ★ありません
+   ★★ 指を 受けるのは .stage ぜんぶ です ★★
+     ★ ロボットの 手札の 帯の 中で 押した ときだけ 札が 浮きます（inZone）。
+     ★ 自分の 手札を 押したら ぷるっと ゆれます（「そこは 引く 所では ありません」）。 */
+.play-screen { flex:1 1 auto; min-height:0; display:flex; }
+.stage {
+  position:relative; flex:1 1 auto; min-height:0; min-width:0;
+  padding:0 4px;                       /* ★ 320px：314 − 8 ＝ ★306px（ルルの 器）*/
+  touch-action:none;
+  -webkit-user-select:none; user-select:none;
+}
+.stage, .zone, .cards, .card, .card-in, .card img, .finger { touch-action:none; }
+
+/* ★ 手札の 台（★2つ。★上が ロボット・下が 自分）
+   ★ たけは JS が 入れる（--handh）。★14枚 ぶん いつも 空けて あります（ルル §5-1）*/
+.zone {
+  position:absolute; left:4px; right:4px; height:var(--handh);
+  background:var(--felt-in); border:2px solid var(--felt-line); border-radius:14px;
+}
+.zone.bot { top:0; }
+.zone.me  { bottom:0; }
+.zone.me.is-no { animation:shakeNo .15s ease-in-out; }
+
+/* ★ まん中（ハッピー）。★遊んでいる 最中、ハッピーは 1文字も しゃべりません（ルル §7-5）*/
+.middle {
+  position:absolute; left:0; right:0; display:flex; align-items:center; justify-content:center;
+  gap:8px; pointer-events:none;
+}
+.middle .happy-cat { width:calc(var(--happy) * 1.32); height:var(--happy); }
+
+/* ── 札 ───────────────────────────────────
+   ★★ 札は ぜんぶ 1つの 板（.cards）の 上に 置いて、★場所だけを 動かします ★★
+     ★ ＝ 手札から 手札へ 移る ときも、★★同じ 1枚が 飛んで いく のが 見えます。
+     ★ これが 判断2「追える形」の 見え方 そのものです（★光は 1つも 使って いません）。 */
+.cards { position:absolute; inset:0; pointer-events:none; }
+.card {
+  position:absolute; width:var(--cw); height:var(--ch);
+  transition:left .26s ease, top .26s ease, transform .14s ease, opacity .3s ease;
+  will-change:left, top, transform;
+}
+.card-in {
+  position:absolute; inset:0; border-radius:calc(var(--cw) * .10);
+  box-shadow:0 1px 2px rgba(40,30,50,.28);
+  transform-style:preserve-3d; transition:transform .2s ease;
+}
+.card img {
+  position:absolute; inset:0; width:100%; height:100%; border-radius:inherit;
+  display:block; object-fit:fill; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  pointer-events:none; -webkit-user-drag:none;
+}
+.card .face { opacity:1; }
+.card.is-down .face { opacity:0; }
+.card.is-down .back { opacity:1; }
+.card .back { opacity:0; }
+.card.is-lift { transform:translateY(calc(-1 * var(--lift))); }
+.card.is-pop  { transform:translateY(calc(-1 * var(--lift))); }
+.card.is-gone { opacity:0; transform:scale(.55); transition:opacity .3s ease, transform .3s ease; }
+.card.is-fly  { z-index:40; transition:left .42s cubic-bezier(.35,.02,.28,1), top .42s cubic-bezier(.35,.02,.28,1); }
+/* ★ 負けた ときの ばば 1枚（★試合が 終わってから 出る しるし・ルル §7-2）*/
+.card.is-last { z-index:30; transform:scale(1.18); transition:transform .5s ease; }
+
+/* ★ 絵が 届かなかった ときだけ（★ふだんは 一度も 通らない）*/
+.card .fallback {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:#fff; border:1px solid #b9b0c4; border-radius:inherit;
+  font-size:calc(var(--cw) * .34); font-weight:900; color:#33303a;
+}
+.card .fallback.red { color:#c0392b; }
+
+/* ── ロボットの 指（○の しるし）────────────────────
+   ★★ 顔は 作れません。★でも 指なら 作れます（ルル §2-4）★★
+     ★ ロボットの 番に、★自分の 手札の 上を すべって いき、
+       ★★引く 札の 上で **0.6秒** 止まって から 抜きます。
+     ★ 情報は 1ミリも 増えて いません ―― ★自分の 手札は 元から 表向き。
+       ★ 足したのは「0.6秒 早く 分かる」だけ。★その 0.6秒が この ゲームの どきどきです。
+   ⚠️★ **色でも 光でも ありません。**★輪の 線と、うすい まる だけ。
+   ⚠️★ 0.6秒を うっかり 縮めない こと。★この 1本の 顔は これ だけ です。 */
+.finger {
+  position:absolute; width:calc(var(--cw) * .62); height:calc(var(--cw) * .62);
+  margin-left:calc(var(--cw) * -.31); margin-top:calc(var(--cw) * -.31);
+  border:calc(var(--cw) * .07) solid var(--finger); border-radius:50%;
+  background:var(--finger-in); box-sizing:border-box;
+  opacity:0; pointer-events:none; z-index:50;
+  transition:left .5s ease, top .5s ease, opacity .18s ease;
+}
+.finger.is-on { opacity:1; }
+.finger::after {
+  content:""; position:absolute; left:50%; top:50%; width:26%; height:26%;
+  margin:-13% 0 0 -13%; border-radius:50%; background:var(--finger);
+}
+
+@keyframes shakeNo {
+  0%,100% { transform:translateX(0); }
+  25%     { transform:translateX(-5px); }
+  75%     { transform:translateX(5px); }
+}
+
+/* ★ 場所を いきなり 入れる とき（★配りの はじめ・画面の 大きさが 変わった とき）*/
+.cards.no-move .card { transition:none !important; }
+
+/* ★★ 測る ときは 動きを 止める ★★
+   ------------------------------------------------------------
+   ★ 会社で 4回 かかった わな ―― ★**動いて いる 途中を 測ると、数字が うそに なる**。
+     ★ アトの 申し送り：「箱は 出してから 0.3秒 待つ」。
+   ★ ここでは 待つ かわりに、★★止めて から 測ります（★待ち時間 0・★ぶれ 0）。
+   ★ このクラスは たしかめ（verify / fitTest / screen）の 中でだけ 付きます。 */
+body.measuring *, body.measuring *::before, body.measuring *::after {
+  transition:none !important; animation:none !important;
+}
+
+/* ── ハッピー ＋ ふきだし（★はじめの 画面と 終わった あと だけ）──── */
+.happy-bubble {
+  margin:0; padding:7px 12px; background:var(--cream);
+  border:3px solid var(--gold-soft); border-radius:16px;
+  font-size:14px; font-weight:900; color:#7a5205; line-height:1.5;
+}
+.happy-name { margin:0; font-size:10px; font-weight:900; color:#c9a24a; }
+@keyframes happyJump {
+  0%,100% { transform:translateY(0) rotate(0); }
+  30%     { transform:translateY(-10px) rotate(-6deg); }
+  60%     { transform:translateY(0) rotate(5deg); }
+}
+.happy-cat.is-jump { animation:happyJump .5s ease-in-out 4; }
+
+/* ── 結果の 箱 ────────────────────────────────
+   ★★ たけは 100px 以下（ルル §7-2 の ⚠️・五目並べ T133 の 教訓を 先に 入れる）★★
+      ★ 320×568 で 手札の 外に 残る たては **144px しか ありません**。
+      ★ T130 の 箱（155px）だと 11px はみ出します。
+   ★★ ここにも つよさの プルダウンは 置きません（社長裁定 判断4）★★
+      ★ スピード以来 6本 続けてきた 形が、★この1本だけ 変わります。 */
+.result-wrap {
+  position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center;
+  padding:10px; background:rgba(70,60,82,.34);
+}
+/* ★ たけの 内わけ【計算・実測で 合わせました】
+     ふち 3×2 ＝ 6 ／ 内よはく 7×2 ＝ 14 ／ 見出しの 行 30 ／ すきま 5 ／ ボタン 44
+     　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　＝ ★★99px（★100px 以下）
+   ⚠️★ はじめは ふち4・よはく9 で ★102px に なり、★ハッピーの ひとことが 2px 切れて いました
+      【実測・T144 の 私の 失敗】。★verify ⑩ が「はみ出して いないか」も 見張ります。 */
+.result-box {
+  width:min(360px,100%); max-height:var(--result-max);
+  padding:7px 11px; background:var(--white); border:3px solid var(--pink-soft);
+  border-radius:20px; box-shadow:0 8px 0 rgba(196,58,115,.16);
+  display:flex; flex-direction:column; gap:5px; overflow:hidden;
+}
+@keyframes resultIn { 0% { transform:scale(.86); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+.result-wrap:not(.hidden) .result-box { animation:resultIn .22s ease-out; }
+.result-head { display:flex; align-items:center; gap:8px; min-height:30px; }
+.result-title { margin:0; flex:0 0 auto; font-size:18px; font-weight:900; line-height:1.15; color:var(--pink-dark); white-space:nowrap; }
+.result-title.is-quiet { color:#7f8fa0; }
+/* ★ ハッピーの ひとこと。★2行までで 切る（★箱の たけ 100px を こえない ため）*/
+.result-say { margin:0; flex:1 1 auto; min-width:0; font-size:11.5px; font-weight:900;
+              color:#7a5205; line-height:1.25; max-height:30px; overflow:hidden; }
+.result-row { display:flex; flex-direction:row; align-items:stretch; gap:8px; }
+.dialog-ok {
+  flex:1 1 0; display:inline-flex; align-items:center; justify-content:center; gap:4px;
+  min-height:44px; padding:0 14px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 4px 0 var(--pink-dark);
+  font-size:15px; font-weight:900; text-decoration:none;
+}
+.dialog-ok:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
+.dialog-ok.alt {
+  background:var(--white); color:var(--pink-dark); border:3px solid var(--pink-soft);
+  box-shadow:0 4px 0 var(--pink-soft);
+}
+.result-row { transition:opacity .16s ease-out; }
+.result-box.is-locked .result-row { pointer-events:none; opacity:.4; }
+.result-box.is-locked .dialog-ok { box-shadow:none; transform:translateY(3px); }
+
+/* ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+   ★ ルールは 3行。★16本で いちばん 軽い 3行です（ルル §0-3）。
+   ⚠️ ★ どの 札を 引くと よいかは、ここでも 1文字も 教えません（設計図 追記②）。 */
+dialog {
+  width:min(420px,92vw); padding:20px 18px; border:5px solid var(--pink-soft); border-radius:24px;
+  background:var(--white); color:var(--ink); font-family:var(--font-main);
+}
+dialog::backdrop { background:rgba(70,60,82,.34); }
+dialog h2 { margin:0 0 10px; font-size:19px; font-weight:900; text-align:center; color:var(--pink-dark); }
+.dialog-lead { margin:0 0 14px; font-size:15px; font-weight:900; text-align:center; color:#5a4a63; }
+.close-dialog {
+  position:absolute; top:8px; right:10px; width:44px; height:44px; border-radius:50%;
+  border:3px solid var(--pink-soft); background:var(--white); color:var(--pink-dark);
+  font-size:18px; font-weight:900; line-height:1;
+}
+.help-list { margin:0 0 12px; padding-left:1.3em; }
+.help-list li { margin-bottom:8px; font-size:14.5px; font-weight:700; line-height:1.65; }
+.help-list b { color:var(--pink-dark); }
+.help-note {
+  margin:0 0 14px; padding:10px 12px; background:var(--cream);
+  border:3px solid var(--gold-soft); border-radius:14px;
+  font-size:13px; font-weight:700; line-height:1.7; color:#7a5205;
+}
+.help-note b { color:var(--pink-dark); }
+dialog .dialog-ok { width:100%; }
+
+/* ── 横向き（低い 画面）───────────────────────── */
+@media (max-height:430px) and (orientation:landscape) {
+  .app-shell { padding:2px 8px; gap:2px; }
+  .topbar { min-height:44px; }
+  .back, .howto { min-height:44px; }
+  .title-screen { gap:8px; padding:8px 14px; }
+  .title-happy .happy-cat { width:52px; height:39px; }
+  .result-box { padding:7px 10px; }
+}

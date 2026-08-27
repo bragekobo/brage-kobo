@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ババ抜き ― ブラゲ工房</title>
+  <meta name="description" content="同じ 数字を すてて、ばばから にげよう ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       既存15本と おなじ 書き方。絶対URL で 書く。
+       ⚠️ まとめサイトに 並べる ときに og:url を もう一度 見なおすこと。
+
+       ★★ この1本は 設計図 §9（トランプの 絵札）が **効きます** ★★
+         ★ 読む 絵は 54個（52枚 ＋ JOKER1 ＋ トランプ裏赤）。
+         ★★ そして ―― ★**裏面が 主役**です（ロボットの 手札は ぜんぶ 裏向き）。
+         ★ og:image は まだ ありません。★絵が 要るなら 🎨アトが 1枚 作って ここに 足すこと。
+
+       ★★ 画面に 出す 言葉は すべて「ババ抜き」★★
+         ★ 「ババ抜き」は **固有の 呼び名**なので そのまま（★「抜」は 中学ですが 名前です）。
+         ★ ジョーカーの ことは ★★かならず「ばば」（ひらがな）。
+           ★「ジョーカー」「JOKER」は 読む 文字に 1度も 出しません（ルル §8-2）。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="ババ抜き ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="同じ 数字を すてて、ばばから にげよう。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/babanuki/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="ババ抜き ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="同じ 数字を すてて、ばばから にげよう。開いたらすぐ遊べます。" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存15本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="babanuki.css" />
+
+  <!-- ★ 裏面は この1本の 主役。★いちばん 先に 読ませる（設計図 §9・2026-08-26 の 行）-->
+  <link rel="preload" as="image" href="../cards/%E3%83%88%E3%83%A9%E3%83%B3%E3%83%97%E8%A3%8F%E8%B5%A4.png" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存15本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       ★ 遊んでいる間の ボタンは 2つだけ ―― 「◀ ゲームを選ぶ」と「？ 遊び方」（ルル §7-3）。
+       ★★「もどす」は 作りません ―― ★ババ抜きの もどすは
+          ★★「ばばを 引き直す ボタン」です。★1回目から ずる です。
+          ★ 人が 引くのは 1試合に 4回 だけ。★そのうちの 1回が 決め手 なので、
+            ★引き直せたら この ゲームは 消えます（ルル §7-3）。
+       ★ 対戦の 9本に そろえます。 -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>ババ抜き</span>
+    </div>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★★★ ここが 16本の 中で ただ 1本 だけ ちがう ところ です ★★★
+         ★ スピード・神経衰弱・リバーシ2本・四目並べ・五目並べ ―― ★6本 つづいた
+           「つよさ 5段」の プルダウンが、★★この1本で 初めて 途切れます。
+         ★★ <select> は 1つも ありません（社長裁定 判断4 ＝ ①）。
+         ★ 理由：★ババ抜きに 段が 作れないから（ルル §3-1・§3-2）――
+           ★神経衰弱の 5段を そのまま あてはめても、★29.5〜29.8% で 動きません。
+           ★2段なら 作れますが、★弱い方は「★画面に 見えている ばばを 引く ロボット」
+             ―― ★この会社が 5回 落として きた ものです。
+         ★ ＝ 置くものは ★ハッピー ／ ひとこと ／「はじめる ▶」の 3つ だけ。 -->
+  <section class="title-screen" id="titleScreen">
+    <div class="title-happy">
+      <svg class="happy-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble">同じ 数字を すてて、ばばから にげよう！</p>
+    <p class="title-lead">さいごに ばばが 残った 人の 負け。</p>
+    <button class="start-button" type="button" id="btnStart">
+      <span>はじめる <b>▶</b></span><small>相手の 手札から 1枚 引こう</small>
+    </button>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       ★★ 置き場は 2か所だけ（ロボットの手札・自分の手札）★★
+         ★ すてた札の 置き場 … ★作りません（★数える 必要が ない ―― 勝ち負けは 枚数で 決まらない）
+         ★ 枚数の 数字　　　 … ★1つも 出しません（★手札を 見れば 分かります）
+         ★ 山札　　　　　　　… ★ありません（★神経衰弱に 続いて 2本目）
+       ★★ 手札の 枠は いつも 14枚ぶん 空けて あります ★★
+         ★ 14枚は 見立てでは なく **式**で 決まります ―― ★数字 13しゅるい ＋ ばば 1枚（ルル §5-1）。
+         ★ 触る所が 画面の 外に 出たら 故障（設計図 追記③）。
+       ★★ 盤の 上に 出る しるしは 2つ だけ ★★
+         ★ 浮いた 札（指を 置いている あいだ だけ）… ★操作の 返事。★中身を 数えません
+         ★ ロボットの 指（○）… ★引く 札の 上で 0.6秒 止まる だけ
+         ★ 光り・色の 変わり・「ここだよ」の 合図 は ★★1つも ありません。 -->
+  <section class="play-screen hidden" id="playScreen">
+    <!-- ★★ 指を 受けるのは .stage ぜんぶ です ★★
+         ★ ロボットの 手札の 帯で 押した ときだけ 札が 浮きます。
+         ★ 自分の 手札を 押したら ぷるっと ゆれます（★「そこは 引く 所では ありません」）。 -->
+    <div class="stage" id="stage">
+      <!-- ★ ロボットの 手札（裏）。★ここを 引く -->
+      <div class="zone bot" id="zoneBot"></div>
+      <!-- ★ まん中の ハッピー。★★遊んでいる 最中、ハッピーは 1文字も しゃべりません（ルル §7-5）
+           ★ 「ロボットが ばばを 引いた よ」も 言いません ―― ★画面が すでに 言って います。
+           ★ 「ドキドキ…」も 言いません ―― ★ヒントか うそかの どちらかに なります（ルル §2-3）。 -->
+      <div class="middle" id="middle">
+        <svg class="happy-cat" id="happyMid" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      </div>
+      <!-- ★ 自分の 手札（表）。★見るだけ ―― ★ここは 引く 所では ありません -->
+      <div class="zone me" id="zoneMe"></div>
+      <!-- ★★ 札は ぜんぶ この 1枚の 板の 上に います ★★
+           ★ 手札から 手札へ 移る ときも、★同じ 1枚が 場所を 変える だけ。
+           ★★ だから「さっき 取られた 札が いま どこに あるか」が 目で 追えます（判断2）。 -->
+      <div class="cards" id="cards"></div>
+      <!-- ★★ ロボットの 指（○の しるし）★★
+           ★ 顔は 作れません（ルル §2-3：本当のことしか 言わないなら ヒント、うそを つくなら 却下）。
+           ★ かわりに 指を 出します ―― ★引く 札の 上で **0.6秒** 止まります。
+           ★★ 情報は 1ミリも 増えて いません（★自分の 手札は 元から 表向き）。
+              ★ 足したのは「0.6秒 早く 分かる」だけ。★その 0.6秒が この ゲームの どきどきです。 -->
+      <span class="finger" id="finger"></span>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── 勝ち／負け の 画面 ──────────────────────────
+     ⚠️ 箱が 出てから しばらくは おせなく する（game.js の RESULT_LOCK）。
+     ★★ 引き分けは ありません（0%）★★
+        ★ ばばは 組に ならない ので、★ばばを 持って いる 人は 0枚に なれません。
+        ★ もう一方は 0枚に なれます。★＝ ★必ず どちらかが 負けます（ルル §7-2・式で 決まる）。
+     ★★ ここにも つよさの プルダウンは 置きません（社長裁定 判断4）★★
+        ★ スピード T60 以来 6本 続けてきた 形が、★この1本だけ 変わります。
+     ★★ 箱の たけは 100px 以下（ルル §7-2 の ⚠️）★★
+        ★ 320×568 で 手札の 外に 残る たては 144px しか ありません。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result-head">
+      <p class="result-title" id="resultTitle">勝ち！</p>
+      <p class="result-say" id="resultSay"></p>
+    </div>
+    <div class="result-row">
+      <button class="dialog-ok" type="button" id="btnAgain">もう1回 <b>▶</b></button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ★ ルールは 3行。★★16本で いちばん 軽い 3行です（ルル §0-3）。
+       ★ 「同じ 数字か」を 見るだけ ―― ★しかも 機械が すてて くれます。
+     ★ 機械が すてるのは 追記②に 触れません（ルル §6-4）：
+       ★★2人ババ抜きでは 同じ 数字は 手札に 1組 しか 出ない ＝ ★選ぶ 余地が 1つも ない。
+       ★ 選べない ものを 機械が やるのは「肩代わり」です。
+     ⚠️ ★ どの 札を 引くと よいかは、ここでも 1文字も 教えません（設計図 追記②）。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">同じ 数字を すてて、ばばから にげよう！</p>
+  <ol class="help-list">
+    <li>同じ 数字が <b>2枚 そろったら</b>、すてる。</li>
+    <li>順番に、<b>相手の 手札から 1枚 引く</b>。</li>
+    <li>さいごに <b>ばばが 残った 人の 負け</b>。</li>
+  </ol>
+  <p class="help-note">ばばは 1枚だけ。組に なりません。<br>
+    引く 札は、指を <b>はなすまで</b> 決まりません。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<script src="babanuki-core.js"></script>
+<script src="babanuki-game.js"></script>
+</body>
+</html>
