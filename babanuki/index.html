@@ -10,12 +10,14 @@
   <!-- ============================================================
        SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
        既存15本と おなじ 書き方。絶対URL で 書く。
-       ⚠️ まとめサイトに 並べる ときに og:url を もう一度 見なおすこと。
+       ★ og:url は T157 で 見なおしずみ ―― ★★本物の 住所に 取りに 行って 18本 とも 200 でした。
+       ★★ `…/brage-kobo/<名前>/` が 正 です。★`games/` を 足すと **18本 とも 404**。
+       ★★ （★この フォルダ そのものが 公開の 根っこ だから です・設計図 §8.5）。
 
        ★★ この1本は 設計図 §9（トランプの 絵札）が **効きます** ★★
          ★ 読む 絵は 54個（52枚 ＋ JOKER1 ＋ トランプ裏赤）。
          ★★ そして ―― ★**裏面が 主役**です（ロボットの 手札は ぜんぶ 裏向き）。
-         ★ og:image は まだ ありません。★絵が 要るなら 🎨アトが 1枚 作って ここに 足すこと。
+         ★ og:image は T157 で 足しました（★JOKER1.png ＝ ばばの 札。★下を 見て ください）。
 
        ★★ 画面に 出す 言葉は すべて「ババ抜き」★★
          ★ 「ババ抜き」は **固有の 呼び名**なので そのまま（★「抜」は 中学ですが 名前です）。
@@ -28,9 +30,20 @@
   <meta property="og:title" content="ババ抜き ― ブラウザですぐ遊べる｜ブラゲ工房" />
   <meta property="og:description" content="同じ 数字を すてて、ばばから にげよう。ダウンロードはいりません。開いたらすぐ遊べます。" />
   <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/babanuki/" />
+  <!-- ★★ T157：★ここには 絵が 1つも ありませんでした。
+       ★ og:image が 無いと、★LINE などに はると **見出しの 札（サムネイル）が 出ません**。
+       ★ 大きさは 実物どおり 280×424（★T83 で 419×635 から 小さく した もの）。
+       ★ ※ 読む 文字では ないので、★ファイル名の JOKER は そのまま で かまいません。
+         ★★ alt（読み上げ用）だけは この 1本の 呼び方に そろえて「ばば」。 -->
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/JOKER1.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="280" />
+  <meta property="og:image:height" content="424" />
+  <meta property="og:image:alt" content="トランプのばばの札" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="ババ抜き ― ブラウザですぐ遊べる｜ブラゲ工房" />
   <meta name="twitter:description" content="同じ 数字を すてて、ばばから にげよう。開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/JOKER1.png" />
 
   <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存15本と おなじ。 -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
