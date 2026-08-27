@@ -500,48 +500,18 @@ button { font-family:inherit; cursor:pointer; }
      【実測 320×568：盤の 上 168px ／ 下 140px。★パソコン 1512×945：上 193px ／ 下 124px】。
    ⚠️★ 上の帯（◀ ゲームを選ぶ）は 隠れますが、★もともと 箱が 出ている 間は
       うしろの 幕（rgba）が 押しを 受け止める ので、押せない のは 前と 同じ です。 */
-/* ★★★ T138：勝った 瞬間に 画面ぜんぶが 灰色に なる のを やめました ★★★
-   ------------------------------------------------------------
-   ★ 🧪トライ T135 §6-2 は 五目並べで 見つけましたが、★★**四目ならべも 1文字ちがわず 同じ 作り**
-     でした（★どちらも `rgba(70,60,82,.42)` の まくが 画面ぜんぶ）。★★2本 同じに 直します。
-   ★ 四目ならべの ほうが 濃く 出ます ―― ★盤が **青**（暗い 色）なので、
-     まくが かかると 穴が ほとんど 黒に 見えます【実測・写真】。
-
-   ★★ まくの 役目 3つは、そのまま 引きつぎました（★くわしくは gomoku.css の 同じ 節）：
-     ① 箱を 読みやすく する → ★★箱の まわり だけの 白い 輪 ＋ やわらかい 影に 縮めた
-     ② 遊びが 終わったと 伝える → ★★すでに 4つ ある（光り／うすいコマ .is-dim ／
-        次の コマが 消える .is-off ／ハッピーの ふきだし）★＋ 箱そのもの
-     ③ うしろの 押しを 受け止める → ★`position:fixed; inset:0` の 仕事。★色では ない
-
-   ★★ そして ―― ★まくは T130 で 私が 100%（69本中69本）に した「光る 4つ」も
-      ★一緒に 暗く して いました。★★見えるように どけた ものを、★自分で 半分 消して いた こと に なります。
-
-   ⚠️★ 遊び方の 箱（`dialog::backdrop`）の 42% は **そのまま**（→ ファイルの 下）。 */
 .result-wrap {
   position:fixed; inset:0; z-index:80; display:flex;
   align-items:flex-start;          /* ★ 盤の 上の 空きへ（まん中に 置かない）*/
   justify-content:center;
-  padding:10px;
-  background:transparent;          /* ★★ T138：42% の まくを やめた（→ 上の 書き置き）*/
+  padding:10px; background:rgba(70,60,82,.42);
 }
 /* ⚠️★ たけの 天井は 320×568 が 決めます【実測：盤の 上ふちまで 168px】。
       ★ よはく 10px ＋ 箱 155px ＝ 165px ―― ★盤には 3px 手前で 止まります。 */
 .result-box {
   width:min(360px,100%); padding:8px 14px 10px; text-align:center;
   background:var(--white); border:4px solid var(--pink-soft); border-radius:22px;
-  /* ★★ T138：まくの 役目①（読みやすさ）を、箱の まわり だけに 引きつぐ ★★
-     ★ ① ピンクの 段差（前から ある 立体・★8px は 四目の 元の 数字の まま）
-     ★ ② 白い 細い 輪（どんな 背景でも ふちが 切れる）
-     ★ ③ ふちの すぐ そばだけ 濃い 影 ／ ★④ その 外に ひろがる うすい 影
-     ★★ 濃さは 五目並べと **同じ 数字**（★写真の 画素で 決めました。→ gomoku.css の 同じ 節）。
-     ⚠️★ 影は レイアウトに 効きません ―― ★★箱の 四角は 1pxも 動きません
-        （★T130 §3-3「隠す マス 0/42・4つ並び 69/69」は そのまま）。 */
-  box-shadow:
-    0 8px 0 rgba(196,58,115,.16),
-    0 0 0 3px rgba(255,255,255,.92),
-    0 4px 18px rgba(70,60,82,.60),
-    0 12px 34px rgba(70,60,82,.35);
-  max-height:100%; overflow-y:auto;
+  box-shadow:0 8px 0 rgba(196,58,115,.16); max-height:100%; overflow-y:auto;
 }
 @keyframes resultIn { 0% { transform:scale(.8); opacity:0; } 100% { transform:scale(1); opacity:1; } }
 .result-wrap:not(.hidden) .result-box { animation:resultIn .22s ease-out; }
