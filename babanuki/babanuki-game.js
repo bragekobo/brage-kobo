@@ -1101,17 +1101,28 @@
     /* ★★光りの box-shadow を 書いて よいのは ―― ★★.card.is-edge の 1つ だけ ★★
        ★ T144 は「札に ぼかしの 影が あったら NG」でした。★いまは 1つ だけ ゆるします。
        ★ ★ゆるす 先を **名指し** して いるので、★ほかの 所に 光を 足したら 鳴ります。 */
+    /* ⚠️★★ 見つけ方も 直しました（T155）★★
+       ★ 前は **文字の かたち**で 見て いました（/\d+px\s+\d+px\s+[1-9]/ など）。
+         ★ ブラウザは box-shadow を 書きなおして 返します ――
+           ★ 書いたのは `0 0 12px 4px #ff0`、★返って くるのは `rgb(255,255,0) 0px 0px 12px 4px`。
+         ★★ しかも ふつうの 影 `0 1px 2px` も「0px 1px 2」で 当たって しまい、
+            ★★**上の cssRuleList を 直した とたん、★.card-in の ふつうの 影で 誤って 鳴りました**
+            【T155・私の 回り道】。
+       ★ → ★★**長さ（px）だけを 数で 見ます**（★ぼかし 6px 以上／広がり 2px 以上 ＝ 光り）。
+         ★ ★色（rgb()/rgba()）は 先に 取りのぞきます ―― ★中の カンマで 切れない ように。
+         ★ ★ふつうの 影（0 1px 2px）は そのまま 通ります【実測・両方 確認ずみ】。 */
     var glowSel = [];
     cssRuleList().forEach(function (r) {
-      if (!/box-shadow:/.test(r.text)) return;
       if (!/\.card/.test(r.sel)) return;
-      /* ★ ぼかし（3つめの 値）か 広がり（4つめ）が ある ＝ 光り */
+      if (r.sel.indexOf('.is-edge') >= 0) return;      /* ★ ここ だけ ゆるす */
       var m = r.text.match(/box-shadow:([^;}]*)/);
       if (!m) return;
-      var soft = /\d+px\s+\d+px\s+[1-9]/.test(m[1]) || /0px\s+0px\s+0px\s+[1-9]/.test(m[1]) || /0 0 0 [1-9]/.test(m[1]);
-      if (!soft) return;
-      if (r.sel.indexOf('.is-edge') >= 0) return;      /* ★ ここ だけ ゆるす */
-      glowSel.push(r.sel);
+      m[1].replace(/\b(?:rgba?|hsla?)\([^)]*\)/g, ' ').split(',').forEach(function (one) {
+        if (/inset/.test(one)) return;
+        var nums = (one.match(/-?\d+(?:\.\d+)?px/g) || []).map(parseFloat);
+        if (nums.length < 3) return;
+        if (nums[2] >= 6 || (nums.length >= 4 && nums[3] >= 2)) glowSel.push(r.sel);
+      });
     });
     if (glowSel.length) ng.push('★★ふちの 光り いがいの 所に 光りが ある：' + glowSel.join('・'));
     /* ★ 逆の 見張り ―― ★ふちの 光りが **そもそも 書かれて いない** ときも 鳴らす
@@ -1266,13 +1277,25 @@
   }
 
   /* ★ CSS を「選択子 ＋ 中身」の 組で 返す（★T145：光りを **名指しで** ゆるす ため）*/
+  /* ⚠️★★★ ここは 見張りが **丸ごと 死んで いました**（★T152 で ページワンで 見つけ、
+        ★★T153 で トライと アイが ババ抜きでも 確かめた もの。★直したのは T155）★★★
+     ★ 前の 書き方：
+         if (r.cssRules) { walk(r.cssRules); continue; }   ← ★これ
+         if (r.selectorText) out.push(…);
+     ★ ★いまの Chrome は「入れ子の CSS」に 対応した ので、
+       ★★**ふつうの 決まり（.card など）にも 空の cssRules が 付いて います。**
+       ★ 空の CSSRuleList も if では「真」―― ★★だから 毎回 空へ もぐって continue し、
+       ★★**1個も 集まって いませんでした**（★実測：この 書き方 0個／直した 書き方 96〜97個）。
+     ★ ＝ ★★**ババ抜きの 札に 光りを 足しても、verify は 1度も 鳴りませんでした。**
+       ★ ★遊びは 壊れて いません。★★見張りだけが 死んで いました。
+     ★ → ★★**まず 拾い、それから（★中身が ある ときだけ）もぐる。** */
   function cssRuleList() {
     var out = [];
     function walk(rs) {
       for (var j = 0; j < rs.length; j++) {
         var r = rs[j];
-        if (r.cssRules) { walk(r.cssRules); continue; }
         if (r.selectorText) out.push({ sel: r.selectorText, text: r.cssText });
+        if (r.cssRules && r.cssRules.length) walk(r.cssRules);
       }
     }
     for (var i = 0; i < document.styleSheets.length; i++) {

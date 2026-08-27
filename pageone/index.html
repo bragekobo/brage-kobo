@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ページワン ― ブラゲ工房</title>
+  <meta name="description" content="同じ マークか 同じ 数字を つないで、先に 手札を 0枚に しよう ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       既存16本と おなじ 書き方。絶対URL で 書く。
+       ⚠️ まとめサイトに 並べる ときに og:url を もう一度 見なおすこと。
+
+       ★★ この1本は 設計図 §9（トランプの 絵札）が **効きます** ★★
+         ★ 読む 絵は 53個（52枚 ＋ トランプ裏赤）。★JOKER は 1枚も 読みません。
+         ★ 足す 絵は **0枚**（ルル §9【実測】）。
+
+       ★★ 8で 決めた マークの 見せかたは「絵」では ありません ★★
+         ★ 場札の 8の 上に ♠♥♦♣ の しるしを 1つ 出すだけ（ルル §9・→ 🎨アト）。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="ページワン ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="同じ マークか 同じ 数字を つないで、先に 手札を 0枚に しよう。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/pageone/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="ページワン ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="同じ マークか 同じ 数字を つないで、先に 手札を 0枚に しよう。" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存16本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="pageone.css" />
+
+  <!-- ★ 裏面は ロボット3人の 手札と 山札の 顔。★いちばん 先に 読ませる（設計図 §9・2026-08-26 の 行）-->
+  <link rel="preload" as="image" href="../cards/%E3%83%88%E3%83%A9%E3%83%B3%E3%83%97%E8%A3%8F%E8%B5%A4.png" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存16本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ─────────────────────────────────── -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>ページワン</span>
+    </div>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★★★ ここが 16本の 中で 2本目の 例外です（社長裁定 2026-08-28・設計図 §5.5）★★★
+         ★ 設定の 入口を 持って よい ゲームは **大富豪 と ページワン の 2本だけ**。
+         ★★ そして ―― ★**「かんたん／ふつう／ぜんぶ」の まとめ選びは 作りません。**
+            ★ 大富豪は ルールが 15個 ある ので まとめが 要りました。
+            ★★ ページワンは 5個。★1つずつの ○✕ だけで 足ります（アイの 指示）。
+         ★★ 初期値は「8だけ ON」★★
+            ★ 設計図 §5.5-②：★何も 触らずに「はじめる ▶」を 押した 人が、
+              ★★いちばん 深くて（★得 +8.0【計算】）いちばん 短い（★まん中 46秒【見立て】）形で 遊べます。
+         ★★ <select> は 1つも ありません（★つよさも 速さも 人数も 選ばせない・ルル §3-4）。 -->
+  <section class="title-screen" id="titleScreen">
+    <div class="title-happy">
+      <svg class="happy-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble">同じ マークか 同じ 数字を つなげよう！</p>
+    <p class="title-lead">先に 手札を 0枚に した 人の 勝ち。</p>
+
+    <details class="rule-fold" id="ruleFold">
+      <summary>▾ 特別な 札を 決める <b id="ruleCount"></b></summary>
+      <div class="rule-list" id="ruleList"></div>
+    </details>
+
+    <button class="start-button" type="button" id="btnStart">
+      <span>はじめる <b>▶</b></span><small>あなた ＋ ロボット3人</small>
+    </button>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       ★★ 置き場は 4か所（ロボット3人の 手札／山札／場札／自分の 手札）★★
+       ★★ 盤の 上に 出る しるしは **2つ だけ** ★★
+         ★ 出せない 札が **暗くなる**（★引き算。★光らせない ―― 設計図 §5.5「強調は 1種類まで」）
+         ★ 場札が 8の ときだけ、その 上に「いま 出せる マーク」の しるしが 1つ
+       ★★ 光り・「ここだよ」の 合図・出せる札の わく は ★1つも ありません。 -->
+  <section class="play-screen hidden" id="playScreen">
+    <div class="stage" id="stage">
+      <!-- ★ ロボット3人（裏向き）。★名前は 下に 1行 -->
+      <div class="zone bots" id="zoneBots">
+        <div class="bot" id="bot1"><span class="bot-name">ロボット1</span></div>
+        <div class="bot" id="bot2"><span class="bot-name">ロボット2</span></div>
+        <div class="bot" id="bot3"><span class="bot-name">ロボット3</span></div>
+      </div>
+
+      <!-- ★ まん中 ―― 山札 と 場札 と ハッピー -->
+      <div class="middle" id="middle">
+        <div class="happy-spot" id="happySpot">
+          <svg class="happy-cat" id="happyMid" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+        </div>
+        <!-- ★★ 8で 決めた マーク。★場札が 8の ときだけ 出す（ルル §9）★★ -->
+        <div class="suit-now hidden" id="suitNow"><span id="suitNowMark">♠</span></div>
+        <p class="say hidden" id="say"></p>
+      </div>
+
+      <!-- ★ 自分の 手札（表）。★9割の 試合で 7枚の まま（ルル §4-3）
+           ★ 8枚を こえたら **静かに つめます**（設計図 追記③）。★注意書きは 出しません。 -->
+      <div class="zone me" id="zoneMe"></div>
+
+      <!-- ★★ 札は ぜんぶ この 1枚の 板の 上に います ★★
+           ★ 手札 → 場札、山札 → 手札 も、★同じ 1枚が 場所を 変える だけ。
+           ★★ だから「いま 出した 札」「いま 引いた 札」が 目で 追えます。 -->
+      <div class="cards" id="cards"></div>
+
+      <!-- ★★★ 8を 出した あとの マーク選び ★★★
+           ★★ ここは **絶対に 自動化しません**（設計図 追記②・ルル §8-b）。
+              ★ ルル §1-3【計算】：★「8を ためる」+5.2 と「マークを 選ぶ」+0.8 は
+                ★★足し算では なく かけ算（合わせて +7.6）。★★この 1本の 遊びの 芯 です。
+           ★ 押す ところは 4つとも 44px 以上。 -->
+      <div class="suit-pick hidden" id="suitPick">
+        <p class="suit-pick-lead">マークを 選ぼう！</p>
+        <div class="suit-row">
+          <button type="button" class="suit-btn s0" data-suit="0"><b>♠</b></button>
+          <button type="button" class="suit-btn s1" data-suit="1"><b>♥</b></button>
+          <button type="button" class="suit-btn s2" data-suit="2"><b>♦</b></button>
+          <button type="button" class="suit-btn s3" data-suit="3"><b>♣</b></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── 勝ち／負け の 画面 ──────────────────────────
+     ⚠️ 箱が 出てから しばらくは おせなく する（game.js の RESULT_LOCK）。
+     ★★ 箱の たけは 100px 以下（★320×568 で 手札の 外に 残る たてが 少ない）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result-head">
+      <p class="result-title" id="resultTitle">勝ち！</p>
+      <p class="result-say" id="resultSay"></p>
+    </div>
+    <div class="result-row">
+      <button class="dialog-ok" type="button" id="btnAgain">もう1回 <b>▶</b></button>
+      <button class="dialog-ok alt" type="button" id="btnBackTitle">決まりを 変える</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ★ ルルの 決まりは 5つ。★見せる 説明は 4行（ルル §7）。
+     ★ 5つめ（山札が なくなったら まぜ直す）は **画面が 勝手に やる** ので 出しません。
+     ⚠️ ★ どの 札を 出すと よいかは、ここでも 1文字も 教えません（設計図 追記②）。
+        ★ とくに「8は 取って おこう」は ★★書いては いけません ―― ★それが この 1本の 遊び です。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">同じ マークか 同じ 数字を つなげよう！</p>
+  <ol class="help-list">
+    <li>場札と <b>同じ マーク</b>か <b>同じ 数字</b>の 札を 1枚 出す。</li>
+    <li>出せない ときは <b>山札を おして 引く</b>。出せる 札が 来るまで 引こう。</li>
+    <li>先に <b>手札が 0枚</b>に なった 人の 勝ち。</li>
+  </ol>
+  <p class="help-note" id="helpRules"></p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<script src="pageone-core.js"></script>
+<script src="pageone-game.js"></script>
+</body>
+</html>
