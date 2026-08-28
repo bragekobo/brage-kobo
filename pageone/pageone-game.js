@@ -617,12 +617,53 @@
     if (!t || t === cardsEl) { pressId = 0; return; }
     pressId = t.slotId || 0;
   }
+  /* ============================================================
+     ★★★ T160 ―― ★すべって 出なかった とき、★「ぷるっ」と 返事を する ★★★
+     ------------------------------------------------------------
+     ⚠️★ トライが T159 §4-5 で 見つけた もの：
+        ★ ★T157 の 直しで「★すべったら 何も 起きない」に なりました（★これは 正しい）。
+        ★ ★★でも ―― ★★**画面が 1文字も・1回も 返事を しません**【実測・意地悪④で `.card.is-no` 0個】。
+        ★ ＝ ★遊ぶ人からは「★★壊れた」と「★わざと 出さなかった」の 見分けが つきません。
+     ★ ★★社長の 決め：★★**ぷるっと 返す。**★（★どう 返すかは 私が 決めました → 下）
+     ------------------------------------------------------------
+     ★★ 私の 決め ①：★★**「出せない 札」と 同じ「ぷるっ」を 使い回します**（★新しい 見た目は 0）
+        ★ ★理由1：★設計図 §5.5「★1画面に 強調は 1種類まで」。★いま 走って いるのは
+          ★★「出せない 札を 暗くする」（is-dim）1つ だけ ―― ★★**ここに 2つ目を 増やせません。**
+          ★ ★`is-no`（ぷるっ）は **もとから ある 動き** で、★強調（ずっと 出て いる 印）では
+          ★ ありません ―― ★0.16秒の 返事 です。★★増えるのは 0種類 です。
+        ★ ★理由2：★追記②（気づくを 奪わない）に 照らすと、★これは
+          ★★「遊びの 情報」では なく「★★操作の 返事」。★★返して よい 側 です。
+     ★★ 私の 決め ②：★★**「出せない 札を 押した」と「すべって 外した」は 同じ 返し方に します。**
+        ★ ★分けた 方が いい と 思える 理由も 考えました（★「この 札は 出せない」と
+          ★ ★「押し方が 外れた」は ちがう 話だから）。★★でも 分けませんでした：
+          ★ ★(1) 分けると **2つ目の 動き**を 作る ことに なります（→ §5.5 に ぶつかる）
+          ★ ★(2) ★★**もう 分かれて 見えて います** ―― ★出せない 札は `is-dim` で **暗い**。
+              ★★暗い 札が ゆれた ＝「この 札は 出せない」／★★明るい 札が ゆれた ＝「押し方が 外れた」。
+              ★★**印を 足さずに、★すでに 見分けが ついて います。**
+          ★ ★(3) どちらも 遊ぶ人が 次に する ことは 同じ（★もう 一度 押す）。★1回 押せば 通ります。
+     ★★ 私が やらなかった こと（★濁さず 書きます・追記⑤）：
+        ★ ★**押した 札を 浮かせる（トライの 3案）は しません。**★★それは「★すべって いる 間に
+          ★ 選び直せる」形に 近づき、★T157 §2 で 追記② を 理由に 外した 道 です。
+        ★ ★**「出せる ときに 山札を 押した」（doDraw の 空ぶり）には 手を 入れて いません。**
+          ★ ★★ここは 今回の 決めの 外 です（→ 作業メモ §5 に 数字を 出して あります）。
+     ============================================================ */
+  /* ★ slotId から、いま 画面に ある その 札（★山札の 空わくも 含む）を 引く */
+  function elOfSlot(id) {
+    if (!id) return null;
+    if (id === DECK_SLOT_ID) return (deckSlot && deckSlot.parentNode) ? deckSlot : null;
+    var e = cardEl[id];
+    return (e && e.parentNode) ? e : null;
+  }
   function onUp(e) {
     var id = pressId; pressId = 0;
     if (!id || busy || over || !g || g.over) return;
     if (waitSuit >= 0) return;                    /* ★ マークを 選んで いる 途中 */
     var t = hitAt(e.clientX, e.clientY);          /* ★★ e.target では ありません（★上の ⚠️）*/
-    if (!t || t.slotId !== id) return;            /* ★ 押した 札と はなした 札が ちがう */
+    if (!t || t.slotId !== id) {                  /* ★ 押した 札と はなした 札が ちがう */
+      var slipped = elOfSlot(id);                 /* ★★ T160：★押した 札に「ぷるっ」と 返事 */
+      if (slipped) nope(slipped);
+      return;
+    }
     var where = t.where;
     if (where === 'deck') { doDraw(); return; }
     if (where !== 'me') { nope(t); return; }
@@ -1475,7 +1516,8 @@
     upEl.dispatchEvent(mk('pointerup', x, y));
   }
   function slideProbe() {
-    var out = { ok: 0, straight: '―', stuck: '―', mouse: '―', why: [] };
+    var out = { ok: 0, straight: '―', stuck: '―', mouse: '―',
+                sayStraight: '―', say: '―', sayMouse: '―', why: [] };
     if (!g || !cardsEl || !geo || !built) { out.why.push('★場面を 作れない（★立ち上がって いない）'); return out; }
     var snap = snapG();
     var kBusy = busy, kOver = over, kTake = takeLeft, kWait = waitSuit, kMix = g.mixes;
@@ -1508,26 +1550,48 @@
       var s = scene();
       if (!s) { out.why.push('★★試し方が おかしい：★「出せる 札 ＋ となりの 札」の 場面を 作れなかった'); return; }
       var rA = s.A.getBoundingClientRect();
+      s.A.classList.remove('is-no');
       pressRelease(s.A, s.A, rA.left + rA.width / 2, rA.top + rA.height / 2);
       out.straight = (g.hands[0].length < s.n) ? '○ 出た' : '★✕ 出ない';
       if (g.hands[0].length >= s.n) out.why.push('★★試し方が おかしい：★まっすぐ 押しても 札が 出ない');
+      /* ★★ T160 の くらべ ―― ★★**まっすぐ 押して 通った ときは ゆれない**
+         ★ ★これが 無いと「★いつも ゆれて いる」でも 下の (b)(c) が 通って しまいます。 */
+      out.sayStraight = s.A.classList.contains('is-no') ? '★★✕ ゆれて しまう' : '○ ゆれない';
+      if (s.A.classList.contains('is-no')) {
+        out.why.push('★★まっすぐ 押して 出た のに ゆれた（★★いつも ゆれて いる ＝ 返事に なって いません）');
+      }
 
       /* ★ (b) ★★指の くっつき ―― ★A に down、★★A に up（座標だけ B）*/
       s = scene();
       if (!s) { out.why.push('★★試し方が おかしい：★2回目の 場面を 作れなかった'); return; }
+      s.A.classList.remove('is-no');                 /* ★ 前の 回の 名残を 消して から 測る */
+      if (s.A.classList.contains('is-no')) { out.why.push('★★試し方が おかしい：★is-no を 消せない'); return; }
       pressRelease(s.A, s.A, s.x, s.y);
       var slid = (g.hands[0].length < s.n);
       out.stuck = slid ? '★★✕ 出て しまう' : '○ 出ない';
       if (slid) out.why.push('★★★指で となりへ すべらせて はなしたのに、★押した 方の 札が 出た');
+      /* ★★ T160 ―― ★★出さなかった なら、★★**返事は して いるか**（→ 上の ⚠️ T160）
+         ★ ★出て しまった とき（slid）は、この 問いは 立ちません（★別の NG が すでに 出て います）。*/
+      out.say = slid ? '―' : (s.A.classList.contains('is-no') ? '○ ぷるっと 返した' : '★★✕ 何も 返さない');
+      if (!slid && !s.A.classList.contains('is-no')) {
+        out.why.push('★★★すべって 出なかった のに、★押した 札が 1回も ゆれない（★遊ぶ人には 壊れたと 見分けが つきません）');
+      }
 
       /* ★ (c) くらべ：マウス ―― ★A に down、★B に up（座標も B）*/
       s = scene();
       if (!s) { out.why.push('★★試し方が おかしい：★3回目の 場面を 作れなかった'); return; }
+      s.A.classList.remove('is-no');
       var upEl = hitAt(s.x, s.y) || s.A;
       pressRelease(s.A, upEl, s.x, s.y);
       var m = (g.hands[0].length < s.n);
       out.mouse = m ? '★✕ 出て しまう' : '○ 出ない';
       if (m) out.why.push('★★マウスで すべらせても 押した 方の 札が 出た');
+      /* ★★ T160 ―― ★★指と マウスで **返事も そろって いるか**（★片方だけ 黙るのは ばらつき）*/
+      out.sayMouse = m ? '―' : (s.A.classList.contains('is-no') ? '○ ぷるっと 返した' : '★★✕ 何も 返さない');
+      if (!m && !s.A.classList.contains('is-no')) {
+        out.why.push('★★マウスで すべった ときだけ 返事が ない（★指と そろって いません）');
+      }
+
       out.ok = 1;
     });
 
@@ -1560,6 +1624,9 @@
        ⑭  ★★★人が さわれるか（T155）―― ★★「押す ものが 1つも ない」画面が 作れないか
        ⑮  ★★★マーク板を 出した ままの 画面（T155）―― ★4つの ボタンが 画面の 中に あるか
        ⑯  ★★★押して・すべらせて・はなす（T157）―― ★★指の くっつきを 本物の 道で 通す
+       ⑰  ★★★出なかった ときの 返事（T160）―― ★★すべって 外したら「ぷるっ」と 返すか
+           ★ ★くらべ：★まっすぐ 押して 通った ときは **ゆれない**（★いつも ゆれる のは 返事では ない）
+       ⑱  ★★★○✕ の 5行が ぜんぶ 押せるか（T160）―― ★★320×568・横向きを 含む
      ============================================================ */
   function verify(n) {
     n = n || 3000;
@@ -1720,6 +1787,96 @@
     note['⑦ 設定'] = '<select> ' + sel.length + '個／○✕ ' + boxes.length + '個（今 ' + onNow +
                      '個 ON）／まとめ選び ' + pre.length + '個';
 
+    /* ============================================================
+       ⑱ ★★★○✕ の 5行が **ぜんぶ 押せるか**（T160・トライ T153 🟡-2 / T159 判断4）★★★
+       ------------------------------------------------------------
+       ⚠️★ ⑦ は「★○✕ が 5つ ある」までしか 見て いませんでした。
+          ★ ★★**その 5つに 指が 届くか**を、★1度も 見て いません。
+          ★ ★T153・T159 の 実測：★320×568 で 5行目「A＝もう1回」が **押せない**
+            （★白い 箱の 下ばしで 切れ、★★スクロールでも 届かない）。★横向きでは 4行が 届かない。
+       ★ ★ここでは 数えるのでは なく ―― ★★**1行ずつ 実際に さして 確かめます**：
+         ★ ①その 行を 見える ところへ 送る（scrollIntoView）
+         ★ ②まん中の 点が **画面の 中**に あるか
+         ★ ③その 点を さすと ★★**本当に その 行が 返るか**（elementFromPoint）
+         ★ ④たてが **44px 以上**か（★この 会社の 決まり）
+       ★ ★見て いる 間だけ はじめの 画面を 出し、★★状態は 1つ 残らず 元に もどします。
+       ============================================================ */
+    var rf = document.getElementById('ruleFold');
+    var r18 = { rows: 0, ok: 0, ng: [], small: 0 };
+    if (rf) {
+      var kTitleHid = titleScreen.classList.contains('hidden');
+      var kPlayHid = playScreen.classList.contains('hidden');
+      var kOpen = rf.open, kTop = titleScreen.scrollTop;
+      titleScreen.classList.remove('hidden');
+      playScreen.classList.add('hidden');
+      rf.open = true;
+      void titleScreen.offsetWidth;
+      var rrs = titleScreen.querySelectorAll('.rule-row');
+      r18.rows = rrs.length;
+      /* ⚠️★★★ ここは **`scrollIntoView` を 使っては いけません**（★T160 で 私が やらかした ところ）
+         ★ ★`scrollIntoView` は「★動かせる 入れ物」を **上から ぜんぶ** 動かします。
+         ★ ★★`.rule-fold` は 角丸の ために `overflow:hidden` ―― ★★**人は 指で 動かせません。**
+           ★ ★でも 中身は 動かせて しまう ので、★★**人が 届かない 行を「届いた」と 数えます。**
+         ★ ★★実測（T160・わざと 壊した ④⑤⑥）：★scrollIntoView だと **3通りとも 鳴りませんでした。**
+         ★ ★→ ★★**人が 本当に 動かせる 入れ物（`.title-screen`）だけ**を 動かして 測ります。 */
+      var tsBox = titleScreen.getBoundingClientRect();
+      var maxTop = Math.max(0, titleScreen.scrollHeight - titleScreen.clientHeight);
+      for (var i18 = 0; i18 < rrs.length; i18++) {
+        var rr = rrs[i18];
+        rf.scrollTop = 0;                            /* ★ 人が 動かせない ところは 0 の まま */
+        var rl18 = rf.querySelector('.rule-list'); if (rl18) rl18.scrollTop = 0;
+        var b0 = rr.getBoundingClientRect();
+        var mid = (b0.top - tsBox.top) + titleScreen.scrollTop + b0.height / 2;   /* ★ 中身の 中での 位置 */
+        var want = mid - titleScreen.clientHeight / 2;
+        titleScreen.scrollTop = Math.max(0, Math.min(maxTop, want));
+        var bb = rr.getBoundingClientRect();
+        var cx18 = Math.round(bb.left + bb.width / 2), cy18 = Math.round(bb.top + bb.height / 2);
+        var nm18 = ((rr.querySelector('.rule-name') || {}).textContent || ('' + (i18 + 1) + '行目')).trim();
+        var inV = (cy18 >= 0 && cy18 <= window.innerHeight && cx18 >= 0 && cx18 <= window.innerWidth);
+        var hit18 = inV ? document.elementFromPoint(cx18, cy18) : null;
+        var mine = !!(hit18 && hit18.closest && hit18.closest('.rule-row') === rr);
+        if (inV && mine) r18.ok++; else r18.ng.push(nm18);
+        if (bb.height < 44) r18.small++;
+      }
+      /* ⚠️★★ もう 1つの 目 ―― ★★**はみ出しが「上」に 出て いないか**
+         ★ ★行が 5つとも 押せても、★★`justify-content:center` の ままだと
+           ★ ★はみ出しは **上下に 半分ずつ** 出ます。★★上に 出た ぶんは scrollTop を
+           ★ ★マイナスに できない ので、★★**どうやっても 届きません**（★ハッピーが 消えます）。
+         ★ ★→ ★★いちばん 上まで 送って「上が 切れて いないか」、
+           ★ ★★いちばん 下まで 送って「下が 切れて いないか」を 見ます。 */
+      titleScreen.scrollTop = 0;
+      var tsA = titleScreen.getBoundingClientRect();
+      var f18 = titleScreen.firstElementChild, l18 = titleScreen.lastElementChild;
+      r18.cutTop = f18 ? Math.round(tsA.top - f18.getBoundingClientRect().top) : 0;
+      titleScreen.scrollTop = Math.max(0, titleScreen.scrollHeight - titleScreen.clientHeight);
+      var tsB = titleScreen.getBoundingClientRect();
+      r18.cutBottom = l18 ? Math.round(l18.getBoundingClientRect().bottom - tsB.bottom) : 0;
+
+      titleScreen.scrollTop = kTop;
+      rf.open = kOpen;
+      if (kTitleHid) titleScreen.classList.add('hidden');
+      if (!kPlayHid) playScreen.classList.remove('hidden');
+      void document.body.offsetWidth;              /* ★ 元の 形に もどして から 次の 見張りへ */
+    }
+    if (!rf) ng.push('★特別な 札の ○✕ の 箱（#ruleFold）が ない');
+    else if (r18.ng.length) {
+      ng.push('★★★○✕ の 中に 押せない 行が ' + r18.ng.length + '行 ある：' + r18.ng.join('・') +
+              '（★★スクロールしても 届きません）');
+    }
+    if (r18.small) ng.push('★○✕ の 行が 44px より 低い：' + r18.small + '行');
+    if (r18.cutTop > 1) {
+      ng.push('★★はじめの 画面の **上が ' + r18.cutTop + 'px 切れて、★どうやっても 届かない**' +
+              '（★いちばん 上まで 送っても 出て きません）');
+    }
+    if (r18.cutBottom > 1) {
+      ng.push('★★はじめの 画面の **下が ' + r18.cutBottom + 'px 切れて、★どうやっても 届かない**');
+    }
+    note['⑱ ★○✕ の 5行'] = '押せた ' + r18.ok + ' / ' + r18.rows + '行' +
+                            (r18.ng.length ? '（★届かない：' + r18.ng.join('・') + '）' : '') +
+                            '／44px 割れ ' + r18.small + '行' +
+                            '／届かない 上 ' + (r18.cutTop > 0 ? r18.cutTop : 0) + 'px・下 ' +
+                            (r18.cutBottom > 0 ? r18.cutBottom : 0) + 'px';
+
     /* ⑧ ★寸法 */
     var want = [[1504, 901, 100, '1512×945'], [992, 856, 100, '1000×900'], [367, 623, 49, '375×667'],
                 [312, 524, 42, '★320×568'], [804, 331, 72, '横向き 812×375']];
@@ -1842,8 +1999,18 @@
     if (/var\s+t\s*=\s*e\.target/.test(String(onUp))) {
       ng.push('★★★onUp が e.target を 見て いる（★指では 押した 札の まま に なります）');
     }
+    /* ★★ ⑰ の 3つ目の 目（T160）―― ★onUp が「ちがう 札だった とき」に 返事を 呼んで いるか。
+       ★ ★動きの 測り（sp.say）だけでも 見つかりますが、★★行でも 見て おきます
+         （★★2つの 目で 見る ―― ★T157 §4 と 同じ 作法）。 */
+    var upSrc = String(onUp), upCut = upSrc.indexOf('var where');
+    if (upCut < 0 || !/nope\s*\(/.test(upSrc.slice(0, upCut))) {
+      ng.push('★★★onUp の「すべって 外した」ところに 返事が ない（★nope を 呼んで いません）');
+    }
     note['⑯ ★すべらせて はなす'] = 'まっすぐ ' + sp.straight + '／★指で すべらせる ' + sp.stuck +
                                     '／マウスで すべらせる ' + sp.mouse;
+    note['⑰ ★★出なかった ときの 返事'] = 'まっすぐ 出た とき ' + sp.sayStraight +
+                                    '／★★指で すべった とき ' + sp.say +
+                                    '／マウスで すべった とき ' + sp.sayMouse;
 
     var out = {
       '★NG': ng.length, '中身': ng.length ? ng : 'ぜんぶ OK ✅',

@@ -106,11 +106,33 @@ body {
 @media (max-width:340px) { .app-shell { padding:6px 3px; } }
 
 /* ── はじめの 画面 ───────────────────────── */
+/* ⚠️★★★ T160 ―― ★★はみ出したら **スクロールで 届く** ように する ★★★
+   ------------------------------------------------------------
+   ★ トライの 実測（T153 🟡-2 → T159）：★★320×568 で ○✕ を ひらくと
+     ★★**5行目「A＝もう1回」が 押せない。★★スクロールしても 届かない。**
+     ★横向き（812×375）では **5つの うち 4つ**が 届きません。
+   ★ ★★正体は 2つ 重なって いました【実測・T160】：
+     ★ ★① `.rule-fold` は flex の 子 ―― ★★**初期値で ちぢみます**（flex-shrink:1）。
+       ★ ★そこへ `overflow:hidden`（★角丸の ため）が かかって いる ので、
+       ★ ★★**ちぢんだ ぶんの 中身が、そのまま 切り落とされて いました**
+       ★ ★（★320×568 の 実測：★要る 313px ／ 出て いる **276px**）。
+       ★ ★＝ ★中身が はみ出して いない ので、★★titleScreen は「スクロールする 必要なし」と 見ます
+         （★実測：★scrollHeight 507px ＝ clientHeight 507px。★scrollTop は 0 の まま）。
+     ★ ★② かりに ①を 直しても、★`justify-content:center` の ままだと
+       ★ ★★**はみ出しは 上下に 半分ずつ 出ます。★上に 出た ぶんは scrollTop が 負に できず 届きません。**
+   ★ ★→ ★★**①は `flex:0 0 auto`（ちぢませない）。★②は「入る ときだけ まん中」に する。**
+     ★ ★②の 形は ―― ★`justify-content:flex-start` に して、
+       ★ ★**いちばん 上と いちばん 下の 子に `margin:auto`** を 置きます。
+       ★ ★flex の auto余白は **余りが ある ときだけ** 広がり、★★足りない ときは 0 に なる ――
+       ★ ★★＝「入る ときは まん中・はみ出す ときは 上から」が 1つの 形で 書けます。
+   ★ ★★見た目は 1pxも 変わりません（★入る 画面では 前と 同じ まん中ぞろえ）。→ ★実測は 作業メモ §4 */
 .title-screen {
   flex:1 1 auto; min-height:0; overflow:auto;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:10px;
   text-align:center; padding:6px 4px;
 }
+.title-screen > :first-child { margin-top:auto; }
+.title-screen > :last-child { margin-bottom:auto; }
 .title-happy { display:flex; flex-direction:column; align-items:center; gap:2px; }
 .title-happy .happy-cat { width:76px; height:57px; }
 .happy-name { margin:0; font-size:10px; font-weight:900; color:#c9a24a; }
@@ -123,6 +145,7 @@ body {
 /* ★★ 特別な 札の ○✕（★2本目の 例外・社長裁定 2026-08-28）★★
    ★ たたんで あります ―― ★何も 触らずに「はじめる ▶」を 押せる 形（設計図 §5.5-②）。 */
 .rule-fold {
+  flex:0 0 auto;                      /* ★★ T160：★ちぢませない（→ 上の ⚠️）*/
   width:min(100%, 380px); background:var(--white); border-radius:14px;
   box-shadow:0 2px 0 #e6dcc9; text-align:left; overflow:hidden;
 }
