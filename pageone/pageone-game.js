@@ -155,16 +155,86 @@
     var lay = C.pickLayout(W, H);
     var need = lay.botH + C.FIT.PAD + lay.mid + C.FIT.PAD + lay.h;
     var slack = Math.max(0, H - need);
-    var padTop = Math.min(8, Math.floor(slack / 2));
+
+    /* ★★★★★ T163 ―― ★★まん中の 空きを 配り直す（🎨アト・2026-08-28）★★★★★
+       ------------------------------------------------------------
+       ★ アイの 指摘：「★大富豪と ならべると、★ロボットと 台の あいだが 大きく 空いて、
+         ★★ハッピーが 浮いて 見える」。★→ ★★数えたら 本当でした【実測・T163】：
+
+       | 画面 | ★何も 無い たての 帯（★いちばん 長い もの） | 盤の たての 何% |
+       |---|---|---|
+       | 320×568  大富豪 | **16px** | 3.1% |
+       | 320×568  ページワン | **104px** | **20.5%** |
+       | 375×812  大富豪 | **12px** | 2.1% |
+       | 375×812  ページワン | **198px** | **26.5%** |
+       | 1512×945 大富豪 | **14px** | 1.9% |
+       | 1512×945 ページワン | **108px** | **12.3%** |
+
+       ★★ 正体は **この 数行**でした ―― ★T162 まで、
+          ★`midH = lay.mid + slack - padTop*2` ＝ ★★**余りを ぜんぶ まん中の 帯へ**。
+          ★ ★そして 台と 札は その 帯の **下ぞろえ**。★上が まるごと 空きます。
+          ★ ★ハッピーは その 空きの まん中に 1人で 立って いました ＝ ★★「浮いて いる」。
+
+       ★★ 直し方（★新しい ものは **1つも 足して いません**。★置き場所と 大きさ だけ）：
+          ★ ① 台を 大富豪の **上限（台÷札 ＝ 2.26）**まで 太らせる（★いまは 1.85）
+          ★ ② ハッピーを 札×2.4（天井 220px）まで 大きく する（★T162 は 札×1.7・天井 180px）
+          ★ ③ ★★それでも 残った 余りを、★**5つの すきまに 均等に 配る**
+               （★上／ロボットの 下／ハッピーの 下／台の 下／手札の 下）
+          ★ ★★①→②→③ の 順。★★①②で 使い切らない ぶんだけ ③に 回ります。
+
+       ⚠️★ ぺったんこな 画面（★横向き 812×375 など）は **T162 の まま**です ――
+          ★ ★下の 3つ目の 道（★`else`）に 落ちて、★台の わくを 縮めて 入れます。
+          ★ ★ここを 変えると T162 の「よこ向きでも 場が 分かる」が 死にます。 */
+    var PADMIN = 4;                                   /* ★ すきまの 下ばり */
+    var EDGE = 13;                                    /* ★ 4 ＋ 7 ＋ 2（★大富豪の 実測）*/
+    var chh = lay.h;
+    /* ★ 台 ―― ★下ばり ＝ T162 の 1.85倍／天井 ＝ 大富豪の 2.26倍【どちらも 実測】*/
+    var feltBase = chh + 2 * (EDGE + Math.max(6, Math.round(chh * 0.425) - EDGE));
+    var feltCap  = Math.max(feltBase, Math.round(chh * 2.26));
+    /* ★ ハッピー ―― ★40px を 切ったら 出しません（★T162 の 決まりの まま）*/
+    var happyCap = Math.min(220, Math.round(chh * 2.4));
+    var HAPPY_MIN = 40;
+    var fixed = lay.botH + chh;                       /* ★ ロボット帯 と 手札（★動かさない）*/
+    var feltH, happyH, pad, padOut, nGap;
+
+    if (H - fixed - 5 * PADMIN - feltBase - HAPPY_MIN >= 0) {
+      /* ★ ふつう ―― ★ハッピーも 出せる */
+      nGap = 5;
+      var free = H - fixed - nGap * PADMIN;           /* ★ 台 と ハッピーに 使える たて */
+      feltH  = Math.min(feltCap, free - HAPPY_MIN);
+      /* ★★ ハッピーは **台より 大きく しません** ★★
+         ★ ★これが 無いと 375×812 で ★かお 175px ／ 台 165px ―― ★★猫が 場より 大きい 画面に
+           ★なりました【実測・私の 1回目】。★★主役は 場です。 */
+      happyH = Math.min(happyCap, feltH, free - feltH);
+      pad    = Math.max(PADMIN, Math.floor((H - fixed - feltH - happyH) / nGap));
+      padOut = pad;
+    } else if (H - fixed - 4 * PADMIN - feltBase >= 0) {
+      /* ★ ハッピーが 入らない ―― ★台だけ 太らせる */
+      nGap = 4; happyH = 0;
+      feltH = Math.min(feltCap, H - fixed - nGap * PADMIN);
+      pad   = Math.max(PADMIN, Math.floor((H - fixed - feltH) / nGap));
+      padOut = pad;
+    } else {
+      /* ★★ ぺったんこ（★横向き 812×375・667×375）―― ★★T162 の 計算を **そのまま** 使います ★★
+         ★ 社長が 気に入って いる ②「どれが 場か 分かる」は、★よこ向きでは わくを 縮めて
+           ★ようやく 成り立って います（★T162 §5-②）。★★1px も 動かしません。
+         ★ ★私は 1回、★ここにも 5つの すきまの 決まりを かけて、★★台を 116px → 110px に
+           ★★やせさせました【私の 回り道・T163】。★→ ★T162 の 式に 戻して あります。 */
+      nGap = 4; happyH = 0;
+      padOut = Math.min(8, Math.floor(slack / 2));    /* ＝ T162 の padTop */
+      pad = C.FIT.PAD;                                /* ＝ T162 の ゾーンの あいだ（8px）*/
+      feltH = lay.mid + slack - padOut * 2;           /* ＝ T162 の midH */
+    }
+
     geo = {
       W: W, H: H,
       cw: lay.w, ch: lay.h, gap: lay.g, bw: lay.bw, bh: lay.bh,
-      botTop: padTop, botH: lay.botH,
-      midTop: padTop + lay.botH + C.FIT.PAD,
-      midH: lay.mid + slack - padTop * 2,
-      slack: slack, padTop: padTop, tight: !!lay.tight
+      botTop: padOut, botH: lay.botH,
+      midTop: padOut + lay.botH + pad,
+      midH: (happyH ? happyH + pad : 0) + feltH,
+      slack: slack, padTop: padOut, pad: pad, nGap: nGap, tight: !!lay.tight
     };
-    geo.meTop = geo.midTop + geo.midH + C.FIT.PAD;
+    geo.meTop = geo.midTop + geo.midH + pad;
     geo.meH = lay.h;
     geo.colW = Math.floor(W / 3);
     /* ★★ 山札 と 場札 は まん中の 帯の **下ぞろえ** ―― ★自分の 手札の すぐ 上に 置きます ★★
@@ -192,15 +262,14 @@
        ⚠️★ ぺったんこな 画面（★横向き 812×375：★帯 116px・札 100px ＝ 余り 16px）では
           ★★わくを **そのまま 縮めます**（★13px → 4px）。★消しません ―― ★消すと
           ★★「どれが 場か」が また 分からなく なるから です。 */
-    var EDGE = 13;                                          /* ★ 4 ＋ 7 ＋ 2（★大富豪の 実測）*/
-    var room = Math.floor((geo.midH - geo.ch) / 2);         /* ★ 札の 上下に 使える たて */
-    var wantPad = Math.max(6, Math.round(geo.ch * 0.425) - EDGE);  /* ★ 台÷札 ＝ 1.85 に なる 余白 */
-    var edge = EDGE, padY = wantPad;
+    /* ★★ T163：★台の たけは もう 上で 決まって います（feltH）。
+       ★ ★ここでは その たけを、★大富豪と 同じ わりふり（木4／内よはく7／みどり2）に
+         ★★ほどく だけ です。★★T162 の 見た目は 1pxも 変わりません ―― ★太さだけ が 変わります。 */
+    var room = Math.floor((feltH - geo.ch) / 2);            /* ★ 札の 上下に 使える たて */
+    var edge = EDGE, padY = Math.max(0, room - EDGE);
     if (room < EDGE + 6) {                                  /* ★ 横向きの ような ぺったんこ */
       edge = Math.max(4, Math.floor(room * 0.55));
       padY = Math.max(0, room - edge);
-    } else if (room < EDGE + wantPad) {
-      padY = room - EDGE;
     }
     geo.feltBd  = Math.max(1, Math.round(edge * 4 / EDGE));
     geo.feltPad = Math.max(1, Math.round(edge * 7 / EDGE));
@@ -208,25 +277,25 @@
     geo.feltEdge = geo.feltBd + geo.feltPad + geo.feltIn;
     geo.feltPadY = Math.max(0, padY);
     geo.feltOff = geo.feltEdge + geo.feltPadY;              /* ★ 札の 外がわに 要る たて */
-    geo.midY = Math.round(geo.midTop + geo.midH - geo.ch - geo.feltOff);
-    geo.feltTop = geo.midY - geo.feltOff;
     geo.feltH = geo.ch + geo.feltOff * 2;
+    /* ★★ T163：★台は まん中の 帯の **いちばん 下**（★手札の すぐ 上）の まま。
+       ★ ★上に できた ぶんは ハッピーと すきまが もらいました。 */
+    geo.feltTop = geo.midTop + geo.midH - geo.feltH;
+    geo.midY = geo.feltTop + geo.feltOff;                   /* ★ 山札・場札の 上ばし */
 
-    /* ★ ハッピーの 場所（★台の 上・まん中）
-       ★★ T162：★下ばしは「山札の 上」では なく **台の 上**に 変えました
-          ―― ★でないと ハッピーが 台に めりこみます。 */
-    geo.happyBoxTop = geo.midTop + 22;                       /* ★ 22 ＝ ひとことの 帯 */
-    geo.happyBoxH = Math.max(0, geo.feltTop - geo.happyBoxTop - 6);
-    /* ★ 大きい 画面で ハッピーだけが 育ちすぎない ように 180px で 止めます（★あとは 🎨アト）
-       ★★ T162：★入る たてが 40px 未満の ときは **出しません**。
-          ★ ★理由（★実測・直す前の 812×375 よこ）：★入る たては 24px しか 無いのに
-            ★★26px の かおが 山札と 場札の あいだに 押しこまれて いました
-            ―― ★★写真で 見ると 顔では なく「点」です（★T162_写真 の 前_ページワン_遊ぶ_812x375よこ）。
-          ★ ★ハッピーは 上の帯（.brand-cat）にも いる ので、★設計図 §9.5「全ゲームに 必ず 登場」は 保てます。 */
-    geo.happyShow = geo.happyBoxH >= 40;
-    geo.happyH = geo.happyShow
-      ? Math.max(26, Math.min(geo.happyBoxH, Math.round(geo.ch * 1.7), 180))
-      : 0;
+    /* ★★★ T163 ―― ★ハッピーは まん中の 帯の **いちばん 上**（★台の 真上）★★★
+       ★ T162 まで：★「空いた ところの まん中」に 置いて いました
+         ―― ★★空きが 300px を こえる 画面では、★★上にも 下にも 空きが 残り、
+         ★★ハッピーは その まん中に **1人で 浮いて** いました（★アイの 指摘・T163）。
+       ★ ★いまは 帯の 上に そろえ、★上下の 空きは 5つの すきまに 分けて あります。 */
+    geo.happyShow = happyH >= HAPPY_MIN;
+    geo.happyH = geo.happyShow ? happyH : 0;
+    geo.happyBoxTop = geo.midTop;
+    geo.happyBoxH = geo.happyH;
+    /* ★ ひとこと（`.say`）―― ★T162 は ハッピーの **上**（帯の てっぺん）に 置いて いました。
+       ★ ★いまは ハッピーと 台の あいだ（★すきま）に 置きます ―― ★★かおの 下から 話す 形。
+       ★ ★出て いない ときは 何も 場所を 取りません（★position:absolute の まま）。 */
+    geo.sayTop = geo.happyShow ? (geo.happyH + Math.max(0, Math.floor((pad - 22) / 2))) : 0;
     return geo;
   }
 
@@ -264,7 +333,10 @@
       feltTable.style.height = geo.feltH + 'px';
     }
     happySpot.classList.toggle('hidden', !geo.happyShow);
-    happySpot.style.top = Math.round(geo.happyBoxTop - geo.midTop + (geo.happyBoxH - geo.happyH) / 2) + 'px';
+    happySpot.style.top = Math.round(geo.happyBoxTop - geo.midTop) + 'px';
+    /* ★★ T163 ―― ★ひとことは ハッピーの 下（★かおの 下から 話す 形）★★
+       ★ T162 まで：★帯の てっぺん ＝ ★ハッピーの **上**（★頭の 上に 字が 出て いました）。 */
+    if (sayEl) sayEl.style.top = geo.sayTop + 'px';
     /* ★ 8で 決めた マークの しるし ―― ★場札の 右上に 1つ（ルル §9）
        ⚠️★ この しるしは `.middle` の 中に います。★★top は **帯の 中の 座標**で 書く こと
           ―― ★私は ここで 器ぜんたいの 座標（geo.midY）を そのまま 入れて しまい、
@@ -1044,6 +1116,10 @@
         'ロボットの 帯': geo.botH + 'px（上 ' + geo.botTop + 'px）',
         'まん中の 帯': geo.midH + 'px（上 ' + geo.midTop + 'px）',
         '自分の 帯': geo.meH + 'px（上 ' + geo.meTop + 'px）',
+        /* ★★ T163 で 足した 3行 ―― ★「まん中の 空き」を 数で 見える ように */
+        '★すきま': geo.pad + 'px × ' + geo.nGap + 'つ（★上下の はし ' + geo.padTop + 'px）',
+        '★台': geo.feltH + 'px（★台÷札のたけ ' + (geo.feltH / geo.ch).toFixed(2) + '）',
+        '★ハッピー': geo.happyShow ? geo.happyH + 'px' : '出さない',
         '上下の 余り': geo.slack + 'px',
         '★結果の 箱の 天井': getComputedStyle(document.documentElement).getPropertyValue('--result-max').trim(),
         'ページ縦スクロール': document.documentElement.scrollHeight > window.innerHeight,
