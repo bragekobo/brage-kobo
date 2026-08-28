@@ -14,10 +14,12 @@
        ★★ `…/brage-kobo/<名前>/` が 正 です。★`games/` を 足すと **18本 とも 404**。
        ★★ （★この フォルダ そのものが 公開の 根っこ だから です・設計図 §8.5）。
 
-       ★★ この1本も og:image が ありません ★★
-         ★ トランプを 1枚も 使いません（設計図 §9 は かかりません・ルル §1-1）。
-         ★ うそに なる ので、他の ゲームの 札を 借りません。
-         ★ 絵が 要るなら 🎨アトが この ゲーム用に 1枚 作って、ここに 足すこと。
+       ★★ 見出しの 絵（og:image）★★ T158 で 足しました（🎨アト）
+         ★ 中の 盤は **本物の この ゲームを 本物の Chrome で 打って 撮った 写真** です。
+           ★ 描き直して いません（★トランプの 札を 借りるのは うそ ―― コーダ T157 §6-4）。
+         ★ 絵の 置き場所：office/games/og/og-gomoku.png（★公開だと …/brage-kobo/og/…）
+         ★★ 下の width / height は **PNG の 頭から 読んだ 本当の 数**（600×600）。
+            ⚠️★ 絵を 差しかえたら、★この 2つの 数も かならず 直すこと（T157 §6-3 の 落とし穴）。
 
        ★★ 画面に 出す 言葉は すべて「五目並べ」★★
          ★ 「並べ」は 漢字（★「並」は 小6・設計図 §9.6）。
@@ -32,9 +34,15 @@
   <meta property="og:title" content="五目並べ ― ブラウザですぐ遊べる｜ブラゲ工房" />
   <meta property="og:description" content="黒と 白を、たて よこ ななめに 5つ 並べよう。ダウンロードはいりません。開いたらすぐ遊べます。" />
   <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/gomoku/" />
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/og/og-gomoku.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="600" />
+  <meta property="og:image:height" content="600" />
+  <meta property="og:image:alt" content="五目並べの 木の 盤。黒い 石が よこに 4つ 並んで います" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="五目並べ ― ブラウザですぐ遊べる｜ブラゲ工房" />
   <meta name="twitter:description" content="黒と 白を、たて よこ ななめに 5つ 並べよう。開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/og/og-gomoku.png" />
 
   <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存14本と おなじ。 -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
