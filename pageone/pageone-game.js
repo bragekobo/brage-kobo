@@ -665,7 +665,9 @@
       return;
     }
     var where = t.where;
-    if (where === 'deck') { doDraw(); return; }
+    /* ★★ T161：★山札を まっすぐ 押した のに 引けなかった とき ―― ★「ぷるっ」と 返します
+       ★ ★doDraw は「引けたか」を 返します（★false ＝ 何も 起きなかった）。→ 下の ⚠️ T161 */
+    if (where === 'deck') { if (!doDraw()) nope(t); return; }
     if (where !== 'me') { nope(t); return; }
     if (g.cur !== 0) { nope(t); return; }
     if (takeLeft > 0) { nope(t); return; }
@@ -684,19 +686,54 @@
     return -1;
   }
 
-  /* ★★ 山札を 押した ―― 1枚 引く（★人が 押した ときだけ 通ります）★★ */
+  /* ============================================================
+     ★★★ ⚠️ T161 ―― ★山札を まっすぐ 押した ときの 返事 ★★★
+     ------------------------------------------------------------
+     ★ ★T160 で 私が 数えて、★社長に 上げた 1件です【実測・T160 §5-1】：
+       ★ ★★「出せる とき に 山札を まっすぐ 押す」と ―― ★★**画面が 1文字も 返しません**
+         （★T161 で 3サイズ 60回 押し直しても ★★**返事 0回**。★引けては いません ＝ 正しい）。
+     ★ ★★社長の 決め：★★**返す。**★（★どう 返すかは 私が 決めました → 下）
+     ------------------------------------------------------------
+     ★★ 私の 決め ―― ★★**手札と まったく 同じ「ぷるっ」を 使い回します**（★新しい CSS 0行・新しい 印 0種類）
+       ★ ★T160 §2-2 と 同じ 考え方 です。★`is-no` は 0.16秒の 返事 で、
+         ★★**強調（ずっと 出て いる 印）では ありません** ―― ★★§5.5「強調は 1種類まで」を こえません。
+     ------------------------------------------------------------
+     ★★★ ここが この 直しの ぜんぶ ―― ★★**線を こえて いないか** ★★★
+       ★ ★社長の 線：★★「★出せる 札が あるよ と 教えたら、★★それは 遊びの 情報。★こえるな」
+       ★ ★★山札が ゆれるのは ―― ★★**自分の 番・引かされて いない・出せる 札が ある** とき だけ です
+         （★doDraw の 2つの return が それ）。★★＝ ★理屈の 上では
+         ★★「出せる 札が ある」と 言って いる ことに なります。
+       ★ ★★**それでも こえて いません。★理由は 1つ だけ：**
+         ★★ **その ことは、★押す 前から すでに 画面に 出て いる** から です。
+         ★ ★`refreshDim` は 自分の 番の あいだ ずっと ―― ★★出せない 札を 暗くして います。
+           ★★ ＝ ★★**明るい 札が 1枚でも あれば「出せる 札が ある」** ―― ★★指を 触れる 前に 見えて います。
+         ★ ★★山札の ぷるっが 新しく 言う ことは ★★**1つも ありません。**
+           ★ ★言って いるのは ★★「★いま の 押しは 届いた。★でも 何も 起きなかった」―― ★★操作の 返事 です。
+       ★ ★★**言わない ことも 決めました**（★ここを こえたら 追記② 違反 です）：
+         ★ ★★どの 札を 出せば いいかは 言いません（★山札は 手札を 1枚も 指しません）
+         ★ ★★ひとことも 出しません（★`say()` を 呼びません ―― ★★文字で 教えたら それは 説明の 追加）
+         ★ ★★手札の 明るさを 1枚も 変えません（★→ ⑲ が 毎回 数えます）
+     ------------------------------------------------------------
+     ★★ 私が **やらなかった** こと（★濁さず 書きます・追記⑤ → 作業メモ §5）：
+       ★ ★★ロボットの 番・動いて いる 間（`busy`）は 返しません。★onDown が そもそも 受けません。
+         ★ ＝ ★★**盤ぜんたいが 眠って いる** ので、★1枚だけ ゆらすと 逆に おかしく なります。
+       ★ ★★マーク板を 出して いる 間（`waitSuit`）も 返しません。★同じ 理由（★busy）です。
+     ============================================================ */
+  /* ★★ 山札を 押した ―― 1枚 引く（★人が 押した ときだけ 通ります）★★
+     ★★ 返り値：★引けた（＝ 何かが 起きた）なら true ／ ★何も 起きなかったら false */
   function doDraw() {
-    if (busy || over || !g || g.over || g.cur !== 0) return;
-    if (takeLeft === 0 && C.canPlay(g, 0)) return;   /* ★ 出せる ときは 引けません */
+    if (busy || over || !g || g.over || g.cur !== 0) return false;
+    if (takeLeft === 0 && C.canPlay(g, 0)) return false;   /* ★ 出せる ときは 引けません */
     var d = C.drawOne(g, 0);
     rebuild();
-    if (!d.ok) { finish(); return; }
+    if (!d.ok) { finish(); return true; }
     if (takeLeft > 0) {
       takeLeft--;
       if (takeLeft === 0) { say(''); busy = true; later(T.DRAW_MOVE, function () { afterTurn(0, false); }); }
-      return;
+      return true;
     }
     if (C.canPlay(g, 0)) { say(''); refreshDim(); }
+    return true;
   }
 
   /* ★★★ 人が 1枚 出す ★★★
@@ -1606,6 +1643,155 @@
   }
 
   /* ============================================================
+     ★★★ ⑲ ★山札を まっすぐ 押した ときの 返事（T161）★★★
+     ------------------------------------------------------------
+     ★★ 数えるのでは なく ―― ★★**本物の 道（onDown → onUp → doDraw）を 3通り 通します。**
+       ★ ★(a) ★★出せる とき に 山札を 押す … ★★引けない（追記④）＋ ★★ぷるっと 返す
+       ★ ★(b) ★★くらべ：出せない とき に 押す … ★★引ける ＋ ★★**1枚も ゆれない**
+             ―― ★★これが 無いと「★いつも ゆれる」でも (a) は 通って しまいます（★T160 §6-③ の わな）
+       ★ ★(c) ★★山札 0枚（空の わく）＋ 出せる とき … ★★まぜ直しも 起きない ＋ ぷるっ
+             ―― ★★ここが いちばん あぶない：★引いたら core が 場札を まぜ直して しまいます
+     ★★ そして ―― ★★**線を こえて いないか を 毎回 数えます**（→ doDraw の 上の ⚠️ T161）：
+       ★ ★★手札の 暗い／明るいが **1枚も 変わって いない**（★遊びの 情報を 足して いない）
+       ★ ★★ゆれる 前から **明るい 札が 1枚以上 見えて いる**（★★新しい ことを 何も 言って いない）
+       ★ ★★ひとことを 出して いない（★`sayEl` が かくれた まま）
+     ★ ★状態は 1つ 残らず 元に もどします（★52枚 きっちり 保った まま）。
+     ============================================================ */
+  /* ★ 手札の「暗い／明るい」を 1本の 文字列に する（★1 ＝ 暗い・0 ＝ 明るい）*/
+  function dimMap() {
+    var m = '', i, e;
+    for (i = 0; i < g.hands[0].length; i++) {
+      e = cardEl[g.hands[0][i].id];
+      m += e ? (e.classList.contains('is-dim') ? '1' : '0') : '?';
+    }
+    return m;
+  }
+  function deckProbe() {
+    var out = { ok: 0, can: '―', canSay: '―', shakes: '―', see: '―',
+                no: '―', noSay: '―', empty: '―', emptySay: '―',
+                bright: 0, dimSame: '―', said: '―', why: [] };
+    if (!g || !cardsEl || !geo || !built) { out.why.push('★場面を 作れない（★立ち上がって いない）'); return out; }
+    var snap = snapG();
+    var kBusy = busy, kOver = over, kTake = takeLeft, kWait = waitSuit, kMix = g.mixes;
+    var kResult = resultWrap.classList.contains('hidden');
+    var kSay = sayEl.classList.contains('hidden');
+    var tMark = timers.length;
+
+    function reset() {
+      restoreG(snap);
+      busy = false; over = false; takeLeft = 0; waitSuit = -1;
+      resultWrap.classList.add('hidden');
+      sayEl.classList.add('hidden');
+      var a = cardsEl.querySelectorAll('.card.is-no'), i;   /* ★ 前の 回の 名残を 消して から 測る */
+      for (i = 0; i < a.length; i++) a[i].classList.remove('is-no');
+    }
+    /* ★ 山札の 場所に「いま 本当に ある もの」を、★★onUp と 同じ 目（hitAt）で 引く */
+    function deckEl() {
+      if (!deckSlot || !deckSlot.parentNode) return null;
+      var q = deckSlot.getBoundingClientRect();
+      return hitAt(q.left + q.width / 2, q.top + q.height / 2);
+    }
+    function pressDeck() {
+      var e = deckEl();
+      if (!e) return null;
+      var q = e.getBoundingClientRect();
+      pressRelease(e, e, q.left + q.width / 2, q.top + q.height / 2);
+      return e;
+    }
+    function shaken() { return cardsEl.querySelectorAll('.card.is-no').length; }
+
+    still(function () {
+      /* ★ (a) ★★出せる とき に 山札を まっすぐ 押す */
+      reset();
+      if (!makeCanPlay()) { out.why.push('★★試し方が おかしい：★「出せる 札が ある」場面を 作れなかった'); return; }
+      rebuild(); placeAll(true); refreshDim();
+      var d0 = g.deck.length, h0 = g.hands[0].length, m0 = g.mixes, p0 = g.pile.length;
+      var dim0 = dimMap();
+      out.bright = dim0.split('0').length - 1;
+      if (out.bright < 1) { out.why.push('★★試し方が おかしい：★出せる 場面な のに 明るい 札が 0枚'); return; }
+      if (shaken()) { out.why.push('★★試し方が おかしい：★押す 前から ゆれて いる'); return; }
+      var e = pressDeck();
+      if (!e) { out.why.push('★★試し方が おかしい：★山札の 場所に 押す ものが 無い'); return; }
+      out.can = (g.deck.length === d0 && g.hands[0].length === h0 &&
+                 g.mixes === m0 && g.pile.length === p0) ? '○ 引けない' : '★★✕ 引けて しまう';
+      if (out.can !== '○ 引けない') {
+        out.why.push('★★★出せる のに 山札から 引けて しまった（★設計図 追記④「勝手に 引かない」）');
+      }
+      var got = e.classList.contains('is-no');
+      out.canSay = got ? '○ ぷるっと 返した' : '★★✕ 何も 返さない';
+      if (!got) {
+        out.why.push('★★★出せる ときに 山札を まっすぐ 押しても、★画面が 1つも 返事を しない' +
+                     '（★遊ぶ人には 壊れたと 見分けが つきません）');
+      }
+      out.shakes = shaken() + '枚';
+      if (shaken() !== 1) out.why.push('★★山札を 押して ゆれた ものが ' + shaken() + '枚（★1枚 の はず）');
+      /* ★ 目に 見える 大きさか（★T160 の 意地悪と 同じ ものさし）*/
+      var q = e.getBoundingClientRect(), op = parseFloat(getComputedStyle(e).opacity);
+      out.see = Math.round(q.width) + '×' + Math.round(q.height) + 'px・すきとおり ' + (isNaN(op) ? '―' : op.toFixed(2));
+      if (q.width < 24 || q.height < 24 || !(op > 0.05)) {
+        out.why.push('★★★ゆれた ものが 目に 見えない（' + out.see + '）');
+      }
+      /* ★★ 線 ―― ★手札の 明るさを 1枚も 変えて いない／★ひとことも 出して いない */
+      out.dimSame = (dimMap() === dim0) ? '○ 1枚も 変わらない' : '★★✕ 明るさが 変わった';
+      if (dimMap() !== dim0) {
+        out.why.push('★★★山札の 返事で 手札の 明るさが 変わった（★★遊びの 情報を 足して います）');
+      }
+      out.said = sayEl.classList.contains('hidden') ? '○ 出して いない' : '★★✕ ひとことを 出した';
+      if (!sayEl.classList.contains('hidden')) {
+        out.why.push('★★★山札の 返事で ひとことを 出した（★★文字で 教えるのは 説明の 追加 ―― §5.5）');
+      }
+
+      /* ★ (b) ★★くらべ：出せない とき ―― ★引ける・★★1枚も ゆれない */
+      reset();
+      if (!makeNoPlay(5, 3)) { out.why.push('★★試し方が おかしい：★「1枚も 出せない」場面を 作れなかった'); return; }
+      rebuild(); placeAll(true); refreshDim();
+      var h1 = g.hands[0].length;
+      if (!pressDeck()) { out.why.push('★★試し方が おかしい：★（くらべ）山札に 押す ものが 無い'); return; }
+      out.no = (g.hands[0].length > h1) ? '○ 引けた' : '★★✕ 引けない';
+      if (g.hands[0].length <= h1) out.why.push('★★試し方が おかしい：★出せない のに 山札から 引けない');
+      out.noSay = shaken() ? '★★✕ ゆれて しまう' : '○ ゆれない';
+      if (shaken()) {
+        out.why.push('★★★引けた のに ゆれた（★★いつも ゆれて いる ＝ 返事に なって いません）');
+      }
+
+      /* ★ (c) ★★山札 0枚（空の わく）＋ 出せる とき ―― ★まぜ直しも 起きない */
+      reset();
+      if (!makeCanPlay()) { out.why.push('★★試し方が おかしい：★（空の わく）場面を 作れなかった'); return; }
+      g.hands[g.nP - 1] = g.hands[g.nP - 1].concat(g.deck);   /* ★ 52枚 きっちり 保った まま 山を 空に する */
+      g.deck = [];
+      rebuild(); placeAll(true); refreshDim();
+      var m2 = g.mixes, p2 = g.pile.length, h2 = g.hands[0].length;
+      var e3 = pressDeck();
+      if (!e3) { out.why.push('★★試し方が おかしい：★空の わくに 押す ものが 無い'); return; }
+      out.empty = (g.mixes === m2 && g.pile.length === p2 && g.hands[0].length === h2 && !g.deck.length)
+                  ? '○ 引けない・まぜ直し 0' : '★★✕ 動いた';
+      if (out.empty !== '○ 引けない・まぜ直し 0') {
+        out.why.push('★★★山札 0枚で 押したら、★出せる のに まぜ直し／引きが 起きた（★追記④）');
+      }
+      out.emptySay = e3.classList.contains('is-no') ? '○ ぷるっと 返した' : '★★✕ 何も 返さない';
+      if (!e3.classList.contains('is-no')) {
+        out.why.push('★★★山札 0枚の「空の わく」を 押しても、★画面が 1つも 返事を しない');
+      }
+      if (!e3.classList.contains('is-slot')) {
+        out.why.push('★★試し方が おかしい：★空の わくを 押せて いない（★札を 押して います）');
+      }
+      out.ok = 1;
+    });
+
+    /* ★ 片づけ ―― ★この 見張りが 作った 待ち時間だけ 消して、★元の 試合に もどします */
+    for (var t = timers.length - 1; t >= tMark; t--) { clearTimeout(timers[t]); timers.splice(t, 1); }
+    var a2 = cardsEl.querySelectorAll('.card.is-no');
+    for (var i2 = 0; i2 < a2.length; i2++) a2[i2].classList.remove('is-no');
+    restoreG(snap);
+    g.mixes = kMix;
+    busy = kBusy; over = kOver; takeLeft = kTake; waitSuit = kWait;
+    if (kResult) resultWrap.classList.add('hidden'); else resultWrap.classList.remove('hidden');
+    if (kSay) sayEl.classList.add('hidden'); else sayEl.classList.remove('hidden');
+    rebuild(); placeAll(true); refreshDim();
+    return out;
+  }
+
+  /* ============================================================
      ★★★ verify ―― この 1本ならではの 見張り ★★★
      ------------------------------------------------------------
        ①  ルールの 通り（反則0・詰まり0・★★終わらない 0件・札が 52枚 きっちり）
@@ -1627,6 +1813,9 @@
        ⑰  ★★★出なかった ときの 返事（T160）―― ★★すべって 外したら「ぷるっ」と 返すか
            ★ ★くらべ：★まっすぐ 押して 通った ときは **ゆれない**（★いつも ゆれる のは 返事では ない）
        ⑱  ★★★○✕ の 5行が ぜんぶ 押せるか（T160）―― ★★320×568・横向きを 含む
+       ⑲  ★★★山札を まっすぐ 押した ときの 返事（T161）―― ★★引かずに「ぷるっ」と 返すか
+           ★ ★くらべ：★出せない ときは **引けて・ゆれない**（★いつも ゆれる のは 返事では ない）
+           ★ ★線：★★手札の 明るさを 1枚も 変えない・★ひとことも 出さない（★遊びの 情報を 足さない）
      ============================================================ */
   function verify(n) {
     n = n || 3000;
@@ -2011,6 +2200,27 @@
     note['⑰ ★★出なかった ときの 返事'] = 'まっすぐ 出た とき ' + sp.sayStraight +
                                     '／★★指で すべった とき ' + sp.say +
                                     '／マウスで すべった とき ' + sp.sayMouse;
+
+    /* ============================================================
+       ⑲ ★★★山札を まっすぐ 押した ときの 返事（T161）★★★
+       ★ ★動きの 目（本物の 道を 3通り 通す）＋ ★行の 目（2つ）―― ★T157 §4 と 同じ 作法。
+       ============================================================ */
+    var dp = deckProbe();
+    for (var i19 = 0; i19 < dp.why.length; i19++) ng.push(dp.why[i19]);
+    /* ★ 行の 目 ① ―― ★onUp の 山札の ところが「引けなかった とき」に 返事を 呼んで いるか */
+    var upSrc2 = String(onUp);
+    if (!/where\s*===\s*'deck'[\s\S]{0,80}?nope\s*\(/.test(upSrc2)) {
+      ng.push('★★★onUp の 山札の ところに 返事が ない（★nope を 呼んで いません）');
+    }
+    /* ★ 行の 目 ② ―― ★doDraw が「引けたか」を 返して いるか（★返さないと onUp が 見分けられない）*/
+    var drawSrc = String(doDraw);
+    if (!/return\s+false\s*;/.test(drawSrc) || !/return\s+true\s*;/.test(drawSrc)) {
+      ng.push('★★★doDraw が「引けたか」を 返して いない（★true／false の どちらかが ありません）');
+    }
+    note['⑲ ★★山札の 返事'] = '★出せる とき ' + dp.can + '・' + dp.canSay + '（ゆれた ' + dp.shakes + '／' + dp.see + '）' +
+                              '／★くらべ 出せない とき ' + dp.no + '・' + dp.noSay +
+                              '／★空の わく ' + dp.empty + '・' + dp.emptySay +
+                              '／★★線：明るさ ' + dp.dimSame + '（明るい 札 ' + dp.bright + '枚）・ひとこと ' + dp.said;
 
     var out = {
       '★NG': ng.length, '中身': ng.length ? ng : 'ぜんぶ OK ✅',
