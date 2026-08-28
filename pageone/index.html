@@ -102,22 +102,48 @@
             ★ 設計図 §5.5-②：★何も 触らずに「はじめる ▶」を 押した 人が、
               ★★いちばん 深くて（★得 +8.0【計算】）いちばん 短い（★まん中 46秒【見立て】）形で 遊べます。
          ★★ <select> は 1つも ありません（★つよさも 速さも 人数も 選ばせない・ルル §3-4）。 -->
+  <!-- ★★★ T162①（社長指示）―― ★★大富豪と 同じ「白い 囲い」を 付けました ★★★
+       ------------------------------------------------------------
+       ★ 社長の 言葉：「★はじめる の ボタンが 小さいし 囲いが ない。
+         ★大富豪の ときみたいな デザイン 好きだったから 統一して ほしい。」
+       ★★ 直す前の 実測（★同じ ものさしで 2本 とも 測った 数字）：
+         ★ ボタン 320×568 … ★大富豪 270×61 ／ ページワン **172×56**（★面積 37%）
+         ★ ボタン 1512×945 … ★大富豪 502×63 ／ ページワン **172×56**（★面積 30%）
+         ★ 白い 囲い       … ★大富豪 308×464（わく4px）／ ページワン **0（そもそも 無い）**
+       ★★ だから ―― ★大富豪の `.start-card`（白・角丸30・わく5px・うすい ピンク）を
+          ★そのまま 持ちこみ、★ボタンは **囲いの はば いっぱい**に しました。
+       ⚠️★ ここは T160 の「はみ出したら スクロールで 届く」を こわしては いけない ところ です。
+          ★★ `.title-screen` の 子は **2つの まま**（★囲い と ハッピー）――
+             ★`> :first-child{margin-top:auto}` / `> :last-child{margin-bottom:auto}` が
+             ★★そのまま 効きます（★入る ときは まん中・はみ出す ときは 上から）。
+          ★★ そして ―― ★○✕ の 5行は **囲いの 中の ふつうの ブロック**に なったので、
+             ★T160 が つぶした「flex で ちぢむ」問題は **そもそも 起きません**。 -->
   <section class="title-screen" id="titleScreen">
-    <div class="title-happy">
-      <svg class="happy-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
-      <p class="happy-name">ハッピー</p>
+    <div class="start-card">
+      <!-- ⚠️★★ 大富豪の この行は「みんなで楽しく**カード**ゲーム！」です。
+           ★★ そのまま 写したら ―― ★verify ⑫ が **10サイズ とも 鳴りました**
+              （★「★言っては いけない 言葉が ある：カード」／設計図 §9.6）。
+           ★ ★「トランプ」に 入れかえて います。★★言葉だけは 写せません。 -->
+      <p class="eyebrow">みんなで 楽しく トランプ！</p>
+      <h1>ページワン</h1>
+      <p class="intro">先に 手札を 0枚に した 人の 勝ち。</p>
+
+      <details class="rule-fold" id="ruleFold">
+        <summary>▾ 特別な 札を 決める <b id="ruleCount"></b></summary>
+        <div class="rule-list" id="ruleList"></div>
+      </details>
+
+      <button class="start-button" type="button" id="btnStart">
+        <span>はじめる <b>▶</b></span><small>あなた ＋ ロボット3人</small>
+      </button>
     </div>
-    <p class="happy-bubble">同じ マークか 同じ 数字を つなげよう！</p>
-    <p class="title-lead">先に 手札を 0枚に した 人の 勝ち。</p>
 
-    <details class="rule-fold" id="ruleFold">
-      <summary>▾ 特別な 札を 決める <b id="ruleCount"></b></summary>
-      <div class="rule-list" id="ruleList"></div>
-    </details>
-
-    <button class="start-button" type="button" id="btnStart">
-      <span>はじめる <b>▶</b></span><small>あなた ＋ ロボット3人</small>
-    </button>
+    <!-- ★ ハッピー（★大富豪と 同じ ならび ―― ★ふきだし → かお → 名前）-->
+    <div class="mascot">
+      <p class="bubble">同じ マークか 同じ 数字を つなげよう！</p>
+      <svg class="happy-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="cat-name">ハッピー</p>
+    </div>
   </section>
 
   <!-- ── 遊ぶ 画面 ────────────────────────────────
@@ -137,6 +163,20 @@
 
       <!-- ★ まん中 ―― 山札 と 場札 と ハッピー -->
       <div class="middle" id="middle">
+        <!-- ★★★ T162②（社長指示）―― ★★札を 置く「場」の 台 ★★★
+             ------------------------------------------------------------
+             ★ 社長の 言葉：「★トランプを 置く ところ（緑色の 囲い、テーブルみたいな やつ）が
+               ★なくなって いるので、それを 付けて ★その上に 山札と 場に 置かれて いる
+               ★トランプを 置いて ほしい。★★ようは どれが "場" なのかを 分かる ように。」
+             ★★ 大富豪から 写し取った 数字（★実測・同じ ものさし）：
+               ★ 320×568 … ★台 308×118（★台÷札のたけ **1.74**・みどり÷札 1.41）左右あき 6px
+               ★ 375×812 … ★台 359×152（★2.24 / 1.91）左右あき 8px
+               ★ 1512×945 … ★台 1272×244（★1.93 / 1.68）左右あき 120px
+               ★ → ★★まん中を 取って **台÷札のたけ ＝ 1.85** に そろえました。
+             ★★ 色・わく・かざりも 大富豪と 同じ もの（★木の わく＋みどりの ラシャ）。
+             ★★ 大事：★これは **飾りの 1枚**で、★指は 1つも 当たりません（pointer-events:none）。
+                ★ ★札は これまで どおり `.cards` の 上に います ―― ★1枚も この 中に 入れて いません。 -->
+        <div class="felt-table" id="feltTable" aria-hidden="true"><i></i></div>
         <div class="happy-spot" id="happySpot">
           <svg class="happy-cat" id="happyMid" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
         </div>

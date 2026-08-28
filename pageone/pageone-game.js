@@ -123,6 +123,7 @@
      ============================================================ */
   var titleScreen, playScreen, stageEl, cardsEl, zoneBots, zoneMe, middleEl;
   var suitPick, suitNow, suitNowMark, sayEl, happySpot, happyMid;
+  var feltTable;                      /* ★★ T162② ―― ★場の 台（★飾りの 1枚・指は 当たらない）*/
   var resultWrap, resultBox, resultTitle, resultSay, btnAgain;
   var botEl = [];
 
@@ -175,12 +176,57 @@
     var pairW = geo.cw * 2 + geo.gap * 4;
     geo.deckX = Math.round(4 + (W - pairW) / 2);
     geo.pileX = geo.deckX + geo.cw + geo.gap * 4;
-    geo.midY = Math.round(geo.midTop + geo.midH - geo.ch);
-    /* ★ ハッピーの 場所（★山札の 上・まん中）*/
+
+    /* ★★★ T162② ―― ★★場の 台（みどりの テーブル）の 寸法（🎨アト・社長指示）★★★
+       ------------------------------------------------------------
+       ★ 社長：「★トランプを 置く ところ（緑色の 囲い）を 付けて、★その上に 山札と 場札を 置いて。
+         ★★ようは どれが "場" なのかを 分かる ように。」
+       ★★ 大富豪から 写し取った 数字（★実測・同じ ものさしで 2本 とも 測った）：
+         ★ 320×568 … 台÷札のたけ **1.74** ／ 375×812 … **2.24** ／ 1512×945 … **1.93**
+         ★ → ★まん中を 取って **1.85** に そろえる。
+       ★★ わくの あつさも 大富豪の 実測（★木のわく 4px ＋ 内よはく 7px ＋ みどりのわく 2px ＝ 13px）。
+       ★★★ ここで 山札・場札を **13＋よはく ぶん 上へ ずらします** ★★★
+         ★ ★これまで 2枚は「まん中の 帯の いちばん 下」に そろえて いました
+           ―― ★★その ままだと、★台の 下わくが **手札に かぶります**（★帯の 下から 8pxしか ない）。
+         ★ ★★上へ ずらしても 帯の 中の まま なので、★ロボットにも 手札にも 当たりません。
+       ⚠️★ ぺったんこな 画面（★横向き 812×375：★帯 116px・札 100px ＝ 余り 16px）では
+          ★★わくを **そのまま 縮めます**（★13px → 4px）。★消しません ―― ★消すと
+          ★★「どれが 場か」が また 分からなく なるから です。 */
+    var EDGE = 13;                                          /* ★ 4 ＋ 7 ＋ 2（★大富豪の 実測）*/
+    var room = Math.floor((geo.midH - geo.ch) / 2);         /* ★ 札の 上下に 使える たて */
+    var wantPad = Math.max(6, Math.round(geo.ch * 0.425) - EDGE);  /* ★ 台÷札 ＝ 1.85 に なる 余白 */
+    var edge = EDGE, padY = wantPad;
+    if (room < EDGE + 6) {                                  /* ★ 横向きの ような ぺったんこ */
+      edge = Math.max(4, Math.floor(room * 0.55));
+      padY = Math.max(0, room - edge);
+    } else if (room < EDGE + wantPad) {
+      padY = room - EDGE;
+    }
+    geo.feltBd  = Math.max(1, Math.round(edge * 4 / EDGE));
+    geo.feltPad = Math.max(1, Math.round(edge * 7 / EDGE));
+    geo.feltIn  = Math.max(1, edge - geo.feltBd - geo.feltPad);
+    geo.feltEdge = geo.feltBd + geo.feltPad + geo.feltIn;
+    geo.feltPadY = Math.max(0, padY);
+    geo.feltOff = geo.feltEdge + geo.feltPadY;              /* ★ 札の 外がわに 要る たて */
+    geo.midY = Math.round(geo.midTop + geo.midH - geo.ch - geo.feltOff);
+    geo.feltTop = geo.midY - geo.feltOff;
+    geo.feltH = geo.ch + geo.feltOff * 2;
+
+    /* ★ ハッピーの 場所（★台の 上・まん中）
+       ★★ T162：★下ばしは「山札の 上」では なく **台の 上**に 変えました
+          ―― ★でないと ハッピーが 台に めりこみます。 */
     geo.happyBoxTop = geo.midTop + 22;                       /* ★ 22 ＝ ひとことの 帯 */
-    geo.happyBoxH = Math.max(24, geo.midY - geo.happyBoxTop - 6);
-    /* ★ 大きい 画面で ハッピーだけが 育ちすぎない ように 180px で 止めます（★あとは 🎨アト）*/
-    geo.happyH = Math.max(26, Math.min(geo.happyBoxH, Math.round(geo.ch * 1.7), 180));
+    geo.happyBoxH = Math.max(0, geo.feltTop - geo.happyBoxTop - 6);
+    /* ★ 大きい 画面で ハッピーだけが 育ちすぎない ように 180px で 止めます（★あとは 🎨アト）
+       ★★ T162：★入る たてが 40px 未満の ときは **出しません**。
+          ★ ★理由（★実測・直す前の 812×375 よこ）：★入る たては 24px しか 無いのに
+            ★★26px の かおが 山札と 場札の あいだに 押しこまれて いました
+            ―― ★★写真で 見ると 顔では なく「点」です（★T162_写真 の 前_ページワン_遊ぶ_812x375よこ）。
+          ★ ★ハッピーは 上の帯（.brand-cat）にも いる ので、★設計図 §9.5「全ゲームに 必ず 登場」は 保てます。 */
+    geo.happyShow = geo.happyBoxH >= 40;
+    geo.happyH = geo.happyShow
+      ? Math.max(26, Math.min(geo.happyBoxH, Math.round(geo.ch * 1.7), 180))
+      : 0;
     return geo;
   }
 
@@ -208,6 +254,16 @@
       botEl[i].style.left = (4 + geo.colW * i) + 'px';
       botEl[i].style.width = geo.colW + 'px';
     }
+    /* ★★ T162② ―― ★場の 台（★飾りの 1枚。★指は 当たりません）★★
+       ★ たては 札の たけで 決まる ので、★ここで 入れます（★CSS だけでは 書けません）。 */
+    if (feltTable) {
+      s.setProperty('--felt-bd', geo.feltBd + 'px');
+      s.setProperty('--felt-pad', geo.feltPad + 'px');
+      s.setProperty('--felt-in', geo.feltIn + 'px');
+      feltTable.style.top = (geo.feltTop - geo.midTop) + 'px';
+      feltTable.style.height = geo.feltH + 'px';
+    }
+    happySpot.classList.toggle('hidden', !geo.happyShow);
     happySpot.style.top = Math.round(geo.happyBoxTop - geo.midTop + (geo.happyBoxH - geo.happyH) / 2) + 'px';
     /* ★ 8で 決めた マークの しるし ―― ★場札の 右上に 1つ（ルル §9）
        ⚠️★ この しるしは `.middle` の 中に います。★★top は **帯の 中の 座標**で 書く こと
@@ -885,6 +941,7 @@
     zoneBots = $('zoneBots'); zoneMe = $('zoneMe'); middleEl = $('middle');
     suitPick = $('suitPick'); suitNow = $('suitNow'); suitNowMark = $('suitNowMark');
     sayEl = $('say'); happySpot = $('happySpot'); happyMid = $('happyMid');
+    feltTable = $('feltTable');
     resultWrap = $('resultWrap'); resultBox = $('resultBox');
     resultTitle = $('resultTitle'); resultSay = $('resultSay'); btnAgain = $('btnAgain');
     botEl = [$('bot1'), $('bot2'), $('bot3')];
