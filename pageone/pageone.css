@@ -44,7 +44,8 @@
   --bw:    22px;
   --bh:    33px;
   --gap:    3px;
-  --happy: 46px;
+  /* ★★ T169：★`--happy` は 消しました（★盤の まん中の ネコが いなく なった ため）。
+     ★ ★上の 帯の ネコの 大きさは `.talk .happy-cat` が 数で 持って います（48／64px）。 */
   --result-max:100px;
 }
 
@@ -266,7 +267,117 @@ body {
 }
 
 /* ── 遊ぶ 画面 ──────────────────────────── */
-.play-screen { flex:1 1 auto; min-height:0; display:flex; }
+/* ★★ T169：★`column` を 足しました ―― ★上に ハッピーの 帯、下に 盤（`.stage`）の 2段。
+   ★ ★（★T162 まで 子は `.stage` 1つ だけ だったので、★向きが 要りませんでした）
+   ⚠️★★ `position:relative` も **必ず** 要ります ―― ★★私は これを 1回 忘れました【T169・実測】。
+      ★ ★横向きでは 帯を `position:absolute` で 浮かせます。★ここが positioned で ないと、
+        ★ ★ブラウザは **画面ぜんたい** を 親に 選び、★帯の top:0 が **窓の てっぺん** に なります。
+      ★ ★★実測：★ひとことが 142px（★台の 上ばし ＝ 直す前と 同じ 場所）から
+        ★★**84px**（★ロボットの 札の 上）へ **58px 上に 飛びました**。
+      ★ ★見つけた 目：★`t169_yoko.cjs` で 帯の 上を 直に 読んだ ら **0**（★盤の 上は 58）でした。 */
+.play-screen { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+
+/* ============================================================
+   ★★★ ハッピーの 帯（★T169・社長指示「大富豪みたいに 統一して ほしい」）★★★
+   ------------------------------------------------------------
+   ★ ★手本は 大富豪の `.status-line > .talk`。★★下の 数字は ぜんぶ
+     ★ 大富豪から **測って 写した** もの です【実測・T167 §1】――
+     ★ ★私の 好みで 決めた 数字は 1つも ありません。★★ハーツ（T167）と 同じ ブロックです。
+
+   | ★写した もの      | ★大富豪【実測】                    | ★ページワン（ここ）  |
+   |--------------------|------------------------------------|----------------------|
+   | ネコの 器の はば   | 64px ／ 48px（はば 650px 以下）     | ★同じ                |
+   | ふきだし           | flex:1（★横に 長い）                | ★同じ                |
+   | ふきだしの わく    | 3px ピンク・かど 18px               | ★同じ                |
+   | ふきだしの 内よはく| 8px 13px ／ 5px 10px（650px 以下）  | ★同じ                |
+   | ふきだしの 字      | 13px ／ 12px（520以下）／17px（PC） | ★同じ                |
+   | ネコと ふきだしの 間| 10px                               | ★同じ                |
+   | しっぽ             | ピンク 9x17 ＋ 白 6x12 の 2まい重ね | ★同じ（★下を 見て）  |
+
+   ⚠️★★ 1つだけ わざと ちがう ところ ―― ★**しっぽの たての 位置** ★★
+     ★ 大富豪は `top:18px`（★上ぞろえ。★中が 2行に なる ことを 見た 置き方）。
+     ★ ★ページワンの ひとことは **いつも 1行**【実測】―― ★18px の まま 写すと
+       ★★しっぽの 先（36px）が ふきだし（32px）から 4px 下に はみ出します。
+     ★ → ★★まん中ぞろえ（`top:calc(50% - 9px)`）。★★大きさは 1pxも 変えて いません。
+
+   ⚠️★★ たけは **数で 書く**（★`height:auto` に しない）★★ ―― ★T167 §2 回り道③【実測】
+     ★ ★`<svg class="happy-cat">` には viewBox が ありません（★中身は `<use>` で 呼ぶ だけ）。
+       ★ ★大きさの 手がかりが 無いので、★ブラウザは SVG の 決まりの **150px** を たけに 使い、
+         ★★ハーツでは 盤が 150px 短く なり、★320×480 の 札が 39 → **23px** に 縮みました。
+     ★ → ★★48 × 112/150 ＝ 35.84 → **36px** ／ 64 × 112/150 ＝ 47.79 → **48px**。
+   ============================================================ */
+.talk {
+  flex:0 0 auto; display:flex; align-items:flex-start; gap:10px;
+  padding:0 2px 6px; min-width:0;
+}
+.talk .cat-wrap { width:64px; flex:0 0 auto; text-align:center; }
+.talk .happy-cat { width:64px; height:48px; display:block; margin:0 auto; }
+/* ★ 名札は 流れの 中（★大富豪は position:absolute ―― ★あちらは 体まで 描いて いて
+     ★ 下に 置く 場所が ある から です。★この 絵は **かおだけ** なので、
+     ★ ★下に かぶせると 盤に かかります）。★→ ★1行 ぶん（15px）を 素直に 使います。
+   ★ ★これで 帯の 中身は **36 ＋ 15 ＝ 51px** ―― ★★大富豪の 51px と 同じ です【実測】。 */
+.talk .cat-name {
+  margin:1px 0 0; font-size:10.5px; font-weight:900; line-height:14px;
+  color:var(--pink-dark); white-space:nowrap;
+}
+.talk .banner {
+  position:relative; flex:1 1 auto; min-width:0; margin:0; padding:8px 13px;
+  background:var(--white); border:3px solid var(--pink); border-radius:18px;
+  color:var(--ink); font-size:13px; font-weight:900; line-height:1.35;
+  box-shadow:0 3px 0 rgba(196,155,110,.18);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* ★ しっぽは 2まい重ね（★ピンクの ふち ＋ 白い 中身）＝ 大富豪と 同じ 作り */
+.talk .banner::before, .talk .banner::after {
+  content:''; position:absolute; width:0; height:0; border-style:solid;
+}
+.talk .banner::before {
+  left:-17px; top:calc(50% - 9px);
+  border-width:9px 17px 9px 0; border-color:transparent var(--pink) transparent transparent;
+}
+.talk .banner::after {
+  left:-11px; top:calc(50% - 6px);
+  border-width:6px 12px 6px 0; border-color:transparent #fff transparent transparent;
+}
+@media (max-width:650px) {
+  .talk .cat-wrap { width:48px; }
+  .talk .happy-cat { width:48px; height:36px; }
+  .talk .banner { padding:5px 10px; }
+}
+@media (max-width:520px) { .talk .banner { font-size:12px; } }
+/* ★ 大富豪の「パソコンで 字を 大きく する」かたまりと **同じ 条件**（min 1180×850）*/
+@media (min-width:1180px) and (min-height:850px) { .talk .banner { font-size:17px; } }
+/* ============================================================
+   ★★ たての 低い 画面（★横向き）―― ★帯を **並びから 外します**（★たけ 0）★★
+   ------------------------------------------------------------
+   ★ ★なぜ 並びに 置けないか【実測】：★横向きの 盤は **309px**、★必要な たては **307px**
+     ―― ★★余りは **2px** しか ありません（★すきまは すでに 下ばりの 8px）。
+     ★ ★帯（57px）を 並びに 入れると、★★札が **66px → 51px** まで 縮みます。
+       ★ ★★66px は T162 で 社長に 見て いただいた 数字 です。★動かしません。
+   ★ → ★★ネコは 出さず（★横向きは 直す前から 出て いません ―― ★`geo.happyShow` が false）、
+     ★ ★ひとことだけを **直す前と 同じ 場所**（★台の 上ばし）に 浮かべます（★たけ 0）。
+   ★ ★上ばしの y は JS が 入れます（`layout()` の `flat`）―― ★台の 位置は 札の たけで
+     ★ 決まる ので、★CSS だけでは 書けません。
+   ⚠️★ ★T167（ハーツ）で 私は ここを `display:none` と 書き、★★横向きで ひとことを
+      ★ **まるごと 消しました**。★★同じ 失敗を くり返さない ように、★ここは 消さずに 浮かせます。
+   ============================================================ */
+@media (max-height:430px) {
+  .play-screen > .talk {
+    position:absolute; left:0; right:0; top:0; height:0;
+    display:block; padding:0; pointer-events:none; z-index:60; text-align:center;
+  }
+  .talk .cat-wrap { display:none; }
+  /* ★ 直す前の `.say` の 見た目 そのまま（★小さい 丸い ふきだし・しっぽ なし）*/
+  .talk .banner {
+    position:absolute; left:50%; transform:translateX(-50%);
+    display:inline-block; flex:none; width:auto; max-width:96%;
+    padding:4px 12px; border:0; border-radius:999px;
+    background:var(--white); color:#5a4a63; font-size:11.5px; font-weight:900;
+    line-height:normal;
+    box-shadow:0 2px 0 #e6dcc9; white-space:nowrap;
+  }
+  .talk .banner::before, .talk .banner::after { display:none; }
+}
 /* ★★★ T162② ―― ★★器の 色を「みどり」から「うすい クリーム」に 戻しました ★★★
    ★ 理由：★みどりの 上に みどりの 台を 置くと、★★台が 見えません
      ―― ★★社長の「どれが "場" なのか 分かる ように」が 成り立ちません。
@@ -330,18 +441,11 @@ body {
 }
 
 .middle { position:absolute; left:0; right:0; pointer-events:none; }
-/* ★ ハッピーは 山札の 上・まん中。★top は JS が 入れます（★空いた たてを 埋める）*/
-.happy-spot { position:absolute; left:50%; top:0; transform:translateX(-50%); }
-.happy-spot .happy-cat { width:calc(var(--happy) * 1.32); height:var(--happy); display:block; }
-
-/* ★ ハッピーの ひとこと（★出しっぱなしに しない） */
-.say {
-  position:absolute; left:50%; top:0; transform:translateX(-50%);
-  margin:0; padding:4px 12px; border-radius:999px;
-  background:var(--white); color:#5a4a63; font-size:11.5px; font-weight:900;
-  box-shadow:0 2px 0 #e6dcc9; white-space:nowrap; max-width:96%;
-  overflow:hidden; text-overflow:ellipsis; z-index:60;
-}
+/* ★★ T169：★ここに あった `.happy-spot`（★ネコを 盤の まん中に 大きく 置く）と
+   ★ `.say`（★台の 上に 出る 小さな 丸い ふきだし）は **消しました**。
+   ★ ★引っこし先は 上の 「ハッピーの 帯」（`.talk`）です。
+   ★ ★★横向きの ときだけ、★`.talk .banner` が 直す前と 同じ 見た目・同じ 場所に 戻ります
+     （→ ★上の `@media (max-height:430px)`）。 */
 
 /* ★★ 8で 決めた マークの しるし（★場札が 8の ときだけ 出る・ルル §9）★★
    ★ これは **絵札では ありません**。★新しい 絵は 1枚も 足して いません。 */

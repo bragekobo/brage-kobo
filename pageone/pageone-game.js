@@ -185,31 +185,36 @@
        ⚠️★ ぺったんこな 画面（★横向き 812×375 など）は **T162 の まま**です ――
           ★ ★下の 3つ目の 道（★`else`）に 落ちて、★台の わくを 縮めて 入れます。
           ★ ★ここを 変えると T162 の「よこ向きでも 場が 分かる」が 死にます。 */
+    /* ★★★★★ T169 ―― ★★ハッピーが 盤から 出て 行きました（🎨アト・2026-08-28）★★★★★
+       ------------------------------------------------------------
+       ★ 社長の 言葉（T167 経由）：「★ハッピーが 今までは 小さく、ふきだしで コメントして
+         ★くれて いたのに、★★巨大化 して いるので、★★大富豪みたいに 統一して ほしい」。
+       ★ ★数えたら 本当でした【実測・T167 §5 / T169】：
+         ★ ★★ページワン **218×165px（★画面の たての 38.5%）** ―― ★大富豪は 48×51px（9.4%）。
+
+       ★★ 直し方は **T163 と まったく 同じ 考え**です ―― ★★新しい ものは 1つも 足しません。
+          ★ ★ハッピーの 取り分（`happyH`）と その 下の すきま 1つが 消えた ので、
+          ★ ★★**すきまは 5つ → 4つ**（★上／ロボットの 下／台の 下／手札の 下）。
+          ★ ★のこりは これまで どおり ①台を 上限（`feltCap`）まで 太らせて
+            ★ ★②余りを すきまに **均等に** 配る ―― ★★式は 下の `else if` に
+              ★**もともと あった もの** です。★私は 新しい 式を 1つも 作って いません。
+
+       ⚠️★ ★`feltCap`（台÷札 ＝ 2.26）は **1文字も さわって いません**。
+          ★ ★台が 前と 同じ 大きさの まま なのは、★T162② で 社長が 気に入られた
+            ★「どれが 場か 分かる」を 1pxも 動かさない ため です。
+       ⚠️★ ★ぺったんこな 画面（★横向き）は **T162 の まま**（★下の `else`）。
+          ★ ★横向きの 盤は 309px・必要な たては 307px ＝ ★★余りは **2px** だけ です。 */
     var PADMIN = 4;                                   /* ★ すきまの 下ばり */
     var EDGE = 13;                                    /* ★ 4 ＋ 7 ＋ 2（★大富豪の 実測）*/
     var chh = lay.h;
     /* ★ 台 ―― ★下ばり ＝ T162 の 1.85倍／天井 ＝ 大富豪の 2.26倍【どちらも 実測】*/
     var feltBase = chh + 2 * (EDGE + Math.max(6, Math.round(chh * 0.425) - EDGE));
     var feltCap  = Math.max(feltBase, Math.round(chh * 2.26));
-    /* ★ ハッピー ―― ★40px を 切ったら 出しません（★T162 の 決まりの まま）*/
-    var happyCap = Math.min(220, Math.round(chh * 2.4));
-    var HAPPY_MIN = 40;
     var fixed = lay.botH + chh;                       /* ★ ロボット帯 と 手札（★動かさない）*/
     var feltH, happyH, pad, padOut, nGap;
 
-    if (H - fixed - 5 * PADMIN - feltBase - HAPPY_MIN >= 0) {
-      /* ★ ふつう ―― ★ハッピーも 出せる */
-      nGap = 5;
-      var free = H - fixed - nGap * PADMIN;           /* ★ 台 と ハッピーに 使える たて */
-      feltH  = Math.min(feltCap, free - HAPPY_MIN);
-      /* ★★ ハッピーは **台より 大きく しません** ★★
-         ★ ★これが 無いと 375×812 で ★かお 175px ／ 台 165px ―― ★★猫が 場より 大きい 画面に
-           ★なりました【実測・私の 1回目】。★★主役は 場です。 */
-      happyH = Math.min(happyCap, feltH, free - feltH);
-      pad    = Math.max(PADMIN, Math.floor((H - fixed - feltH - happyH) / nGap));
-      padOut = pad;
-    } else if (H - fixed - 4 * PADMIN - feltBase >= 0) {
-      /* ★ ハッピーが 入らない ―― ★台だけ 太らせる */
+    if (H - fixed - 4 * PADMIN - feltBase >= 0) {
+      /* ★ ふつう ―― ★台を 上限まで 太らせ、★余りを 4つの すきまに 均等に 配る */
       nGap = 4; happyH = 0;
       feltH = Math.min(feltCap, H - fixed - nGap * PADMIN);
       pad   = Math.max(PADMIN, Math.floor((H - fixed - feltH) / nGap));
@@ -283,19 +288,16 @@
     geo.feltTop = geo.midTop + geo.midH - geo.feltH;
     geo.midY = geo.feltTop + geo.feltOff;                   /* ★ 山札・場札の 上ばし */
 
-    /* ★★★ T163 ―― ★ハッピーは まん中の 帯の **いちばん 上**（★台の 真上）★★★
-       ★ T162 まで：★「空いた ところの まん中」に 置いて いました
-         ―― ★★空きが 300px を こえる 画面では、★★上にも 下にも 空きが 残り、
-         ★★ハッピーは その まん中に **1人で 浮いて** いました（★アイの 指摘・T163）。
-       ★ ★いまは 帯の 上に そろえ、★上下の 空きは 5つの すきまに 分けて あります。 */
-    geo.happyShow = happyH >= HAPPY_MIN;
-    geo.happyH = geo.happyShow ? happyH : 0;
+    /* ★★★ T169 ―― ★ハッピーは 盤の 中に **いません**（★上の 帯へ 引っこしました）★★★
+       ★ T163 まで：★まん中の 帯の いちばん 上（★台の 真上）に、★札の 2.4倍の 大きさで
+         ★立って いました ―― ★★375×812 で **218×165px**（★画面の たての 38.5%）【実測】。
+       ★ ★いまは 盤の 外（`.talk`）に 48×36px で います ＝ ★★大富豪と 同じ 場所・同じ 大きさ。
+       ⚠️★ ★`happyShow` / `happyH` は **消して いません** ―― ★見張り（geo）と
+          ★ ★横向きの 見分けが この 名前を 使って います。★いつも 0 / false です。 */
+    geo.happyShow = false;
+    geo.happyH = 0;
     geo.happyBoxTop = geo.midTop;
-    geo.happyBoxH = geo.happyH;
-    /* ★ ひとこと（`.say`）―― ★T162 は ハッピーの **上**（帯の てっぺん）に 置いて いました。
-       ★ ★いまは ハッピーと 台の あいだ（★すきま）に 置きます ―― ★★かおの 下から 話す 形。
-       ★ ★出て いない ときは 何も 場所を 取りません（★position:absolute の まま）。 */
-    geo.sayTop = geo.happyShow ? (geo.happyH + Math.max(0, Math.floor((pad - 22) / 2))) : 0;
+    geo.happyBoxH = 0;
     return geo;
   }
 
@@ -307,9 +309,8 @@
     s.setProperty('--bw', geo.bw + 'px');
     s.setProperty('--bh', geo.bh + 'px');
     s.setProperty('--gap', geo.gap + 'px');
-    /* ★ ハッピーの 大きさ ―― ★空いた ところを 埋める ように（設計図 §9.5）。
-       ★★ 寸法の 計算には 使いません ―― ★手札も 山札も 1pxも 動きません。 */
-    s.setProperty('--happy', geo.happyH + 'px');
+    /* ★★ T169：★`--happy`（★盤の まん中の ネコの 大きさ）は もう 要りません ―― ★ネコは
+       ★ ★盤の 外（`.talk`）に いて、★大きさは CSS が 決めます（★48／64px ＝ 大富豪と 同じ）。 */
     /* ★ 結果の 箱の たけの 天井 ―― ★手札に かぶらせない（五目並べ T133 の 教訓）*/
     s.setProperty('--result-max', Math.max(60, Math.min(100, geo.midH + C.FIT.PAD * 2 - 8)) + 'px');
 
@@ -332,11 +333,18 @@
       feltTable.style.top = (geo.feltTop - geo.midTop) + 'px';
       feltTable.style.height = geo.feltH + 'px';
     }
-    happySpot.classList.toggle('hidden', !geo.happyShow);
-    happySpot.style.top = Math.round(geo.happyBoxTop - geo.midTop) + 'px';
-    /* ★★ T163 ―― ★ひとことは ハッピーの 下（★かおの 下から 話す 形）★★
-       ★ T162 まで：★帯の てっぺん ＝ ★ハッピーの **上**（★頭の 上に 字が 出て いました）。 */
-    if (sayEl) sayEl.style.top = geo.sayTop + 'px';
+    /* ★★ T169：★ここに あった 3行（★ハッピーを 出す／消す・ハッピーの top・ひとことの top）は
+       ★ ★消しました ―― ★★ハッピーも ひとことも、もう **盤の 外（上の 帯）** に いて、
+         ★ ★大きさも 置き場所も **CSS が 決めます**（★大富豪と 同じ 作り）。
+       ⚠️★ ★JS が top を 入れ つづけると、★CSS の 並び（flex）と けんかします。
+
+       ★★ ただ 1つ だけ JS が いる ところ ―― ★★たての 低い 画面（★横向き）★★
+         ★ ★横向きの 盤は 309px・要る たては 307px ＝ ★★余りは **2px**。★帯を 並びに 置くと
+           ★ 札が 66 → 51px に 縮みます。★→ ★ネコは 出さず、★ひとことだけを
+             ★★**直す前と 同じ 場所**（★台の 上ばし ＝ T163 の `sayTop:0` と 同じ y）に 浮かべます。
+         ★ ★台の 上ばしの y は 札の たけで 決まる ので、★★CSS だけでは 書けません。 */
+    var flat = window.matchMedia && window.matchMedia('(max-height:430px)').matches;
+    if (sayEl) sayEl.style.top = flat ? geo.feltTop + 'px' : '';
     /* ★ 8で 決めた マークの しるし ―― ★場札の 右上に 1つ（ルル §9）
        ⚠️★ この しるしは `.middle` の 中に います。★★top は **帯の 中の 座標**で 書く こと
           ―― ★私は ここで 器ぜんたいの 座標（geo.midY）を そのまま 入れて しまい、
@@ -1119,7 +1127,15 @@
         /* ★★ T163 で 足した 3行 ―― ★「まん中の 空き」を 数で 見える ように */
         '★すきま': geo.pad + 'px × ' + geo.nGap + 'つ（★上下の はし ' + geo.padTop + 'px）',
         '★台': geo.feltH + 'px（★台÷札のたけ ' + (geo.feltH / geo.ch).toFixed(2) + '）',
-        '★ハッピー': geo.happyShow ? geo.happyH + 'px' : '出さない',
+        /* ★★ T169：★ハッピーは 盤の 外（上の 帯）に います。★ここでは その 帯を 測ります。 */
+        '★ハッピー': (function () {
+          var t = document.getElementById('talk'), c = document.getElementById('happyMid');
+          if (!t) return '帯が ない';
+          var tr = t.getBoundingClientRect(), cr = c ? c.getBoundingClientRect() : null;
+          if (!cr || cr.height < 2) return '★上の 帯（ネコは 出さない・帯 ' + Math.round(tr.height) + 'px）';
+          return '★上の 帯 ' + Math.round(tr.height) + 'px（ネコ ' + Math.round(cr.width) + '×' + Math.round(cr.height) +
+                 'px・画面の 上から ' + ((cr.top + cr.height / 2) / window.innerHeight * 100).toFixed(1) + '%）';
+        })(),
         '上下の 余り': geo.slack + 'px',
         '★結果の 箱の 天井': getComputedStyle(document.documentElement).getPropertyValue('--result-max').trim(),
         'ページ縦スクロール': document.documentElement.scrollHeight > window.innerHeight,

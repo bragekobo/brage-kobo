@@ -153,6 +153,29 @@
          ★ 場札が 8の ときだけ、その 上に「いま 出せる マーク」の しるしが 1つ
        ★★ 光り・「ここだよ」の 合図・出せる札の わく は ★1つも ありません。 -->
   <section class="play-screen hidden" id="playScreen">
+
+    <!-- ★★ ハッピーの 帯（★T169・社長指示「★大富豪みたいに 統一して ほしい」）★★
+         ★ ★T167（ハーツ）と **まったく 同じ もの** です ―― ★大富豪の `.status-line > .talk` を
+           ★数字で 写し取った 形【実測・T167 §1】：
+           ★ ★ネコの 器 … 48px（はば 650px 以下）／64px（それ より 広い）
+           ★ ★ふきだし … flex:1（★横に 長い）・わく 3px ピンク・かど 18px・内よはく 5px 10px／8px 13px
+           ★ ★字 … 12px（520px 以下）／13px／17px（1180×850 以上）
+         ★ ★ネコの 絵は 今までの `#happy-head` の まま（★新しい 絵は 0枚）。
+           ★ ★viewBox の はばが 大富豪と 同じ 150 なので、★★はばを そろえると
+             ★かおの 大きさが **大富豪と 1pxも 同じ**に なります。
+         ⚠️★ 名前（id）は 変えて いません ―― ★`happySpot`／`happyMid`／`say` の 3つは
+            ★ ★JS（`layout` ／ `say` ／ 見張り ⑲）が そのまま 使い つづけます。
+         ⚠️★ ★横向き（低い 画面）では この 帯を **並びから 外します**（pageone.css の
+            ★ `@media (max-height:430px)`）―― ★★盤の たけ 309px に 余りが **2px しか ありません**。
+              ★ ★1pxでも 減らすと 札が 66px から 縮み、★T162 の 数字が 動きます。 -->
+    <div class="talk" id="talk">
+      <div class="cat-wrap" id="happySpot">
+        <svg class="happy-cat" id="happyMid" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+        <p class="cat-name">ハッピー</p>
+      </div>
+      <p class="banner hidden" id="say"></p>
+    </div>
+
     <div class="stage" id="stage">
       <!-- ★ ロボット3人（裏向き）。★名前は 下に 1行 -->
       <div class="zone bots" id="zoneBots">
@@ -177,12 +200,12 @@
              ★★ 大事：★これは **飾りの 1枚**で、★指は 1つも 当たりません（pointer-events:none）。
                 ★ ★札は これまで どおり `.cards` の 上に います ―― ★1枚も この 中に 入れて いません。 -->
         <div class="felt-table" id="feltTable" aria-hidden="true"><i></i></div>
-        <div class="happy-spot" id="happySpot">
-          <svg class="happy-cat" id="happyMid" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
-        </div>
+        <!-- ★★ T169：★ここに いた ハッピー（`happy-spot`）と ひとこと（`say`）は
+           ★ ★**上の 帯へ 引っこしました**（★この 節の いちばん 上を 見て ください）。
+           ★ ★空いた ぶんは 新しい ものを 足さず、★★T163 と 同じ 考えで
+             ★**すきまに 均等に** 配り直して います（★5つ → 4つ）。 -->
         <!-- ★★ 8で 決めた マーク。★場札が 8の ときだけ 出す（ルル §9）★★ -->
         <div class="suit-now hidden" id="suitNow"><span id="suitNowMark">♠</span></div>
-        <p class="say hidden" id="say"></p>
       </div>
 
       <!-- ★ 自分の 手札（表）。★9割の 試合で 7枚の まま（ルル §4-3）
