@@ -1,0 +1,569 @@
+/* ============================================================
+   ハーツ ― 見た目（T165・コーダ）
+   ------------------------------------------------------------
+   ★ ここは「中身が 動く 形」までです。★仕上げは 🎨アト。
+   ★ 既存17本と 同じ 色・同じ 部品の 名前で 書いて あるので、
+     ★アトは いつもの ように 上から 直せます。
+   ★ 見た目の もとは **ページワン T162／T163**（＝ 大富豪の 形。★社長が 気に入って いる 本）：
+     ★ 白い 囲い（.start-card）・場の 台（木わく＋みどりの ラシャ）・左右の 余白（max-width＋margin-inline）。
+
+   ★★★ この 1本の 決まりごと（★アトへ・ここだけは 動かさないで ください）★★★
+     ------------------------------------------------------------
+     ① ★★強調は **その ときどき 1種類だけ** ――
+        ★ わたす とき … `.card.is-pick`（★選んだ 3枚に わく）
+        ★ 出す とき   … `.card.is-dim`（★出せない 札を 暗くする）
+        ★ ★★この 2つは **同時に 出ません**（★verify ④ が 毎回 本物で 数えます）。
+        ★ ★光り（ぼかしの 太い 影・色の 反転）を 足したら、★verify ④ が 鳴ります。
+        ★ ★`.is-pick` は **outline** で 書いて あります ―― ★box-shadow で 書くと
+          ★「広がり 2px 以上 ＝ 光り」に なって しまう から です（★ページワン T152 の 見張りの 決まり）。
+     ② ★★`.card` に `:hover` を 足さない ―― ★指の 端末で こびりつきます。
+     ③ ★★札の 比は 419:635。★はば・たけは JS が --cw / --ch に 入れます。★上書きしない。
+     ④ ★★結果の 箱は `--result-max` 以下。★手札に かぶらせない。
+   ============================================================ */
+
+:root {
+  --ink:#463c52;
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+  --white:     #ffffff;
+  --cream:     #fff9ea;
+  --gold:      #F1A426;
+  --gold-soft: #FFE690;
+  --sky:       #BCEBF0;
+
+  /* ★ マークの 色 */
+  --m-black:   #3D3550;
+  --m-red:     #E2506A;
+
+  --font-main:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","M PLUS Rounded 1c","Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;
+
+  /* ★ JS が 入れなおす 値（★はじめの 値は 320×568 の もの）*/
+  --cw:    38px;
+  --ch:    58px;
+  --bw:    17px;
+  --bh:    26px;
+  --gap:    3px;
+  --result-max:200px;
+  /* ★★ T167：★`--happy`（★盤の まん中の ネコの たけ）は 消しました ――
+     ★ ★ネコの 大きさは もう JS では なく **CSS が 決めます**（★大富豪と 同じ 48／64px）。 */
+}
+
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; }
+body {
+  margin:0; overflow:hidden;
+  font-family:var(--font-main);
+  color:var(--ink);
+  background:linear-gradient(180deg, var(--sky) 0%, #E8F7F3 46%, var(--cream) 100%);
+  -webkit-user-select:none; user-select:none;
+}
+.hidden { display:none !important; }
+.sprite-defs { position:absolute; width:0; height:0; overflow:hidden; }
+
+/* ★★ 左右の 余白（★ページワン T162③・将来の 広告のため・社長指示）★★
+   ★ 大富豪から 写した 正体は たった 1行：`max-width:1000px; margin-inline:auto;`
+   ★ ★1280×900 で 左右 140px ずつ。★札は 1pxも 小さく なりません
+     （★13枚 ＋ すきま が 1000px の 中に 収まる ―― ★実測は 作業メモ）。 */
+.app-shell {
+  height:100%; height:100dvh;
+  width:100%; max-width:1000px; margin-inline:auto;
+  display:flex; flex-direction:column; gap:6px;
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+}
+
+/* ── 上の帯 ─────────────────────────────── */
+.topbar { flex:0 0 auto; display:flex; align-items:center; gap:6px; min-height:44px; }
+/* ⚠️★★ `.back` は **かならず .topbar で しぼる** こと ★★
+   ★ 札の うら面の 絵も `img.back` です（★17本で 同じ 名前）。
+   ★★ しぼらずに 書くと、★52枚 ぜんぶの うら面に min-width:44px が かかり、
+      ★ロボットの 小さい 札だけが ふくらみます（★ページワン T152 で 実際に 起きた 60件）。 */
+.topbar .back {
+  display:flex; align-items:center; gap:2px; min-height:44px; padding:0 12px;
+  border-radius:999px; background:var(--white); color:#5a7a8c;
+  font-size:12.5px; font-weight:900; text-decoration:none;
+  box-shadow:0 2px 0 #cfe4ea;
+}
+.brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
+.brand-cat { width:30px; height:23px; flex:0 0 auto; }
+.brand span { font-weight:900; font-size:16px; color:#3f5a70; white-space:nowrap; }
+.howto {
+  min-height:44px; padding:0 12px; border:0; border-radius:999px;
+  background:var(--gold-soft); color:#8a6420; font-size:12.5px; font-weight:900;
+  box-shadow:0 2px 0 #e0c25f; cursor:pointer; font-family:inherit;
+}
+@media (max-width:520px) {
+  .topbar .back span { display:none; }
+  .topbar .back { padding:0 11px; min-width:44px; justify-content:center; }
+  .howto { padding:0 10px; font-size:12px; }
+  .brand span { font-size:15px; }
+}
+@media (max-width:360px) {
+  .app-shell { gap:5px; }
+  .brand-cat { display:none; }
+  .brand span { font-size:13px; }
+}
+@media (max-width:340px) { .app-shell { padding:6px 3px; } }
+
+
+/* ── はじめの 画面 ───────────────────────── */
+/* ⚠️★★ T160 の 決まり ―― ★はみ出したら **スクロールで 届く** ように する ★★
+   ★ `justify-content:center` の ままだと、はみ出しは 上下に 半分ずつ 出て、
+     ★★上に 出た ぶんは scrollTop を 負に できない ので **どうやっても 届きません**。
+   ★ → ★`flex-start` ＋「いちばん 上と いちばん 下の 子に margin:auto」。
+     ★★ flex の auto余白は 余りが ある ときだけ 広がる ―― ★1つの 形で
+        「入る ときは まん中・はみ出す ときは 上から」に なります。 */
+.title-screen {
+  flex:1 1 auto; min-height:0; overflow:auto;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:10px;
+  text-align:center; padding:6px 4px;
+}
+.title-screen > :first-child { margin-top:auto; }
+.title-screen > :last-child { margin-bottom:auto; }
+
+/* ★ 白い 囲い（★大富豪 ＝ ページワン T162① の 実測値 そのまま）*/
+.start-card {
+  flex:0 0 auto;
+  position:relative; width:min(560px, 100%); text-align:center;
+  background:var(--white); border:5px solid #FFD9E8; border-radius:30px;
+  padding:26px 24px 24px;
+  box-shadow:0 4px 0 rgba(196,155,110,.18), 0 10px 22px rgba(150,110,70,.14);
+}
+.eyebrow { margin:0; font-size:15px; font-weight:900; color:#ff759d; }
+/* ★ 大見出し ―― ★大富豪と 同じ 立体の 縁どり（設計図 §9.5）。★3文字 なので 大きく 出せます。 */
+.start-card h1 {
+  margin:4px 0 0; font-size:58px; font-weight:900; letter-spacing:2px; line-height:1.1;
+  color:#E9607F; text-shadow:0 4px #9E2A47, 0 7px #FFE0E8;
+}
+.intro { margin:6px 0 16px; font-size:17px; font-weight:700; color:#5a4a63; }
+
+/* ★★ つよさの えらび（★1ゲームにつき 選ばせるのは 1つまで・設計図 追記①）★★
+   ★ 四目・6×6リバーシと 同じ 部品・同じ 名前。★44px（会社の 基準）。 */
+.level-pick {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px 10px;
+  max-width:100%; margin:0 auto; padding:7px 10px;
+  background:var(--cream); border:3px solid var(--gold-soft); border-radius:20px;
+}
+.level-pick-name { font-size:13px; font-weight:900; color:#7a5205; white-space:nowrap; }
+.level-select {
+  max-width:100%; min-height:44px; padding:5px 10px;
+  background:var(--white); border:3px solid var(--gold); border-radius:999px;
+  color:var(--ink); font-family:inherit; font-size:15px; font-weight:900; cursor:pointer;
+}
+.level-select:focus-visible { outline:3px solid var(--pink); outline-offset:2px; }
+
+/* ★ はじめる の ボタン（★大富豪 ＝ ページワン T162① と 同じ 手ざわり）*/
+.start-button {
+  margin-top:18px; width:100%; min-height:63px;
+  padding:12px 26px 10px; border:4px solid #fff; border-radius:50px;
+  background:linear-gradient(180deg, var(--pink), var(--pink-deep));
+  color:#fff; font-family:inherit; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:1px;
+  font-size:21px; font-weight:900;
+  box-shadow:0 7px 0 var(--pink-dark), 0 12px 18px rgba(196,58,115,.26);
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+.start-button small { font-size:11.5px; font-weight:700; color:#ffe6f0; }
+.start-button:active { transform:translateY(4px); box-shadow:0 2px 0 var(--pink-dark); }
+
+/* ★★ つづきから（★合計が しまって ある ときだけ 出ます）★★
+   ★ はじめて 開いた 人には **ボタンは 1つ しか ありません**（設計図 §5.5-②）。 */
+.sub-button {
+  margin-top:10px; width:100%; min-height:46px; padding:5px 16px;
+  border:3px solid #cfe4ea; border-radius:999px; background:#eaf3f1;
+  color:#5a7a8c; font-family:inherit; font-size:14.5px; font-weight:900; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:0; line-height:1.25;
+}
+.sub-button small { font-weight:700; color:#7b95a3; font-size:11px; }
+.sub-button:active { transform:translateY(2px); }
+
+/* ★ ハッピー（★大富豪・ページワンと 同じ ならび）
+   ⚠️ ★`.title-screen` の **いちばん 下の 子** ―― ★T160 の margin-bottom:auto が 効きます。 */
+.mascot { flex:0 0 auto; margin-top:16px; display:flex; flex-direction:column; align-items:center; }
+.mascot .bubble {
+  position:relative; margin:0 0 12px; padding:7px 14px; border-radius:18px;
+  background:var(--white); border:3px solid var(--pink);
+  font-size:14px; font-weight:900; color:var(--pink-dark); line-height:1.3;
+  box-shadow:0 3px 0 rgba(196,155,110,.18);
+}
+.mascot .bubble::before, .mascot .bubble::after { content:''; position:absolute; left:50%; width:0; height:0; border-style:solid; }
+.mascot .bubble::before { bottom:-14px; margin-left:-6px; border-width:14px 11px 0 0; border-color:var(--pink) transparent transparent transparent; }
+.mascot .bubble::after  { bottom:-9px;  margin-left:-4px; border-width:10px 8px 0 0;  border-color:#fff transparent transparent transparent; }
+.mascot .happy-cat { width:76px; height:58px; }
+.cat-name { margin:2px 0 0; font-size:11px; font-weight:900; color:var(--pink-dark); }
+
+/* ★ 日本語の 折り返しを「ことばの きれめ」で（★大富豪と 同じ 1行）*/
+.intro, .mascot .bubble, .help-list li, .help-note, .result-say { word-break:auto-phrase; }
+
+/* ★★ せまい 画面の 囲い（★大富豪の @media (max-width:650px) の 実測値 そのまま）★★
+   ⚠️★ この かたまりは **`.start-card` の 決まりより 後ろ**に 置く こと
+      ―― ★同じ 強さでは 後ろが 勝つ ので、前に 置くと 1つも 効きません（★ページワン T162 の 失敗）。 */
+@media (max-width:650px) {
+  .start-card { border-width:4px; border-radius:24px; padding:22px 15px 20px; }
+  .start-card h1 { font-size:50px; letter-spacing:1px; }
+  .eyebrow { font-size:13.5px; }
+  .intro { font-size:15px; margin:5px 0 14px; }
+  .start-button { font-size:19px; min-height:58px; }
+  .mascot .bubble { font-size:12.5px; padding:6px 11px; border-width:2px; }
+  .mascot .happy-cat { width:64px; height:49px; }
+  .level-pick-name { font-size:12.5px; }
+  .level-select { font-size:14px; }
+}
+@media (max-width:340px) {
+  .start-card { padding:18px 12px 16px; }
+  .start-card h1 { font-size:44px; }
+  .mascot { margin-top:12px; }
+}
+
+/* ── 遊ぶ 画面 ──────────────────────────── */
+.play-screen { position:relative; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+
+/* ============================================================
+   ★★★ ハッピーの 帯（★T167・社長指示「大富豪みたいに 統一して ほしい」）★★★
+   ------------------------------------------------------------
+   ★ ★手本は 大富豪の `.status-line > .talk`。★★下の 数字は ぜんぶ
+     ★ 大富豪から **測って 写した** もの です【実測・T167 §1】 ――
+     ★ ★私の 好みで 決めた 数字は 1つも ありません。
+
+   | ★写した もの      | ★大富豪【実測】                    | ★ハーツ（ここ）      |
+   |--------------------|------------------------------------|----------------------|
+   | ネコの 器の はば   | 64px ／ 48px（はば 650px 以下）     | ★同じ                |
+   | ふきだし           | flex:1（★横に 長い）                | ★同じ                |
+   | ふきだしの わく    | 3px ピンク・かど 18px               | ★同じ                |
+   | ふきだしの 内よはく| 8px 13px ／ 5px 10px（650px 以下）  | ★同じ                |
+   | ふきだしの 字      | 13px ／ 12px（520以下）／17px（PC） | ★同じ                |
+   | ネコと ふきだしの 間| 10px                               | ★同じ                |
+   | しっぽ             | ピンク 9x17 ＋ 白 6x12 の 2まい重ね | ★同じ（★下を 見て）  |
+
+   ⚠️★★ 1つだけ わざと ちがう ところ ―― ★**しっぽの たての 位置** ★★
+     ★ 大富豪は `top:18px`（★上ぞろえ）。★★これは 中が 2行に なる ことを 見た 置き方 です。
+     ★ ★ハーツの ひとことは **いつも 1行**（★いちばん 長い 文でも 1行【実測】）。
+       ★ ★大富豪の 18px を そのまま 写すと、★ふきだしが 32px の とき
+         ★★しっぽの 先（18＋18＝36px）が **下に 4px はみ出します**。
+     ★ → ★★まん中ぞろえ（`top:calc(50% - 9px)`）に しました。★★大きさは 1pxも 変えて いません。
+
+   ⚠️★★ たての 低い 画面（★横向き）では この 帯を **出しません** ★★
+     ★ ★横向きは いまも「ハッピーを 出さない」画面 です（★直す前から）。
+     ★ ★そして ★★盤の たけ 309px は verify ⑧ の 表に 書いて あります ――
+       ★★1pxでも 減らすと 札が 33px から 縮み、★トライ T166 の 数字が 動きます。
+   ============================================================ */
+.talk {
+  flex:0 0 auto; display:flex; align-items:flex-start; gap:10px;
+  padding:0 2px 6px; min-width:0;
+}
+.talk .cat-wrap { width:64px; flex:0 0 auto; text-align:center; }
+/* ⚠️★★ たけは **数で 書く**（★`height:auto` に しない）★★ ―― ★私の 回り道③【実測】
+   ★ ★大富豪の `.cat` は `width:100%; height:auto` です。★同じに 書いたら
+     ★★ネコが **48×150px** に なり、★盤が 150px 短く なって
+     ★★320×568 の 札が 39→38px、★320×480 が 39→**23px** まで 縮みました。
+   ★ ★わけ：★ハーツの `<svg class="happy-cat">` には viewBox が ありません
+     （★中身は `<use>` で 呼ぶ だけ）。★★大きさの 手がかりが ないので、
+     ★ブラウザは SVG の 決まりの 150px を たけに 使います。
+   ★ → ★★たけは 自分で 書きます。★★48 × 112/150 ＝ 35.84 → **36px**
+     ／★64 × 112/150 ＝ 47.79 → **48px**（★112/150 は `#happy-head` の viewBox の 比）。
+   ★ ★★これで かおの 大きさは **大富豪と 同じ**（★はばが 同じ ＝ 絵の 座標が 同じ）です。 */
+.talk .happy-cat { width:64px; height:48px; display:block; margin:0 auto; }
+/* ★ 名札は 流れの 中（★大富豪は position:absolute ―― ★あちらは 体まで 描いて いて
+     ★ 下に 置く 場所が ある から です。★ハーツの 絵は **かおだけ**なので、
+     ★ ★下に 出すと 盤に かぶります。★→ ★1行 ぶん（15px）を 素直に 使います。
+   ★ ★これで 帯の 中身は **36 ＋ 15 ＝ 51px** ―― ★★大富豪の 51px と 同じ です【実測】。 */
+.talk .cat-name {
+  margin:1px 0 0; font-size:10.5px; font-weight:900; line-height:14px;
+  color:var(--pink-dark); white-space:nowrap;
+}
+.talk .banner {
+  position:relative; flex:1 1 auto; min-width:0; margin:0; padding:8px 13px;
+  background:var(--white); border:3px solid var(--pink); border-radius:18px;
+  color:var(--ink); font-size:13px; font-weight:900; line-height:1.35;
+  box-shadow:0 3px 0 rgba(196,155,110,.18);
+  overflow:hidden; text-overflow:ellipsis;
+}
+/* ★ しっぽは 2まい重ね（★ピンクの ふち ＋ 白い 中身）＝ 大富豪と 同じ 作り */
+.talk .banner::before, .talk .banner::after {
+  content:''; position:absolute; width:0; height:0; border-style:solid;
+}
+.talk .banner::before {
+  left:-17px; top:calc(50% - 9px);
+  border-width:9px 17px 9px 0; border-color:transparent var(--pink) transparent transparent;
+}
+.talk .banner::after {
+  left:-11px; top:calc(50% - 6px);
+  border-width:6px 12px 6px 0; border-color:transparent #fff transparent transparent;
+}
+@media (max-width:650px) {
+  .talk .cat-wrap { width:48px; }
+  .talk .happy-cat { width:48px; height:36px; }
+  .talk .banner { padding:5px 10px; }
+}
+@media (max-width:520px) { .talk .banner { font-size:12px; } }
+/* ★ 大富豪の「パソコンで 字を 大きく する」かたまりと **同じ 条件**（min 1180×850）*/
+@media (min-width:1180px) and (min-height:850px) { .talk .banner { font-size:17px; } }
+/* ============================================================
+   ★★ たての 低い 画面（★横向き）―― ★帯を **並びから 外します**（★たけ 0）★★
+   ------------------------------------------------------------
+   ⚠️★★ ★私の 回り道④【実測】：★はじめ ここを `display:none` と 書きました。
+      ★ ★★すると 横向きで ひとことが まるごと 消えました ―― ★★これは 直しでは なく **こわし** です。
+        ★ ★「3枚 えらんで、左の 人に わたそう！」は、★★わたす 場面で 画面に 出て いる
+          ★ **たった 1つの 案内** です。★消したら 何を すれば よいか 分かりません。
+      ★ ★見つけた 目：★数字では なく **写真**（`後_812x375よこ.png` の 1枚目）でした。
+
+   ★ ★では なぜ 帯を 並びに 置けないか【計算・実測】：
+     ★ ★横向きの 盤は **309px**。★すきまは すでに 下ばりの 4px（＝ 余りが 1pxも ない）。
+     ★ ★帯を 並びに 入れると 盤は 263px に なり、★★札が **33px → 26px** に 縮みます。
+       ★ ★★トライ T166 が 測った 横向きの 数字が 動きます。
+   ★ → ★★ネコは 出さず、★ひとことだけを **直す前と 同じ 置き方**（★台の 上ばしに 浮かべる・
+     ★ ★たけ 0）に 戻します。★★これは トライが すでに 検査ずみの 形 です
+       （★T166 気になる程度3：★横向きは 19px かさなる。★★「読めます」と 書かれて います）。
+   ★ ★上ばしの y は JS が 入れます（`layout()` の `is-flat`）―― ★台の 位置は 札の たけで
+     ★ 決まる ので、★CSS だけでは 書けません。
+   ============================================================ */
+@media (max-height:420px) {
+  .play-screen > .talk {
+    position:absolute; left:0; right:0; top:0; height:0;
+    display:block; padding:0; pointer-events:none; z-index:60; text-align:center;
+  }
+  .talk .cat-wrap { display:none; }
+  /* ★ 直す前の `.say` の 見た目 そのまま（★小さい 丸い ふきだし・しっぽ なし）*/
+  .talk .banner {
+    position:absolute; left:50%; transform:translateX(-50%);
+    display:inline-block; flex:none; width:auto; max-width:92%;
+    padding:4px 12px; border:0; border-radius:999px;
+    background:var(--white); color:#5a4a63; font-size:11.5px; font-weight:900;
+    /* ★ `normal` に 戻すのは わざと です ―― ★1.35 の ままだと ふきだしが
+       ★ 19px → 24px に 太り、★台との かさなりが 19px → 24px に 増えます【実測】。
+       ★ ★★19px は トライ T166 が 検査した 数字 です。★動かしません。 */
+    line-height:normal;
+    box-shadow:0 2px 0 #e6dcc9; white-space:nowrap;
+  }
+  .talk .banner::before, .talk .banner::after { display:none; }
+}
+/* ★ 器は うすい クリーム ―― ★みどりの 上に みどりの 台を 置くと 台が 見えません
+     （★ページワン T162② の 直し。★大富豪も 同じ 作り）。 */
+.stage {
+  position:relative; flex:1 1 auto; min-height:0;
+  border-radius:18px; padding:0 4px;
+  background:linear-gradient(180deg, rgba(255,255,255,.55) 0%, rgba(255,253,245,.85) 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.75);
+  overflow:hidden;
+}
+
+/* ★★ 場の 台（★大富豪 ＝ ページワン T162② の `.felt-table` を そのまま）★★
+   ★ 木の わく（外）＋ みどりの ラシャ（中）の 2枚がさね。
+   ★ 大きさ・場所は JS が 入れます（★札の たけで 決まる ので CSS だけでは 書けない）。
+   ⚠️★ **指は 1つも 当たりません**（pointer-events:none）。★飾りの 1枚 です。
+   ⚠️★ 影は `0 6px 0`（★ぼかし 0）―― ★verify ④ の「光り」には なりません。 */
+.felt-table {
+  position:absolute; z-index:0; pointer-events:none;
+  border:var(--felt-bd, 4px) solid #412817;
+  border-radius:calc(var(--felt-bd, 4px) * 4);
+  padding:var(--felt-pad, 7px);
+  background:linear-gradient(135deg,#6b3d1e,#bf7a34 17%,#6d3f1f 33%,#c08139 50%,#66391b 73%,#b86e2a);
+  box-shadow:0 6px 0 rgba(86,53,38,.28);
+}
+.felt-table > i {
+  display:block; width:100%; height:100%;
+  border:var(--felt-in, 2px) solid #3f863f;
+  border-radius:calc(var(--felt-bd, 4px) * 3);
+  background:repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 2px, transparent 2px 8px), #82ce84;
+  box-shadow:inset 0 0 20px #4c9d51;
+}
+/* ★ 角の かざり（★大富豪と 同じ。★言葉では ないので 足して よい）*/
+.felt-table::before, .felt-table::after {
+  content:'♥'; position:absolute; z-index:2; color:#F6D69B; opacity:.75;
+  font-size:calc(var(--cw) * .22); line-height:1;
+}
+.felt-table::before { left:5px; top:3px; }
+.felt-table::after  { right:5px; bottom:1px; transform:rotate(150deg); }
+.stage, .zone, .cards, .card, .card-in, .card img { touch-action:none; }
+
+.zone { position:absolute; left:0; right:0; pointer-events:none; }
+.zone.bots { display:block; top:0; bottom:0; }
+.bot { position:absolute; }
+/* ★ ロボットの 名前 ―― ★うすい クリームの 器の 上なので、字を こく します。
+   ★ ★#3F6B5D ／ #E5F7F9 … ★色の 濃さの 差 **5.44:1**（★4.5:1 の 線を こえます）【計算】*/
+.bot-name {
+  position:absolute; left:0; right:0; text-align:center;
+  font-size:10px; font-weight:900; color:#3F6B5D; line-height:15px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+.middle { position:absolute; left:0; right:0; pointer-events:none; }
+/* ★★ T167：★ここに あった `.happy-spot`（★ネコを 盤の まん中に 大きく 置く）と
+   ★ `.say`（★台の 上に 出る 小さな 丸い ふきだし）は **消しました**。
+   ★ ★引っこし先は 上の 「ハッピーの 帯」（`.talk`）です。
+   ★ ★★ついでに 直った もの：★トライ T166「気になる程度3 ―― ★ふきだしが 台の 上わくに
+     ★重なる（★横向き 19px・PC 15px・320×568 7px）」。★★10サイズ とも **0px** に なりました。 */
+
+/* ★★ 点の 帯 ―― ★「この回」と「合計」を 4人ぶん ★★
+   ★ 見出し ／ この回 ／ 合計 の 3行。★数だけ。★言葉は 足しません。 */
+/* ★★★ T171 ―― ★字の 大きさは **JS が 帯の たけから 出します**（★社長の 決め）★★★
+   ------------------------------------------------------------
+   ★ トライ T166 §7-2：★★「9.5px／10.5px。★1280pxでも 大きく ならない」。
+   ★ ★前は ここに `font-size:10.5px` と `@media (max-width:360px){9.5px}` が
+     ★★**決め打ちで** 書いて ありました ―― ★だから 大きい 画面でも 育ちませんでした。
+   ★ → ★★`--sb-num`（数の 字）と `--sb-name`（名前の 字）を JS が 入れます。
+     ★ ★JS 側は「★台を 1pxも やせさせない たけ」から 逆算して います（★game.js の measure）。
+   ⚠️★ アトへ：★ここに `font-size` を 決め打ちで 書き戻さないで ください
+      ―― ★★大きい 画面で また 育たなく なります（★verify ㉑ が 鳴ります）。
+   ★ ★下の `10.5px` / `9px` は **JS が 動かなかった ときの 保険**です。 */
+.score-band {
+  position:absolute; left:4px; right:4px; z-index:40; pointer-events:none;
+  display:grid; grid-template-columns:auto repeat(4, 1fr);
+  align-content:center; gap:1px 2px;
+  padding:2px 4px; border-radius:12px;
+  background:rgba(255,255,255,.72); box-shadow:inset 0 0 0 2px rgba(255,255,255,.9);
+  font-weight:900; color:#5a6b78;
+  font-size:var(--sb-num, 10.5px);
+  line-height:calc(var(--sb-num, 10.5px) * 1.2);
+}
+.score-band b { font-weight:900; color:#93a3ae; text-align:right; padding-right:2px; }
+.score-band i { font-style:normal; text-align:center; color:#43596b; }
+.score-band .sb-name {
+  color:#3F6B5D; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:var(--sb-name, 9px);
+  line-height:calc(var(--sb-name, 9px) * 1.25);
+}
+.score-band .sb-me { color:var(--pink-dark); }
+
+/* ── 札 ─────────────────────────────────── */
+.cards { position:absolute; inset:0; }
+.card {
+  position:absolute; width:var(--cw); height:var(--ch);
+  transition:left .26s cubic-bezier(.35,.02,.28,1), top .26s cubic-bezier(.35,.02,.28,1),
+             width .2s ease, height .2s ease, transform .14s ease, filter .16s ease, opacity .2s ease;
+  will-change:left, top;
+}
+.card.is-bot { width:var(--bw); height:var(--bh); }
+.card-in {
+  position:absolute; inset:0; border-radius:calc(var(--cw) * .1); overflow:hidden;
+  background:var(--white); box-shadow:0 1px 2px rgba(40,30,50,.28);
+}
+.card.is-bot .card-in { border-radius:calc(var(--bw) * .12); }
+.card img {
+  position:absolute; inset:0; width:100%; height:100%; object-fit:fill;
+  display:block; pointer-events:none;
+}
+.card .face { opacity:1; }
+.card.is-down .face { opacity:0; }
+.card.is-down .back { opacity:1; }
+.card .back { opacity:0; }
+
+/* ★★★ 強調 その1 ―― ★出す とき：★出せない 札を 暗くする ★★★
+   ★ 光らせません。★色も 変えません。★★引き算 だけ です（ルル §14-1）。
+   ⚠️★ アトへ：★ここに 光りを 足すと、★verify ④ が すぐ 鳴ります。 */
+.card.is-dim { filter:brightness(.62) saturate(.55); }
+
+/* ★★★ 強調 その2 ―― ★わたす とき：★選んだ 3枚（★ピラミッドの「選ぶ→わく→押す」）★★★
+   ★★ `.is-dim` とは **同時に 出ません**（★わたす 間は 出せる／出せないが 無い）。
+   ⚠️★ `box-shadow` では なく `outline` で 書いて あります ――
+      ★verify ④ は 札の box-shadow の「広がり 2px 以上」を 光りと 見なす ので、
+      ★★わくを box-shadow で 書くと 自分で 鳴らして しまいます。 */
+.card.is-pick {
+  outline:3px solid var(--pink-deep); outline-offset:-3px;
+  border-radius:calc(var(--cw) * .1);
+  transform:translateY(-14%);
+  z-index:70;
+}
+
+/* ★ 出せない 所を 押した ―― ★ぷるっと ゆれる だけ（★「そこは ちがうよ」）
+   ★ ★ページワン T160／T161 と 同じ 返事。★新しい 見た目は 0種類 です。 */
+.card.is-no { animation:shakeNo .16s ease-in-out; }
+@keyframes shakeNo {
+  0%,100% { margin-left:0; } 25% { margin-left:-4px; } 75% { margin-left:4px; }
+}
+.cards.no-move .card { transition:none !important; }
+/* ★ 取られて 消える 4枚（★取った 人の ところへ 飛んで、静かに 消える）*/
+.card.is-gone { opacity:0; }
+
+.card .fallback {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:calc(var(--cw) * .3); font-weight:900; color:#3D3550; background:var(--white);
+}
+.card .fallback.red { color:#c0392b; }
+
+/* ── ★★わたす ボタン（★3枚 えらんだ ときだけ 出る）── */
+.pass-go {
+  position:absolute; left:50%; transform:translateX(-50%);
+  z-index:80;
+}
+.pass-btn {
+  min-height:48px; min-width:132px; padding:0 22px;
+  border:4px solid #fff; border-radius:999px;
+  background:linear-gradient(180deg, var(--pink), var(--pink-deep));
+  color:#fff; font-family:inherit; font-size:17px; font-weight:900; cursor:pointer;
+  box-shadow:0 5px 0 var(--pink-dark), 0 8px 14px rgba(196,58,115,.24);
+}
+.pass-btn:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
+
+/* ── ハッピーの うごき ──────────────────── */
+@keyframes happyJump {
+  0%,100% { transform:translateY(0); } 40% { transform:translateY(-10%); }
+}
+.happy-cat.is-jump { animation:happyJump .5s ease-in-out 3; }
+
+/* ── 点の 画面 ／ 勝ち・負けの 画面 ───────────── */
+.result-wrap {
+  position:fixed; inset:0; z-index:120;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(70,60,82,.30); padding:10px;
+}
+.result-box {
+  width:min(94vw, 420px); max-height:var(--result-max);
+  padding:8px 12px 10px; border-radius:18px; background:var(--white);
+  box-shadow:0 6px 0 #e0d3c2; display:flex; flex-direction:column; gap:6px;
+  overflow:hidden;
+}
+@keyframes resultIn { 0% { transform:scale(.86); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+.result-wrap:not(.hidden) .result-box { animation:resultIn .22s ease-out; }
+.result-head { display:flex; align-items:center; gap:8px; min-height:24px; }
+.result-title { margin:0; flex:0 0 auto; font-size:18px; font-weight:900; line-height:1.15; color:var(--pink-dark); white-space:nowrap; }
+.result-title.is-quiet { color:#7f8fa0; }
+.result-say { margin:0; flex:1 1 auto; min-width:0; font-size:11.5px; font-weight:900; color:#6b7b88;
+  overflow:hidden; text-overflow:ellipsis; }
+/* ★ 点の 表（★この回 と 合計）―― ★遊ぶ 画面の 帯と 同じ ならび */
+.result-score {
+  display:grid; grid-template-columns:auto repeat(4, 1fr); gap:1px 4px;
+  font-size:11px; font-weight:900; line-height:15px; color:#5a6b78;
+}
+.result-score b { font-weight:900; color:#93a3ae; text-align:right; padding-right:2px; }
+.result-score i { font-style:normal; text-align:center; color:#43596b; }
+.result-score .sb-name { color:#3F6B5D; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.result-score .sb-me { color:var(--pink-dark); }
+.result-box .level-pick { margin:0 auto; padding:2px 8px; border-width:2px; }
+.result-box .level-pick .level-select { min-height:44px; font-size:14px; }
+.result-row { display:flex; gap:8px; transition:opacity .16s ease-out; }
+.dialog-ok {
+  flex:1 1 auto; min-height:44px; padding:0 14px; border:0; border-radius:999px;
+  background:var(--pink); color:#fff; font-family:inherit; font-size:14px; font-weight:900;
+  cursor:pointer; box-shadow:0 3px 0 var(--pink-dark);
+  display:flex; align-items:center; justify-content:center; text-decoration:none;
+}
+.dialog-ok:active { transform:translateY(2px); box-shadow:0 1px 0 var(--pink-dark); }
+.dialog-ok.alt { background:#eaf3f1; color:#5a7a8c; box-shadow:0 3px 0 #cfe4ea; }
+.dialog-ok.alt:active { box-shadow:0 1px 0 #cfe4ea; }
+.result-box.is-locked .result-row,
+.result-box.is-locked .level-pick { pointer-events:none; opacity:.4; }
+.result-box.is-locked .dialog-ok { box-shadow:none; transform:translateY(3px); }
+
+/* ── 遊び方 ─────────────────────────────── */
+dialog#helpDialog {
+  border:0; border-radius:20px; padding:16px 16px 14px; max-width:min(92vw, 430px);
+  max-height:86vh; overflow:auto;
+  background:var(--white); color:var(--ink); font-family:inherit; position:relative;
+  box-shadow:0 8px 0 #e0d3c2;
+}
+dialog#helpDialog::backdrop { background:rgba(70,60,82,.34); }
+dialog#helpDialog h2 { margin:0 0 6px; font-size:17px; font-weight:900; color:var(--pink-dark); }
+.dialog-lead { margin:0 0 8px; font-size:13px; font-weight:900; color:#5a4a63; }
+.help-list { margin:0 0 8px; padding-left:1.2em; font-size:12.5px; font-weight:700; line-height:1.7; }
+.help-note { margin:0 0 10px; font-size:11.5px; font-weight:700; color:#7d8c99; line-height:1.6; }
+.close-dialog {
+  position:absolute; right:8px; top:8px; width:44px; height:44px; border:0; border-radius:50%;
+  background:#f1f5f4; color:#7d8c99; font-size:18px; font-weight:900; cursor:pointer; font-family:inherit;
+}
+
+/* ── ★測る ときは 動きを 止める（★会社で 4回 かかった わな）── */
+body.measuring *, body.measuring *::before, body.measuring *::after {
+  transition:none !important; animation:none !important;
+}
