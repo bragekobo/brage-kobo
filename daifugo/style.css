@@ -1707,3 +1707,295 @@ body {
      `.hand-area:has(.hand .card.can-join) .play-button:disabled {` に 書きもどす
    ・小さい字の こさも 前に 戻す … `.play-button:disabled small { opacity:1; }` を 消す
    ============================================================ */
+
+/* ============================================================
+   ★T185 ― ①よこ向き（812×375）で 手札に 1枚も さわれない
+            ②せまい・ひくい 画面で「出す」が 画面の 外
+            （🎨アト・2026-08-31 ／ コーダの 見張り T184 が 見つけた 本物の 2件）
+   ------------------------------------------------------------
+   ★直す前の 実測（本物の 試合・自分の番）：
+
+   | 画面        | ページの高さ | はみ出し | 「出す」の 下ばし | 手札の まん中が 外 |
+   |-------------|------------|---------|-----------------|------------------|
+   | ★812×375    | ★855px    | ★＋480  | ★y=815（画面375）| ★14 / 14枚      |
+   | 320×480 ふつう| 564px     | ＋84    | y=552（画面480） | 0 / 14枚         |
+   | 320×568 ぜんぶ| 662px     | ＋94    | y=650（画面568） | 0 / 14枚         |
+   | 375×667 ぜんぶ| 731px     | ＋64    | y=713（画面667） | 0 / 14枚         |
+
+   ★設計図 §5.5 追記③：「★見切れて よいのは "使わない 側" だけ。
+     ★触る ところが 画面の 外に 出たら、それは 見切れでは なく ★故障」。
+   ★手札と「出す」「パスする」は 触る ところ ＝ ★故障 でした。
+
+   ── ★なぜ いままで 出なかったか（コーダ T184 §5-1 の 実測）────────────
+   ★T120 で 測ったのは 375×667・375×812・320×568・1280×910・1512×945 の 5サイズ。
+   ★★812×375（よこ向き）は 大富豪で ★一度も 測られて いません でした。
+   ★★この CSS には いままで「たての 短さ」を 見る ものさしが 1つも 無く、
+     ★分かれ道は ぜんぶ「よこはば」（max-width:650 ／ min-width:1180）だけ でした。
+     ★★812×375 は よこ 812px なので「パソコン」と 見なされ、
+       ★★たて 375px の 画面に パソコンの 高さ（855px）が 出て いた ―― これが 原因です。
+
+   ── ★何を したか（大きく 2つ）──────────────────────────
+   ★A. よこ向き（たて 560px 以下・よこ 560px 以上）＝ ★2つの 柱に 組みかえる
+        左：ハッピー・ロボット・場　　右：手札・「出す」「パスする」
+        ★上の 1行（バッジ＋つよさの ものさし）だけ 左右に またがせる。
+   ★B. たての ひくい たて向き（よこ 650px以下・たて 700px以下）
+        ＝ ★画面の 高さに 合わせて 1画面に たたむ。★あまった 高さは 場の みどりに あげ、
+          ★足りない ときは 場の みどりが 先に 縮む（＝ 触る ところは 動かない）。
+
+   ── ⛔ ちぢめて いない もの（ぜんぶ 実測で 確かめた）────────────
+   ・375×812・390×844・414×896・768×1024・1280×910・1512×945 … ★1バイトも 効きません
+     （★この 2つの media は たて 560px以下／700px以下 でしか 開かない）
+   ・手札の 札の 大きさ（375級 45px・320級 41px）… ★たて向きは 1pxも 変えて いない
+   ・「出す」「パスする」の 高さ … ★52px 以上を 守った（44pxの 指の的）
+   ・トランプの 比率 419:635 … ★どこも 崩して いない（width:auto ＋ aspect-ratio）
+   ・game.js ／ index.html ／ office/state.js ／ ほかの 19本 … ★1バイトも さわって いない
+
+   ── ★直した あとの 実測（★はみ出し／「出す」が 外に 出た px）──────────
+   | 画面     | かんたん | ふつう | ★ぜんぶ | ★ぜんぶ＋バッジ全部＋手札18枚 |
+   |----------|---------|-------|--------|---------------------------|
+   | ★812×375 | ★0     | ★0    | ★0     | ★0（「出す」は 下ばしから 44px 内がわ）|
+   | ★375×667 | ★0     | ★0    | ★0     | ★0（10px 内がわ）           |
+   | ★320×568 | ★0     | ★0    | ★0     | ★0（10px 内がわ）           |
+   | ★320×480 | ★0     | ★0    | ★0     | ★★手札16枚で 42px 外（→ 下）|
+
+   ★★本物の 試合では（★見張り ②-2・346手番 × 10サイズ）：
+     ★★10サイズ ぜんぶ ★手札 0 / 346回・ボタン 0 / 346回 ＝ ★NG 0。
+
+   ★★入らない ところ（正直に・設計図 追記⑤）───────────────────
+   ★★私が わざと 作った「手札16枚 以上 ＋ バッジ 4つ ぜんぶ」の 場面 だけ、
+     ★320×480 で「出す」が ★42px 画面の 外に 出ます。★足りないのは ★50px。
+     ★内わけ：手札が 3だん目に 入る ぶん ＝ 66px、★のこりの 空きは 16px（★どちらも 実測）。
+     ★埋める には ★①320級の 手札の 札を 41→36px（2だんで 16枚まで 入る）か
+       ★②バッジの 2行目の 説明（「♠♥だけ出せるよ」等）を 消す ―― の どちらかが 要ります。
+     ★★どちらも 社長が 通した ものを 削るので、★私では 決めません。
+   ★★ただし ★本物の 試合（346手番）では 1回も 起きて いません
+     ―― ★手札が 16枚に なるのは「ぜんぶ」ONの 7わたしの ときだけ で、
+     ★★T184 の 教え「自分で 作った まれな 場面は ものさしに ならない」に したがい、
+     ★★鳴らす ものさしは 本物の 試合の ほうを 正と しています。
+   ============================================================ */
+
+/* ============================================================
+   ★A. よこ向き（landscape・たて 560px 以下）＝ 2つの 柱
+   ------------------------------------------------------------
+   ★なぜ 2つの 柱か（実測）：たて 375px に、いままでの たてならび
+     （上の帯32 ＋ ハッピー53 ＋ バッジ80 ＋ ロボット81 ＋ 場119 ＋ 手札227）を
+     入れると ★855px。★どれだけ 詰めても 半分にも なりません。
+     ★でも よこは 812px も 余って いる ―― ★だから よこに 分けました。
+
+   ★何を どちらに 置いたか
+     左（38%）… ハッピー／ロボット3人／場の みどり ＝「★見る もの」
+     右（62%）… 手札／「出す」「パスする」        ＝「★さわる もの」
+     上の 1行 … バッジ ＋ つよさの ものさし（★左右に またがる）
+   ★ものさしを 上に 通した 理由：左の 柱（297px）に 入れると
+     こまが 13個 ならばず 3だんに 折れて、★左の 柱が 127px も 太る（実測）。
+     ★よこ 792px なら 1行に おさまる（実測）。
+
+   ★★上の 1行の 高さを 80pxで 予約して いる 理由（いちばん 大事）：
+     バッジ（🔒しばり・↺ぎゃくまわり・👑都落ち）は「ぜんぶ」ONの あいだ
+     ★1手ごとに 出たり 消えたり します。★予約しないと、その たびに
+     ★右の 柱（手札と ボタン）が 50px 上下に 跳ねる ―― ★これは 社長が T100 で
+     名ざしで きらった「縦の 長さが 変わるので 目が チカチカ」と 同じ 形です。
+     ★予約した 結果、★「出す」の 位置は かんたんでも ぜんぶでも ★同じ y（実測 279）。
+     ★代金：バッジが 出ない かんたん／ふつうでは 上に 48px の 空きが 出ます。
+       ★ものさしを その まん中に 置いて（align-content:center）、帯として 見えるように しました。
+   ============================================================ */
+@media (orientation:landscape) and (max-height:560px) and (min-width:560px) {
+  /* 札は 44px（★手札が 9枚 × 2だんで 18枚まで 入る 最大。実測で 決めた）
+     よこ：手札の 箱の 中 459px ／ 9×44 ＋ すきま4×8 ＝ 428 ≦ 455 ✅
+     ★45px 以上に すると 8枚/だん に なり、17枚で 3だんに 落ちて はみ出す。 */
+  :root { --card-w:44px; }
+  .app-shell { max-width:100%; padding:4px 10px 3px; }
+  /* ★画面の 高さに ぴったり 合わせる。★数字を 直に 書かず、上の帯の ぶんは
+     flex に 計算させる（＝ 帯の 高さを あとで 変えても 狂わない）。
+     ★はじめの 画面の ときは かからない（★はじめの 画面は 縦に 長いので 巻けなく なる）。 */
+  .app-shell:has(#gameScreen:not(.hidden)) { height:100dvh; display:flex; flex-direction:column; }
+  .topbar { height:32px; }
+  .brand { font-size:20px; } .brand-cat { width:26px; height:20px; } .brand small { display:none; }
+  .back, .howto { min-height:30px; font-size:11.5px; padding:0 10px; border-width:2px; }
+
+  .game-screen { flex:1 1 auto; min-height:0; display:grid;
+    grid-template-columns:minmax(0,38fr) minmax(0,62fr);
+    /* 1行目＝バッジ＋ものさし（80px 予約）／2行目＝ハッピー（70px 予約）／
+       3行目＝ロボット／4行目＝場（★あまりを ぜんぶ もらう＝ここが 伸び縮みの 受け皿） */
+    grid-template-rows:minmax(60px,auto) minmax(70px,auto) auto minmax(0,1fr);
+    column-gap:10px; align-items:start; }
+  .flag-row    { grid-area:1/1/2/3; padding:0 0 4px; align-content:center; }
+  .status-line { grid-area:2/1; padding:0 0 4px; }
+  .players     { grid-area:3/1; padding:0 0 4px; }
+  .table-wrap  { grid-area:4/1; margin-top:0; align-self:stretch; min-height:0; display:flex; flex-direction:column; }
+  .hand-area   { grid-area:2/2/5/3; margin-top:0; }
+
+  .talk { flex:1 1 0; }
+  .status-line .cat-wrap { width:44px; }
+  .cat-name { font-size:9.5px; }
+  .talk .banner { padding:5px 9px; }
+  .talk .banner p { font-size:12px; }
+
+  .cpu { padding:4px 2px 3px; border-width:2px; }
+  .cpu-name { font-size:12px; } .cpu-name small { font-size:10.5px; }
+  .cpu-cards { padding-top:2px; }
+  .cpu-card { --back-h:38px; --back-step:6px; }
+
+  /* ★場の みどり：たて 375px では T100-2 の「札＋86px」（＝180px）は
+     ★画面の 48% を 食べて しまう（実測）。★よこ向き だけ、あまった 高さを
+     もらう かたちに した（★実測 79〜105px）。★中の 札は 44×67px ＝ ★まるごと 見える。
+     ⚠️ たて向き（375×812 など）の 180px／130px には 1pxも さわって いません。 */
+  .table-wrap { padding:7px 9px 6px; border-width:4px; border-radius:18px; }
+  .table-wrap .field { height:auto; flex:1 1 auto; min-height:var(--card-h); padding:2px 4px; }
+  /* ★もし それでも 足りない ときは、★場の 札が しずかに 小さく なる（比率は 保つ）。
+     ＝ 設計図 §5.5 追記③「①しずかに 詰める → ②それでも 無理なら 見切れる」の ①。 */
+  .table-wrap .field .card { height:min(var(--card-h), 100%); width:auto; }
+  .table-wrap > .score-chip { font-size:11px; top:-12px; }
+
+  /* ★バッジの 2行目（説明）を 1行目の 横に つける ―― ★字は 1つも 消して いない。
+     ★T102 は「1行目が 大きい・2行目が 説明」と 決めた けれど、それは たての 長い 画面の 話。
+     ★たて 375px では この 折り返しが 1つ 23px を 食べ、★上の 帯を 80px も ふくらませて
+       いた（実測 154px → ★78px）。★字の 大きさ・色・順番は 1pxも 変えて いない。 */
+  .flag { font-size:11.5px; padding:3px 7px; border-radius:12px; line-height:1.22; flex-wrap:nowrap; }
+  .flag small { font-size:9.5px; flex:0 1 auto; }
+  .flag-order { padding:4px 8px; border-width:2px; border-radius:13px; gap:3px; }
+  .ord-chip { min-width:16px; padding:1px 2px 0; font-size:11px; border-width:1.5px; border-radius:5px; }
+  .ord-chip.is-joker { min-width:18px; }
+  .ord-end { font-size:10px; }
+  .ord-strip { gap:1px; }
+
+  .hand-area { padding:7px 10px 9px; }
+  .hand { padding:9px 2px 0; gap:5px 4px; min-height:0; }
+  .hand-count { font-size:10.5px; right:10px; }
+  .actions { margin-top:6px; gap:8px; }
+  /* ★指の的：実測 225×52px（44pxの 的を たても よこも こえて いる） */
+  .play-button, .pass-button { flex:1 1 0; min-width:0; min-height:52px; font-size:16px; padding:7px 8px 5px; }
+  .play-button small, .pass-button small { font-size:10px; }
+}
+
+/* ============================================================
+   ★B. たての ひくい たて向き（よこ 650px 以下・たて 700px 以下）
+      ＝ 320×480 ／ 320×568 ／ 375×667
+   ------------------------------------------------------------
+   ★ここでも「まず けずる。足りない ぶんだけ 縮める」（T114・T117 と 同じ 順）。
+
+   ★①いちばん 効いた のは「けずる」では なく ★"受け皿を 作った" こと：
+     ゲームの 画面を ★画面の 高さ ちょうどに して、
+     ★あまった 高さは 場の みどりに あげ、★足りない ときは 場の みどりが 先に 縮む。
+     ★★これで「バッジが 出た」「手札が 3だんに なった」で ★手札と ボタンが 動きません。
+     ★実測：375×667 で「出す」の 下ばしは かんたんでも ぜんぶでも ★同じ（657）。
+
+   ★②縮む 順番も 決めた（★いたみの 小さい ほうから）：
+     ★1番目 場の みどりの 余白（＝ ただの 空き。無料）
+     ★2番目 ロボットの 伏せ札（★枚数の 数字は 上に あるので 消えない。flex-shrink:4）
+     ★3番目 場の 札そのもの（★1枚ぶんの 高さは 必ず 残す＝min-height:var(--card-h)）
+     ★★「出す」「パスする」と 手札は ★一度も 縮まない・動かない。
+
+   ★けずった もの（★ぜんぶ からっぽの 余白か、大きすぎた 飾り）
+     ・上の帯 40 → 30px（中の ボタンは 30px。10px あまって いた）
+     ・ハッピーの 絵 64 → 40px ／ 名札 10.5 → 9px
+     ・ロボットの 伏せ札 58 → 34px（★枚数の 字は 1pxも 変えて いない）
+     ・バッジの 内よはく 3 → 2px ／ 行間 1.22 → 1.18
+     ・手札の 箱の 上下 8/11 → 5/5px ／ 札の だんの すきま 5 → 4px
+   ★★変えて いない もの：手札の 札の 大きさ（45px／320級 41px）・
+     「出す」「パスする」の 高さ（52px）・字の 大きさ（ボタン・ロボットの 枚数）。
+   ============================================================ */
+@media (orientation:portrait) and (max-width:650px) and (max-height:700px) {
+  /* ★受け皿（①）。★はじめの 画面には かけない（縦に 長いので 巻けなく なる）。 */
+  .app-shell:has(#gameScreen:not(.hidden)) { height:100dvh; display:flex; flex-direction:column; padding-top:5px; padding-bottom:2px; }
+  .app-shell:has(#gameScreen:not(.hidden)) .game-screen { flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
+  .topbar { height:30px; }
+  .back, .howto { min-height:30px; font-size:11.5px; padding:0 10px; border-width:2px; }
+
+  .status-line { padding:0 0 3px; }
+  .status-line .cat-wrap { width:40px; }
+  .cat-name { font-size:9px; }
+  .talk .banner { padding:4px 8px; }
+  .talk .banner p { font-size:12px; }
+
+  .flag-row { padding:0 0 3px; gap:4px; }
+  /* ★バッジの 2行目（説明）を 1行目の 横に つける（★理由は よこ向きの ところと 同じ）。
+     ★実測（320×568・ぜんぶON）：上の 帯 154px → ★78px。
+     ★この 76px が、★ロボットの 伏せ札（切れて いた）と 場の みどり（68→102px）に 戻りました。
+     ★字は 1つも 消して いません ―― ★行を 折る のを やめただけ です。 */
+  .flag { padding:2px 8px; line-height:1.18; border-radius:13px; flex-wrap:nowrap; }
+  .flag small { font-size:9.5px; line-height:1.2; flex:0 1 auto; }
+  .flag .mk { min-width:1.15em; height:1.15em; margin:0; }
+
+  /* ★縮む 順番 2番目。★min-height:38px は「ロボットの 名前と ◯枚」が
+     ★かならず 読める 高さ（実測）。★伏せ札だけが 下から 静かに 切れる。 */
+  .players { padding:0 0 3px; flex:0 4 auto; min-height:38px; overflow:hidden; }
+  .cpu { padding-bottom:2px; }
+  .cpu-name { font-size:12px; } .cpu-name small { font-size:10.5px; }
+  .cpu-cards { padding-top:2px; }
+  .cpu-card { --back-h:34px; --back-step:5px; }
+
+  /* ★場の みどり ＝ 伸び縮みの 受け皿。
+     ★上は T100-2 の「札＋62px」で 止める（★いままでと 同じ 見た目。それ以上 太らせない）。
+     ★下は「札 1枚ぶん」で 止める ―― ★場の 札は 読む もの なので、ここは 譲らない。 */
+  .table-wrap { margin-top:0; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; padding:6px; }
+  .table-wrap .field { height:auto; flex:1 1 auto; min-height:var(--card-h); max-height:calc(var(--card-h) + 62px); padding:3px 0; }
+  .table-wrap .field .card { height:min(var(--card-h), 100%); width:auto; }
+
+  /* ★手札は かならず 画面の いちばん 下（＝ 指が いちばん 届く ところ）に つく。 */
+  .hand-area { margin-top:auto; padding-top:5px; padding-bottom:5px; }
+  .hand { padding-top:10px; padding-bottom:0; row-gap:4px; }
+  .actions { margin-top:4px; }
+  .play-button, .pass-button { min-height:52px; }
+}
+
+/* ── ★B-2. 320×480（いちばん せまくて ひくい 画面）だけ、あと 13px ──────────
+   ★上の B を 入れた あとの 実測（★見張り ②-2・本物の 試合 346手番）：
+     ★「出す」が 画面の 外に 出たのは ★2回だけ、★はみ出しは ★6px と 10px。
+   ★＝ もう ★10px の 空きが あれば 0に なる ところ まで 来て いた ので、
+     ★★からっぽの 余白だけを 13px 集めました（★札・字・ボタンの 大きさは 1pxも 変えて いない）：
+       画面いちばん上 5→4（−1）／いちばん下 2→0（−2）
+       手札の 箱の 中・札の 上 10→8（−2）／札の だんの すきま 4→2（−4・3だんの とき）
+       手札の 箱の 上下 5/5→3/3（−4）／ボタンの 上 4→3（−1）
+       ふきだしの 内よはく 4→3（−1）
+   ★直した あと：★0 / 346回（★NG 0）。
+   ⚠️ 320×568・375×667 には かかりません（★たて 520px 以下 だけ）。 */
+@media (orientation:portrait) and (max-width:340px) and (max-height:520px) {
+  .app-shell:has(#gameScreen:not(.hidden)) { padding-top:4px; padding-bottom:0; }
+  .hand { padding-top:8px; row-gap:2px; }
+  .hand-area { padding-top:3px; padding-bottom:3px; }
+  .actions { margin-top:3px; }
+  .talk .banner { padding:3px 8px; }
+}
+
+/* ── ★A-2. よこ向きの「はじめの 画面」―― ★「ゲームを始める」が 画面の 外だった ──
+   ★実測（812×375・直す前）：ページ 546px（画面 375）。
+     ★「ゲームを始める」の まん中は ★y=426 ＝ ★51px 画面の 外。
+   ★見張り（⑥）は「スクロールすれば 届く」ので 鳴りません でした。★でも
+     ★はじめて 開いた 人の 画面に「始める」が 1つも 写って いない ―― これは 直します。
+
+   ★どこから 高さを 出したか（★まず けずる。足りない ぶんだけ 縮める）
+     ⑴ ★ハッピーを 右の 余白へ 逃がす（position:absolute）  ★−221px（★いちばん 大きい）
+        ―― ★絵・ふきだし・名札は 1pxも 変えて いない。★置き場所だけ 変えた。
+        ★よこ 812px では 白い 箱（560px）の 右に 126px あく ＝ ★ここは ずっと 空だった。
+     ⑵ 上下の からっぽの 余白（18/40 → 4/6）                 −48px
+     ⑶ 白い 箱の 内よはく（26/24 → 12/12）                   −26px
+     ⑷ タイトル「大富豪」60 → 34px                          −26px
+     ⑸ 「まずは"ふつう"から…」の 1行を 出さない（★下の 3つが 同じ ことを 言って いる：
+        「どれで遊ぶ？」の ふつう★・ボタンの 中の「カードを配るよ」・ハッピーの ふきだし）−27px
+     ⑹ 雲の かざり（画面の 外に 出て いた）                    −0（見えなく なるだけ）
+   ★結果：ページ 546 → ★375px（★画面ぴったり。スクロール 0）。
+   ⚠️ たて向きには 1バイトも かかりません（landscape ＋ たて560px以下 だけ）。 */
+@media (orientation:landscape) and (max-height:560px) and (min-width:560px) {
+  .start-screen { padding:4px 0 6px; }
+  .start-card { padding:12px 20px 12px; border-width:4px; border-radius:24px; }
+  .eyebrow { font-size:12.5px; }
+  .start-card h1 { font-size:34px; margin:0; text-shadow:0 3px #285e46,0 5px #e3ffd7; }
+  .start-card h1 span { font-size:24px; vertical-align:4px; }
+  .intro { font-size:13.5px; margin:2px 0 9px; }
+  .preset-block { padding:8px; }
+  .preset { padding:6px 5px; }
+  .preset b { font-size:15px; }
+  .rule-fold { margin-top:8px; }
+  .rule-fold > summary { padding:6px 12px; }
+  .start-button { margin-top:10px; padding:8px 20px 6px; font-size:19px; }
+  .tip { display:none; }
+  /* ★ハッピーは 消えて いない。白い 箱の 右の 空きに 立たせただけ。
+     ⚠️★ここで 1回 失敗しました：右へ 寄せた とき、ふきだし（154px）が
+       ★ハッピーの 幅（112px）の まん中ぞろえの まま だったので、
+       ★右へ 5px はみ出し、★見張りが「横スクロールが 1場面で 出ました」と 鳴りました。
+       ★→ ふきだしの 右ばしを ハッピーの 右ばしに そろえ（左へ 伸びる）、0に 戻しました。 */
+  .mascot { position:absolute; right:6px; bottom:8px; width:112px; margin:0; }
+  .mascot .bubble { align-self:flex-end; justify-self:end; }
+  .cloud { display:none; }
+}
