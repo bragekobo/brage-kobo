@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>セブンブリッジ ― ブラゲ工房</title>
+  <meta name="description" content="同じ 数字 3枚か、同じ マークの つづいた 数字 3枚で 場に 出す。7は 0点 ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       SNS・LINE に URL を はったときの プレビュー（OGP / Twitter Card）
+       ★ og:url は `…/brage-kobo/<名前>/` が 正（T157 で 18本 とも 200 を 確かめずみ）。
+         ★ `games/` を 足すと 404 ―― ★この フォルダ そのものが 公開の 根っこ だから（設計図 §8.5）。
+
+       ★★ この1本は 設計図 §9（トランプの 絵札）が **効きます** ★★
+         ★ 読む 絵は **54個**（52枚 ＋ JOKER1 ＋ トランプ裏赤）。★JOKER2 は 読みません。
+         ★ 足す 絵は **0枚**（ルル T173 §10【実測】）。
+
+       ★★ 見出しの 札は **クローバーの 7** ★★
+         ★ ルル §4-5：「★7が 0点 だから、点を 見る 腕の 差が 4.64 → 6.34 に なる」。
+           ★ ★＝ ★7は この ゲームの 名前 そのもの です。
+         ★ 大きさは 実物どおり 280×424（★T83 で 419×635 から 小さく した もの）。
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="セブンブリッジ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="同じ 数字 3枚か、同じ マークの つづいた 数字 3枚で 場に 出す。人の 組にも 足せる。7は 0点。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/sevenbridge/" />
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%90%E3%83%BC7.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="280" />
+  <meta property="og:image:height" content="424" />
+  <meta property="og:image:alt" content="トランプのクローバーの7" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="セブンブリッジ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="同じ 数字 3枚か、同じ マークの つづいた 数字 3枚で 場に 出す。7は 0点。" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/cards/%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%90%E3%83%BC7.png" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存18本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="sevenbridge.css" />
+
+  <!-- ★ 裏面は ロボット3人の 手札 ＋ 山 ぜんぶの 顔。★いちばん 先に 読ませる
+       （設計図 §9・2026-08-26 の 行）-->
+  <link rel="preload" as="image" href="../cards/%E3%83%88%E3%83%A9%E3%83%B3%E3%83%97%E8%A3%8F%E8%B5%A4.png" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存18本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ─────────────────────────────────── -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>セブンブリッジ</span>
+    </div>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★★★ 選ばせるのは **ロボットの つよさ 1つだけ**（★設計図 追記①・ルル §14）★★★
+         ★ ★★決まりの 入口（設定）は **0個** です ―― ★ルル §6-2：
+           ★ ★「★切りかえて 面白くなる 決まりが 1つも ありませんでした。
+             ★ ★7が0点・7上がり2倍・ジョーカー1枚・7枚配り ―― ★どれも 切ると ただ 悪くなる だけ」。
+         ★ ★★決まりは 13個 ぜんぶ 入って います（設計図 §5.5-①「機能は 削らない」）。
+         ★ ★★初期値は 1段目「はじめて」―― ★はじめての 人が 25.06%（★ちょうど 五分・ルル §12-3）。
+
+       ★★ 囲い（.start-card）と はじめるボタンは **大富豪 ＝ ページワン T162 ＝ ハーツ の 形**
+       ⚠️★ `.title-screen` の 子は **2つの まま**（★囲い と ハッピー）――
+          ★T160 の `> :first-child{margin-top:auto}` / `> :last-child{margin-bottom:auto}` が 効きます。 -->
+  <section class="title-screen" id="titleScreen">
+    <div class="start-card">
+      <!-- ⚠️★ 「カード」は 設計図 §9.6 で 言っては いけない 言葉（★verify ⑫ が 鳴ります）。 -->
+      <p class="eyebrow">みんなで 楽しく トランプ！</p>
+      <h1>セブンブリッジ</h1>
+      <p class="intro">そろえて 出して、手札を 0枚に！</p>
+
+      <label class="level-pick" for="levelTitle">
+        <span class="level-pick-name">ロボットの つよさ</span>
+        <select class="level-select" id="levelTitle"></select>
+      </label>
+
+      <!-- ★★ 途中から 続ける（★1試合は 4回 配ります）★★
+           ★ ★1回 配り終わる ごとに 合計を しまいます。★続きが ある ときだけ 出ます。
+           ★ ★＝ ★はじめて 開いた 人には ボタンは **1つ しか ありません**（設計図 §5.5-②）。 -->
+      <button class="start-button" type="button" id="btnStart">
+        <span>はじめる <b>▶</b></span><small>あなた ＋ ロボット3人 ／ 4回 やって 合計点</small>
+      </button>
+      <button class="sub-button hidden" type="button" id="btnResume">
+        <span>つづきから ▶</span><small id="resumeAt"></small></button>
+    </div>
+
+    <!-- ★ ハッピー（★大富豪・ページワン・ハーツと 同じ ならび ―― ★ふきだし → かお → 名前）-->
+    <div class="mascot">
+      <p class="bubble">そろえて 出そう！ 7は 0点だよ！</p>
+      <svg class="happy-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="cat-name">ハッピー</p>
+    </div>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       ★★ 置き場は 5つ（上から）★★
+         ★ ロボット3人の 手札（裏）／ ★点の 帯 ／ ★★場の 台 ／ ★山・すて札 ／ ★自分の 手札 8枚
+       ★★ 盤の 上に 出る しるしは **1種類だけ** ―― ★選んだ 札の わく（.card.is-pick）。
+         ⚠️★★ 組・並び・付け札を 光らせる ものは **1つも ありません**
+            ―― ★★それが この 1本の いちばん 大事な 線 です（★ルル §2-3・遊びの 21.6ポイント）。 -->
+  <section class="play-screen hidden" id="playScreen">
+
+    <!-- ★★ ハッピーの 帯（★T167・社長指示「大富豪みたいに 統一して ほしい」の 数字を そのまま）★★
+         ⚠️★ 名前（id）は 変えて いません ―― ★`say` は JS が そのまま 使い つづけます。
+         ⚠️★ たての 低い 画面（★横向き）では この 帯を 出しません（sevenbridge.css の @media max-height:420px）。 -->
+    <div class="talk" id="talk">
+      <div class="cat-wrap" id="happySpot">
+        <svg class="happy-cat" id="happyMid" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+        <p class="cat-name">ハッピー</p>
+      </div>
+      <p class="banner hidden" id="say"></p>
+    </div>
+
+    <div class="stage" id="stage">
+      <!-- ★★ 場の 台（★大富豪 ＝ ページワン T162 と 同じ 木わく＋みどりの ラシャ）★★
+           ★ 大きさは JS が 入れます（★台の たては 札の たけで 決まる ので CSS だけでは 書けない）。
+           ⚠️★ **指は 1つも 当たりません**（pointer-events:none）。★飾りの 1枚 です。 -->
+      <div class="felt-table" id="feltTable" aria-hidden="true"><i></i></div>
+
+      <!-- ★ ロボット3人（裏向き）。★左から 1・2・3 -->
+      <div class="zone bots" id="zoneBots">
+        <div class="bot" id="bot1"><span class="bot-name">ロボット1</span></div>
+        <div class="bot" id="bot2"><span class="bot-name">ロボット2</span></div>
+        <div class="bot" id="bot3"><span class="bot-name">ロボット3</span></div>
+      </div>
+
+      <!-- ★★ 点の 帯 ―― ★「何回目」と「合計」を 4人ぶん ★★
+           ★ ルル §14-1：★合計は **見えて いる 事実**。★画面が 言って よい 側。
+           ⚠️★ ここは **数と 名前だけ** です。★「あぶない」「気をつけて」の たぐいは 1文字も 出しません。 -->
+      <div class="score-band" id="scoreBand"></div>
+
+      <!-- ★★ 山 と すて札（★指の 的）★★
+           ★ ★引く ところ です。★★どちらから 引くかは **人が えらびます**
+             ―― ★ルル §4-1：★「引き方」は **14.9ポイント**。★教えたら 追記② 違反 です。
+           ★ ★すて札は **落とし先**でも あります（★1枚 運んで 落とすと 手番が おわります）。 -->
+      <div class="spot" id="spotStock" data-spot="stock" aria-label="山"></div>
+      <div class="spot" id="spotDiscard" data-spot="discard" aria-label="すて札"></div>
+
+      <!-- ★★ 札は ぜんぶ この 1枚の 板の 上に います ★★
+           ★ 手札 → 場、山 → 手札、手札 → すて札 も、★同じ 1枚が 場所を 変える だけ。 -->
+      <div class="cards" id="cards"></div>
+
+      <!-- ★★★ 「出す」 ―― ★えらんだ 札が 組に なって いる ときだけ 出ます ★★★
+           ⚠️★ ここは **絶対に 自動化しません**（設計図 追記②・ルル §14-1）。
+              ★ ★おすすめを 1文字も 出しません。★★えらぶのは 人 だけ です。
+              ★ ★★機械が やるのは「★組に なって いるか たしかめる」だけ。 -->
+      <div class="go-wrap hidden" id="goWrap">
+        <button type="button" class="go-btn" id="btnGo">出す <b>▶</b></button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── 点の 画面 ／ 勝ち・負けの 画面 ──────────────────
+     ★ 1回 配り終わる ごとに ここが 出ます ―― ★★これが「やめられる 区切り」です（★4回 あります）。
+     ⚠️ 箱が 出てから しばらくは おせなく する（sevenbridge-game.js の RESULT_LOCK）。
+     ★★ つよさの えらび は **1回 おわり／終わった あとの 画面にだけ** 置きます
+        （設計図 §5.5 の 線引き：★遊んで いる 最中の 画面には 置かない）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result-head">
+      <p class="result-title" id="resultTitle">勝ち！</p>
+      <p class="result-say" id="resultSay"></p>
+    </div>
+    <div class="result-score" id="resultScore"></div>
+    <label class="level-pick hidden" for="levelResult" id="levelPickResult">
+      <span class="level-pick-name">ロボットの つよさ</span>
+      <select class="level-select" id="levelResult"></select>
+    </label>
+    <div class="result-row">
+      <button class="dialog-ok" type="button" id="btnNext">つぎへ <b>▶</b></button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ★ ルルの 決まりは **13個**。★★見せる 説明は **6行**（ルル §2-1：★13個の うち 6個は 説明 0行）。
+     ★ ★「点は 札の すみに 書いて あります」―― ★これで 4行 減りました（★ルル §2-2）。
+     ⚠️ ★ どの 札を 出すと よいかは、ここでも 1文字も 教えません（設計図 追記②）。
+        ★ ★とくに「7は のこした ほうが いい」は ★★書いては いけません ―― ★それが この 1本の 遊び です。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">そろえて 出して、手札を 0枚に！</p>
+  <ol class="help-list">
+    <li>山から <b>1枚 引く</b>。すて札の いちばん上を もらっても よい。</li>
+    <li><b>同じ 数字 3枚</b>か、<b>同じ マークの つづいた 数字 3枚</b>で、場に 出せる。</li>
+    <li>場に 出て いる 組には、だれの ものでも 自分の 札を <b>足せる</b>（運んで 落とす）。</li>
+    <li>さいごに <b>1枚 すてて</b>、次の 人の 番。手札が <b>0枚</b>に なったら 上がり。</li>
+    <li>のこった 札の 点が つく（点は 札の すみに 書いて あります）。<b>7は 0点</b>。</li>
+    <li><b>4回</b> くりかえして、<b>点が いちばん 少ない 人の 勝ち</b>。</li>
+  </ol>
+  <p class="help-note">ジョーカーは どの 札の かわりにも なれる（1つの 組に 1枚まで）。<br>
+    ロボットの <b>つよさ</b>は、はじめの 画面と、1回 おわった あとに えらべる。<br>
+    1回 おわる ごとに <b>やめられる</b>。つぎに 開くと 合計から つづけられる。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<script src="sevenbridge-core.js"></script>
+<script src="sevenbridge-game.js"></script>
+</body>
+</html>

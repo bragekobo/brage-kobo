@@ -1,0 +1,2786 @@
+/* ============================================================
+   セブンブリッジ ― 画面（T174・コーダ）
+   ------------------------------------------------------------
+   ★ 決まりと ロボットは sevenbridge-core.js に あります。
+     ★ ここには 決まりが 1行も ありません（★点の 数え方も core が 返します）。
+     ★ ＝ 数える 側（Node）と 遊ぶ 側（画面）が ズレようが ない。
+
+   ★★★ この 1本で いちばん 気を つけた 5つ（★ルル T173 §18「コーダへ」）★★★
+     ------------------------------------------------------------
+     ① ★★★組・並びを **光らせない。さがして 見せない**（★★遊びの 21.6ポイント）★★★
+        ★ ★この ファイルには ★**`enumMelds` を 呼ぶ 行が 1つも ありません。**
+        ★ ★人が 3枚 えらぶ → ★機械は `makeMeld` で **たしかめる だけ**。
+        ★ ★★verify ⑬ が、画面側の 関数の 中身を 1行ずつ 走査します。
+     ② ★★付け札できる 札を **光らせない**（★七並べ 2026-08-24 裁定と 同じ 罪）
+        ★ ★運んで いる 間も、★落とせる 組を 1つも 光らせません。
+        ★ ★合えば 乗り、合わなければ 戻る ―― ★それだけ（★ソリティア・スパイダーと 同じ 形）。
+     ③ ★★「上がれます！」を 出さない（★設計図 追記② 違反）
+     ④ ★★札の すみに 点を 書く（★7＝0／A＝20／絵札＝10／JOKER＝50）
+        ★ ★★これで あそびかたが **4行 減りました**（★ルル §2-2）。
+        ★ ★書くのは ★**自分の 手札**と ★**すて札の 一番上** だけ ――
+          ★ ★点は「★手元に のこったら つく」もの。★★場に 出た 札は もう 点に ならない ので 書きません。
+     ⑤ ★★54枚を 遊ぶ前に まとめて 読む（★52枚 ＋ JOKER1 ＋ うら面。★足す絵 0枚）
+
+   ★★ 強調は **1種類だけ**（設計図 §5.5）★★
+     ★ ★`.card.is-pick` … ★人が 押して えらんだ 札の わく。★★これ 1種類 です。
+     ★ ★暗くするのも、光らせるのも、点滅も ありません。
+     ★ ★（★`.is-no`＝ぷるっ・`.is-drag`＝運んで いる は **人の 指の 返事** なので 強調では ありません）
+
+   ★★ 測る ときの 決まり（★会社で 4回 かかった わな）★★
+     ★ 動いて いる 途中を 測らない。★測る ときは .measuring を 付けて
+       ★うつり変わりと 動きを 止めてから 測る。★札の 場所は getBoundingClientRect で 見る。
+   ============================================================ */
+(function (root) {
+  'use strict';
+
+  var C = root.SEVENBRIDGE_CORE;
+  var T = C.TUNE;
+
+  /* ★ Node（画面が ない ところ）では ここで おしまい。 */
+  if (typeof document === 'undefined') return;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ── カードの 絵（設計図 §9・厳守）──────────────────
+     ・画像は office/games/cards/ の 支給画像。★CSSや 絵文字で 自作しない。
+     ・ファイル名が 日本語なので encodeURIComponent を 必ず 通す。 */
+  var CARD_DIR = '../cards/';
+  function cardSrc(name) { return CARD_DIR + encodeURIComponent(name) + '.png'; }
+
+  /* ★★ ハッピーの ひとこと（★ルル §14-2 の 6場面。★見出しは ルル、文は ここ）★★
+     ⚠️★ **手を 教えては いけません**（ルル §14-1）。
+        ★ 「その 3枚 そろうよ」「7は のこそう」の たぐいは ★★1文字も 書きません。
+        ★ ここに あるのは「★いま 何を する 番か」と「★何が 起きたか」だけ です。
+     ★ ★★場面2（そろった）と 場面3（付け札）は **起きた あと** に 出ます ――
+        ★ ★★先に 言ったら、それは「教える」に なります。 */
+  var SAY = {
+    draw:    '山か すて札から 1枚 引こう！',
+    play:    'さいごに 1枚 すてて、番を おわろう！',
+    meld1:   'そろった！ やったね！',
+    lay1:    '人の 組にも 足せたね！',
+    outMe:   '上がり！ この回は 0点！',
+    outBot:  '{名前}が 上がった！',
+    sevenMe: '7で 上がった！ ほかの 3人の 点が 2倍！',
+    sevenBot:'{名前}が 7で 上がった！ みんなの 点が 2倍…',
+    dry:     '山が なくなった。この回は ここまで！'
+  };
+  var SAY_DEAL_ME = '🐱 この回は あなたが いちばん 少なかった！';
+  var SAY_DEAL_OT = '🐱 まだ つづくよ。つぎの 回で 取り返そう！';
+  var SAY_WIN  = '🐱 やったー！　{名前}の 勝ち！';
+  var SAY_LOSE = '🐱 {名前}の 勝ち！　もう1回 やろ？';
+
+  /* ============================================================
+     ★★ 絵の 先読み（設計図 §9・2026-08-26 の 行）★★
+     ------------------------------------------------------------
+     ★ この 1本で 使う札 ＝ **54個**（52枚 ＋ JOKER1 ＋ トランプ裏赤）。★足す絵 0枚。
+     ★★ 裏面は ―― ★ロボット3人の 手札 ぜんぶ ＋ 山。★いちばん 先に 読みます。
+     ★ 裏で **4本ずつ** 流す。★いま 要る 札は 待ち行列の **先頭へ 入れ替える**（大富豪 T120）。
+     ★ ★「読み込み中」の 文字は 出しません（設計図 §5.5）。
+     ============================================================ */
+  var WARM_PAR = 4;
+  var warmImg = {}, warmQueue = [], warmRun = 0, warmDone = 0, warmErr = 0, warmGo = false;
+  var ALL_NAMES = C.allNames();               /* ★ 54個。★先頭が 裏面 */
+  var BACK_SRC = cardSrc(C.BACK_NAME);
+
+  function warmNext() {
+    while (warmRun < WARM_PAR && warmQueue.length) {
+      (function (name) {
+        var im = warmImg[name];
+        if (im && im.complete && im.naturalWidth) { warmNext(); return; }
+        im = new Image();
+        warmImg[name] = im;
+        try { im.fetchPriority = 'low'; } catch (e) {}
+        warmRun++;
+        im.onload = function () { warmRun--; warmDone++; handFace(name); warmNext(); };
+        im.onerror = function () { warmRun--; warmErr++; warmNext(); };
+        im.src = cardSrc(name);
+      })(warmQueue.shift());
+    }
+  }
+  function warmFirst(names) {
+    for (var i = names.length - 1; i >= 0; i--) {
+      var k = warmQueue.indexOf(names[i]);
+      if (k > 0) { warmQueue.splice(k, 1); warmQueue.unshift(names[i]); }
+    }
+    warmNext();
+  }
+  function warmReady(name) {
+    var im = warmImg[name];
+    return !!(im && im.complete && im.naturalWidth > 0);
+  }
+  function warmStart() {
+    warmQueue = ALL_NAMES.slice(1);            /* ★ 裏面いがいの 53個 */
+    var back = new Image();
+    warmImg[C.BACK_NAME] = back;
+    function go() { if (warmGo) return; warmGo = true; warmNext(); }
+    back.onload = function () { warmDone++; go(); };
+    back.onerror = function () { warmErr++; go(); };
+    back.src = BACK_SRC;
+    setTimeout(go, 1200);
+  }
+  /* ★ 読めた その 瞬間に、盤の img へ src を 入れる（★神経衰弱 T80 と 同じ 作法）*/
+  function handFace(name) {
+    for (var id in cardEl) {
+      if (!cardEl.hasOwnProperty(id)) continue;
+      var e = cardEl[id];
+      if (e.cardName !== name) continue;
+      var f = e.faceImg;
+      if (f && !f.getAttribute('src')) f.src = cardSrc(name);
+    }
+  }
+
+  /* ============================================================
+     ★ 部品
+     ============================================================ */
+  var titleScreen, playScreen, stageEl, cardsEl, zoneBots, scoreBand, feltTable;
+  var spotStock, spotDiscard, goWrap, btnGo, sayEl;
+  var resultWrap, resultBox, resultTitle, resultSay, resultScore, levelPickResult, btnNext;
+  var botEl = [];
+
+  var g = null, match = null, cardEl = {}, geo = null, built = false;
+  var tblPos = [], pack = null;
+  var busy = true, over = false, pressId = null, drag = null;
+  var picks = {};                              /* ★★ 人が 押して えらんだ 札（★おすすめは 1つも 入りません）*/
+  var rules = C.defaultRules();
+  var rand = C.rng((Date.now() ^ 0x5bd1) | 0);
+  var seedFixed = 0;
+  var timers = [], sayTimer = 0;
+  var toldMeld = false, toldLay = false;       /* ★ 場面2・3 は 1試合に 1回だけ */
+  var STORE = 'brage-sevenbridge-v1';
+  var LV_STORE = 'brage-sevenbridge-lv';
+
+  function later(ms, fn) { var t = setTimeout(fn, ms); timers.push(t); return t; }
+  function clearTimers() { for (var i = 0; i < timers.length; i++) clearTimeout(timers[i]); timers = []; }
+  /* ⚠️★ おかしい つよさが 入っても ここで 止まらない ように まるめます（★ハーツ T168・🟡-4 の 直し）*/
+  function levelNow() {
+    var i = match ? match.level : C.LEVEL_START;
+    if (!(i >= 0 && i < C.LEVELS.length)) i = C.LEVEL_START;
+    return C.LEVELS[i];
+  }
+  function botName(seat) { return 'ロボット' + seat; }
+  function seatName(seat) { return seat === 0 ? 'あなた' : botName(seat); }
+  function pickList() {
+    var a = [];
+    for (var k in picks) if (picks.hasOwnProperty(k)) a.push(+k);
+    return a;
+  }
+  function pickCount() { return pickList().length; }
+
+  /* ============================================================
+     ★★ 寸法 ―― ★core の pickLayout を 呼ぶ（★式は 1か所だけ）★★
+     ------------------------------------------------------------
+     ★ 上から：ロボット3人 ／ 点の 帯 ／ ★★場の 台 ／ 山・すて札 ／ 自分の 手札。
+     ★ ★余った たては ―― ★①台を 上限まで 太らせる → ★②のこりを **6つの すきまに 均等に**。
+     ★ ★★台が いちばん 大きく なります ―― ★この 1本の 遊びは 場に あるから です。
+     ============================================================ */
+  /* ★★ たての わりふり（★数だけ。★画面を 1度も さわりません）★★
+     ★ ★★見張り（verify ⑬）も **この 同じ 関数**を 通します ―― ★★式を 2か所に 書くと
+       ★ ★片方だけ 直して 気づけなく なります（★ハーツ T165 の 注意書き）。 */
+  function budget(W, H) {
+    var F = C.FIT;
+    var lay = C.pickLayout(W, H);
+    /* ★ 点の 帯 ―― ★余って いる ぶんだけ 太らせる（★ハーツ T171 と 同じ 考え方）
+       ★ ★台を 下ばり（tblBase）より やせさせない ところで 止めます。 */
+    var scoreRoom = H - lay.botH - lay.tblBase - lay.ph - lay.h - F.NGAP * F.PADMIN;
+    var scoreH = Math.max(F.SCORE_MIN, Math.min(F.SCORE_WANT, scoreRoom));
+    var fixed = lay.botH + scoreH + lay.ph + lay.h;
+    var room = H - fixed - F.NGAP * F.PADMIN;
+    var tblH = Math.max(Math.min(lay.tblCap, room), Math.min(lay.tblBase, room));
+    if (!(tblH > 20)) tblH = Math.max(20, room);
+    var pad = Math.max(F.PADMIN, Math.floor((H - fixed - tblH) / F.NGAP));
+    var edge = F.EDGE;
+    if (tblH < 80) edge = Math.max(3, Math.round(tblH * 0.16));
+    return { lay: lay, scoreH: scoreH, scoreRoom: scoreRoom, tblH: tblH, pad: pad, edge: edge,
+             innerW: W - edge * 2, innerH: tblH - edge * 2 };
+  }
+
+  function measure() {
+    var r = stageEl.getBoundingClientRect();
+    var W = Math.max(60, Math.round(r.width) - 8);
+    var H = Math.max(60, Math.round(r.height));
+    var F = C.FIT;
+    var B = budget(W, H);
+    var lay = B.lay, scoreH = B.scoreH, scoreRoom = B.scoreRoom, tblH = B.tblH, pad = B.pad;
+
+    var y = pad;
+    var botTop = y; y += lay.botH + pad;
+    var scoreTop = y; y += scoreH + pad;
+    var feltTop = y; y += tblH + pad;
+    var pileTop = y; y += lay.ph + pad;
+    var meTop = y;
+
+    /* ★ 台の わく（★大富豪の わりふり：木4／内よはく7／みどり2 ＝ 13px）*/
+    var edge = B.edge;
+    var bd = Math.max(1, Math.round(edge * 4 / F.EDGE));
+    var pd = Math.max(1, Math.round(edge * 7 / F.EDGE));
+
+    /* ★ ロボット3人 ―― ★よこに 3つ ならべる */
+    var colW = Math.floor(W / 3);
+    var botX = [];
+    for (var k = 0; k < 3; k++) botX.push(4 + colW * k + Math.round((colW - lay.botOne) / 2));
+
+    /* ★ 山 と すて札 ―― ★まん中に 2つ */
+    /* ★ 2つの あいだ ―― ★★広げた 当たり（±10px）どうしが かさならない 22px を 下ばりに します */
+    var gapP = Math.max(22, Math.round(lay.pw * 0.5));
+    var pileLeft = 4 + Math.round((W - (lay.pw * 2 + gapP)) / 2);
+
+    geo = {
+      W: W, H: H, pad: pad, nGap: F.NGAP,
+      cw: lay.w, ch: lay.h, gap: lay.g, pitch: lay.pitch,
+      bw: lay.bw, bh: lay.bh, bstep: lay.bstep, botOne: lay.botOne,
+      pw: lay.pw, ph: lay.ph,
+      tw: lay.tw, th: lay.th, tblBase: lay.tblBase, tblCap: lay.tblCap,
+      botTop: botTop, botH: lay.botH, botX: botX, colW: colW,
+      scoreTop: scoreTop, scoreH: scoreH, scoreRoom: scoreRoom,
+      scoreMin: F.SCORE_MIN, scoreWant: F.SCORE_WANT,
+      feltTop: feltTop, feltH: tblH, feltLeft: 4, feltW: W,
+      edge: edge, feltBd: bd, feltPad: pd, feltIn: Math.max(1, edge - bd - pd),
+      innerW: W - edge * 2, innerH: tblH - edge * 2,
+      pileTop: pileTop, pileLeft: pileLeft, pileGap: gapP,
+      stockX: pileLeft, discardX: pileLeft + lay.pw + gapP,
+      meTop: meTop, meH: lay.h, tight: !!lay.tight
+    };
+    return geo;
+  }
+
+  /* ============================================================
+     ★★★ 場の 組を たたむ（★core の packTable を 呼ぶ だけ）★★★
+     ------------------------------------------------------------
+     ★ ★ふだんの 形（★5組・19枚）を いちばん 大きく。★まれな 8組・25枚は 静かに 詰める。
+     ★ ★★戻って くるのは **座標だけ** です ―― ★「どこに 足せるか」は 1文字も 返りません。
+     ============================================================ */
+  function layoutTable() {
+    tblPos = [];
+    if (!g || !g.table.length) {
+      pack = null;
+      setVar('--tw', geo.tw + 'px'); setVar('--th', geo.th + 'px');
+      return;
+    }
+    var counts = [], i;
+    for (i = 0; i < g.table.length; i++) counts.push(C.meldLen(g.table[i]));
+    pack = C.packTable(counts, geo.innerW, geo.innerH, geo.tw);
+    setVar('--tw', pack.tw + 'px'); setVar('--th', pack.th + 'px');
+    var used = pack.h;
+    var y0 = geo.feltTop + geo.edge + Math.max(0, Math.floor((geo.innerH - used) / 2));
+    for (var ri = 0; ri < pack.rows.length; ri++) {
+      var yy = y0 + ri * (pack.th + pack.rowGap);
+      for (var j = 0; j < pack.rows[ri].length; j++) {
+        var e = pack.rows[ri][j];
+        tblPos[e.i] = { x: geo.feltLeft + geo.edge + e.x, y: yy, step: e.step,
+                        w: e.w, h: pack.th, row: ri };
+      }
+    }
+  }
+
+  function setVar(k, v) { document.documentElement.style.setProperty(k, v); }
+
+  function layout() {
+    measure();
+    setVar('--cw', geo.cw + 'px');
+    setVar('--ch', geo.ch + 'px');
+    setVar('--bw', geo.bw + 'px');
+    setVar('--bh', geo.bh + 'px');
+    setVar('--pw', geo.pw + 'px');
+    setVar('--ph', geo.ph + 'px');
+    setVar('--gap', geo.gap + 'px');
+    setVar('--felt-bd', geo.feltBd + 'px');
+    setVar('--felt-pad', geo.feltPad + 'px');
+    setVar('--felt-in', geo.feltIn + 'px');
+    /* ★ 結果の 箱の たけの 天井 ―― ★手札に かぶらせない（五目並べ T133 の 教訓）*/
+    setVar('--result-max', Math.max(90, Math.min(300, geo.feltH + geo.scoreH + geo.pad * 2)) + 'px');
+
+    /* ★ 点の 帯の 字 ―― ★帯の たけから 出します（★CSS の 決め打ちを しない・ハーツ T171）*/
+    var numF = Math.max(11, Math.min(17, Math.round((geo.scoreH - 8) / 2.45)));
+    var nameF = Math.max(9, Math.min(13, Math.round(numF * 0.78)));
+    setVar('--sb-num', numF + 'px');
+    setVar('--sb-name', nameF + 'px');
+    geo.sbNum = numF; geo.sbName = nameF;
+
+    zoneBots.style.top = geo.botTop + 'px';
+    zoneBots.style.height = geo.botH + 'px';
+    for (var k = 0; k < 3; k++) {
+      botEl[k].style.left = geo.botX[k] + 'px';
+      botEl[k].style.width = geo.botOne + 'px';
+      botEl[k].style.top = '0px';
+      botEl[k].style.height = geo.botH + 'px';
+      botEl[k].querySelector('.bot-name').style.top = geo.bh + 'px';
+    }
+    scoreBand.style.top = geo.scoreTop + 'px';
+    scoreBand.style.height = geo.scoreH + 'px';
+
+    feltTable.style.left = geo.feltLeft + 'px';
+    feltTable.style.width = geo.feltW + 'px';
+    feltTable.style.top = geo.feltTop + 'px';
+    feltTable.style.height = geo.feltH + 'px';
+
+    spotStock.style.left = geo.stockX + 'px';
+    spotStock.style.top = geo.pileTop + 'px';
+    spotDiscard.style.left = geo.discardX + 'px';
+    spotDiscard.style.top = geo.pileTop + 'px';
+
+    /* ★ 「出す」ボタン ―― ★台の 下ばしの まん中（★3枚 そろった ときだけ 出ます）*/
+    goWrap.style.top = (geo.feltTop + geo.feltH - 22) + 'px';
+
+    /* ★★ たての 低い 画面（★横向き）は ハッピーの 帯を 出しません ――
+       ★ ★ひとことだけを 台の 上ばしに 浮かべます（★ハーツ T167 と 同じ 形）。 */
+    var flat = window.matchMedia && window.matchMedia('(max-height:420px)').matches;
+    if (sayEl) sayEl.style.top = flat ? geo.feltTop + 'px' : '';
+
+    layoutTable();
+    resultSpot();
+    if (g) placeAll(true);
+  }
+
+  /* ★ 結果の 箱を 台に そろえる（★手札に かぶらせない）*/
+  function resultSpot() {
+    var r = stageEl.getBoundingClientRect();
+    var mc = r.top + geo.feltTop + geo.feltH / 2;
+    var VH = window.innerHeight;
+    resultWrap.style.paddingTop = '10px';
+    resultWrap.style.paddingBottom = '10px';
+    if (mc >= VH / 2) resultWrap.style.paddingTop = Math.round(2 * mc - VH) + 'px';
+    else resultWrap.style.paddingBottom = Math.round(VH - 2 * mc) + 'px';
+  }
+
+  /* ============================================================
+     ★★ 場所の 決め方 ★★
+     ------------------------------------------------------------
+     ★ where … 'me' ／ 'bot1'〜'bot3' ／ 'stock' ／ 'discard' ／ 'tbl'
+     ★ ★場の 札は **左から 右へ**、★あとの 札が 上に 重なります
+       ―― ★★だから どの 札も **左上の 角（数字と マーク）が 必ず 見えます**。
+     ============================================================ */
+  function spotOf(where, i, n) {
+    if (where === 'me') {
+      var left = 4 + (geo.W - ((n - 1) * geo.pitch + geo.cw)) / 2;
+      return { x: Math.round(left + i * geo.pitch), y: geo.meTop };
+    }
+    if (where === 'stock')   return { x: geo.stockX, y: geo.pileTop };
+    if (where === 'discard') return { x: geo.discardX, y: geo.pileTop };
+    if (where === 'tbl') {
+      var p = tblPos[i];
+      if (!p) return { x: geo.feltLeft + geo.edge, y: geo.feltTop + geo.edge };
+      return { x: p.x + n * p.step, y: p.y };
+    }
+    var k = +where.charAt(3) - 1;
+    return { x: geo.botX[k] + i * geo.bstep, y: geo.botTop };
+  }
+
+  function placeAll(instant) {
+    if (!g) return;
+    if (instant) cardsEl.classList.add('no-move');
+    var i, p, mi, k;
+    /* ★ 山（★ぜんぶ 同じ 場所に 重ねる ＝ 見た目は 1つの 山）*/
+    for (i = 0; i < g.stock.length; i++) putAt(g.stock[i], 'stock', 0, 0, i);
+    /* ★ すて札（★一番上の 1枚だけ 見えます ―― ★25枚 重なっても 見た目は 1枚・ルル §8-2）*/
+    for (i = 0; i < g.discard.length; i++) putAt(g.discard[i], 'discard', 0, 0, 60 + i);
+    /* ★ 場の 組 */
+    for (mi = 0; mi < g.table.length; mi++) {
+      for (k = 0; k < g.table[mi].cards.length; k++) putAt(g.table[mi].cards[k], 'tbl', mi, k, 200 + mi * 20 + k);
+    }
+    /* ★ ロボット3人（★裏向き）*/
+    for (p = 1; p < 4; p++) {
+      for (i = 0; i < g.hands[p].length; i++) putAt(g.hands[p][i], 'bot' + p, i, g.hands[p].length, 400 + i);
+    }
+    /* ★ 自分の 手札 */
+    for (i = 0; i < g.hands[0].length; i++) putAt(g.hands[0][i], 'me', i, g.hands[0].length, 500 + i);
+    if (instant) { void cardsEl.offsetWidth; cardsEl.classList.remove('no-move'); }
+    refreshPick();
+    refreshGo();
+  }
+  function putAt(c, where, i, n, z) {
+    var e = cardEl[c];
+    if (!e) return;
+    e.where = where; e.wi = i; e.wn = n;
+    if (drag && drag.live && drag.card === c) return;   /* ★ 指の 下の 札は 動かさない */
+    var p = spotOf(where, i, n);
+    e.style.left = p.x + 'px';
+    e.style.top = p.y + 'px';
+    e.style.zIndex = String(z + 1);
+    e.className = e.className.replace(/\s*is-(bot|pile|tbl)\b/g, '');
+    if (where.indexOf('bot') === 0) e.className += ' is-bot';
+    else if (where === 'stock' || where === 'discard') e.className += ' is-pile';
+    else if (where === 'tbl') e.className += ' is-tbl';
+    e.spot = p;
+  }
+
+  /* ============================================================
+     ★ 札を 作る（★支給画像。★裏 と 表の 2枚を 重ねる ＋ ★★すみの 点）
+     ------------------------------------------------------------
+     ★★ 点の 数字（★ルル §2-2）―― ★これで あそびかたが 4行 減りました。
+       ★ ★7 には「0」。★A は 20。★J・Q・K は 10。★ジョーカーは 50。
+       ★ ★★出て いるのは **事実 だけ** です ―― ★「のこそう」「すてよう」は 1文字も ありません。
+       ★ ★★見せるのは ★自分の 手札 と ★すて札の 一番上 だけ
+         ―― ★点は「手元に のこったら つく」もの。★場に 出た 札は もう 点に なりません。
+     ============================================================ */
+  function makeCard(c, up) {
+    var e = document.createElement('div');
+    e.className = 'card' + (up ? '' : ' is-down');
+    var inn = document.createElement('div');
+    inn.className = 'card-in';
+    var back = document.createElement('img');
+    back.className = 'back'; back.alt = ''; back.decoding = 'async';
+    back.src = BACK_SRC;
+    var face = document.createElement('img');
+    face.className = 'face'; face.alt = ''; face.decoding = 'async';
+    var name = C.nameOf(c);
+    if (warmReady(name)) face.src = cardSrc(name);
+    face.addEventListener('error', function () { fallback(e, c); });
+    var pt = document.createElement('span');
+    pt.className = 'pt';
+    pt.textContent = String(C.penOf(c));
+    inn.appendChild(back); inn.appendChild(face); inn.appendChild(pt);
+    e.appendChild(inn);
+    e.cardName = name; e.faceImg = face; e.ptEl = pt; e.card = c;
+    cardsEl.appendChild(e);
+    cardEl[c] = e;
+    return e;
+  }
+  /* ★ 絵が 届かなかった ときだけ（★ふだんは 一度も 通らない）*/
+  function fallback(e, c) {
+    if (e.querySelector('.fallback')) return;
+    var d = document.createElement('div');
+    d.className = 'fallback' + (C.isRed(c) ? ' red' : '');
+    d.textContent = C.isJk(c) ? '☆' : (C.markOf(c) + C.RANKS[C.rankOf(c)]);
+    e.firstChild.appendChild(d);
+  }
+  function faceUp(c, up) {
+    var e = cardEl[c];
+    if (!e) return;
+    if (up) {
+      var f = e.faceImg;
+      if (!f.getAttribute('src')) {
+        try { f.fetchPriority = 'high'; } catch (er) {}
+        f.src = cardSrc(e.cardName);
+      }
+      e.classList.remove('is-down');
+    } else e.classList.add('is-down');
+  }
+  function dropCards() {
+    for (var id in cardEl) if (cardEl.hasOwnProperty(id)) {
+      if (cardEl[id].parentNode) cardEl[id].parentNode.removeChild(cardEl[id]);
+    }
+    cardEl = {};
+  }
+  /* ★ 札の 表・裏を そろえ直す（★DOM は 53枚 ぜんぶ 先に 作って あります）*/
+  function rebuild() {
+    if (!g) return;
+    var i, p, mi, k;
+    for (i = 0; i < g.stock.length; i++) faceUp(g.stock[i], false);
+    for (i = 0; i < g.discard.length; i++) faceUp(g.discard[i], true);
+    for (mi = 0; mi < g.table.length; mi++) {
+      for (k = 0; k < g.table[mi].cards.length; k++) faceUp(g.table[mi].cards[k], true);
+    }
+    for (p = 1; p < 4; p++) for (i = 0; i < g.hands[p].length; i++) faceUp(g.hands[p][i], false);
+    for (i = 0; i < g.hands[0].length; i++) faceUp(g.hands[0][i], true);
+    layoutTable();
+    placeAll(false);
+  }
+
+  /* ============================================================
+     ★★★ 強調は これ 1種類だけ ―― ★人が 押して えらんだ 札の わく ★★★
+     ------------------------------------------------------------
+     ★ 設計図 追記④：★ピラミッドの「選ぶ → わく → 押す」と 同じ 形。
+     ★★ ここには **おすすめが 1つも ありません** ―― ★`picks` は 人が 押した 札 だけ。
+        ★ ★★`enumMelds`（＝ そろう 3枚を さがす）を **1度も 呼びません**。
+        ★ ★★verify ⑬ が この 関数を 1行ずつ 走査します。
+     ============================================================ */
+  function refreshPick() {
+    var all = cardsEl.querySelectorAll('.card.is-pick'), i;
+    for (i = 0; i < all.length; i++) all[i].classList.remove('is-pick');
+    if (!g || over) return;
+    var list = pickList();
+    for (i = 0; i < list.length; i++) {
+      var e = cardEl[list[i]];
+      if (e && e.where === 'me') e.classList.add('is-pick');
+    }
+  }
+  /* ★★ 「出す」ボタン ―― ★えらんだ 札が 組か どうかを **たしかめる だけ** ★★
+     ★ ★組に なって いれば 押せる。★なって いなければ 出ません（★押しても 何も 起きない ボタンを 置かない）。
+     ★ ★★「あと 1枚で そろうよ」の たぐいは 1文字も 出しません。 */
+  function refreshGo() {
+    var show = false;
+    if (g && !over && !busy && g.phase === 'play' && g.cur === 0) {
+      var list = pickList();
+      if (list.length >= 3 && g.hands[0].length - list.length >= 1) {
+        show = !!C.makeMeld(list, 0);
+      }
+    }
+    goWrap.classList.toggle('hidden', !show);
+  }
+
+  /* ★ ハッピーの ひとこと（★出しっぱなしに しない）*/
+  function say(text, hold) {
+    if (sayTimer) { clearTimeout(sayTimer); sayTimer = 0; }
+    if (!text) { sayEl.classList.add('hidden'); sayEl.textContent = ''; return; }
+    sayEl.textContent = text;
+    sayEl.classList.remove('hidden');
+    if (hold !== 0) sayTimer = setTimeout(sayIdle, hold || T.SAY_HOLD);
+  }
+  /* ★ 知らせが 消えた あと ―― ★人の 番なら「いま 何を する 番か」に 戻します
+     ★ ★（★帯を 空に すると 壊れて 見えます。★ロボットの 番なら 消したまま）*/
+  function sayIdle() {
+    if (g && !g.over && !over && g.cur === 0) {
+      sayEl.textContent = (g.phase === 'draw') ? SAY.draw : SAY.play;
+      sayEl.classList.remove('hidden');
+      return;
+    }
+    sayEl.classList.add('hidden');
+  }
+
+  /* ============================================================
+     ★★ 点の 帯（★何回目 ／ 合計 ―― ★4人ぶん）★★
+     ★ ルル §14-1：★「合計」も「だれが 何枚 持って いるか」も **見えて いる 事実**。
+     ⚠️★ ここは **数と 名前だけ** です。★「あぶない」「気をつけて」の たぐいは 1文字も 出しません。
+     ============================================================ */
+  function scoreRows(tot, dealNo, deals) {
+    var h = '<b>' + Math.min(deals, dealNo + 1) + '回目</b>', i;
+    for (i = 0; i < 4; i++) h += '<span class="sb-name' + (i === 0 ? ' sb-me' : '') + '">' + seatName(i) + '</span>';
+    h += '<b>合計</b>';
+    for (i = 0; i < 4; i++) h += '<i>' + tot[i] + '</i>';
+    return h;
+  }
+  function renderScore() {
+    if (!match) return;
+    scoreBand.innerHTML = scoreRows(match.total, match.dealNo, match.deals);
+  }
+  /* ★ 勝った 人の 名前（★同じ 点の 人が いたら 2人 とも）
+     ★★ ここは「誰が」だけ。★点数を 1文字も 入れません（★入れたら 表の 言い直し ＝ §5.5 違反）。 */
+  function winnerText() {
+    if (!match || !match.winners.length) return '';
+    var a = [], i;
+    for (i = 0; i < match.winners.length; i++) a.push(seatName(match.winners[i]));
+    return a.join('と ');
+  }
+
+  /* ============================================================
+     ★★ しまう ／ 続きから ★★
+     ------------------------------------------------------------
+     ★ 1試合は【見立て】3分51秒（ルル §7-2）。★★1回 配り終わる ごとに 合計を しまいます。
+     ★★ 正直に 書きます（設計図 追記⑤）：★★**しまうのは 1回 配り終わった ところ だけ** です。
+        ★ ★配って いる 途中で 閉じると、★その 回の はじめから やり直しに なります（★1回 ＝ 約58秒）。
+        ★ ★理由は ハーツ T165 と 同じ ―― ★途中の 状態（4人の 手札・場の 組・山・すて札）を
+          ★ しまう ことも できますが、★開き直す 道が 1本 増え、★そこは 見張りが 薄く なります。
+     ============================================================ */
+  function save() {
+    if (!match) return;
+    try {
+      if (match.over) { localStorage.removeItem(STORE); return; }
+      if (!(match.dealNo > 0)) return;          /* ★ まだ 1回も 配って いない 勝負は しまわない */
+      localStorage.setItem(STORE, JSON.stringify({ t: match.total, d: match.dealNo, lv: match.level }));
+    } catch (e) {}
+  }
+  /* ★★ つよさ だけを 書きかえる（★★合計と 回数は 1文字も さわりません）★★
+     ★ ★ハーツ T168・🔴-1 の 直し ―― ★はじめの 画面で つよさを さわると 続きが 消えた 事故。 */
+  function saveLevelOnly() {
+    try {
+      var o = load();
+      if (!o) return;
+      o.lv = (match ? match.level : C.LEVEL_START);
+      localStorage.setItem(STORE, JSON.stringify(o));
+    } catch (e) {}
+  }
+  function load() {
+    try {
+      var o = JSON.parse(localStorage.getItem(STORE) || 'null');
+      if (!o || !o.t || o.t.length !== 4) return null;
+      for (var i = 0; i < 4; i++) {
+        if (typeof o.t[i] !== 'number' || !isFinite(o.t[i]) || o.t[i] < 0) return null;
+      }
+      if (!(o.d > 0) || o.d >= C.LIM.DEALS) return null;
+      if (!(o.lv >= 0 && o.lv < C.LEVELS.length)) o.lv = C.LEVEL_START;   /* ★ まるめる（★捨てない）*/
+      o.lv = o.lv | 0;
+      o.d = o.d | 0;
+      return o;
+    } catch (e) { return null; }
+  }
+  function clearSave() { try { localStorage.removeItem(STORE); } catch (e) {} }
+
+  /* ============================================================
+     ★ 新しい 1回（★7枚ずつ 配る）
+     ★★ 親は 1人ずつ ずれます（★4回 ＝ 4人 ＝「1人 1回ずつ 親を やる」・ルル §3-3）
+        ★ ★これが 無いと 先手の 得が **5.15ポイント** 残ります【★私の 実測・作業メモ §3】。
+     ============================================================ */
+  function newDeal() {
+    clearTimers();
+    over = false; busy = true; picks = {};
+    toldMeld = false; toldLay = false;
+    goWrap.classList.add('hidden');
+    resultWrap.classList.add('hidden');
+    var r = seedFixed ? C.rng((seedFixed + match.dealNo * 7919) | 0) : rand;
+    g = C.makeGame(r, { rules: rules, dealNo: match.dealNo, startP: match.dealNo % 4 });
+
+    /* ★★ 手札は **はじめだけ マーク順**に そろえます（★ルル §14-1：★これは 肩代わりして よい 側）
+       ★ ★★そのあとは 1度も 並べかえません ―― ★★「組が できる 順に 勝手に 並べかえる」は
+         ★ ★★設計図 追記② 違反 です。★引いた 札は いつも **いちばん 右**に つきます。 */
+    g.hands[0].sort(function (a, b) {
+      if (C.isJk(a) !== C.isJk(b)) return C.isJk(a) ? 1 : -1;
+      if (C.suitOf(a) !== C.suitOf(b)) return C.suitOf(a) - C.suitOf(b);
+      return C.rankOf(a) - C.rankOf(b);
+    });
+
+    /* ★ いま 要る 札を 先読みの 先頭へ（★自分の 手札 ＋ すて札の 1枚）*/
+    var need = [], i;
+    for (i = 0; i < g.hands[0].length; i++) need.push(C.nameOf(g.hands[0][i]));
+    need.push(C.nameOf(g.discard[g.discard.length - 1]));
+    warmFirst(need);
+
+    dropCards();
+    for (i = 0; i < 53; i++) makeCard(i, false);
+    rebuild();
+    placeAll(true);
+    renderScore();
+    busy = false;
+    turnStart();
+  }
+
+  /* ============================================================
+     ★★ 手番 ★★
+     ★ 人（席0）の ときは ―― ★★何も しません。★指を 待つ だけ。
+     ============================================================ */
+  function turnStart() {
+    if (!g) return;
+    if (g.over) { finishDeal(); return; }
+    if (g.cur === 0) {
+      busy = false;
+      /* ★★ 「いま 何を する 番か」は **出しっぱなし**に します（hold 0）★★
+         ★ ★§5.5 の「出しっぱなしに しない」は **知らせ**（起きた こと）の 話 です。
+         ★ ★★これは 帯が いつも 場所を 取って いる ところに 入る「いまの 番」の 1行 ――
+           ★ ★大富豪の `.status-line` と 同じ 立場 で、★消すと 帯が 空に なって 壊れて 見えます。
+         ★ ★★手を 教える 言葉は 1文字も 入って いません（★verify ⑫ が 毎回 走査します）。 */
+      say(g.phase === 'draw' ? SAY.draw : SAY.play, 0);
+      refreshGo();
+    } else {
+      busy = true;
+      refreshGo();
+      later(T.BOT_THINK, botStep);
+    }
+  }
+
+  /* ★★ ロボットの 1手番 ―― ★①引く ②出す・付け札 ③すてる ★★
+     ★ ★どれも core の 関数を そのまま 呼びます（★数える 側と 同じ 道）。 */
+  function botStep() {
+    if (!g || g.over) { finishDeal(); return; }
+    var seat = g.cur;
+    if (seat === 0) { turnStart(); return; }
+    var o = levelNow().o;
+    var from = C.botDraw(g, o);
+    var dr = C.doDraw(g, from);
+    if (!dr.ok) { if (dr.dry) say(SAY.dry, 0); finishDeal(); return; }
+    rebuild();
+    later(T.DRAW_MOVE, function () {
+      if (!g) return;
+      var steps = C.botPlay(g, o);
+      if (steps.length) rebuild();
+      later(steps.length ? T.MELD_MOVE : 0, function () {
+        if (!g) return;
+        var dc = C.botDiscard(g, o);
+        var rr = C.doDiscard(g, dc);
+        rebuild();
+        if (!rr.ok) { finishDeal(); return; }
+        later(T.DISCARD_MOVE, function () {
+          if (!g) return;
+          if (g.over) {
+            if (g.winner >= 0) say(g.doubled ? SAY.sevenBot.replace('{名前}', botName(g.winner))
+                                             : SAY.outBot.replace('{名前}', botName(g.winner)), 0);
+            finishDeal();
+            return;
+          }
+          later(T.TURN_GAP, turnStart);
+        });
+      });
+    });
+  }
+
+  /* ============================================================
+     ★★★ 人の 手番 ★★★
+     ------------------------------------------------------------
+     ★ 設計図 追記④：★★**探すのは 人、たしかめるのが 機械。**
+       ・★引く … ★★人が 山か すて札を えらぶ（★おすすめは 出しません・ルル §4-1「引き方」14.9ポイント）
+       ・★組を 作る … ★★人が 札を えらぶ → ★機械は 組か どうか たしかめる だけ
+       ・★付け札 … ★★人が 運ぶ（ドラッグ）→ ★合えば 乗り、合わなければ 戻る
+       ・★すてる … ★★人が すて札へ 運ぶ
+     ★ ★★機械が 肩代わりして よい 側：★点を 数える・配る・山を 混ぜ直す・上がりの 判定。
+     ============================================================ */
+  function humanDraw(from) {
+    if (!g || busy || over || g.cur !== 0 || g.phase !== 'draw') return false;
+    if (from === 'discard' && !g.discard.length) return false;
+    var r = C.doDraw(g, from);
+    if (!r.ok) {
+      if (r.dry) { say(SAY.dry, 0); finishDeal(); }
+      return false;
+    }
+    busy = true;
+    rebuild();
+    warmFirst([C.nameOf(r.card)]);
+    later(T.DRAW_MOVE, function () {
+      busy = false;
+      say(SAY.play, 0);
+      refreshGo();
+    });
+    return true;
+  }
+  function humanMeld() {
+    if (!g || busy || over || g.cur !== 0 || g.phase !== 'play') return;
+    var list = pickList();
+    var r = C.doMeld(g, list);
+    if (!r.ok) { refreshGo(); return; }
+    picks = {};
+    busy = true;
+    goWrap.classList.add('hidden');
+    rebuild();
+    if (!toldMeld) { toldMeld = true; say(SAY.meld1); }     /* ★ 場面2 ―― ★起きた あとで よろこぶ */
+    later(T.MELD_MOVE, function () { busy = false; refreshGo(); });
+  }
+  function humanLayoff(card, mi) {
+    if (!g || busy || over || g.cur !== 0 || g.phase !== 'play') return false;
+    var r = C.doLayoff(g, card, mi);
+    if (!r.ok) return false;
+    delete picks[card];
+    busy = true;
+    rebuild();
+    if (!toldLay) { toldLay = true; say(SAY.lay1); }        /* ★ 場面3 ―― ★★この 動作に 気づく 唯一の 場面 */
+    later(T.LAY_MOVE, function () { busy = false; refreshGo(); });
+    return true;
+  }
+  function humanDiscard(card) {
+    if (!g || busy || over || g.cur !== 0 || g.phase !== 'play') return false;
+    var r = C.doDiscard(g, card);
+    if (!r.ok) return false;
+    picks = {};
+    busy = true;
+    goWrap.classList.add('hidden');
+    rebuild();
+    later(T.DISCARD_MOVE, function () {
+      if (!g) return;
+      if (g.over) {
+        if (g.winner === 0) say(g.doubled ? SAY.sevenMe : SAY.outMe, 0);
+        finishDeal();
+        return;
+      }
+      later(T.TURN_GAP, turnStart);
+    });
+    return true;
+  }
+  /* ★ 押した ―― ★えらぶ／えらびを 外す（★ピラミッド式）*/
+  function togglePick(c, el) {
+    if (!g || busy || over || g.cur !== 0) { nope(el); return; }
+    if (g.phase !== 'play') { nope(el); return; }          /* ★ まだ 引いて いない */
+    if (picks[c]) delete picks[c];
+    else picks[c] = 1;
+    refreshPick();
+    refreshGo();
+  }
+
+  /* ============================================================
+     ★ 1回 おわり ―― ★合計に 足して、点の 画面を 出す
+     ============================================================ */
+  function finishDeal() {
+    if (over) return;
+    if (!g || !g.over) return;
+    over = true; busy = true;
+    picks = {};
+    refreshPick(); refreshGo();
+    var pts = g.pts.slice();
+    var before = match.total.slice();
+    C.addDeal(match, pts);
+    save();
+    renderScore();
+    later(T.RESULT_WAIT, function () { showResult(pts, before); });
+  }
+
+  function showResult(pts, before) {
+    var fin = match.over;
+    var lo = Math.min(pts[0], pts[1], pts[2], pts[3]);
+    resultTitle.className = 'result-title';
+    /* ★★ つよさは **1回 おわりの 画面にも** 出します（★ハーツ T168・🟡-1 の 直しを 引きつぐ）
+       ★ ★設計図 §5.5 の 線引き：★1回 おわりの 画面は「遊んで いる 最中」では ありません。 */
+    levelPickResult.classList.remove('hidden');
+    if (fin) {
+      var iWin = match.winners.indexOf(0) >= 0;
+      resultTitle.textContent = iWin ? '勝ち！' : '負け…';
+      if (!iWin) resultTitle.className = 'result-title is-quiet';
+      /* ★★ 誰が 勝ったか だけ。★なぜ 勝ったかは 言いません（★合計の 表に 数字が 出て います）*/
+      resultSay.textContent = (iWin ? SAY_WIN : SAY_LOSE).replace('{名前}', winnerText());
+      btnNext.innerHTML = 'もう1回 <b>▶</b>';
+    } else {
+      resultTitle.textContent = match.dealNo + '回目 おわり';
+      resultSay.textContent = (pts[0] === lo) ? SAY_DEAL_ME : SAY_DEAL_OT;
+      btnNext.innerHTML = 'つぎへ <b>▶</b>';
+    }
+    resultScore.innerHTML = resultRows(pts, match.total, g ? g.doubled : false, g ? g.winner : -1);
+    resultWrap.classList.remove('hidden');
+    resultBox.classList.add('is-locked');
+    later(T.RESULT_LOCK, function () { resultBox.classList.remove('is-locked'); });
+  }
+  /* ★ 点の 表（★この回 と 合計）―― ★7で 上がった 回は そう 書きます（★ルル §14-2 場面4）*/
+  function resultRows(pts, tot, doubled, winner) {
+    var i, head = '<b></b>';
+    for (i = 0; i < 4; i++) head += '<span class="sb-name' + (i === 0 ? ' sb-me' : '') + '">' + seatName(i) + '</span>';
+    var row1 = '<b>' + (doubled ? 'この回 ×2' : 'この回') + '</b>';
+    for (i = 0; i < 4; i++) row1 += '<i' + (i === winner ? ' class="sb-out"' : '') + '>' + pts[i] + '</i>';
+    var row2 = '<b>合計</b>';
+    for (i = 0; i < 4; i++) row2 += '<i>' + tot[i] + '</i>';
+    return head + row1 + row2;
+  }
+
+  function onNext() {
+    resultWrap.classList.add('hidden');
+    if (match.over) {
+      clearSave();
+      match = C.newMatch(match.level);
+    }
+    newDeal();
+  }
+
+  /* ============================================================
+     ★★★ 指の 道 ★★★
+     ------------------------------------------------------------
+     ★ 設計図 追記④「操作の 形は、そのゲームが 何を する 遊びかで 変わる」：
+       | ★遊びの 中身 | ★形 | ★この 1本では |
+       |---|---|---|
+       | ★2枚以上を **えらんで 組む**（行き先が ない）| ★押して えらぶ | ★★組を 作る |
+       | ★札を **運ぶ**（行き先が ある）| ★★ドラッグ | ★★付け札・すてる |
+     ★ ★★ソリティア・スパイダーと 同じ 運び方 です（★ルル §2-2 の 3番）。
+     ★ ★★ここが この 1本の うまい ところ ―― ★**すてるのが ドラッグ**なので、
+        ★ ★毎手番 かならず 1回 運びます。★★その 手が そのまま 付け札の 練習に なって います
+          （★ルル §1-4：★付け札に 気づけるかが **12.2ポイント**）。
+
+     ⚠️★★ 指の ポインタは 押した ものに くっつきます（implicit pointer capture）――
+        ★ ★だから **はなした 点の 座標から 引き直します**（`hitAt`）。★ページワン T157 の 直し。
+     ⚠️★★ 運んで いる 間、★★**落とせる 組を 1つも 光らせません**
+        ★ ★（★七並べ 2026-08-24 裁定・ルル §14-1。★★verify ⑬ が 数えます）。
+     ============================================================ */
+  function hitAt(x, y) {
+    if (!(x >= 0) || !(y >= 0) || x > window.innerWidth || y > window.innerHeight) return null;
+    var t = document.elementFromPoint(Math.round(x), Math.round(y));
+    while (t && t !== stageEl && !(t.classList && (t.classList.contains('card') || t.classList.contains('spot')))) {
+      t = t.parentNode;
+    }
+    return (t && t !== stageEl && t.classList &&
+            (t.classList.contains('card') || t.classList.contains('spot'))) ? t : null;
+  }
+  function nope(t) {
+    if (!t) return;
+    t.classList.remove('is-no'); void t.offsetWidth; t.classList.add('is-no');
+  }
+  /* ★ 落とし先を 決める（★場の 組 ／ すて札 ／ どこでも ない）
+     ★ ★ここは **落とした あと**に 1回だけ 呼ばれます ―― ★運んで いる 間は 呼びません
+       （★呼んで 光らせたら、それが「足せる 札を 光らせる」に なります）。 */
+  function dropZone(x, y) {
+    var r = stageEl.getBoundingClientRect();
+    var px = x - r.left, py = y - r.top;
+    var dR = { x: geo.discardX, y: geo.pileTop, w: geo.pw, h: geo.ph };
+    var M = 14;
+    if (px >= dR.x - M && px <= dR.x + dR.w + M && py >= dR.y - M && py <= dR.y + dR.h + M) {
+      return { kind: 'discard' };
+    }
+    var bestI = -1, bestD = 1e9;
+    for (var i = 0; i < tblPos.length; i++) {
+      var p = tblPos[i];
+      if (!p) continue;
+      var L = p.x - 8, R = p.x + p.w + 8, Tp = p.y - 8, B = p.y + p.h + 8;
+      if (px < L || px > R || py < Tp || py > B) continue;
+      var cx = p.x + p.w / 2, cy = p.y + p.h / 2;
+      var d = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+      if (d < bestD) { bestD = d; bestI = i; }
+    }
+    if (bestI >= 0) return { kind: 'meld', at: bestI };
+    return null;
+  }
+
+  function onDown(e) {
+    if (busy || over || !g) return;
+    if (e.isPrimary === false) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (drag) return;
+    var t = hitAt(e.clientX, e.clientY);
+    pressId = null;
+    if (!t) return;
+    if (t.classList.contains('spot')) { pressId = { spot: t.getAttribute('data-spot'), el: t }; return; }
+    var c = t.card;
+    if (c === undefined) return;
+    pressId = { card: c, el: t, where: t.where };
+    /* ★ 自分の 手札 ＋ 出す 番 ―― ★運べます */
+    if (t.where === 'me' && g.cur === 0 && g.phase === 'play') {
+      var r = stageEl.getBoundingClientRect();
+      var q = t.getBoundingClientRect();
+      drag = { card: c, el: t, id: e.pointerId, live: false, moved: false,
+               sx: e.clientX, sy: e.clientY, rl: r.left, rt: r.top,
+               ox: q.left - e.clientX, oy: q.top - e.clientY };
+      try { stageEl.setPointerCapture(e.pointerId); } catch (err) {}
+    }
+  }
+  function onMove(e) {
+    var d = drag;
+    if (!d || e.pointerId !== d.id) return;
+    if (!d.live) {
+      var dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+      if (dx * dx + dy * dy < T.DRAG_SLOP * T.DRAG_SLOP) return;
+      d.live = true; d.moved = true;
+      d.el.classList.add('is-drag');
+    }
+    e.preventDefault();
+    d.el.style.left = Math.round(e.clientX + d.ox - d.rl) + 'px';
+    d.el.style.top = Math.round(e.clientY + d.oy - d.rt) + 'px';
+  }
+  function onUp(e) {
+    var d = drag, pid = pressId;
+    pressId = null;
+    if (d && e.pointerId === d.id) {
+      drag = null;
+      try { stageEl.releasePointerCapture(e.pointerId); } catch (err) {}
+      if (d.live) {
+        d.el.classList.remove('is-drag');
+        var z = dropZone(e.clientX, e.clientY);
+        var done = false;
+        if (z && z.kind === 'discard') done = humanDiscard(d.card);
+        else if (z && z.kind === 'meld') done = humanLayoff(d.card, z.at);
+        if (!done) {
+          /* ★ 置けなかった ―― ★元の 場所へ 戻る ＋ ぷるっと 返す（★「そこは ちがうよ」）
+             ★ ★★どこなら 置けるかは 1文字も 教えません（★スパイダー T73 と 同じ 線）。 */
+          placeAll(false);
+          nope(d.el);
+        }
+        return;
+      }
+    }
+    if (!pid || busy || over || !g) return;
+    var t = hitAt(e.clientX, e.clientY);
+    if (!t) { if (pid.el) nope(pid.el); return; }
+    /* ★ 山 ／ すて札 を 押した（★札を 押しても 同じ ―― ★山の 札は 山の 一部 です）*/
+    var spot = t.classList.contains('spot') ? t.getAttribute('data-spot')
+             : (t.where === 'stock' ? 'stock' : (t.where === 'discard' ? 'discard' : null));
+    var wantSpot = pid.spot || (pid.where === 'stock' ? 'stock' : (pid.where === 'discard' ? 'discard' : null));
+    if (spot && wantSpot === spot) {
+      if (g.cur !== 0) { nope(t); return; }
+      if (g.phase !== 'draw') { nope(t); return; }
+      if (!humanDraw(spot)) nope(t);
+      return;
+    }
+    if (pid.card === undefined) { nope(pid.el); return; }
+    if (t.card !== pid.card) { if (pid.el && pid.el.parentNode) nope(pid.el); return; }
+    if (t.where !== 'me') { nope(t); return; }
+    togglePick(pid.card, t);
+  }
+  function onCancel(e) {
+    if (drag && (!e || e.pointerId === drag.id)) {
+      drag.el.classList.remove('is-drag');
+      drag = null;
+      placeAll(false);
+    }
+    pressId = null;
+  }
+
+  /* ============================================================
+     ★ つよさ（★3段・プルダウン 2か所）
+     ★ はじめの 画面 と、★1回 おわり／終わった あとの 画面。
+     ★ ★★負けた その場で 下げられる ことが、はじめての 人の 逃げ道です。
+     ★ 遊んで いる 最中の 画面には 置きません（設計図 §5.5 の 線引き）。
+     ============================================================ */
+  function fillLevelSelect(sel) {
+    sel.innerHTML = '';
+    for (var i = 0; i < C.LEVELS.length; i++) {
+      var o = document.createElement('option');
+      o.value = String(i);
+      o.textContent = C.LEVELS[i].label;
+      sel.appendChild(o);
+    }
+    sel.value = String(match ? match.level : C.LEVEL_START);
+  }
+  function setLevel(i) {
+    i = Math.max(0, Math.min(C.LEVELS.length - 1, i | 0));
+    if (match) match.level = i;
+    try { localStorage.setItem(LV_STORE, String(i)); } catch (e) {}
+    $('levelTitle').value = String(i);
+    $('levelResult').value = String(i);
+    saveLevelOnly();          /* ★★ つよさだけ。★合計と 回数は さわりません（★ハーツ T168・🔴-1）*/
+    refreshResume();
+  }
+  function loadLevel() {
+    try {
+      var v = localStorage.getItem(LV_STORE);
+      if (v != null && C.LEVELS[v | 0]) return v | 0;
+    } catch (e) {}
+    return C.LEVEL_START;
+  }
+
+  /* ============================================================
+     ★ 立ち上げ
+     ============================================================ */
+  function build() {
+    if (built) return;
+    built = true;
+    stageEl.addEventListener('pointerdown', onDown);
+    stageEl.addEventListener('pointermove', onMove);
+    stageEl.addEventListener('pointerup', onUp);
+    stageEl.addEventListener('pointercancel', onCancel);
+    stageEl.addEventListener('lostpointercapture', onCancel);
+    stageEl.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    stageEl.addEventListener('dragstart', function (e) { e.preventDefault(); });
+    btnGo.addEventListener('click', humanMeld);
+  }
+  function start(resume) {
+    var lv = match ? match.level : loadLevel();
+    if (resume) {
+      var o = load();
+      match = C.newMatch(o ? o.lv : lv);
+      if (o) { match.total = o.t.slice(); match.dealNo = o.d; }
+    } else {
+      clearSave();
+      match = C.newMatch(lv);
+    }
+    titleScreen.classList.add('hidden');
+    playScreen.classList.remove('hidden');
+    build();
+    layout();
+    newDeal();
+  }
+  function backToTitle() {
+    resultWrap.classList.add('hidden');
+    playScreen.classList.add('hidden');
+    titleScreen.classList.remove('hidden');
+    clearTimers(); dropCards(); g = null; over = false; busy = true;
+    refreshResume();
+  }
+  function refreshResume() {
+    var o = load();
+    var btn = $('btnResume');
+    if (o) {
+      btn.classList.remove('hidden');
+      $('resumeAt').textContent = o.d + '回 おわり ／ あなた ' + o.t[0] + '点';
+    } else btn.classList.add('hidden');
+  }
+
+  function boot() {
+    titleScreen = $('titleScreen'); playScreen = $('playScreen');
+    stageEl = $('stage'); cardsEl = $('cards');
+    zoneBots = $('zoneBots'); scoreBand = $('scoreBand'); feltTable = $('feltTable');
+    spotStock = $('spotStock'); spotDiscard = $('spotDiscard');
+    goWrap = $('goWrap'); btnGo = $('btnGo'); sayEl = $('say');
+    resultWrap = $('resultWrap'); resultBox = $('resultBox');
+    resultTitle = $('resultTitle'); resultSay = $('resultSay'); resultScore = $('resultScore');
+    levelPickResult = $('levelPickResult'); btnNext = $('btnNext');
+    botEl = [$('bot1'), $('bot2'), $('bot3')];
+
+    match = C.newMatch(loadLevel());
+    fillLevelSelect($('levelTitle'));
+    fillLevelSelect($('levelResult'));
+    $('levelTitle').addEventListener('change', function () { setLevel(this.value | 0); });
+    $('levelResult').addEventListener('change', function () { setLevel(this.value | 0); });
+    $('btnStart').addEventListener('click', function () { start(false); });
+    $('btnResume').addEventListener('click', function () { start(true); });
+    btnNext.addEventListener('click', onNext);
+    $('btnHowto').addEventListener('click', function () { $('helpDialog').showModal(); });
+    var cl = document.querySelectorAll('[data-close]');
+    for (var i = 0; i < cl.length; i++) {
+      cl[i].addEventListener('click', function (e) { $(e.currentTarget.getAttribute('data-close')).close(); });
+    }
+    window.addEventListener('resize', function () { if (geo) layout(); });
+    window.addEventListener('orientationchange', function () { if (geo) layout(); });
+    warmStart();
+    refreshResume();
+    stageEl.style.visibility = 'hidden';
+    build(); measure(); layout();
+    stageEl.style.visibility = '';
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  /* ============================================================
+     ★★ たしかめの 窓口（既存18本と 同じ 作法。★画面には 1つも 出ない）★★
+     ============================================================ */
+
+  /* ★ 測る ときは 動きを 止める（★会社で 4回 かかった わな）*/
+  function still(fn) {
+    document.body.classList.add('measuring');
+    void document.body.offsetWidth;
+    var r;
+    try { r = fn(); } finally { document.body.classList.remove('measuring'); }
+    return r;
+  }
+  function handText(hand) {
+    var a = [];
+    for (var i = 0; i < hand.length; i++) a.push(C.nameOf(hand[i]));
+    return a.join(' ');
+  }
+  function meldText(m) {
+    var a = [];
+    for (var i = 0; i < m.cards.length; i++) a.push(C.nameOf(m.cards[i]));
+    return (m.t === 's' ? '組' : '並び') + '[' + a.join(' ') + ']';
+  }
+  function tableText() {
+    if (!g || !g.table.length) return '（なし）';
+    var a = [];
+    for (var i = 0; i < g.table.length; i++) a.push(meldText(g.table[i]));
+    return a.join(' ／ ');
+  }
+
+  function now() {
+    var list = pickList(), a = [], i;
+    for (i = 0; i < list.length; i++) a.push(C.nameOf(list[i]));
+    return {
+      '★つよさ': levelNow().label,
+      '★何回目': match ? (Math.min(match.deals, match.dealNo + 1) + '回目 / ' + match.deals + '回') : '―',
+      '★いま': g ? (g.over ? '1回 おわり' : (g.phase === 'draw' ? '引く' : '出す・すてる')) : '―',
+      '★手番': g ? (g.over ? '終わり' : seatName(g.cur)) : '―',
+      '★いま 押せるか': (g && !g.over && !over && !busy && g.cur === 0) ? 'はい' : 'いいえ',
+      '★自分の 手札': g ? handText(g.hands[0]) : '―',
+      '★えらんで いる 札': a.length ? a.join(' ') : '（なし）',
+      '★★「出す」が 押せるか': goWrap && !goWrap.classList.contains('hidden') ? 'はい' : 'いいえ',
+      '★場の 組': tableText(),
+      '★場の 大きさ': g ? (g.table.length + '組 / ' + (function () {
+        var n = 0; for (var k = 0; k < g.table.length; k++) n += C.meldLen(g.table[k]); return n;
+      })() + '枚') : '―',
+      '★山': g ? g.stock.length + '枚' : '―',
+      '★すて札': g ? (g.discard.length + '枚（上 ' + (g.discard.length ? C.nameOf(g.discard[g.discard.length - 1]) : '―') + '）') : '―',
+      '★みんなの 手札': g ? (g.hands[0].length + ' / ' + g.hands[1].length + ' / ' + g.hands[2].length + ' / ' + g.hands[3].length) : '―',
+      '★合計': match ? match.total.join(' / ') : '―',
+      '★混ぜ直した 回数': g ? g.st.reshuffles : '―',
+      '★わくの 札': cardsEl ? cardsEl.querySelectorAll('.card.is-pick').length + '枚' : '―',
+      '★札': geo ? (geo.cw + '×' + geo.ch + 'px ／ 場 ' + (pack ? pack.tw : geo.tw) + 'px') : '―',
+      '★読めた 絵': warmDone + ' / ' + ALL_NAMES.length + (warmErr ? ('（読めず ' + warmErr + '）') : '')
+    };
+  }
+
+  /* ★ 種を 固定する（★同じ 試合を 何度でも）*/
+  function seed(n) {
+    seedFixed = (n | 0) || 0;
+    return { '★種': seedFixed || '（毎回 ちがう）', '★次の 1回から 効きます': true };
+  }
+
+  function geoInfo() {
+    return still(function () {
+      var r = stageEl.getBoundingClientRect();
+      return {
+        '画面': window.innerWidth + '×' + window.innerHeight,
+        '器の中身': geo.W + '×' + geo.H,
+        '★自分の 札': geo.cw + '×' + geo.ch + 'px',
+        '★★手札 8枚の 見えて いる はば': geo.pitch.toFixed(1) + 'px（★札の ' + (geo.pitch / geo.cw * 100).toFixed(0) + '%）',
+        '★44pxに 対して': (geo.cw / 44 * 100).toFixed(0) + '%',
+        '★ロボットの 札': geo.bw + '×' + geo.bh + 'px（ずらし ' + geo.bstep + 'px・1人 ' + geo.botOne + 'px）',
+        '★山・すて札': geo.pw + '×' + geo.ph + 'px（★44pxに 対して ' + (geo.pw / 44 * 100).toFixed(0) + '%）',
+        '★★場の 台': geo.feltH + 'px（内 ' + geo.innerW + '×' + geo.innerH + '）',
+        '★★場の 札': (pack ? pack.tw : geo.tw) + 'px（★ふだんの 上限 ' + geo.tw + 'px）' +
+                      (pack ? '／' + pack.rows.length + '行・ずらし ' + pack.step + 'px' + (pack.tight ? '★詰め' : '') : '／（場は 空）'),
+        '★点の 帯': geo.scoreH + 'px（字 ' + geo.sbNum + 'px／名前 ' + geo.sbName + 'px）',
+        'ロボットの 帯': geo.botH + 'px（上 ' + geo.botTop + 'px）',
+        '自分の 帯': geo.meH + 'px（上 ' + geo.meTop + 'px）',
+        '★すきま': geo.pad + 'px × ' + geo.nGap + 'つ',
+        '★結果の 箱の 天井': getComputedStyle(document.documentElement).getPropertyValue('--result-max').trim(),
+        'ページ縦スクロール': document.documentElement.scrollHeight > window.innerHeight,
+        'ページ横スクロール': document.documentElement.scrollWidth > window.innerWidth,
+        'stage': Math.round(r.width) + '×' + Math.round(r.height)
+      };
+    });
+  }
+
+  /* ★ 走らせる（★遊ぶ 側と 同じ core を 通ります）
+     ★ opt.mode … 'match'（★4回 配って 合計点・初期値）／ 'deal'（★1回 配る ぶん）*/
+  function autoPlay(n, opt) {
+    n = n || 1000; opt = opt || {};
+    var mode = opt.mode || 'match';
+    var lv = C.LEVELS[opt.level == null ? (match ? match.level : C.LEVEL_START) : opt.level];
+    var hu = C.HUMANS[opt.human == null ? 3 : opt.human];
+    var t0 = Date.now();
+    var st = C.runMany(n, opt.seed || 4649, [hu.o, lv.o, lv.o, lv.o], opt.rules || rules, mode, opt.deals);
+    var one = C.machineMs() / 1000;
+    var out = {
+      '数えかた': (mode === 'match' ? ('★' + (opt.deals || C.LIM.DEALS) + '回 配って 合計点') : '1回 配る ぶん'),
+      '回数': st.games,
+      '★ロボットの つよさ': lv.label, '★人の 打ち手': hu.label,
+      '★★反則・札の 数ちがい': st.illegal + '件',
+      '★流れ（誰も 上がれない）': (st.nofin / st.games * 100).toFixed(2) + '%',
+      '★7上がり（点が 2倍）': (st.doubled / st.games * 100).toFixed(2) + '%',
+      '★人が 勝つ': (st.win / st.games * 100).toFixed(2) + '%（★五分 25.0%）',
+      '★自分の 点': (st.pts / st.games).toFixed(1),
+      '★手番 まん中': C.pct(st.turnList, 0.5) + '／9割 ' + C.pct(st.turnList, 0.9) + '／99% ' + C.pct(st.turnList, 0.99),
+      '★★手札の 最大': st.handMax + '枚',
+      '★★場の 大きさ（組）': 'まん中 ' + C.pct(st.meldList, 0.5) + '／9割 ' + C.pct(st.meldList, 0.9) + '／最大 ' + st.melds,
+      '★★場の 大きさ（枚）': 'まん中 ' + C.pct(st.cardList, 0.5) + '／9割 ' + C.pct(st.cardList, 0.9) + '／最大 ' + st.tblCards,
+      '★いちばん 長い 組': st.widest + '枚',
+      '★★長さ【見立て】': '1回 ' + (one + 33.1).toFixed(1) + '秒（★機械 ' + one.toFixed(1) +
+        '秒 ＋ 人 6.4手×4.0秒 ＋ 点の 画面 2.5秒）／★1試合 ' +
+        (((one + 33.1) * C.LIM.DEALS) / 60).toFixed(1) + '分',
+      'かかった 時間': (Date.now() - t0) + 'ms'
+    };
+    console.log('[セブンブリッジ] autoPlay', out);
+    return out;
+  }
+
+  /* ★ つよさ 3段 × 人の 分かり具合（★ルル T173 §12-1 の 表を 本物の core で）*/
+  function rates(n, mode) {
+    n = n || 800; mode = mode || 'match';
+    var out = { '数えかた': (mode === 'match' ? '★4回 配って 合計点' : '1回 配る ぶん'), '回数': n + '（各マス）' };
+    for (var hi = 0; hi < 4; hi++) {
+      var row = [];
+      for (var li = 0; li < C.LEVELS.length; li++) {
+        var st = C.runMany(n, 246810, [C.HUMANS[hi].o, C.LEVELS[li].o, C.LEVELS[li].o, C.LEVELS[li].o], null, mode);
+        row.push(C.LEVELS[li].label + ' ' + (st.win / st.games * 100).toFixed(2) + '%');
+      }
+      out[C.HUMANS[hi].label] = row.join('　');
+    }
+    console.log('[セブンブリッジ] rates', out);
+    return out;
+  }
+
+  /* ============================================================
+     ★ はみ出し・画面外を 測る
+     ============================================================ */
+  /* ⚠️★ `.back` は **かならず .topbar で しぼる** こと ―― ★札の うら面の 絵も `img.back` です
+     （★ページワン T152 で 60件の 誤りの もとに なりました）。 */
+  var TOUCH_SEL = '.topbar .back,.howto,.start-button,.sub-button,.dialog-ok,.close-dialog,.go-btn,.level-select';
+  function measureOnce() {
+    var r = stageEl.getBoundingClientRect();
+    var out = { over: 0, off: 0, offName: [], small: 0, outName: [],
+                scrollX: document.documentElement.scrollWidth > window.innerWidth,
+                scrollY: document.documentElement.scrollHeight > window.innerHeight };
+    for (var id in cardEl) {
+      if (!cardEl.hasOwnProperty(id)) continue;
+      var e = cardEl[id];
+      if (!e.parentNode) continue;
+      var q = e.getBoundingClientRect();
+      var d = Math.max(Math.round(r.left - q.left), Math.round(r.top - q.top),
+                       Math.round(q.right - r.right), Math.round(q.bottom - r.bottom));
+      if (d > out.over) { out.over = d; out.outName = [e.where + ':' + e.cardName]; }
+    }
+    out.over = Math.max(0, out.over);
+    var list = document.querySelectorAll(TOUCH_SEL);
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (!el.offsetParent && el.tagName !== 'BODY') continue;
+      var q2 = el.getBoundingClientRect();
+      if (q2.width === 0 || q2.height === 0) continue;
+      if (q2.left < -0.5 || q2.top < -0.5 || q2.right > window.innerWidth + 0.5 || q2.bottom > window.innerHeight + 0.5) {
+        out.off++; out.offName.push(el.className || el.tagName);
+      }
+      if (q2.width < 43.5 || q2.height < 43.5) out.small++;
+    }
+    return out;
+  }
+
+  /* ★★★ 手札 8枚 ―― ★1枚ずつ **まん中を さして、その 札が 返るか** ★★★
+     ★ ★トライ T153 🟡-1【実測】：★見えて いる はばが 札の 半分を 切ると まん中が かくれる。
+     ★ ★式では なく **本物で** 数えます。 */
+  function handHit() {
+    var okN = 0, n = g ? g.hands[0].length : 0, i, bad = [];
+    for (i = 0; i < n; i++) {
+      var e = cardEl[g.hands[0][i]];
+      if (!e) { bad.push(i); continue; }
+      var q = e.getBoundingClientRect();
+      var got = hitAt(q.left + q.width / 2, q.top + q.height / 2);
+      if (got === e) okN++; else bad.push(i);
+    }
+    return { n: n, ok: okN, bad: bad };
+  }
+  /* ★★★ 場の 組 ―― ★1組ずつ **いちばん 左の 札の まん中を さして 当たるか** ★★★
+     ★ ★★これが「触る ところが 画面に 残って いるか」の 本物の ものさし です（★追記③）。 */
+  function meldHit() {
+    var okN = 0, n = g ? g.table.length : 0, i, bad = [];
+    for (i = 0; i < n; i++) {
+      var c = g.table[i].cards[0];
+      var e = cardEl[c];
+      if (!e) { bad.push(i); continue; }
+      var q = e.getBoundingClientRect();
+      var st = stageEl.getBoundingClientRect();
+      var inStage = (q.left >= st.left - 0.5 && q.right <= st.right + 0.5 &&
+                     q.top >= st.top - 0.5 && q.bottom <= st.bottom + 0.5);
+      var z = dropZone(q.left + Math.min(q.width, 10) / 2 + 2, q.top + q.height / 2);
+      if (inStage && z && z.kind === 'meld') okN++; else bad.push(i);
+    }
+    return { n: n, ok: okN, bad: bad };
+  }
+
+  /* ============================================================
+     ★★★ 山・すて札の「指の 的」を 本物の 指で 測る（★44px は 会社の 決まり）★★★
+     ★ ★見た目の 大きさでは なく ―― ★★**まん中から 外へ 何px まで 当たるか** を 数えます。
+       ★ ★★横向きでは 絵が 29px しか ありません。★当たりだけ 広げて あります（CSS の .spot::after）。
+     ============================================================ */
+  function spotProbe() {
+    var out = { rows: [], why: [] };
+    still(function () {
+      [['山', spotStock], ['すて札', spotDiscard]].forEach(function (sp) {
+        var el = sp[1], q = el.getBoundingClientRect();
+        var cx = q.left + q.width / 2, cy = q.top + q.height / 2;
+        function reach(dx, dy) {
+          var d = 0;
+          for (var s = 1; s <= 40; s++) {
+            var hx = cx + dx * s, hy = cy + dy * s;
+            if (hx < 0 || hy < 0 || hx > window.innerWidth || hy > window.innerHeight) break;
+            /* ⚠️★ `document.elementFromPoint` を そのまま 見ては いけません ――
+               ★ ★返って くるのは 札の **中身**（.card-in や img）です【★私の 失敗⑧】。
+               ★ ★★遊ぶ 側と 同じ `hitAt` を 通します（★目を 1つに して おく）。 */
+            var t = hitAt(hx, hy);
+            var want = (el === spotStock ? 'stock' : 'discard');
+            var ok = !!(t && (t === el ||
+                        (t.getAttribute && t.getAttribute('data-spot') === want) ||
+                        (t.classList && t.classList.contains('card') && t.where === want)));
+            if (!ok) break;
+            d = s;
+          }
+          return d;
+        }
+        var w = reach(-1, 0) + reach(1, 0), h = reach(0, -1) + reach(0, 1);
+        out.rows.push(sp[0] + ' 絵 ' + Math.round(q.width) + '×' + Math.round(q.height) +
+                      'px ／ ★当たり ' + w + '×' + h + 'px');
+        if (w < 43.5 || h < 43.5) {
+          out.why.push('★★★' + sp[0] + ' の 指の 的が ' + w + '×' + h +
+                       'px（★44px 以上 の はず ―― ★★山は 毎手番 押す ところ です）');
+        }
+      });
+    });
+    return out;
+  }
+
+  /* ★★ 場面を 作る どうぐ ―― ★組を 何個・何枚 でも 並べた 場を 作ります ★★
+     ★ ★53枚は 1枚も 増やさず・減らさず 保ちます。 */
+  function fakeTable(counts, rd) {
+    var used = {}, table = [], i, k;
+    function take(c) { if (used[c]) return false; used[c] = 1; return true; }
+    var rank = 1, suit = 0, lo = 2;
+    for (i = 0; i < counts.length; i++) {
+      var n = Math.max(3, Math.min(13, counts[i]));
+      var m = null, cards = [], ok = true;
+      if (n <= 4) {                                  /* ★ 組（同じ 数字）*/
+        while (rank <= 13) {
+          cards = []; ok = true;
+          for (k = 0; k < n; k++) { var c = k * 13 + (rank - 1); if (used[c]) { ok = false; break; } cards.push(c); }
+          if (ok) break;
+          rank++;
+        }
+        if (!ok || rank > 13) continue;
+        for (k = 0; k < cards.length; k++) take(cards[k]);
+        var su = [false, false, false, false];
+        for (k = 0; k < cards.length; k++) su[C.suitOf(cards[k])] = true;
+        m = { t: 's', rank: rank, suits: su, jk: 0, n: n, owner: 1, cards: cards };
+        rank++;
+      } else {                                       /* ★ 並び（同じ マークの つづいた 数字）*/
+        var tryN = 0;
+        while (tryN++ < 60) {
+          cards = []; ok = true;
+          if (lo + n - 1 > 13) { lo = 2; suit = (suit + 1) % 4; }
+          for (k = 0; k < n; k++) { var c2 = suit * 13 + (lo + k - 1); if (used[c2]) { ok = false; break; } cards.push(c2); }
+          if (ok) break;
+          lo += 1;
+          if (lo + n - 1 > 13) { lo = 2; suit = (suit + 1) % 4; }
+        }
+        if (!ok) continue;
+        for (k = 0; k < cards.length; k++) take(cards[k]);
+        m = { t: 'r', suit: suit, lo: lo, hi: lo + n - 1, jk: 0, owner: 1, cards: cards };
+        lo += n + 1;
+      }
+      if (m) table.push(m);
+    }
+    /* ★ のこりを 山・すて札・手札に 配り直す（★53枚 きっちり）*/
+    var rest = [];
+    for (i = 0; i < 53; i++) if (!used[i]) rest.push(i);
+    for (i = rest.length - 1; i > 0; i--) {
+      var j = (rd() * (i + 1)) | 0, t = rest[i]; rest[i] = rest[j]; rest[j] = t;
+    }
+    return { table: table, rest: rest };
+  }
+  /* ★★ その 札を 自分の 手札へ 入れかえる（★53枚は 1枚も 増やさず・減らさず 保ちます）★★
+     ⚠️★★ はじめ「★山の 中だけ」から さがして いました ―― ★★見つからない ことが あり、
+        ★ ★★見張りが「試し方が おかしい」と 鳴りました【★私の 失敗④・作業メモ §5】。
+        ★ ★★機能は 生きて いたのに、★試し方の せいで 鳴って いた ―― ★★書き分けが 効いた 例 です。 */
+  function bringToHand(c) {
+    if (!g) return false;
+    if (g.hands[0].indexOf(c) >= 0) return true;
+    if (!g.hands[0].length) return false;
+    var back = g.hands[0].pop(), k, p;
+    k = g.stock.indexOf(c);
+    if (k >= 0) { g.stock.splice(k, 1, back); g.hands[0].push(c); return true; }
+    k = g.discard.indexOf(c);
+    if (k >= 0) { g.discard.splice(k, 1, back); g.hands[0].push(c); return true; }
+    for (p = 1; p < 4; p++) {
+      k = g.hands[p].indexOf(c);
+      if (k >= 0) { g.hands[p].splice(k, 1, back); g.hands[0].push(c); return true; }
+    }
+    g.hands[0].push(back);
+    return false;
+  }
+  /* ★ 場の mi番目の 組に 合う 札を 1枚 見つけて、★自分の 手札へ 入れかえる */
+  function bringFitFor(mi) {
+    if (!g || !g.table[mi]) return -1;
+    var m = g.table[mi], i, j;
+    for (i = 0; i < 53; i++) {
+      if (!C.tableFits(m, i)) continue;
+      var inTbl = false;
+      for (j = 0; j < g.table.length; j++) if (g.table[j].cards.indexOf(i) >= 0) inTbl = true;
+      if (inTbl) continue;
+      if (bringToHand(i)) return i;
+    }
+    return -1;
+  }
+  function makeScene(counts, handN, rd) {
+    if (!g) return false;
+    var f = fakeTable(counts, rd || C.rng(31337));
+    g.table = f.table;
+    var rest = f.rest.slice();
+    g.hands[0] = rest.splice(0, Math.min(handN || 8, rest.length));
+    for (var p = 1; p < 4; p++) g.hands[p] = rest.splice(0, Math.min(7, rest.length));
+    g.discard = rest.splice(0, Math.min(3, rest.length));
+    g.stock = rest;
+    g.cur = 0; g.phase = 'play'; g.over = false;
+    var n = g.stock.length + g.discard.length, i;
+    for (i = 0; i < 4; i++) n += g.hands[i].length;
+    for (i = 0; i < g.table.length; i++) n += C.meldLen(g.table[i]);
+    if (built && geo) rebuild();          /* ★ 表・裏も そろえる（★手で 呼ぶ ときの ため）*/
+    return n === 53;
+  }
+
+  /* ★★ はみ出し しらべ（設計図 追記③）★★
+     ★ ★★ふだんの 形（5組・19枚）から まれな 形（8組・25枚・1組14枚）まで まぜて 測ります。 */
+  var SCENES = [
+    { n: '★5組19枚（ふだんの形）', c: [3, 4, 3, 5, 4] },
+    { n: '3組11枚',               c: [3, 4, 4] },
+    { n: '6組23枚',               c: [3, 4, 3, 5, 4, 4] },
+    { n: '7組25枚',               c: [3, 4, 3, 5, 4, 3, 3] },
+    { n: '★8組25枚（99%の外）',   c: [3, 3, 3, 3, 3, 3, 3, 4] },
+    { n: '★1組13枚（いちばん長い）', c: [13] },
+    { n: '空っぽ',                c: [] }
+  ];
+  function fitTest(n) {
+    n = n || 140;
+    var rd = C.rng(90909), worst = 0, worstAt = '', offTotal = 0, smallTotal = 0, names = {}, sx = 0, sy = 0;
+    var hitBad = 0, hitTot = 0, mBad = 0, mTot = 0, tightN = 0;
+    var keepG = g, keepBusy = busy, keepOver = over, keepPicks = picks;
+    var kTitleHid = titleScreen.classList.contains('hidden');
+    var kPlayHid = playScreen.classList.contains('hidden');
+    titleScreen.classList.add('hidden');
+    playScreen.classList.remove('hidden');
+    if (!match) match = C.newMatch(C.LEVEL_START);
+    build(); layout();
+    still(function () {
+      for (var k = 0; k < n; k++) {
+        dropCards();
+        picks = {};
+        g = C.makeGame(rd, { rules: rules, dealNo: k % 4, startP: k % 4 });
+        for (var i = 0; i < 53; i++) makeCard(i, false);
+        var sc = SCENES[k % SCENES.length];
+        makeScene(sc.c, 8, rd);
+        if (k % 3 === 0 && g.hands[0].length >= 3) {
+          picks[g.hands[0][0]] = 1; picks[g.hands[0][1]] = 1; picks[g.hands[0][2]] = 1;
+        }
+        rebuild();
+        placeAll(true);
+        if (pack && pack.tight) tightN++;
+        var m = measureOnce();
+        if (m.over > worst) { worst = m.over; worstAt = sc.n + '：' + (m.outName[0] || ''); }
+        offTotal += m.off; smallTotal += m.small;
+        for (var q = 0; q < m.offName.length; q++) names[m.offName[q]] = 1;
+        if (m.scrollX) sx++;
+        if (m.scrollY) sy++;
+        var hh = handHit(); hitTot += hh.n; hitBad += (hh.n - hh.ok);
+        var mh = meldHit(); mTot += mh.n; mBad += (mh.n - mh.ok);
+      }
+    });
+    dropCards();
+    picks = keepPicks; g = keepG; busy = keepBusy; over = keepOver;
+    if (kTitleHid) titleScreen.classList.add('hidden'); else titleScreen.classList.remove('hidden');
+    if (kPlayHid) playScreen.classList.add('hidden'); else playScreen.classList.remove('hidden');
+    if (g) { for (var z = 0; z < 53; z++) if (!cardEl[z]) makeCard(z, false); rebuild(); placeAll(true); }
+    var out = {
+      '画面': window.innerWidth + '×' + window.innerHeight,
+      '★札': geo.cw + '×' + geo.ch + 'px（★見えて いる はば ' + geo.pitch.toFixed(1) + 'px）',
+      '調べた場面': n + '（★5組19枚〜8組25枚・1組13枚・空っぽ）',
+      '★はみ出し（一番 大きい）': worst + 'px' + (worst ? '（' + worstAt + '）' : ''),
+      '★押す ところが 画面外': offTotal + '件',
+      '★44pxより 小さい ボタン': smallTotal + '件',
+      '★★手札の まん中を さして 当たらなかった': hitBad + ' / ' + hitTot + '枚',
+      '★★場の 組を さして 当たらなかった': mBad + ' / ' + mTot + '組',
+      '★静かに 詰めた 場面': tightN + ' / ' + n,
+      '横スクロールが 出た場面': sx, '縦スクロールが 出た場面': sy
+    };
+    if (offTotal) out['画面外に 出た もの'] = Object.keys(names);
+    console.log('[セブンブリッジ] fitTest', out);
+    return out;
+  }
+
+  /* ============================================================
+     ★★★ 手を 教えて いないか（★ハーツ T168 の 見かたを 引きつぐ）★★★
+     ------------------------------------------------------------
+     ★ 手を 教える 文は かならず ★★**①札を 名ざしして ②どう しろと 言う**。
+       ★ ★どちらか 片方だけ なら 教えて いません：
+         ★ ★「山か すて札から 1枚 引こう」…… ★札を 名ざして いない（★決まりの 言い方）→ ○
+         ★ ★「7は 0点」……………………………… ★名ざして いるが「どう しろ」が 無い → ○
+         ★ ★★「7は のこそう」………………………… ★★両方 ある → ✕
+     ★ ★空白・句読点・「！」を ぜんぶ 取ってから くらべます（★「！」1文字で すり抜けた T166 の 直し）。
+     ============================================================ */
+  function flatText(s) { return String(s).replace(/[\s　。、,.!?！？…‥・「」『』（）()]/g, ''); }
+  /* ⚠️★★ 「数字なら 何でも 札の 名ざし」に したら、★★自分の 見張りが 空うちしました
+        ―― ★「1回 おわる ごとに **やめ**られる」の「1」＋「やめ」で 鳴りました【★私の 失敗②】。
+     ★ → ★★**札の 数字だけ**（7・10・絵札・A）に しぼり、★★数え言葉（枚・回・人・点…）が
+       ★ 後ろに 来る ものは 外します。★これで「7は のこそう」は 鳴り、「1回」は 鳴りません。 */
+  var NUM_NG = '(?![枚回人点組行番位つ本目段度])';
+  var TEACH_CARD = 'スペード|ハート|ダイヤ|クローバー|[♠♥♦♣]|クイーン|キング|エース|ジャック' +
+                   '|ジョーカー|この札|その札|この1枚|その1枚|点の札|高い札|低い札|大きい札|小さい札' +
+                   '|[QKAJ]' + NUM_NG + '|7' + NUM_NG + '|10' + NUM_NG;
+  var TEACH_ADVICE = 'ほうがい|ほうがよ|のこそ|のこして|残そ|残して|ためて|とっておこ|取っておこ' +
+                     '|すてよう|すてた|捨てよう|えらぼ|選ぼ|ねらお|狙お|つかお|使お|だそう|出そう' +
+                     '|ださない|出さない|すてない|やめ|気をつけ|きをつけ|注意|ちゅうい|あぶな|危な' +
+                     '|しないで|だめ|いらない|要らない|そろうよ|そろえよ|足せる|たせる';
+  var TEACH_ALONE = ['おすすめ', 'オススメ', 'すすめ', 'ヒント', 'コツ', 'あと1枚', '上がれます', '上がれるよ', 'そろうよ'];
+  /* ★★ ルル T173 §14-1 の 表の 文 そのもの（★★これが 通ったら 見張りは 死んで います）*/
+  var TEACH_RULU = ['その3枚がそろうよ', '7は残しておこう', 'Aは早く捨てよう', 'この札を捨てるといいよ',
+                    'すて札を取ったほうが得', '上がれます'];
+  function teachHit(s) {
+    var f = flatText(s), out = [], i, m;
+    var re = new RegExp('(' + TEACH_CARD + ')[^]{0,14}?(' + TEACH_ADVICE + ')', 'g');
+    while ((m = re.exec(f))) { out.push(m[0]); if (re.lastIndex <= m.index) re.lastIndex = m.index + 1; }
+    for (i = 0; i < TEACH_ALONE.length; i++) if (f.indexOf(TEACH_ALONE[i]) >= 0) out.push(TEACH_ALONE[i]);
+    for (i = 0; i < TEACH_RULU.length; i++) if (f.indexOf(TEACH_RULU[i]) >= 0) out.push('★ルルの 禁句：' + TEACH_RULU[i]);
+    return out;
+  }
+  function readableText(rootEl) {
+    if (!rootEl) return '';
+    var out = '', w = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, null, false), t;
+    while ((t = w.nextNode())) {
+      var p = t.parentNode, skip = false;
+      while (p && p !== rootEl) {
+        var tn = (p.tagName || '').toLowerCase();
+        if (tn === 'script' || tn === 'style' || tn === 'svg') { skip = true; break; }
+        p = p.parentNode;
+      }
+      if (!skip) out += t.nodeValue;
+    }
+    return out.replace(/\s+/g, ' ').trim();
+  }
+  /* ★ 札の 上の 文字（★点の 数字は 別に 数えます）*/
+  function cardWords(el) {
+    var out = '', list = el.querySelectorAll('.card'), i;
+    for (i = 0; i < list.length; i++) {
+      var c = list[i].cloneNode(true);
+      var pt = c.querySelectorAll('.pt');
+      for (var j = 0; j < pt.length; j++) pt[j].parentNode.removeChild(pt[j]);
+      out += readableText(c);
+    }
+    return out;
+  }
+
+  /* ============================================================
+     ★★ CSS の 決まりを ぜんぶ 集める ★★
+     ⚠️★★ **まず 拾い、それから（中身が ある ときだけ）もぐる** こと。
+        ★ `if (r.cssRules) { walk(...); continue; }` と 書くと **1つも 集まりません**
+          ―― ★★見張りが 丸ごと 死にます（★ページワン T152 で 実際に 起きた）。
+     ============================================================ */
+  function cssRuleList() {
+    var out = [];
+    function walk(rs) {
+      for (var j = 0; j < rs.length; j++) {
+        var r = rs[j];
+        if (r.selectorText) out.push({ sel: r.selectorText, text: r.cssText });
+        if (r.cssRules && r.cssRules.length) walk(r.cssRules);
+      }
+    }
+    for (var i = 0; i < document.styleSheets.length; i++) {
+      try { walk(document.styleSheets[i].cssRules); } catch (e) {}
+    }
+    return out;
+  }
+  function cssRulesText() {
+    var s = '';
+    for (var i = 0; i < document.styleSheets.length; i++) {
+      try {
+        var rs = document.styleSheets[i].cssRules;
+        for (var j = 0; j < rs.length; j++) s += rs[j].cssText + '\n';
+      } catch (e) {}
+    }
+    return s;
+  }
+
+  /* ============================================================
+     ★ 場面を 作る／もどす どうぐ
+     ============================================================ */
+  function snapG() {
+    if (!g) return null;
+    var s = { hands: [], table: C.cloneTable(g.table), stock: g.stock.slice(), discard: g.discard.slice() }, p;
+    for (p = 0; p < 4; p++) s.hands.push(g.hands[p].slice());
+    ['phase', 'cur', 'over', 'winner', 'turn', 'lastDiscard', 'doubled', 'drawGame'].forEach(function (k) { s[k] = g[k]; });
+    s.pts = g.pts ? g.pts.slice() : null;
+    return s;
+  }
+  function restoreG(s) {
+    if (!g || !s) return;
+    for (var p = 0; p < 4; p++) g.hands[p] = s.hands[p].slice();
+    g.table = C.cloneTable(s.table);
+    g.stock = s.stock.slice(); g.discard = s.discard.slice();
+    ['phase', 'cur', 'over', 'winner', 'turn', 'lastDiscard', 'doubled', 'drawGame'].forEach(function (k) { g[k] = s[k]; });
+    g.pts = s.pts ? s.pts.slice() : null;
+  }
+  function tapDom(el, x, y) {
+    if (!el) return false;
+    function mk(type, px, py) {
+      var o = { bubbles: true, cancelable: true, clientX: px, clientY: py,
+                pointerId: 1, isPrimary: true, pointerType: 'touch' };
+      try { return new PointerEvent(type, o); }
+      catch (e) {
+        var ev = document.createEvent('Event'); ev.initEvent(type, true, true);
+        ev.clientX = px; ev.clientY = py; ev.pointerType = 'touch'; return ev;
+      }
+    }
+    var r = el.getBoundingClientRect();
+    var ax = (x === undefined) ? r.left + r.width / 2 : x;
+    var ay = (y === undefined) ? r.top + r.height / 2 : y;
+    el.dispatchEvent(mk('pointerdown', ax, ay));
+    el.dispatchEvent(mk('pointerup', ax, ay));
+    return true;
+  }
+  /* ★★ 押して・運んで・はなす（★本物の 3つの できごとを そのまま 通す）★★ */
+  function dragDom(el, fromX, fromY, toX, toY) {
+    function mk(type, px, py) {
+      var o = { bubbles: true, cancelable: true, clientX: px, clientY: py,
+                pointerId: 2, isPrimary: true, pointerType: 'touch' };
+      try { return new PointerEvent(type, o); }
+      catch (e) {
+        var ev = document.createEvent('Event'); ev.initEvent(type, true, true);
+        ev.clientX = px; ev.clientY = py; ev.pointerType = 'touch'; return ev;
+      }
+    }
+    el.dispatchEvent(mk('pointerdown', fromX, fromY));
+    stageEl.dispatchEvent(mk('pointermove', (fromX + toX) / 2, (fromY + toY) / 2));
+    stageEl.dispatchEvent(mk('pointermove', toX, toY));
+    stageEl.dispatchEvent(mk('pointerup', toX, toY));
+  }
+
+  /* ============================================================
+     ★★★ ⑬ 線を こえて いないか ―― ★この 1本の いちばん 大事な 見張り ★★★
+     ------------------------------------------------------------
+     ★ ルル §14-1 の 表：
+       | ★画面が やって よい | ★★やっては いけない |
+       | 選んだ 札が 組か たしかめる | ★★「そろう 3枚」を さがして 見せる・光らせる |
+       | 付け札が 合って いるか 判定する | ★★足せる 札を 光らせる |
+       | 札の すみに 点を 書く | ★★「7は のこそう」 |
+       | 手札を 人が 並べかえられる | ★★組が できる 順に 勝手に 並べかえる |
+       | 点を 数える・配る・混ぜ直す | ★★上がれる ことを 先に 教える |
+     ★ ★3つの 目で 見ます：
+       ★ ★① ★★**本物の 場面**で 印を 数える（★そろう 3枚を 手札に 仕込んでも 0印）
+       ★ ★② ★★**運んで いる 最中**に 印を 数える（★落とせる 組を 光らせて いないか）
+       ★ ★③ ★★**行を 走査**する（★画面側の 関数が `enumMelds` を 呼んで いないか）
+     ============================================================ */
+  function lineProbe() {
+    var out = { idleMarks: -1, dragMarks: -1, words: '―', sorted: '―', ok: 0, why: [] };
+    if (!g || !cardsEl || !geo || !built) { out.why.push('★立ち上がって いない'); return out; }
+    var snap = snapG();
+    var kBusy = busy, kOver = over, kPicks = picks;
+    var kSay = sayEl.classList.contains('hidden');
+    still(function () {
+      /* ★ ① ★★そろう 3枚（クローバー3・ダイヤ3・ハート3）と、
+             ★★場の 組に ぴったり 足せる 1枚を **わざと 手札に 入れます**。
+         ★ ★★それでも 印は 0個 で なければ なりません。 */
+      busy = false; over = false; picks = {};
+      sayEl.classList.add('hidden');
+      if (!makeScene([3, 4, 3, 5, 4], 8, C.rng(24680))) { out.why.push('★★試し方が おかしい：場面を 作れない'); return; }
+      /* ★ 場の 1組目に 足せる 札を 1枚 手札へ（★53枚は 保った まま 入れかえ）*/
+      var fit = bringFitFor(0);
+      if (fit < 0) { out.why.push('★★試し方が おかしい：★足せる 札を 手札に 入れられなかった'); return; }
+      rebuild(); placeAll(true);
+      out.idleMarks = cardsEl.querySelectorAll('.card.is-pick,.card.is-no,.card.is-drag,.is-hint,.is-glow,.is-ok,.is-fit,.is-here,.is-set,.is-run,.is-match,.is-can').length;
+      if (out.idleMarks !== 0) {
+        out.why.push('★★★人が 1枚も 押して いない のに 印が ' + out.idleMarks + '個 付いて いる ' +
+                     '（★★そろう 3枚と 足せる 1枚を わざと 入れた 場面 です ―― ★設計図 追記② 違反）');
+      }
+      out.words = cardWords(cardsEl);
+      if (out.words) out.why.push('★★札の 上に（点の 数字 いがいの）文字が ある：' + out.words);
+      /* ★ 手札の ならびが「組が できる 順」に 並べかえられて いないか
+         ★ ★★newDeal は はじめに 1回だけ マーク順に します（★これは 許された 側）。
+         ★ ★★ここでは **足した 札が いちばん 右に 来て いるか**を 見ます。 */
+      out.sorted = (g.hands[0][g.hands[0].length - 1] === fit || fit < 0) ? '○ 引いた 札は 右はし' : '★★✕ 勝手に 並べかえた';
+      if (fit >= 0 && g.hands[0][g.hands[0].length - 1] !== fit) {
+        out.why.push('★★★引いた 札を 勝手に 並べかえて います（★「組が できる 順に 並べかえる」＝ 追記② 違反）');
+      }
+
+      /* ★ ② ★★運んで いる 最中 ―― ★落とせる 組を 光らせて いないか */
+      if (fit >= 0) {
+        var el = cardEl[fit];
+        var q = el.getBoundingClientRect();
+        var tp = tblPos[0];
+        var st = stageEl.getBoundingClientRect();
+        var tx = st.left + tp.x + 8, ty = st.top + tp.y + tp.h / 2;
+        function mk(type, px, py) {
+          var o = { bubbles: true, cancelable: true, clientX: px, clientY: py,
+                    pointerId: 3, isPrimary: true, pointerType: 'touch' };
+          try { return new PointerEvent(type, o); } catch (e2) {
+            var ev = document.createEvent('Event'); ev.initEvent(type, true, true);
+            ev.clientX = px; ev.clientY = py; ev.pointerType = 'touch'; return ev;
+          }
+        }
+        el.dispatchEvent(mk('pointerdown', q.left + q.width / 2, q.top + q.height / 2));
+        stageEl.dispatchEvent(mk('pointermove', tx, ty));
+        out.dragMarks = cardsEl.querySelectorAll('.is-hint,.is-glow,.is-ok,.is-fit,.is-here,.is-can,.is-target').length +
+                        stageEl.querySelectorAll('.spot.is-hint,.spot.is-ok,.spot.is-can').length;
+        if (out.dragMarks !== 0) {
+          out.why.push('★★★運んで いる 最中に「そこに 足せるよ」の 印が ' + out.dragMarks +
+                       '個 出て います（★★七並べ 2026-08-24 裁定と 同じ 罪）');
+        }
+        stageEl.dispatchEvent(mk('pointercancel', tx, ty));
+        onCancel({ pointerId: 3 });
+      }
+      out.ok = 1;
+    });
+    picks = kPicks;
+    restoreG(snap);
+    busy = kBusy; over = kOver;
+    if (kSay) sayEl.classList.add('hidden'); else sayEl.classList.remove('hidden');
+    if (g) { rebuild(); placeAll(true); }
+    return out;
+  }
+
+  /* ============================================================
+     ★★★ ⑭ 人が さわれるか（★ルル §18 コーダ⑥）★★★
+     ------------------------------------------------------------
+     ★ ★「人の 番なのに、押せる ものが 1つも 無い」場面を 作れないか。
+     ★ ★★「起きない はず」を そのまま 出しません ―― ★★本物の 指の 道で 通します。
+     ★ ★見る 場面は 3つ：★引く 場面／★出す 場面／★★山も すて札も 空に なりかけた 場面。
+     ============================================================ */
+  function reachProbe() {
+    var out = { cases: 0, dead: 0, why: [], detail: [] };
+    if (!g || !cardsEl || !geo || !built) { out.why.push('★立ち上がって いない'); return out; }
+    var snap = snapG();
+    var kBusy = busy, kOver = over, kPicks = picks;
+    var kResult = resultWrap.classList.contains('hidden');
+    var tMark = timers.length;
+
+    var CASES = [
+      ['★引く 場面', function () { g.phase = 'draw'; g.cur = 0; g.over = false; }],
+      ['★出す 場面', function () { g.phase = 'play'; g.cur = 0; g.over = false; }],
+      ['★★山が 1枚（引いたら 混ぜ直す）', function () {
+        g.phase = 'draw'; g.cur = 0; g.over = false;
+        while (g.stock.length > 1) g.discard.push(g.stock.pop());
+      }],
+      ['★★すて札が 1枚だけ', function () {
+        g.phase = 'draw'; g.cur = 0; g.over = false;
+        while (g.discard.length > 1) g.stock.push(g.discard.pop());
+      }]
+    ];
+    still(function () {
+      CASES.forEach(function (cs) {
+        restoreG(snap);
+        busy = false; over = false; picks = {};
+        resultWrap.classList.add('hidden');
+        cs[1]();
+        rebuild(); placeAll(true);
+        out.cases++;
+        var was = { h: g.hands[0].length, ph: g.phase, d: g.discard.length, pk: pickCount() };
+        var pts = [], i, q, e;
+        for (i = 0; i < g.hands[0].length; i++) {
+          e = cardEl[g.hands[0][i]];
+          if (!e) continue;
+          q = e.getBoundingClientRect();
+          pts.push([q.left + q.width / 2, q.top + q.height / 2]);
+        }
+        q = spotStock.getBoundingClientRect(); pts.push([q.left + q.width / 2, q.top + q.height / 2]);
+        q = spotDiscard.getBoundingClientRect(); pts.push([q.left + q.width / 2, q.top + q.height / 2]);
+        var moved = 0;
+        for (i = 0; i < pts.length; i++) {
+          var el = hitAt(pts[i][0], pts[i][1]);
+          if (!el) continue;
+          tapDom(el, pts[i][0], pts[i][1]);
+          if (g.hands[0].length !== was.h || g.phase !== was.ph || pickCount() !== was.pk) { moved = 1; break; }
+        }
+        out.detail.push(cs[0] + '：さわれた 所 ' + pts.length + '／' + (moved ? '★動いた ○' : '★★1ミリも 動かない ✕'));
+        if (!pts.length) { out.dead++; out.why.push(cs[0] + ' ―― ★★押す ものが 1つも ない'); }
+        else if (!moved) { out.dead++; out.why.push(cs[0] + ' ―― ★★ぜんぶ 押しても 1ミリも 動かない'); }
+      });
+    });
+    for (var t = timers.length - 1; t >= tMark; t--) { clearTimeout(timers[t]); timers.splice(t, 1); }
+    picks = kPicks;
+    restoreG(snap);
+    busy = kBusy; over = kOver;
+    if (kResult) resultWrap.classList.add('hidden'); else resultWrap.classList.remove('hidden');
+    if (g) { rebuild(); placeAll(true); }
+    return out;
+  }
+
+  /* ============================================================
+     ★★★ ⑮ 運ぶ（付け札・すてる）が 本物の 指で 通るか ★★★
+     ★ ★① 合う 組へ 落とす → ★乗る
+     ★ ★② 合わない 組へ 落とす → ★★乗らない ＋ ぷるっと 返す
+     ★ ★③ すて札へ 落とす → ★手番が おわる
+     ★ ★④ 何も ない ところへ 落とす → ★戻る ＋ ぷるっと 返す
+     ============================================================ */
+  function dragProbe() {
+    var out = { fit: '―', unfit: '―', discard: '―', nowhere: '―', why: [] };
+    if (!g || !cardsEl || !geo || !built) { out.why.push('★立ち上がって いない'); return out; }
+    var snap = snapG();
+    var kBusy = busy, kOver = over, kPicks = picks;
+    var tMark = timers.length;
+    var st = stageEl.getBoundingClientRect();
+
+    function scene() {
+      restoreG(snap);
+      busy = false; over = false; picks = {};
+      if (!makeScene([3, 4, 3, 5, 4], 8, C.rng(1357))) return null;
+      /* ★ 場の 1組目に 合う 札を 1枚 手札へ */
+      var fit = bringFitFor(0);
+      if (fit < 0) return null;
+      /* ★ 合わない 札も 1枚 見つける */
+      var m0 = g.table[0], unfit = -1, i;
+      for (i = 0; i < g.hands[0].length; i++) if (!C.tableFits(m0, g.hands[0][i])) { unfit = g.hands[0][i]; break; }
+      rebuild(); placeAll(true);
+      return { fit: fit, unfit: unfit };
+    }
+    function meldXY(mi) {
+      var p = tblPos[mi];
+      return [st.left + p.x + Math.min(p.w, 12) / 2, st.top + p.y + p.h / 2];
+    }
+    function cardXY(c) {
+      var q = cardEl[c].getBoundingClientRect();
+      return [q.left + q.width / 2, q.top + q.height / 2];
+    }
+    still(function () {
+      /* ★ ① 合う 組へ */
+      var s = scene();
+      if (!s) { out.why.push('★★試し方が おかしい：★合う 札の 場面を 作れなかった'); return; }
+      var n0 = C.meldLen(g.table[0]), h0 = g.hands[0].length;
+      var a = cardXY(s.fit), b = meldXY(0);
+      dragDom(cardEl[s.fit], a[0], a[1], b[0], b[1]);
+      out.fit = (C.meldLen(g.table[0]) === n0 + 1 && g.hands[0].length === h0 - 1) ? '○ 乗った' : '★★✕ 乗らない';
+      if (out.fit !== '○ 乗った') out.why.push('★★★合う 札を 場の 組に 落としたのに 乗りません（★付け札が 効いて いません）');
+
+      /* ★ ② 合わない 組へ ―― ★乗らない ＋ ぷるっ */
+      s = scene();
+      if (!s || s.unfit < 0) { out.why.push('★★試し方が おかしい：★合わない 札を 見つけられなかった'); return; }
+      n0 = C.meldLen(g.table[0]); h0 = g.hands[0].length;
+      cardEl[s.unfit].classList.remove('is-no');
+      a = cardXY(s.unfit); b = meldXY(0);
+      dragDom(cardEl[s.unfit], a[0], a[1], b[0], b[1]);
+      var stay = (C.meldLen(g.table[0]) === n0 && g.hands[0].length === h0);
+      out.unfit = stay ? (cardEl[s.unfit].classList.contains('is-no') ? '○ 戻って ぷるっ' : '★✕ 返事が ない') : '★★✕ 乗って しまう';
+      if (!stay) out.why.push('★★★合わない 札が 場の 組に 乗って しまいました（★決まりが 効いて いません）');
+      else if (!cardEl[s.unfit].classList.contains('is-no')) {
+        out.why.push('★★合わない 札を 落としても 1回も ゆれません（★遊ぶ人には 壊れたと 見分けが つきません）');
+      }
+
+      /* ★ ③ すて札へ ―― ★手番が おわる */
+      s = scene();
+      if (!s) { out.why.push('★★試し方が おかしい：★3回目の 場面を 作れなかった'); return; }
+      h0 = g.hands[0].length;
+      var dn = g.discard.length;
+      a = cardXY(s.fit);
+      var dq = spotDiscard.getBoundingClientRect();
+      dragDom(cardEl[s.fit], a[0], a[1], dq.left + dq.width / 2, dq.top + dq.height / 2);
+      out.discard = (g.hands[0].length === h0 - 1 && g.discard.length === dn + 1 && (g.cur !== 0 || g.over))
+        ? '○ すてて 手番が おわった' : '★★✕ すてられない';
+      if (out.discard !== '○ すてて 手番が おわった') {
+        out.why.push('★★★すて札へ 落としても すてられません（★★手番が おわりません ＝ 遊びが 止まります）');
+      }
+
+      /* ★ ④ 何も ない ところ ―― ★戻る ＋ ぷるっ */
+      s = scene();
+      if (!s) { out.why.push('★★試し方が おかしい：★4回目の 場面を 作れなかった'); return; }
+      h0 = g.hands[0].length;
+      cardEl[s.fit].classList.remove('is-no');
+      a = cardXY(s.fit);
+      dragDom(cardEl[s.fit], a[0], a[1], st.left + 6, st.top + geo.scoreTop + 2);
+      out.nowhere = (g.hands[0].length === h0)
+        ? (cardEl[s.fit].classList.contains('is-no') ? '○ 戻って ぷるっ' : '★✕ 返事が ない')
+        : '★★✕ 消えた';
+      if (g.hands[0].length !== h0) out.why.push('★★★何も ない ところに 落としたら 札が 消えました');
+    });
+    for (var t = timers.length - 1; t >= tMark; t--) { clearTimeout(timers[t]); timers.splice(t, 1); }
+    var a2 = cardsEl.querySelectorAll('.card.is-no,.card.is-drag');
+    for (var i2 = 0; i2 < a2.length; i2++) a2[i2].classList.remove('is-no', 'is-drag');
+    picks = kPicks;
+    restoreG(snap);
+    busy = kBusy; over = kOver;
+    if (g) { rebuild(); placeAll(true); }
+    return out;
+  }
+
+  /* ============================================================
+     ★★★ ⑯ 「出す」ボタン ―― ★組の ときだけ 押せるか ★★★
+     ★ ★① そろって いない 3枚 → ★出ない
+     ★ ★② そろった 3枚（同じ 数字）→ ★出る
+     ★ ★③ そろった 3枚（同じ マークの つづいた 数字）→ ★出る
+     ★ ★④ ★★手札 ぜんぶ を えらんだ → ★出ない（★すてる 1枚が なくなる）
+     ============================================================ */
+  function goProbe() {
+    var out = { bad: '―', set: '―', run: '―', all: '―', played: '―', why: [] };
+    if (!g || !geo || !built) { out.why.push('★立ち上がって いない'); return out; }
+    var snap = snapG();
+    var kBusy = busy, kOver = over, kPicks = picks;
+    var tMark = timers.length;
+    still(function () {
+      restoreG(snap);
+      busy = false; over = false;
+      g.phase = 'play'; g.cur = 0; g.over = false;
+      /* ★ 手札を わざと 作ります（★53枚は 保った まま 入れかえ）*/
+      var set3 = [0 * 13 + 2, 1 * 13 + 2, 2 * 13 + 2];          /* ★ 3が 3枚 */
+      var run3 = [3 * 13 + 5, 3 * 13 + 6, 3 * 13 + 7];          /* ★ スペードの 6・7・8 */
+      var other = [1 * 13 + 12, 2 * 13 + 9];
+      var want = set3.concat(run3).concat(other);
+      var rest = [], i;
+      for (i = 0; i < 53; i++) if (want.indexOf(i) < 0) rest.push(i);
+      g.hands[0] = want.slice();
+      g.table = [];
+      g.hands[1] = rest.splice(0, 7); g.hands[2] = rest.splice(0, 7); g.hands[3] = rest.splice(0, 7);
+      g.discard = rest.splice(0, 2);
+      g.stock = rest;
+      rebuild(); placeAll(true);
+
+      picks = {}; picks[set3[0]] = 1; picks[run3[0]] = 1; picks[other[0]] = 1;
+      refreshGo();
+      out.bad = goWrap.classList.contains('hidden') ? '○ 出ない' : '★★✕ 出て しまう';
+      if (!goWrap.classList.contains('hidden')) {
+        out.why.push('★★★そろって いない 3枚で「出す」が 押せます（★決まりが 効いて いません）');
+      }
+      picks = {}; picks[set3[0]] = 1; picks[set3[1]] = 1; picks[set3[2]] = 1;
+      refreshGo();
+      out.set = goWrap.classList.contains('hidden') ? '★★✕ 出ない' : '○ 出る';
+      if (goWrap.classList.contains('hidden')) out.why.push('★★★同じ 数字 3枚で「出す」が 出ません');
+      picks = {}; picks[run3[0]] = 1; picks[run3[1]] = 1; picks[run3[2]] = 1;
+      refreshGo();
+      out.run = goWrap.classList.contains('hidden') ? '★★✕ 出ない' : '○ 出る';
+      if (goWrap.classList.contains('hidden')) out.why.push('★★★同じ マークの つづいた 数字 3枚で「出す」が 出ません');
+      /* ★ ④ 手札 ぜんぶ（★すてる 1枚が なくなる 出し方）*/
+      g.hands[0] = set3.slice();
+      picks = {}; picks[set3[0]] = 1; picks[set3[1]] = 1; picks[set3[2]] = 1;
+      rebuild(); placeAll(true); refreshGo();
+      out.all = goWrap.classList.contains('hidden') ? '○ 出ない' : '★★✕ 出て しまう';
+      if (!goWrap.classList.contains('hidden')) {
+        out.why.push('★★★手札 ぜんぶを 出せて しまいます（★すてる 1枚が なくなり、手番が おわりません）');
+      }
+      /* ★ 本物の ボタンを 押して、★本当に 場へ 出るか */
+      g.hands[0] = want.slice();
+      g.table = [];
+      picks = {}; picks[set3[0]] = 1; picks[set3[1]] = 1; picks[set3[2]] = 1;
+      rebuild(); placeAll(true); refreshGo();
+      var t0 = g.table.length;
+      btnGo.click();
+      out.played = (g.table.length === t0 + 1 && g.hands[0].length === want.length - 3)
+        ? '○ 場に 出た' : '★★✕ 出ない';
+      if (g.table.length !== t0 + 1) out.why.push('★★★「出す」を 押しても 場に 出ません');
+    });
+    for (var t = timers.length - 1; t >= tMark; t--) { clearTimeout(timers[t]); timers.splice(t, 1); }
+    picks = kPicks;
+    restoreG(snap);
+    busy = kBusy; over = kOver;
+    if (g) { rebuild(); placeAll(true); refreshGo(); }
+    return out;
+  }
+
+  /* ★★ 結果の 箱・つよさの えらび（★ハーツ T165／T168 と 同じ 形）★★ */
+  function resultProbe() {
+    /* ⚠️★★ **札を 並べてから** 測ります【★私の 失敗⑥ の 直しの 直し】★★
+       ★ ★はじめ ここは 配りたての 場面（★場が 空・手札は 下）で 測って いました ――
+         ★ ★★だから「箱が 札の 下に かくれる」を わざと 作っても **鳴りませんでした**。
+       ★ ★★かくれるのは「★場に 組が 並んで いる とき」です。★その 場面を 先に 作ります。 */
+    var snap = snapG();
+    var kBusy = busy, kOver = over, kPicks = picks;
+    if (g) {
+      still(function () {
+        busy = false; over = false; picks = {};
+        makeScene([3, 4, 3, 5, 4], 8, C.rng(51515));
+        if (g.hands[0].length >= 3) { picks[g.hands[0][0]] = 1; picks[g.hands[0][1]] = 1; picks[g.hands[0][2]] = 1; }
+        rebuild(); placeAll(true);
+      });
+    }
+    var r = still(function () {
+      var keep = resultWrap.classList.contains('hidden');
+      var keepScore = resultScore.innerHTML, keepSay = resultSay.textContent;
+      resultSay.textContent = SAY_LOSE.replace('{名前}', 'ロボット1と ロボット3');
+      resultScore.innerHTML = resultRows([26, 0, 13, 26], [99, 52, 41, 66], true, 1);
+      levelPickResult.classList.remove('hidden');
+      resultWrap.classList.remove('hidden');
+      var box = resultBox.getBoundingClientRect();
+      var st = stageEl.getBoundingClientRect();
+      var meTop = st.top + geo.meTop;
+      var ov = Math.max(0, Math.round(box.bottom - meTop));
+      var max = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--result-max'), 10) || 0;
+      var m = measureOnce();
+      /* ★★★ 箱が 本当に **前に 出て いるか**（★T174・私の 失敗⑥）★★★
+         ★ ★大きさだけ 見て いると 気づけません ―― ★★札の かさなり順が 箱を 追い越して いても
+           ★ ★数字の 上では ぴったり 収まって 見えます。★★指で さして たしかめます。 */
+      var pts = [[box.left + box.width / 2, box.top + 6],
+                 [box.left + box.width / 2, box.top + box.height / 2],
+                 [box.left + 8, box.bottom - 8],
+                 [box.right - 8, box.top + 8]];
+      var hidden = 0, hitName = [];
+      for (var i = 0; i < pts.length; i++) {
+        var el = document.elementFromPoint(Math.round(pts[i][0]), Math.round(pts[i][1]));
+        if (!el || !resultBox.contains(el)) {
+          hidden++;
+          hitName.push(el ? (el.className || el.tagName) : '（なし）');
+        }
+      }
+      if (keep) resultWrap.classList.add('hidden');
+      levelPickResult.classList.add('hidden');
+      resultScore.innerHTML = keepScore;
+      resultSay.textContent = keepSay;
+      return { h: Math.round(box.height), max: max, over: ov, off: m.off, small: m.small,
+               offName: m.offName, hidden: hidden, hitName: hitName };
+    });
+    picks = kPicks;
+    restoreG(snap);
+    busy = kBusy; over = kOver;
+    if (g) { rebuild(); placeAll(true); }
+    return r;
+  }
+  function levelProbe() {
+    var out = { rows: 0, ok: 0, ng: [], small: 0 };
+    var kTitleHid = titleScreen.classList.contains('hidden');
+    var kPlayHid = playScreen.classList.contains('hidden');
+    var kResult = resultWrap.classList.contains('hidden');
+    var kLv = levelPickResult.classList.contains('hidden');
+    var kTop = titleScreen.scrollTop;
+    still(function () {
+      var spots = [['はじめの 画面', $('levelTitle'), function () {
+        titleScreen.classList.remove('hidden'); playScreen.classList.add('hidden');
+        resultWrap.classList.add('hidden');
+      }], ['1回 おわり／終わった あとの 画面', $('levelResult'), function () {
+        titleScreen.classList.add('hidden'); playScreen.classList.remove('hidden');
+        levelPickResult.classList.remove('hidden'); resultWrap.classList.remove('hidden');
+      }]];
+      spots.forEach(function (sp) {
+        sp[2]();
+        void document.body.offsetWidth;
+        var el = sp[1];
+        out.rows++;
+        if (sp[0].indexOf('はじめ') === 0) {
+          var b0 = el.getBoundingClientRect(), tsBox = titleScreen.getBoundingClientRect();
+          var mid = (b0.top - tsBox.top) + titleScreen.scrollTop + b0.height / 2;
+          var maxTop = Math.max(0, titleScreen.scrollHeight - titleScreen.clientHeight);
+          titleScreen.scrollTop = Math.max(0, Math.min(maxTop, mid - titleScreen.clientHeight / 2));
+        }
+        var b = el.getBoundingClientRect();
+        var cx = Math.round(b.left + b.width / 2), cy = Math.round(b.top + b.height / 2);
+        var inV = (cy >= 0 && cy <= window.innerHeight && cx >= 0 && cx <= window.innerWidth);
+        var hit = inV ? document.elementFromPoint(cx, cy) : null;
+        var mine = !!(hit && (hit === el || (hit.closest && hit.closest('.level-pick') === el.closest('.level-pick'))));
+        if (inV && mine) out.ok++; else out.ng.push(sp[0]);
+        if (b.height < 43.5) out.small++;
+      });
+    });
+    titleScreen.scrollTop = kTop;
+    if (kTitleHid) titleScreen.classList.add('hidden'); else titleScreen.classList.remove('hidden');
+    if (kPlayHid) playScreen.classList.add('hidden'); else playScreen.classList.remove('hidden');
+    if (kResult) resultWrap.classList.add('hidden'); else resultWrap.classList.remove('hidden');
+    if (kLv) levelPickResult.classList.add('hidden'); else levelPickResult.classList.remove('hidden');
+    return out;
+  }
+  /* ★★ 勝ち負けの 画面が「誰が 勝ったか」を 言うか（★本物の showResult を 4通り）★★ */
+  function winProbe() {
+    var out = { cases: [], mid: '―', lvFin: 0, lvMid: 0, why: [] };
+    if (!match || !g) { out.why.push('★立ち上がって いない'); return out; }
+    var kTotal = match.total.slice(), kDeal = match.dealNo, kOver = match.over, kWin = match.winners.slice();
+    var kHidden = resultWrap.classList.contains('hidden');
+    var kTitle = resultTitle.textContent, kCls = resultTitle.className, kSay = resultSay.textContent;
+    var kScore = resultScore.innerHTML, kNext = btnNext.innerHTML;
+    var kLv = levelPickResult.classList.contains('hidden');
+    var kLock = resultBox.classList.contains('is-locked');
+    var tMark = timers.length;
+    var NOWHY = /少なかった|少ない|多かった|多い|\d+\s*点/;
+    var CASES = [
+      ['★あなたが 勝つ',                 [0],    '勝ち！', ['あなた']],
+      ['★ロボットが 勝つ',               [2],    '負け…', ['ロボット2']],
+      ['★あなたと ロボット1が 同じ 点',   [0, 1], '勝ち！', ['あなた', 'ロボット1']],
+      ['★ロボット1と ロボット3が 同じ 点', [1, 3], '負け…', ['ロボット1', 'ロボット3']]
+    ];
+    still(function () {
+      CASES.forEach(function (cs) {
+        match.over = true; match.winners = cs[1].slice();
+        match.total = [30, 30, 50, 30]; match.dealNo = 4;
+        showResult([3, 4, 5, 14], [27, 26, 45, 16]);
+        out.lvFin = levelPickResult.classList.contains('hidden') ? 0 : 1;
+        var ti = resultTitle.textContent, sa = resultSay.textContent;
+        var miss = [], i;
+        for (i = 0; i < cs[3].length; i++) if (sa.indexOf(cs[3][i]) < 0) miss.push(cs[3][i]);
+        var why = NOWHY.test(sa);
+        out.cases.push(cs[0] + '「' + ti + '／' + sa + '」' + (miss.length ? ' ★✕' : ' ○') + (why ? ' ★★✕なぜ' : ''));
+        if (ti !== cs[2]) out.why.push('★' + cs[0] + ' の 見出しが「' + ti + '」（★「' + cs[2] + '」の はず）');
+        if (miss.length) {
+          out.why.push('★★★' + cs[0] + ' で 勝った 人の 名前が ありません：' + miss.join('・') + '（★出て いる 文「' + sa + '」）');
+        }
+        if (why) {
+          out.why.push('★★★' + cs[0] + ' で「なぜ 勝ったか」を 言って います（★合計の 表に すでに 数字が 出て います）：「' + sa + '」');
+        }
+      });
+      match.over = false; match.winners = [];
+      match.dealNo = 2;
+      showResult([3, 4, 5, 14], [27, 26, 45, 16]);
+      out.lvMid = levelPickResult.classList.contains('hidden') ? 0 : 1;
+      out.mid = resultTitle.textContent + '／' + resultSay.textContent;
+      if (/勝ち/.test(resultSay.textContent)) {
+        out.why.push('★★1回 おわりの 画面で「勝ち」と 言って います（★まだ 勝負は ついて いません）：「' + resultSay.textContent + '」');
+      }
+    });
+    for (var t = timers.length - 1; t >= tMark; t--) { clearTimeout(timers[t]); timers.splice(t, 1); }
+    match.total = kTotal; match.dealNo = kDeal; match.over = kOver; match.winners = kWin;
+    resultTitle.textContent = kTitle; resultTitle.className = kCls; resultSay.textContent = kSay;
+    resultScore.innerHTML = kScore; btnNext.innerHTML = kNext;
+    if (kLv) levelPickResult.classList.add('hidden'); else levelPickResult.classList.remove('hidden');
+    if (kLock) resultBox.classList.add('is-locked'); else resultBox.classList.remove('is-locked');
+    if (kHidden) resultWrap.classList.add('hidden'); else resultWrap.classList.remove('hidden');
+    return out;
+  }
+  /* ★★★ T179（🎨アト）★★ 点の まるが「となりの 札に かくれて いないか」を **面で** 数える ★★★
+     ------------------------------------------------------------
+     ★ ★★なぜ 足したか：★T178 まで、★⑰ は 3つしか 見て いませんでした ――
+       ★ ★①数字が あるか ②消えて いないか ③その 札 **自身の** すみに 収まって いるか。
+       ★ ★★どれも「★となりの 札に かぶられて いないか」を 見て いません。
+       ★ ★★＝ ★verify から 見ると 8枚 ぜんぶ「ある」。★でも 人の 目には 1枚しか 見えない
+         ★ ★（★T178 §3【実測】375×812 で 読める 1/8。★★ジョーカーの「50」は 0%）。
+       ★ ★★コーダの 失敗⑥ と 同じ 形 ―― ★★写真でしか 見つからない 穴 でした。
+     ★ ★**数え方**：★点の まるの 四角に **9×7 ＝ 63点**の 網を かけ、★1点ずつ
+       ★ `elementFromPoint` に「いちばん 上に いるのは 誰か」を 聞きます。
+       ★ ★**ほかの 札**だったら「かくれて いる」。★★札 以外（ふきだし・ボタン）は 数えません
+         ―― ★ここで 見たいのは 「★となりの 札」だから です。
+     ★ ★**鳴る 線**：★1枚でも **10%以上** かくれたら NG。
+       ★ ★（★正しい 置き方なら 10サイズ とも **0%**。★10% は まるめの ゆとり）
+     ★ ★**戻すと 鳴る ことを 確かめて あります**（→ `logs/T179_点のまるを左下へ_アト.md` §4）。 */
+  function hideProbe(e, box) {
+    var NX = 9, NY = 7, tot = 0, cov = 0, ix, iy, x, y, el, ow;
+    for (iy = 0; iy < NY; iy++) {
+      for (ix = 0; ix < NX; ix++) {
+        x = box.left + 1 + (box.width  - 2) * (ix / (NX - 1));
+        y = box.top  + 1 + (box.height - 2) * (iy / (NY - 1));
+        tot++;
+        el = document.elementFromPoint(x, y);
+        ow = (el && el.closest) ? el.closest('.card') : null;
+        if (ow && ow !== e) cov++;          /* ★ ほかの 札に かぶられた */
+      }
+    }
+    return tot ? Math.round(cov / tot * 100) : 0;
+  }
+
+  /* ★★ 点の 数字が 札の すみに あるか（★ルル §2-2・★この 1本の 説明を 4行 減らした もの）★★ */
+  function ptProbe() {
+    var out = { hand: 0, ok: 0, corner: 0, small: 0, tbl: 0, seven: '―', ace: '―',
+                hideMax: 0, hidden: 0, hideList: [], why: [] };
+    if (!g || !cardsEl) { out.why.push('★立ち上がって いない'); return out; }
+    still(function () {
+      var i, e, q, p, pr;
+      for (i = 0; i < g.hands[0].length; i++) {
+        e = cardEl[g.hands[0][i]];
+        if (!e) continue;
+        out.hand++;
+        p = e.querySelector('.pt');
+        if (!p) continue;
+        if (p.textContent !== String(C.penOf(g.hands[0][i]))) continue;
+        var cs = getComputedStyle(p);
+        if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+        out.ok++;
+        q = e.getBoundingClientRect(); pr = p.getBoundingClientRect();
+        /* ★ すみに ある か（★札の 4分の1 より 小さい ところに 収まって いる か）*/
+        if (pr.width <= q.width * 0.62 && pr.height <= q.height * 0.42 &&
+            pr.left >= q.left - 1 && pr.right <= q.right + 1 &&
+            pr.top >= q.top - 1 && pr.bottom <= q.bottom + 1) out.corner++;
+        if (parseFloat(cs.fontSize) < q.width * 0.42) out.small++;
+        /* ★★ T179 ―― ★となりの 札に かくれて いないか（★面で 数える）*/
+        var hd = hideProbe(e, pr);
+        out.hideList.push(hd);
+        if (hd > out.hideMax) out.hideMax = hd;
+        if (hd >= 10) out.hidden++;
+      }
+      /* ★ 場の 札には 出さない（★点に ならない 札 だから）*/
+      for (i = 0; i < g.table.length; i++) {
+        for (var k = 0; k < g.table[i].cards.length; k++) {
+          e = cardEl[g.table[i].cards[k]];
+          if (!e) continue;
+          p = e.querySelector('.pt');
+          if (p && getComputedStyle(p).display !== 'none') out.tbl++;
+        }
+      }
+      /* ★ 7 は 0点・A は 20点（★この 1本の 名前 です）*/
+      var sevenEl = cardEl[3 * 13 + 6], aceEl = cardEl[3 * 13 + 0];
+      out.seven = (sevenEl && sevenEl.querySelector('.pt').textContent === '0') ? '○ 7は 0' : '★★✕ ちがう';
+      out.ace = (aceEl && aceEl.querySelector('.pt').textContent === '20') ? '○ Aは 20' : '★★✕ ちがう';
+    });
+    if (out.hand && out.ok < out.hand) {
+      out.why.push('★★★手札 ' + out.hand + '枚 のうち ' + (out.hand - out.ok) + '枚に 点の 数字が 出て いません（★ルル §2-2）');
+    }
+    if (out.ok && out.corner < out.ok) {
+      out.why.push('★★点の 数字が 札の すみに 収まって いない ものが ' + (out.ok - out.corner) + '枚（★絵を かくして います）');
+    }
+    /* ★★★ T179 ―― ★この 1行が、★T178 で 写真でしか 見つからなかった ものを 鳴らします ★★★ */
+    if (out.hidden) {
+      out.why.push('★★★点の まるが となりの 札に かくれて います：' + out.hidden + '/' + out.hand +
+                   '枚（★いちばん 深い もので ' + out.hideMax + '%・★' + out.hideList.join(',') + '%）' +
+                   ' ―― ★手札は 左から 右へ 重なる ので、★点は **左下** に 置きます（★T179）');
+    }
+    if (out.tbl) out.why.push('★場の 札にも 点が 出て います（' + out.tbl + '枚）―― ★場の 札は 点に なりません');
+    if (out.seven.indexOf('✕') >= 0) out.why.push('★★★7の 点が 0で ありません（★★これが この ゲームの 名前 です）');
+    if (out.ace.indexOf('✕') >= 0) out.why.push('★★Aの 点が 20で ありません');
+    return out;
+  }
+
+  /* ============================================================
+     ★★★ verify ―― この 1本ならではの 見張り（24項目）★★★
+     ------------------------------------------------------------
+       ①  決まりの 通り（★反則0・★札が いつも 53枚・★終わらない 0）
+       ②  ★★★4回 配りの 直しが 生きて いる（★★わざと 1回配りに 戻して 鳴らす）
+       ③  ★★つよさ 3段が はしごに なって いる（★わざと 弱い ものが 1つも ない）
+       ④  ★★強調は **1種類だけ**（★光り 0個・★札に ぼかしの 影 0）
+       ⑤  ★★★★組・並びを 光らせて いない・さがして 見せて いない（★★この 1本の 生命線）
+       ⑥  ★★勝手に 出さない・勝手に 引かない・★付け札は 人が 運ぶ（★行を 走査）
+       ⑦  ★選ばせるのは **つよさ 1つだけ**（★入口 0個・ルル §6-2）
+       ⑧  ★寸法が 表どおり（★320×568 を 必ず 含む）
+       ⑨  ★先読み 54枚・白い 札 0枚・JOKER2 を 読まない・裏面が 先頭
+       ⑩  ★操作は pointer（click では ない）＋ はなすまで 決まらない
+       ⑪  ★結果の 箱が 手札に かぶらない・中の 押す ところが 44px 以上
+       ⑫  ★言葉（§9.6）＋ ★★ハッピーが 手を 教えて いない
+       ⑬  ★★★場が 19枚でも はみ出さないか（★★8組25枚・1組13枚 も）
+       ⑭  ★★人が さわれるか（★「押せる ものが 1つも ない」場面が 作れないか）
+       ⑮  ★★運ぶ ―― ★合えば 乗り、合わなければ 戻り、すて札で 手番が おわる
+       ⑯  ★★「出す」は 組の ときだけ 押せる（★そろって いない 3枚では 出ない）
+       ⑰  ★★★点の 数字が 札の すみに あるか（★7＝0・A＝20）
+       ⑱  ★しまう／続きから が 本当に 効くか
+       ⑲  ★つよさの えらびが 2か所とも 押せる（★1回 おわりにも 出る）
+       ⑳  ★勝ち負けの 画面が「誰が 勝ったか」を 言う（★「なぜ」は 言わない）
+       ㉑  ★点の 帯 ―― ★字が 画面に つれて 大きく なる／名前が 切れない
+       ㉒  ★★★山も すて札も 空に なる 場面（★ルル §18 コーダ⑥ の ご注文）
+       ㉓  ★★4回目が 終わるまで 合計を しまう（★ルル §18 コーダ⑦）
+       ㉔  ★★手札は 8枚から 増えない（★決まりの 上で 増えようが ない ことを 数で 見る）
+     ============================================================ */
+  function verify(n) {
+    n = n || 600;
+    var ng = [], t0 = Date.now(), note = {};
+    var L = C.LEVELS, i, k;
+    /* ⚠️★★ 見張りは 見るだけ ―― ★さわった ものは 1つ 残らず 戻します（★T144 §7-5）★★
+       ★ ★★ここを 足す 前は、★verify の あと ハッピーが「そろった！ やったね！」と
+         ★ 言った ままに なって いました（★⑯ が 本物の「出す」を 押す ので）。
+       ★ ★★小さい ですが、★これも「★見張りが 場面を こわす」の 仲間 です（★私の 失敗⑧ と 同じ 形）。 */
+    var kSayTxt = sayEl.textContent, kSayHid = sayEl.classList.contains('hidden');
+    var kToldM = toldMeld, kToldL = toldLay;
+
+    /* ① 決まりの 通り（★3段 ぜんぶ）*/
+    var tot = { illegal: 0, nofin: 0, handMax: 0 }, txt = [];
+    for (i = 0; i < L.length; i++) {
+      var st = C.runMany(n, 31337, [L[i].o, L[i].o, L[i].o, L[i].o], null, 'match');
+      tot.illegal += st.illegal;
+      tot.nofin += st.nofin;
+      if (st.handMax > tot.handMax) tot.handMax = st.handMax;
+      txt.push(L[i].label + ' 7上がり ' + (st.doubled / st.games / C.LIM.DEALS * 100).toFixed(2) + '%');
+    }
+    if (tot.illegal) ng.push('★★★反則・札の 数ちがいが ' + tot.illegal + '件（★53枚 きっちり 保てて いません）');
+    note['① ' + (n * 3) + '試合'] = txt.join('／') + '／★反則 ' + tot.illegal + '件／★手札の 最大 ' + tot.handMax + '枚';
+
+    /* ============================================================
+       ② ★★★4回 配りの 直しが 生きて いるか ★★★
+       ★ ★①だけだと ―― ★直しを まるごと 外しても、たまたま 出なければ 通ります（T144 §7-4）。
+       ★ ★★だから ★**わざと 1回配りに 戻して、ちゃんと 壊れる ことも 見ます。**
+       ★ ★ルル §3-1【計算】：★1回配りだと「ためる人」が 31.93% で いちばん 強く なる。
+         ★ ★★＝ ★付け札（17.4ポイント）と「7は 0点」が 丸ごと 死にます。
+       ============================================================ */
+    var bot = L[2].o, m2 = Math.max(400, Math.round(n * 0.6));
+    var a4 = C.runMany(m2, 20250830, [C.P.bot5(), bot, bot, bot], null, 'match', 4);
+    var h4 = C.runMany(m2, 20250830, [C.P.hold(), bot, bot, bot], null, 'match', 4);
+    var a1 = C.runMany(m2, 20250830, [C.P.bot5(), bot, bot, bot], null, 'match', 1);
+    var h1 = C.runMany(m2, 20250830, [C.P.hold(), bot, bot, bot], null, 'match', 1);
+    var p4 = a4.win / a4.games * 100, q4 = h4.win / h4.games * 100;
+    var p1 = a1.win / a1.games * 100, q1 = h1.win / h1.games * 100;
+    if (C.LIM.DEALS !== 4) ng.push('★★★1試合が ' + C.LIM.DEALS + '回 配りに なって います（★4回 の はず・ルル §3-3）');
+    if (!(q4 < p4 - 8)) {
+      ng.push('★★★4回 配りなのに「ためる人」が 弱く なって いません（★ふつう ' + p4.toFixed(2) +
+              '% ／ ためる ' + q4.toFixed(2) + '%）―― ★★付け札が 死にます');
+    }
+    if (!(q1 > p1)) {
+      ng.push('★★★くらべが 効いて いません：★1回配りに 戻しても「ためる人」が 強く なりません' +
+              '（★ふつう ' + p1.toFixed(2) + '% ／ ためる ' + q1.toFixed(2) + '%）―― ' +
+              '★★試し方が おかしい か、★4回 という 直しが 別の 所に あります');
+    }
+    note['② ★★4回 配りの 直し'] = '★4回：ふつう ' + p4.toFixed(2) + '% ／ ためる ' + q4.toFixed(2) +
+      '%　★★1回に 戻すと：ふつう ' + p1.toFixed(2) + '% ／ ためる ' + q1.toFixed(2) + '%（各' + m2 + '試合・同じ 種）';
+
+    /* ③ ★★つよさ 3段が はしごに なって いるか */
+    var ladder = [];
+    for (k = 0; k < L.length; k++) {
+      var s3 = C.runMany(Math.max(400, Math.round(n * 0.6)), 555001,
+                         [C.HUMANS[3].o, L[k].o, L[k].o, L[k].o], null, 'match');
+      ladder.push(s3.win / s3.games * 100);
+    }
+    for (k = 1; k < ladder.length; k++) {
+      if (!(ladder[k] < ladder[k - 1] - 1)) {
+        ng.push('★★つよさが はしごに なって いない：' + L[k - 1].label + ' ' + ladder[k - 1].toFixed(1) +
+                '% → ' + L[k].label + ' ' + ladder[k].toFixed(1) + '%');
+      }
+    }
+    var lvSrc = JSON.stringify(C.LEVELS);
+    if (/waste|throw|blunder|worse|handicap|weaken|dumb/i.test(lvSrc)) {
+      ng.push('★★つよさの 中に「わざと 弱くする」らしい 名前が ある：' + lvSrc);
+    }
+    if (/Math\.random/.test(String(C.planPlay) + String(C.botDiscard) + String(C.botDraw))) {
+      ng.push('★core が 種の 無い さいころを 使って いる');
+    }
+    note['③ つよさ 3段'] = L.map(function (x, j) { return x.label + ' ' + ladder[j].toFixed(1) + '%'; }).join('　') +
+                           '（★ぜんぶ 気づいた人から 見た 勝率。★下がって いれば はしご）';
+
+    /* ============================================================
+       ④ ★★強調は 1種類だけ（設計図 §5.5）★★
+       ★ ★この 1本の 強調は `.card.is-pick`（★人が 押して えらんだ 札の わく）だけ です。
+       ============================================================ */
+    var css = cssRulesText();
+    var lit = document.querySelectorAll('.is-win,.is-hint,.is-glow,.is-here,.is-ok,.is-fit,.is-can,.is-set,.is-run,.is-match,.is-target,.is-lead');
+    if (lit.length) ng.push('★光って いる ものが ' + lit.length + '個 ある');
+    var litCss = css.match(/\.is-(win|hint|glow|here|ok|fit|can|set|run|match|target|lead)\b/g);
+    if (litCss) ng.push('★★遊びの 情報を 出す 光りの 決まりが CSS に ある：' + litCss.join('・'));
+    /* ★★ 札に「ぼかしの 影」＝ 光り を 書いて いないか
+       ⚠️★ 文字あわせでは 見ません（★ブラウザが box-shadow を 書きなおすので、★色が 先頭に 来る）。
+          ★ → ★長さ（px）だけを 取り出して 数で 見ます。★ぼかし 6px 以上／広がり 2px 以上 ＝ 光り。 */
+    var glowSel = [];
+    cssRuleList().forEach(function (r) {
+      if (!/\.card/.test(r.sel)) return;
+      var mm = r.text.match(/box-shadow:([^;}]*)/);
+      if (!mm) return;
+      mm[1].replace(/\b(?:rgba?|hsla?)\([^)]*\)/g, ' ').split(',').forEach(function (one) {
+        if (/inset/.test(one)) return;
+        var nums = (one.match(/-?\d+(?:\.\d+)?px/g) || []).map(parseFloat);
+        if (nums.length < 3) return;
+        if (nums[2] >= 6 || (nums.length >= 4 && nums[3] >= 2)) glowSel.push(r.sel);
+      });
+    });
+    if (glowSel.length) ng.push('★★札に 光りが ある：' + glowSel.join('・'));
+    if (!/\.card\.is-pick(?![\w-])/.test(css)) ng.push('★★「えらんだ 札に わく」決まりが CSS に 1行も 無い');
+    if (/\.card\.is-dim(?![\w-])/.test(css)) {
+      ng.push('★★「暗くする」決まりが CSS に あります ―― ★★この 1本の 強調は わく 1種類だけ です');
+    }
+    var bad4 = css.match(/\.(card|cards|spot|felt-table)[^{,]*:hover/g);
+    if (bad4) ng.push('★札の 部品に 指を 置くと 変わる 決まりが ある：' + bad4.join('・'));
+    note['④ 強調'] = '光り ' + lit.length + '個／★わく（is-pick）' + (/\.card\.is-pick/.test(css) ? '○' : '★✕') +
+                     '／★ぼかしの 影 ' + glowSel.length + '件';
+
+    /* ============================================================
+       ⑤ ★★★★組・並びを 光らせて いないか ―― ★★この 1本の 生命線 ★★★★
+       ------------------------------------------------------------
+       ★ ルル §2-3：★「★組を 光らせたら、★★残るのは『押す』だけです。★★何も 残りません。」
+       ★ ★組を 見つける ＝ **21.6ポイント**。★このゲームで いちばん 重い 部品 です。
+       ★ ★2つの 目：★①本物の 場面で 印を 数える（lineProbe）★②行を 走査する
+       ============================================================ */
+    var lnp = lineProbe();
+    for (i = 0; i < lnp.why.length; i++) ng.push(lnp.why[i]);
+    /* ★ 行の 目 ―― ★★画面側の 関数が「さがす」道具を 呼んで いないか */
+    var drawSrc = String(refreshPick) + '\n' + String(refreshGo) + '\n' + String(placeAll) + '\n' +
+                  String(putAt) + '\n' + String(makeCard) + '\n' + String(layoutTable) + '\n' +
+                  String(spotOf) + '\n' + String(layout) + '\n' + String(rebuild) + '\n' + String(onMove);
+    var hunt = drawSrc.match(/enumMelds|planPlay|botPlan|usefulness|bestMeld|findMeld|hintOf/g);
+    if (hunt) {
+      ng.push('★★★★画面が「そろう 3枚」を さがして います：' + hunt.join('・') +
+              '（★★設計図 追記② 違反 ―― ★遊びの 21.6ポイントを 奪います）');
+    }
+    /* ★ ★運んで いる 最中に 落とし先を 調べて いないか（★調べたら 光らせられます）*/
+    if (/dropZone|tableFits/.test(String(onMove))) {
+      ng.push('★★★運んで いる 最中に 落とし先を 調べて います（★★そこから 光りが 生まれます）');
+    }
+    /* ★ ★「たしかめる」側は ちゃんと 通って いるか（★これが 無いと 見張りが 空うちに なる）*/
+    if (String(refreshGo).indexOf('makeMeld') < 0) {
+      ng.push('★★「出す」が 組を たしかめて いません（★試し方が おかしい か、機能が ありません）');
+    }
+    note['⑤ ★★★線'] = '★何も 押して いない ときの 印 ' + lnp.idleMarks + '個（★そろう 3枚＋足せる 1枚を わざと 入れた 場面）' +
+                       '／★運んで いる 最中の 印 ' + lnp.dragMarks + '個／★さがす 行 ' + ((hunt || []).length) + '件／' + lnp.sorted;
+
+    /* ============================================================
+       ⑥ ★★勝手に 出さない・勝手に 引かない（設計図 追記②④）★★
+       ============================================================ */
+    var humanSrc = String(onDown) + '\n' + String(onUp) + '\n' + String(togglePick) + '\n' +
+                   String(humanMeld) + '\n' + String(humanLayoff) + '\n' + String(humanDiscard) + '\n' +
+                   String(humanDraw);
+    var peek = humanSrc.match(/enumMelds|planPlay|botPlan|botDraw|botDiscard|botPlay/g);
+    if (peek) ng.push('★★★人の 手番で ロボットの 頭を 使って います：' + peek.join('・'));
+    var auto = [];
+    [['turnStart', turnStart], ['botStep', botStep], ['newDeal', newDeal], ['placeAll', placeAll],
+     ['rebuild', rebuild]].forEach(function (a) {
+      if (/humanMeld\s*\(|humanLayoff\s*\(|humanDiscard\s*\(|humanDraw\s*\(/.test(String(a[1]))) auto.push(a[0]);
+    });
+    if (auto.length) ng.push('★★人の ぶんを 勝手に 動かして いる 所が ある：' + auto.join('・'));
+    if (String(humanMeld).indexOf('pickList') < 0) ng.push('★★humanMeld が 人の えらんだ 札を 使って いない');
+    if (String(humanLayoff).indexOf('doLayoff') < 0) ng.push('★humanLayoff が core を 通って いない');
+    /* ★★ 付け札は **人が 運ぶ**（★設計図 追記④・ルル §2-2 の 3番）*/
+    if (String(onUp).indexOf('humanLayoff') < 0 || String(onUp).indexOf('dropZone') < 0) {
+      ng.push('★★★付け札が ドラッグに なって いません（★★ソリティア・スパイダーと 同じ 形の はず）');
+    }
+    note['⑥ 勝手に しない'] = 'ロボットの 頭を のぞく 行 ' + ((peek || []).length) + '件／勝手に 動かす 所 ' + auto.length + '件';
+
+    /* ⑦ ★選ばせるのは つよさ 1つだけ（★入口 0個）*/
+    var sel = document.querySelectorAll('select');
+    if (sel.length !== 2) ng.push('★<select> が ' + sel.length + '個（★つよさ 2か所 ＝ 2個 の はず）');
+    var kinds = {};
+    for (i = 0; i < sel.length; i++) kinds[sel[i].options.length + ':' + (sel[i].options[0] || {}).text] = 1;
+    if (Object.keys(kinds).length !== 1) ng.push('★★2つの プルダウンの 中身が ちがう（★同じ つよさの はず）');
+    if (sel.length && sel[0].options.length !== 3) ng.push('★つよさが ' + sel[0].options.length + '段（★3段 の はず）');
+    var boxes = document.querySelectorAll('input[type="checkbox"],input[type="radio"],.preset,[data-preset]');
+    if (boxes.length) ng.push('★★★決まりの 入口が ' + boxes.length + '個 ある（★★ルル §6-2：★入口は 0個）');
+    if (C.LEVEL_START < 0 || C.LEVEL_START >= C.LEVELS.length) ng.push('★初期値の つよさが おかしい');
+    if (C.LEVELS[C.LEVEL_START].label !== 'はじめて') {
+      ng.push('★★初期値の つよさが「' + C.LEVELS[C.LEVEL_START].label + '」―― ★「はじめて」の はず（ルル §13-4）');
+    }
+    note['⑦ えらび'] = '<select> ' + sel.length + '個／つよさ ' + C.LEVELS.length + '段／初期値「' +
+                       C.LEVELS[C.LEVEL_START].label + '」／★決まりの 入口 ' + boxes.length + '個';
+
+    /* ⑧ ★寸法（★表の 数は【実測】。★ここを 直さずに 寸法を いじると すぐ 鳴ります）*/
+    var want = [[980, 777, 100, '1000×900（★左右に 余白）'], [355, 544, 72, '375×667'],
+                [300, 445, 60, '★320×568'], [792, 309, 39, '横向き 812×375']];
+    var sizeTxt = [];
+    for (i = 0; i < want.length; i++) {
+      var fl = C.pickLayout(want[i][0], want[i][1]);
+      sizeTxt.push(want[i][3] + ' 手札' + fl.w + 'px（見え ' + fl.pitch.toFixed(1) + '／場 ' + fl.tw + '）');
+      if (fl.w !== want[i][2]) ng.push('★寸法が ちがう（' + want[i][3] + '：' + fl.w + 'px ／ 表 ' + want[i][2] + 'px）');
+      if (fl.pitch < C.FIT.PITCH_MIN - 0.05) ng.push('★★' + want[i][3] + ' で 見えて いる はばが ' + fl.pitch.toFixed(1) + 'px（★21px 以上 の はず）');
+      if (fl.pitch < fl.w * 0.5) ng.push('★★★' + want[i][3] + ' で 札の まん中が かくれる（見え ' + fl.pitch.toFixed(1) + 'px ／ 札 ' + fl.w + 'px）');
+      /* ★★ いちばん 長い 組（★13枚）が 1行に 入るか */
+      var pk = C.packRows([13], want[i][0] - C.FIT.EDGE * 2, fl.tw, fl.step);
+      if (pk.length !== 1) ng.push('★★★' + want[i][3] + ' で 13枚の 組が 1行に 入りません（★端が 切れます）');
+    }
+    note['⑧ 寸法'] = sizeTxt.join('／');
+
+    /* ⑨ ★先読み */
+    var white = 0, faceShown = 0;
+    for (var id9 in cardEl) {
+      if (!cardEl.hasOwnProperty(id9)) continue;
+      var e9 = cardEl[id9];
+      if (!e9.parentNode || e9.classList.contains('is-down')) continue;
+      faceShown++;
+      var fi = e9.faceImg;
+      if (!(fi.complete && fi.naturalWidth > 0) && !e9.querySelector('.fallback')) white++;
+    }
+    if (white) ng.push('★★表向きなのに 絵が 出て いない 札が ' + white + '枚（★大富豪 T120 の 2段階表示）');
+    if (warmDone + warmErr < ALL_NAMES.length && !warmQueue.length && !warmRun) {
+      ng.push('★★先読みが 動いて いない（読めた ' + warmDone + ' / ' + ALL_NAMES.length + '・待ち 0）');
+    }
+    if (warmErr) ng.push('★読めなかった 絵が ' + warmErr + '個 ある');
+    if (ALL_NAMES.length !== 54) ng.push('★読む 絵が ' + ALL_NAMES.length + '個（★54個 の はず ―― ★52枚＋JOKER1＋うら面）');
+    if (ALL_NAMES.join(' ').indexOf('JOKER2') >= 0) ng.push('★★使わない JOKER2 を 読んで いる（★ジョーカーは 1枚・ルル §4-4）');
+    if (ALL_NAMES.indexOf('JOKER1') < 0) ng.push('★★ジョーカー（JOKER1）を 読んで いない');
+    if (ALL_NAMES[0] !== C.BACK_NAME) ng.push('★裏面を いちばん 先に 読んで いない');
+    note['⑨ 先読み'] = '読めた ' + warmDone + '/' + ALL_NAMES.length + '／表向き ' + faceShown + '枚 中 白い 札 ' + white + '枚';
+
+    /* ⑩ ★操作は pointer・はなすまで 決まらない */
+    if (String(build).indexOf('pointerdown') < 0 || String(build).indexOf('pointerup') < 0 ||
+        String(build).indexOf('pointermove') < 0) {
+      ng.push('★pointer で 受けて いない（★運ぶには pointermove が 要ります）');
+    }
+    if (String(onUp).indexOf('hitAt(') < 0) ng.push('★★★onUp が はなした 点で 引き直して いない（★hitAt が ない ―― ★指では 押した 札の まま に なります）');
+    if (/var\s+t\s*=\s*e\.target/.test(String(onUp))) ng.push('★★★onUp が e.target を 見て いる');
+    if (String(onDown).indexOf('togglePick') >= 0 || String(onDown).indexOf('humanDraw') >= 0) {
+      ng.push('★★指を 置いた 時点で 決まって いる（★はなすまで 決まらない はず）');
+    }
+    /* ⑩-2 ★★山・すて札の 指の 的（★44px。★★横向きで 29px でした・T174） */
+    var spq = spotProbe();
+    for (i = 0; i < spq.why.length; i++) ng.push(spq.why[i]);
+    note['⑩ 指の 的'] = spq.rows.join('／');
+
+    /* ⑪ ★結果の 箱 */
+    var bx = resultProbe();
+    if (bx.over) ng.push('★★結果の 箱が 手札に かぶって いる（' + bx.over + 'px）');
+    if (bx.h > bx.max + 0.5) ng.push('★結果の 箱が 天井を こえて いる（' + bx.h + 'px ／ 天井 ' + bx.max + 'px）');
+    if (bx.off) ng.push('★★結果の 箱の 中の 押す ところが ' + bx.off + '件 画面の 外：' + (bx.offName || []).join('・'));
+    if (bx.small) ng.push('★★★結果の 箱の 中に 44pxより 小さい 押す ところが ' + bx.small + '件 ある（★会社の 決まり）');
+    if (bx.hidden) {
+      ng.push('★★★★結果の 箱が 札の 下に かくれて います（★' + bx.hidden + '/4か所で 前に 出て いない：' +
+              (bx.hitName || []).join('・') + '）―― ★★点の 表が 読めません');
+    }
+    note['⑪ 結果の 箱'] = bx.h + 'px（天井 ' + bx.max + 'px）／手札との かぶり ' + bx.over + 'px／画面外 ' + bx.off +
+                          '件／★44px割れ ' + bx.small + '件／★★前に 出て いない ' + bx.hidden + '/4か所';
+
+    /* ⑫ ★言葉（設計図 §9.6）＋ ★★手を 教えて いないか */
+    var text = readableText(document.querySelector('.app-shell')) + ' ' +
+               readableText(resultWrap) + ' ' + readableText($('helpDialog')) + ' ' + document.title;
+    var NGW = ['セット', 'ラン', 'メルド', 'レイオフ', 'ストック', 'ディスカード', 'ドロー', 'ターン',
+               'カード', 'スート', 'レベル', 'ワイルド', 'ポイント', '連番', '罰点', '捨', '累計', 'ms', '％'];
+    /* ⚠️★★ 「ラン」を そのまま さがすと ―― ★★「ト**ラン**プ」で 鳴ります【★私の 失敗③】。
+       ★ ★★使って よい 言葉（トランプ・ジョーカー）を **先に 取り除いてから** くらべます。 */
+    var flat12 = text.replace(/トランプ/g, '').replace(/ジョーカー/g, '');
+    var hitW = [];
+    for (i = 0; i < NGW.length; i++) if (flat12.indexOf(NGW[i]) >= 0) hitW.push(NGW[i]);
+    if (hitW.length) ng.push('★言っては いけない 言葉が ある：' + hitW.join('・'));
+    var sayAll = [];
+    for (var k1 in SAY) if (SAY.hasOwnProperty(k1)) sayAll.push(SAY[k1]);
+    sayAll.push(SAY_WIN, SAY_LOSE, SAY_DEAL_ME, SAY_DEAL_OT);
+    var teach = teachHit(sayAll.join(' '));
+    if (teach.length) ng.push('★★★ハッピーが 手を 教えて いる：' + teach.join('・'));
+    var helpTeach = teachHit(readableText($('helpDialog')));
+    if (helpTeach.length) ng.push('★★★あそびかたが 手を 教えて いる：' + helpTeach.join('・'));
+    var cw = cardWords(cardsEl);
+    if (cw) ng.push('★札の 上に（点の 数字 いがいの）文字が ある：' + cw);
+    /* ★ あそびかたは 6行（★ルル §0-3。★増えたら §5.5 に ぶつかります）*/
+    var helpN = $('helpDialog').querySelectorAll('.help-list li').length;
+    if (helpN !== 6) ng.push('★あそびかたが ' + helpN + '行（★6行 の はず・ルル §2-1）');
+    note['⑫ 言葉'] = text.length + '文字／★あそびかた ' + helpN + '行／★手を 教える 言葉 ' +
+                     (teach.length + helpTeach.length) + '件';
+
+    /* ============================================================
+       ⑬ ★★★場が 19枚でも はみ出さないか（★★ルル §8-2・設計図 追記③）★★★
+       ============================================================ */
+    var ft = fitTest(70);
+    if (ft['★はみ出し（一番 大きい）'] !== '0px') ng.push('★★★札が 器から はみ出した：' + ft['★はみ出し（一番 大きい）']);
+    if (ft['★押す ところが 画面外'] !== '0件') ng.push('★★押す ところが 画面の 外に 出た：' + ft['★押す ところが 画面外']);
+    if (ft['横スクロールが 出た場面']) ng.push('★横スクロールが ' + ft['横スクロールが 出た場面'] + '場面で 出た');
+    if (ft['縦スクロールが 出た場面']) ng.push('★縦スクロールが ' + ft['縦スクロールが 出た場面'] + '場面で 出た');
+    if (ft['★44pxより 小さい ボタン'] !== '0件') {
+      ng.push('★★★44pxより 小さい 押す ところが ある：' + ft['★44pxより 小さい ボタン'] + '（★会社の 決まり）');
+    }
+    var hitTxt = ft['★★手札の まん中を さして 当たらなかった'];
+    if (hitTxt && hitTxt.indexOf('0 /') !== 0) {
+      ng.push('★★★手札の まん中を さして その 札が 返らなかった：' + hitTxt + '（★トライ T153 🟡-1 と 同じ こわれ方）');
+    }
+    var mTxt = ft['★★場の 組を さして 当たらなかった'];
+    if (mTxt && mTxt.indexOf('0 /') !== 0) {
+      ng.push('★★★★場の 組に 指が 届かない ものが ある：' + mTxt +
+              '（★★これは 見切れでは なく **故障** です・設計図 追記③）');
+    }
+    /* ============================================================
+       ★★★ ⑬-2 ―― ★★**4つの 画面 ぜんぶ**で 場が 入るか（★320×568 を 必ず 含む）★★★
+       ------------------------------------------------------------
+       ⚠️★★ ここは **私の 見張りの 穴** でした【★私の 失敗⑤・作業メモ §5】。
+          ★ ★はじめ ⑬は `fitTest`（＝ **いま 開いて いる 画面**）しか 見て いませんでした。
+          ★ ★★「静かに 詰める」を わざと 止めて 試したら ―― ★★NG 0（★鳴らない）。
+            ★ ★理由：★961×914 では 詰めなくても 入って しまう から です。
+            ★ ★★＝ ★★詰める しくみが 消えても、★大きい 画面で 試す かぎり 誰も 気づけません。
+          ★ ★★これで 会社では 4回目 です（★T155・T168・T171・今回）――
+            ★ ★★どれも 同じ 形：★★**「直した」だけで「見張って いない」。**
+       ★ ★下は 画面を 開き直さずに、★**measure() と 同じ 式（budget）**で 4つの 画面を 数えます。
+       ============================================================ */
+    var tblTxt = [];
+    for (i = 0; i < want.length; i++) {
+      var B = budget(want[i][0], want[i][1]);
+      var worstRow = 0, worstName = '';
+      for (k = 0; k < SCENES.length; k++) {
+        if (!SCENES[k].c.length) continue;
+        var pk2 = C.packTable(SCENES[k].c, B.innerW, B.innerH, B.lay.tw);
+        if (pk2.h > B.innerH) {
+          ng.push('★★★' + want[i][3] + ' で「' + SCENES[k].n + '」が 台から はみ出します（★' +
+                  pk2.h + 'px ／ 台の 中 ' + B.innerH + 'px）―― ★★触る ところが 切れます（設計図 追記③）');
+        }
+        /* ★ どの 組も 1行に 収まり、★横にも はみ出さないか */
+        var rows2 = pk2.rows;
+        for (var r2 = 0; r2 < rows2.length; r2++) {
+          var last2 = rows2[r2][rows2[r2].length - 1];
+          if (last2.x + last2.w > B.innerW + 0.5) {
+            ng.push('★★★' + want[i][3] + ' で「' + SCENES[k].n + '」が 台の 右から はみ出します（★' +
+                    (last2.x + last2.w) + 'px ／ ' + B.innerW + 'px）');
+          }
+        }
+        if (pk2.h > worstRow) { worstRow = pk2.h; worstName = SCENES[k].n + ' ' + pk2.tw + 'px/' + rows2.length + '行'; }
+      }
+      var pk1 = C.packTable([3, 4, 3, 5, 4], B.innerW, B.innerH, B.lay.tw);
+      tblTxt.push(want[i][3] + '：★ふだんの形 ' + pk1.tw + 'px/' + pk1.rows.length + '行（台の中 ' +
+                  B.innerH + 'px）／いちばん 高い のは ' + worstName + ' ＝ ' + worstRow + 'px');
+    }
+    note['⑬-2 ★★4つの 画面で 場が 入るか'] = tblTxt.join('　／　');
+    note['⑬ ★★場の 大きさ'] = '★場札 ' + (pack ? pack.tw : geo.tw) + 'px／' + ft['調べた場面'] +
+                              '／はみ出し ' + ft['★はみ出し（一番 大きい）'] + '／手札 ' + hitTxt +
+                              '／★場の 組 ' + mTxt + '／' + ft['★静かに 詰めた 場面'] + ' 詰めました';
+
+    /* ⑭ ★★人が さわれるか */
+    var rp = reachProbe();
+    if (!rp.cases) ng.push('★★「人が さわれるか」を 1場面も 作れなかった（★試し方が おかしい）');
+    for (i = 0; i < rp.why.length; i++) ng.push('★★★人の 番なのに 進めない：' + rp.why[i]);
+    note['⑭ ★人が さわれるか'] = rp.cases + '場面 中 ★止まった ' + rp.dead + '場面／' + rp.detail.join('　');
+
+    /* ⑮ ★★運ぶ（付け札・すてる）*/
+    var dp = dragProbe();
+    for (i = 0; i < dp.why.length; i++) ng.push(dp.why[i]);
+    note['⑮ ★★運ぶ'] = '合う 組へ ' + dp.fit + '／合わない 組へ ' + dp.unfit + '／すて札へ ' + dp.discard +
+                        '／何も ない ところへ ' + dp.nowhere;
+
+    /* ⑯ ★★「出す」は 組の ときだけ */
+    var gp = goProbe();
+    for (i = 0; i < gp.why.length; i++) ng.push(gp.why[i]);
+    note['⑯ ★「出す」'] = 'そろって いない 3枚 ' + gp.bad + '／同じ 数字 ' + gp.set + '／つづいた 数字 ' + gp.run +
+                          '／手札 ぜんぶ ' + gp.all + '／押したら ' + gp.played;
+
+    /* ⑰ ★★★点の 数字が 札の すみに あるか */
+    var pp = ptProbe();
+    for (i = 0; i < pp.why.length; i++) ng.push(pp.why[i]);
+    note['⑰ ★★点の 数字'] = '手札 ' + pp.ok + '/' + pp.hand + '枚に 出て いる（★すみに ' + pp.corner +
+                            '枚・小さい 字 ' + pp.small + '枚）／' + pp.seven + '・' + pp.ace +
+                            '／★場の 札に 出て いる ' + pp.tbl + '枚';
+    /* ⑰-2 ★★★T179 ―― ★となりの 札に かくれて いないか（★★写真でしか 見つからなかった もの）*/
+    note['⑰-2 ★★となりに かくれて いないか'] =
+        'かくれて いる ' + pp.hidden + '/' + pp.hand + '枚（★いちばん 深い もので ' + pp.hideMax + '%）' +
+        (pp.hand ? '／★1枚ずつ ' + pp.hideList.join(',') + '%' : '');
+
+    /* ⑱ ★しまう／続きから */
+    /* ⚠️★★ 見張りが 遊ぶ人の 設定を 書きかえて いました【★私の 失敗⑦】★★
+       ★ ★⑱ は 本物の `setLevel` を 通します ―― ★★それは つよさを **しまいます**。
+       ★ ★★verify を 1回 走らせたら、★「はじめて」で 遊んで いた 人が「ふつう」に なって いました。
+         ★ ★（★私の 手あそびで 実際に そう なり、★now() の 1行で 気づきました）
+       ★ ★★見張りは 見るだけ。★★さわった ものは 1つ 残らず 戻します（★T144 §7-5）。 */
+    var kSave = null, kLv = null;
+    try { kSave = localStorage.getItem(STORE); kLv = localStorage.getItem(LV_STORE); } catch (e) {}
+    var s18 = { write: '―', read: '―', clear: '―', guard: '―', keep: '―', keepLv: '―', badLv: '―', now: '―' };
+    var kMatch = match;
+    try {
+      match = C.newMatch(1); match.total = [7, 22, 13, 4]; match.dealNo = 2; match.over = false;
+      save();
+      var got = load();
+      s18.write = (got && got.t.join(',') === '7,22,13,4' && got.d === 2) ? '○ しまえた' : '★★✕ しまえない';
+      if (s18.write !== '○ しまえた') ng.push('★★★1回 おわりの 合計を しまえて いない（★続きから が 効きません）');
+      s18.read = (got && got.lv === 1) ? '○ つよさも 覚えた' : '★✕ つよさを 覚えて いない';
+      if (!got || got.lv !== 1) ng.push('★つよさを 覚えて いない');
+      match.over = true; save();
+      s18.clear = load() ? '★★✕ 消えない' : '○ 終わったら 消える';
+      if (load()) ng.push('★★終わった 勝負の 続きが 残って いる');
+      try { localStorage.setItem(STORE, '{"t":[1,2],"d":"x"}'); } catch (e) {}
+      s18.guard = load() ? '★★✕ こわれた 中身を 受けて しまう' : '○ こわれた 中身は 受けない';
+      if (load()) ng.push('★★こわれた 中身を そのまま 読んで います');
+      /* ★★ はじめの 画面で つよさを さわっても 続きが 消えないか（★ハーツ T166 🔴-1 と 同じ 手順）*/
+      try { localStorage.setItem(STORE, JSON.stringify({ t: [12, 48, 33, 27], d: 2, lv: 0 })); } catch (e) {}
+      match = C.newMatch(0);
+      setLevel(1);
+      var af = load();
+      s18.keep = (af && af.t.join(',') === '12,48,33,27' && af.d === 2) ? '○ 続きが のこる' : '★★✕ 続きが 消えた';
+      if (!af || af.t.join(',') !== '12,48,33,27' || af.d !== 2) {
+        ng.push('★★★はじめの 画面で つよさを さわったら、しまって ある 続きが 消えました' +
+                '（★しまって ある 中身 ' + JSON.stringify(af) + '）―― ★★ハーツ T166 🔴-1 と 同じ こわれ方');
+      }
+      s18.keepLv = (af && af.lv === 1) ? '○ つよさは 変わる' : '★★✕ つよさが 変わらない';
+      if (!af || af.lv !== 1) ng.push('★★つよさを さわっても しまって ある つよさが 変わらない（★試し方が おかしい）');
+      /* ★ おかしい つよさ（lv:9）を 受けても 止まらないか */
+      try { localStorage.setItem(STORE, JSON.stringify({ t: [99, 1, 1, 1], d: 1, lv: 9 })); } catch (e) {}
+      var af3 = load();
+      s18.badLv = (af3 && af3.lv >= 0 && af3.lv < C.LEVELS.length) ? '○ まるめる' : '★★✕ そのまま 通す';
+      if (!af3 || !(af3.lv >= 0 && af3.lv < C.LEVELS.length)) ng.push('★★★おかしい つよさ（lv:9）を そのまま 受けて います');
+      match = C.newMatch(0); match.level = 9;
+      s18.now = (levelNow() && levelNow().o) ? '○ 落ちない' : '★★✕ 落ちる';
+      if (!levelNow() || !levelNow().o) ng.push('★★★おかしい つよさで levelNow が 使えない');
+      /* ============================================================
+         ㉓ ★★4回目が 終わるまで 合計を しまう（★ルル §18 コーダ⑦）★★
+         ★ ★★4回 おわった 勝負は しまわない ―― ★次に 開いた とき 0から 始まる のが 正しい。
+         ============================================================ */
+      try { localStorage.setItem(STORE, JSON.stringify({ t: [12, 48, 33, 27], d: 4, lv: 0 })); } catch (e) {}
+      var af4 = load();
+      s18.done = af4 ? '★★✕ 4回 終わった 続きを 読む' : '○ 4回 終わったら 読まない';
+      if (af4) ng.push('★★★4回 配り終わった 続きを 読んで います（★★勝負は もう ついて います）');
+    } catch (e) {
+      ng.push('★★しまう 仕組みで つまずいた：' + e.message);
+    }
+    match = kMatch;
+    try {
+      if (kSave === null) localStorage.removeItem(STORE); else localStorage.setItem(STORE, kSave);
+      if (kLv === null) localStorage.removeItem(LV_STORE); else localStorage.setItem(LV_STORE, kLv);
+    } catch (e) {}
+    if (match) { $('levelTitle').value = String(match.level); $('levelResult').value = String(match.level); }
+    refreshResume();
+    note['⑱ しまう／続きから'] = s18.write + '／' + s18.read + '／' + s18.clear + '／' + s18.guard +
+                                 '／★つよさを さわっても ' + s18.keep + '（' + s18.keepLv + '）' +
+                                 '／★おかしい つよさ ' + s18.badLv + '・' + s18.now;
+    note['㉓ ★4回で 打ち止め'] = s18.done + '（★1試合 ＝ ' + C.LIM.DEALS + '回 配り）';
+
+    /* ⑲ ★つよさの えらび */
+    var wpEarly = winProbe();
+    var lp = levelProbe();
+    if (lp.ng.length) ng.push('★★つよさを えらべない 所が ある：' + lp.ng.join('・'));
+    if (lp.small) ng.push('★つよさの えらびが 44px より 低い：' + lp.small + '件');
+    if (wpEarly.lvFin !== 1) ng.push('★★★勝ち負けの 画面に つよさが 出て いません（★負けた 人の 逃げ道が ありません）');
+    if (wpEarly.lvMid !== 1) {
+      ng.push('★★★1回 おわりの 画面に つよさが 出て いません ―― ★★これだと 4分に 1回しか 変えられません');
+    }
+    if (/levelPickResult\.classList\.add\(/.test(String(showResult))) {
+      ng.push('★★★showResult が つよさを 隠す 行を 持って います（★1回 おわりでも 出す はず）');
+    }
+    note['⑲ つよさの えらび'] = '押せた ' + lp.ok + ' / ' + lp.rows + 'か所／44px 割れ ' + lp.small +
+                                '件／★出て いる：勝ち負け ' + (wpEarly.lvFin ? '○' : '★✕') +
+                                '・1回 おわり ' + (wpEarly.lvMid ? '○' : '★✕');
+
+    /* ⑳ ★勝ち負けの 画面 */
+    for (i = 0; i < wpEarly.why.length; i++) ng.push(wpEarly.why[i]);
+    if (SAY_WIN.indexOf('{名前}') < 0 || SAY_LOSE.indexOf('{名前}') < 0) {
+      ng.push('★★★勝ち負けの ひとことに「誰が 勝ったか」を 入れる 場所（{名前}）が ありません');
+    }
+    if (String(showResult).indexOf('winnerText') < 0) ng.push('★★★showResult が 勝った 人の 名前を 入れて いない');
+    if (/total|score|点/.test(String(winnerText))) ng.push('★★★勝った 人の 名前に 点数が 混ざって います');
+    note['⑳ ★誰が 勝ったか'] = wpEarly.cases.join('　') + '／★くらべ 1回 おわり「' + wpEarly.mid + '」';
+
+    /* ㉑ ★点の 帯 */
+    var sb = still(function () {
+      var b = scoreBand, cut = [], j;
+      var names = b.querySelectorAll('.sb-name');
+      for (j = 0; j < names.length; j++) {
+        if (names[j].scrollWidth > names[j].clientWidth + 0.5) cut.push(names[j].textContent);
+      }
+      var q = b.getBoundingClientRect();
+      return { h: Math.round(q.height), inner: b.scrollHeight, n: names.length, cut: cut,
+               numF: parseFloat(getComputedStyle(b).fontSize) || 0,
+               nameF: names.length ? (parseFloat(getComputedStyle(names[0]).fontSize) || 0) : 0 };
+    });
+    var wantH = Math.max(geo.scoreMin, Math.min(geo.scoreWant, geo.scoreRoom));
+    if (geo.scoreH !== wantH) ng.push('★★帯の たけが 決まりと ちがう（' + geo.scoreH + 'px ／ ' + wantH + 'px の はず）');
+    if (sb.inner > sb.h + 1) ng.push('★★★点の 帯から 中身が はみ出して います（★中身 ' + sb.inner + 'px ／ 帯 ' + sb.h + 'px）');
+    if (sb.cut.length) ng.push('★★★点の 帯の 名前が 切れて います：' + sb.cut.join('・') + '（★字が 大きすぎます）');
+    if (sb.n !== 4) ng.push('★点の 帯の 名前が ' + sb.n + '個（★4個 の はず）');
+    if (!(sb.numF >= 11)) ng.push('★★点の 帯の 数の 字が ' + sb.numF + 'px（★11px 以上 の はず）');
+    if (geo.scoreH >= 44 && sb.numF < 14) {
+      ng.push('★★★帯は ' + geo.scoreH + 'px あるのに 数の 字が ' + sb.numF + 'px しか ありません（★トライ T166 §7-2 と 同じ）');
+    }
+    if (!(sb.nameF < sb.numF)) ng.push('★点の 帯の 名前の 字が 数と 同じか 大きい（★読むのは 数の ほう です）');
+    var sbCss = [];
+    cssRuleList().forEach(function (r) {
+      if (!/\.score-band/.test(r.sel)) return;
+      var mm = r.text.match(/font-size:\s*([^;}]+)/);
+      if (mm && mm[1].indexOf('var(') < 0) sbCss.push(r.sel + ' → ' + mm[1].trim());
+    });
+    if (sbCss.length) ng.push('★★★点の 帯の 字が CSS で 決め打ちに なって います：' + sbCss.join('・'));
+    note['㉑ 点の 帯'] = '帯 ' + geo.scoreH + 'px（★余り ' + geo.scoreRoom + 'px）／数の 字 ' + sb.numF +
+                        'px・名前 ' + sb.nameF + 'px／切れた 名前 ' + sb.cut.length + '件';
+
+    /* ============================================================
+       ㉒ ★★★山も すて札も 空に なる 場面（★ルル §18 コーダ⑥ の ご注文）★★★
+       ★ ★ルルの【計算】では 1回 配る あたり 0.25回 混ぜ直しが 起き、★流れは 1.19%。
+       ★ ★★「起きない はず」を そのまま 出しません ―― ★★本当に 起きる ように 追いこみます。
+       ============================================================ */
+    var dry = { made: 0, stuck: 0, cards: [], detail: [] };
+    (function () {
+      var rd = C.rng(777001);
+      for (var t = 0; t < 200; t++) {
+        var gg = C.makeGame(rd, { rules: rules, startP: t % 4 });
+        /* ★ 山を わざと 1枚に して、★誰も 上がれない まま 回します */
+        while (gg.stock.length > 1) gg.discard.push(gg.stock.pop());
+        var guard = 0;
+        while (!gg.over && guard++ < 400) {
+          var o = C.LEVELS[2].o;
+          var dr = C.doDraw(gg, C.botDraw(gg, o));
+          if (!dr.ok) { if (dr.dry) dry.made++; break; }
+          C.botPlay(gg, o);
+          var rr = C.doDiscard(gg, C.botDiscard(gg, o));
+          if (!rr.ok) { dry.stuck++; break; }
+        }
+        if (guard >= 400) dry.stuck++;
+        var n2 = gg.stock.length + gg.discard.length, u;
+        for (u = 0; u < 4; u++) n2 += gg.hands[u].length;
+        for (u = 0; u < gg.table.length; u++) n2 += C.meldLen(gg.table[u]);
+        if (n2 !== 53) dry.cards.push(n2);
+      }
+    })();
+    if (!dry.made) {
+      ng.push('★★「山も すて札も 空に なる」場面を 1回も 作れませんでした（★試し方が おかしい ―― ' +
+              '★★起きない ことの 証明には なりません）');
+    }
+    if (dry.stuck) ng.push('★★★山が 尽きた あと 進めなく なった 回が ' + dry.stuck + '件（★★遊びが 止まります）');
+    if (dry.cards.length) ng.push('★★★山が 尽きた あと 札の 数が ちがう 回が ' + dry.cards.length + '件：' + dry.cards.slice(0, 5).join('・'));
+    note['㉒ ★山が 尽きる'] = '200回 追いこんで ★おわりに なった ' + dry.made + '回／★止まった ' + dry.stuck +
+                             '回／★札の 数ちがい ' + dry.cards.length + '回';
+
+    /* ㉔ ★★手札は 8枚から 増えない */
+    var hm = C.runMany(Math.max(300, Math.round(n * 0.5)), 8080, [C.P.bot5(), bot, bot, bot], null, 'match');
+    if (hm.handMax > 8) ng.push('★★★手札が ' + hm.handMax + '枚に なりました（★8枚 の はず・ルル §8-1）');
+    if (C.FIT.HAND_N !== 8) ng.push('★寸法の 手札枚数が ' + C.FIT.HAND_N + '（★8 の はず）');
+    note['㉔ 手札の 最大'] = hm.handMax + '枚（★' + hm.games + '試合・★決まりの 上で 増えようが ありません）';
+
+    /* ★ さわった ものを 戻す（★ハッピーの ひとこと・★1回だけの 知らせの ふだ）*/
+    if (sayTimer) { clearTimeout(sayTimer); sayTimer = 0; }
+    sayEl.textContent = kSayTxt;
+    if (kSayHid) sayEl.classList.add('hidden'); else sayEl.classList.remove('hidden');
+    toldMeld = kToldM; toldLay = kToldL;
+
+    var out = {
+      '★NG': ng.length, '中身': ng.length ? ng : 'ぜんぶ OK ✅',
+      '画面': window.innerWidth + '×' + window.innerHeight,
+      'かかった 時間': (Date.now() - t0) + 'ms'
+    };
+    for (var kk in note) if (note.hasOwnProperty(kk)) out[kk] = note[kk];
+    console.log('[セブンブリッジ] verify', out);
+    return out;
+  }
+
+  root.SEVENBRIDGE = {
+    now: now, autoPlay: autoPlay, verify: verify, seed: seed, geo: geoInfo,
+    fitTest: fitTest, rates: rates,
+    /* ★ 中を のぞく ため（★トライ・アト用）*/
+    _g: function () { return g; }, _match: function () { return match; }, _core: C,
+    _probe: { line: lineProbe, reach: reachProbe, drag: dragProbe, go: goProbe, pt: ptProbe, spot: spotProbe,
+              level: levelProbe, result: resultProbe, win: winProbe,
+              handHit: handHit, meldHit: meldHit, scene: makeScene }
+  };
+
+})(typeof globalThis !== 'undefined' ? globalThis : this);
