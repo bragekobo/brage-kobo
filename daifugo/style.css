@@ -1999,3 +1999,107 @@ body {
   .mascot .bubble { align-self:flex-end; justify-self:end; }
   .cloud { display:none; }
 }
+
+/* ============================================================
+   ★T187 ― ★★結果の ふたで「あなたは ◯位だったよ！」が 最初に 見えない
+            （🎨アト・2026-08-31 ／ トライの 検査 T186 🟡① が 見つけた 1件）
+   ------------------------------------------------------------
+   ★★1試合 遊びきった、いちばん うれしい しゅんかんの 話です。
+
+   ── ★直す前の 実測（★本物の 試合を 最後まで 遊んだ ときだけ）──────────
+   | 画面 | ★ふたの 中身 | ★ふたの 箱 | ★あふれ | ★開いた時の scrollTop | ★順位が 見えるか |
+   |---|---|---|---|---|---|
+   | ★★**812×375** | 579px | 337px | ★**242px** | ★★**242px** | ★★**✕**（★176px 上に かくれた）|
+   | ★★**320×480** | 656px | 442px | ★**214px** | ★★**214px** | ★★**✕** |
+   | 320×568 | 576px | 450px | 126px | 3px | ○（★でも ボタンと **同時には 見えない**）|
+   | 375×667 | 477px | 450px | 27px | 0px | ○ |
+   | 375×812 以上 | ― | ― | ★0px | 0px | ○ |
+
+   ── ★原因【★トライの 実測を 私も 追認しました】────────────────
+   ```
+   showModal() → ★ブラウザが いちばん 上の 押せる もの＝#againBtn「次のゲームへ」に フォーカスする
+              → ★★フォーカスした ものを 見せる ため、ふたを **下まで スクロールする**
+              → ★★上に ある「🏆 順位発表！」「あなたは ◯◯（◯位）だったよ！」が 押し出される
+   ```
+   ★私も 開いた しゅんかんの `document.activeElement` を 読みました ＝ `BUTTON#againBtn`（★6サイズ ぜんぶ）。
+
+   ── ★★どう 直したか ―― ★「スクロールを 止める」では なく「あふれを 消す」──────
+   ★★フォーカスを 外す 直し方は **しません** でした。
+     ★理由：★フォーカスが 消えると **キーボードで 遊ぶ人**が「次のゲームへ」に すぐ 行けなく なる。
+     ★★そもそも ★**あふれが 0 なら、ブラウザは スクロールしません**。
+       ★→ ★★ふたの 中身を 1画面に 入れる ＝ フォーカスは そのまま で 順位が 見える。
+
+   ★A. ★よこ向き（812×375）… ★★ふたを **2つの 柱** にする
+        左＝🏆 と「あなたは ◯位だったよ！」と 順位表　右＝これまでの成績・ボタン
+   ★B. ★たての ひくい たて向き（320×480・320×568・375×667）… ★★1画面に たたむ
+        ・★ふたを たての ならびに して、★★上（🏆・順位）と 下（ボタン）は **絶対に 動かない**
+        ・★「次のゲームへ」「◀ ゲームを選ぶ」を **よこ 2つ ならび** に 戻す（★320px では たて2つ ＝ 104px を 使って いた）
+        ・★★足りなく なった ときに 動くのは **順位表の 中だけ**（★上下の 見出しと ボタンは 動かない）
+
+   ── ★直した あとの 実測 ────────────────────────────
+   | 画面 | ★あふれ | ★開いた時の scrollTop | ★順位が 見える | ★★ボタンと 同時に 見える | ★フォーカス |
+   |---|---|---|---|---|---|
+   | ★★**812×375** | ★**0px** | ★**0** | ★**○** | ★**○** | ★`#againBtn`（★変わらず）|
+   | ★★**320×480** | ★**0px** | ★**0** | ★**○** | ★**○** | ★`#againBtn` |
+   | ★**320×568** | ★**0px** | ★**0** | ★**○** | ★**○**（★前は ✕）| ★`#againBtn` |
+   | ★**375×667** | ★**0px** | ★**0** | ★**○** | ★**○** | ★`#againBtn` |
+   | 375×812 以上 | ★0px | 0 | ○ | ○ | ★★**1バイトも 変えて いない** |
+
+   ★「次のゲームへ」の 指の的：★**320×480 で 128×46px／375×667 で 156×46px／812×375 で 155×48px**
+     ＝ ★★どこでも **44px を こえて います**（★verify ⑦ が 見張って います）。
+
+   ⚠️★1回 失敗しました：★はじめ ボタンの 内よはくを つめすぎて **128×42px** に なり、
+     ★★44pxを 割りました。★→ 上下の 内よはくを 2px ずつ 戻して 46px に しました。
+   ============================================================ */
+
+/* ── ★A. よこ向き（812×375）＝ ふたを 2つの 柱に ────────────────
+   ★ゲーム画面（T185）と 同じ 分け方：★左＝「見る もの」／右＝「する こと」。
+   ★`display:contents` で #resultContent の 子を そのまま 柱に ならべます
+     （★game.js が 作る HTML の 形は 1文字も 変えて いません）。
+   ★★順位表を 3〜5行目に またがせて いる 理由：★こうしないと 右の「これまでの成績」の
+     高さが 左の 行を 押し広げ、★「だったよ！」と 順位表の あいだに 大きな すきまが できます（実測）。 */
+@media (orientation:landscape) and (max-height:560px) and (min-width:560px) {
+  #resultDialog[open] { display:grid; grid-template-columns:1.1fr 1fr; grid-template-rows:auto auto auto auto 1fr;
+    column-gap:18px; align-content:start; max-width:730px; padding:16px 20px 14px; max-height:calc(100dvh - 24px); }
+  #resultContent { display:contents; }
+  #resultContent h2 { grid-area:1/1; font-size:22px; margin:0 0 4px; }
+  /* ★text-wrap:balance ―― ★2行に なる ときに 行の 長さを そろえる（★字は 1つも 変えて いない）*/
+  #resultContent .winner { grid-area:2/1; margin:0 0 8px; font-size:21px; text-wrap:balance; }
+  .ranking { grid-area:3/1/6/2; gap:5px; margin:0; align-content:start; min-height:0; overflow-y:auto; }
+  .ranking li { padding:5px 10px; }
+  .total-head { grid-area:1/2; margin:0 0 4px; align-self:end; }
+  .totals { grid-area:3/2; gap:3px; margin:0 0 10px; align-content:start; min-height:0; overflow:hidden; }
+  .totals li { padding:3px 9px; }
+  .result-actions { grid-area:4/2; align-self:start; gap:10px; }
+  .dialog-sub { grid-area:5/2; align-self:start; margin-top:8px; }
+}
+
+/* ── ★B. たての ひくい たて向き（320×480・320×568・375×667）＝ 1画面に たたむ ──
+   ★★いちばん 効いたのは「★次のゲームへ／ゲームを選ぶ を よこ 2つ ならびに 戻した」こと。
+     ★320px では `@media (max-width:650px)` が たて 2つ ならびに して いて、
+     ★★それだけで **104px**（★実測）を 使って いました ―― ★★これが あふれの 半分です。
+   ★のこりは からっぽの 内よはくと、★「これまでの成績」の 行の つめ直しから 出しました。
+   ★★字は 1つも 消して いません（★順位・名前・⭐・1位◯回 は ぜんぶ 出ます）。
+
+   ★★足りなく なった ときの 順番（★T185 と 同じ 考え方）：
+     ★1番目 順位表の 中だけが 動く（`.ranking` の overflow-y:auto）
+     ★★2番目 …… ありません。★★🏆・「あなたは ◯位だったよ！」・「次のゲームへ」は
+       ★★**どんな ときも 画面の 中に 残ります**（★ふた 自身は もう スクロールしない）。 */
+@media (orientation:portrait) and (max-width:650px) and (max-height:700px) {
+  #resultDialog[open] { display:flex; flex-direction:column; padding:14px 14px 12px; max-height:calc(100dvh - 24px); }
+  #resultContent { display:flex; flex-direction:column; min-height:0; }
+  #resultContent h2 { font-size:19px; margin:0 0 4px; flex:0 0 auto; }
+  #resultContent .winner { margin:0 0 8px; flex:0 0 auto; text-wrap:balance; }
+  .ranking { gap:4px; margin:0 0 8px; flex:0 1 auto; min-height:0; overflow-y:auto; }
+  .ranking li { padding:3px 9px; }
+  .ranking li:nth-child(1) { padding:7px 9px; }
+  .total-head { margin:0 0 4px; font-size:12px; flex:0 0 auto; }
+  .totals { gap:2px; margin:0 0 8px; flex:0 1 auto; min-height:0; overflow:hidden; }
+  .totals li { padding:2px 8px; font-size:11px; gap:6px; white-space:nowrap; }
+  .totals small { font-size:10px; }
+  /* ★よこ 2つ ならびに 戻す。★字は 小さく するが、★指の的は 46px を 守る（★上の ⚠️ 参照）*/
+  .result-actions { grid-template-columns:1fr 1fr; gap:8px; flex:0 0 auto; }
+  .result-actions .dialog-ok { font-size:13.5px; padding:10px 6px 8px; }
+  .result-actions .dialog-ok small { font-size:9.5px; }
+  .dialog-sub { margin-top:7px; padding:6px 16px; flex:0 0 auto; }
+}

@@ -115,6 +115,20 @@
        ★ ★それを「見えて いる」と 数えて、★★とじた ルールの 15行を
          ★ ★★「押す ところに 届きません」と **11件 うそを 言いました**。
      ★ ★★computed style でも 箱の 大きさでも なく、★`checkVisibility()`（＝ブラウザ自身の 答え）を 聞きます。 */
+  /* ★★T187（🎨アト）― ⑯（バッジ）が「字が あるか」だけを 見て いた すきまの 直し。
+     ★ ★#flagRow の 子（バッジ 1つ1つ）を 見て、★★その しるしを 持つ バッジが
+       ★ ★★「字も あって、かつ 目にも 見える」ときだけ ○ に します。
+     ★ ★`visible()` の 下に 置いて いる 理由：★visible を 使う ので 定義の あとに 要ります。 */
+  function badgeShown(mark) {
+    var row = $('flagRow');
+    if (!row) return false;
+    var kids = row.children;
+    for (var i = 0; i < kids.length; i++) {
+      if ((kids[i].textContent || '').indexOf(mark) >= 0 && visible(kids[i])) return true;
+    }
+    return false;
+  }
+
   function visible(el) {
     if (!el) return false;
     if (el.checkVisibility) {
@@ -1091,8 +1105,15 @@
       play(11, 1);
       S.lock = ['spades']; S.crown = 0; S.revDir = true;
       DF.render();
-      var t = $('flagRow').textContent || '';
-      return { lock: t.indexOf('🔒') >= 0, crown: t.indexOf('👑') >= 0, dir: t.indexOf('ぎゃくまわり') >= 0 };
+      /* ★★T187（🎨アト）― ★トライ T186 §5-2 の すきまを ふさぎました。
+         ★ ★まえは `$('flagRow').textContent` ＝ **字が あるか** だけを 見て いました。
+           ★ ★★だから CSS で `opacity:0; visibility:hidden` に された バッジは
+             ★ ★★字が のこる ので ⑯が **鳴りません** でした（★トライの 実測）。
+         ★ ★★これは 私（アト）が style.css を 直す 仕事で ★まさに 起きる 形の 穴です。
+         ★ ★直し方：★verify が すでに 持って いる `visible()` を 通すだけ。
+           ★ `visible()` は ブラウザ自身の `checkVisibility()` を 聞く ので、
+           ★ ★★②（押せるもの）⑥（届くか）⑦（指の的）と **同じ ものさし** ＝ 二重帳簿に なりません。 */
+      return { lock: badgeShown('🔒'), crown: badgeShown('👑'), dir: badgeShown('ぎゃくまわり') };
     });
     if (!t16.lock)  ng.push('★★★縛り中なのに 🔒バッジが 出ません（★ルルの条件：バッジが 無いなら 縛りを 入れない）');
     if (!t16.crown) ng.push('★★★都落ちで ねらわれて いるのに 👑バッジが 出ません');
@@ -1310,13 +1331,33 @@
       return isMust44(b) && r.h < 44;
     });
 
-    /* ★⑯ 縛り・都落ちの バッジを 消す */
+    /* ★⑯ 縛り・都落ちの バッジを 消す（★DOMから 消す） */
     one('⑯', 'バッジを 消す', function () {
       DF.preset('all'); play(11, 1);
       S.lock = ['spades']; S.crown = 0; DF.render();
-      var before = ($('flagRow').textContent || '').indexOf('🔒') >= 0;
+      var before = badgeShown('🔒');
       $('flagRow').innerHTML = '';
-      var after = ($('flagRow').textContent || '').indexOf('🔒') >= 0;
+      var after = badgeShown('🔒');
+      DF.render();
+      return before && !after;
+    });
+
+    /* ★★⑯-2（T187・🎨アト）★★バッジを **CSSで 見えなく する**
+       ------------------------------------------------------------
+       ★ ★トライ T186 §5-2 が 見つけた すきま。★字は のこる ので、
+         ★ ★★まえの ⑯（textContent だけ）は **鳴りません** でした。
+       ★ ★★これは 私が style.css を さわる たびに 起こしうる 形なので、
+         ★ ★★「1回 直した」で 終わらせず ★見張りに 置いて おきます。
+       ★ ★どの 大きさでも 鳴ります（★画面の 向きも 回線も 使わない ―― トライ T181 の 注意）。 */
+    one('⑯-2', 'バッジを CSSで 見えなくする', function () {
+      DF.preset('all'); play(11, 1);
+      S.lock = ['spades']; S.crown = 0; DF.render();
+      var before = badgeShown('🔒');
+      var st = document.createElement('style');
+      st.textContent = '#flagRow .flag-lock{opacity:0;visibility:hidden}';
+      document.head.appendChild(st);
+      var after = badgeShown('🔒');
+      st.parentNode.removeChild(st);
       DF.render();
       return before && !after;
     });
