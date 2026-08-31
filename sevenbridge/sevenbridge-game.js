@@ -5,26 +5,41 @@
      ★ ここには 決まりが 1行も ありません（★点の 数え方も core が 返します）。
      ★ ＝ 数える 側（Node）と 遊ぶ 側（画面）が ズレようが ない。
 
-   ★★★ この 1本で いちばん 気を つけた 5つ（★ルル T173 §18「コーダへ」）★★★
+   ★★★★★ 2026-08-31・T180 ―― ★★この ファイルの いちばん 大事な 線が 動きました ★★★★★
      ------------------------------------------------------------
-     ① ★★★組・並びを **光らせない。さがして 見せない**（★★遊びの 21.6ポイント）★★★
-        ★ ★この ファイルには ★**`enumMelds` を 呼ぶ 行が 1つも ありません。**
-        ★ ★人が 3枚 えらぶ → ★機械は `makeMeld` で **たしかめる だけ**。
-        ★ ★★verify ⑬ が、画面側の 関数の 中身を 1行ずつ 走査します。
-     ② ★★付け札できる 札を **光らせない**（★七並べ 2026-08-24 裁定と 同じ 罪）
-        ★ ★運んで いる 間も、★落とせる 組を 1つも 光らせません。
-        ★ ★合えば 乗り、合わなければ 戻る ―― ★それだけ（★ソリティア・スパイダーと 同じ 形）。
-     ③ ★★「上がれます！」を 出さない（★設計図 追記② 違反）
-     ④ ★★札の すみに 点を 書く（★7＝0／A＝20／絵札＝10／JOKER＝50）
-        ★ ★★これで あそびかたが **4行 減りました**（★ルル §2-2）。
-        ★ ★書くのは ★**自分の 手札**と ★**すて札の 一番上** だけ ――
-          ★ ★点は「★手元に のこったら つく」もの。★★場に 出た 札は もう 点に ならない ので 書きません。
-     ⑤ ★★54枚を 遊ぶ前に まとめて 読む（★52枚 ＋ JOKER1 ＋ うら面。★足す絵 0枚）
+     ★ ★→ ★★設計図 §5.5「⚠️★★ 追記②の 例外：**セブンブリッジだけ『出せる組を さがして 光らせる』**」
+         （★2026-08-31・社長裁定）を ★★**必ず 先に 読んで ください**。
+     ★ ★★下に ある「①組・並びを 光らせない」は、★★この 1本だけ **外されました**。
+         ★ ★★`enumMelds` を 呼ぶ 行が 画面側に **あります**。★★それが 正しい 姿 です。
+     ⚠️★★★ **決まり違反だと 思って 直しに 来ないで ください。**
+         ★ ★社長は 代金（★遊びの 深さ **24.4 → 2.8ポイント**）を 読んだ うえで 決めて います。
+         ★ ★★この 例外は **セブンブリッジ 1本だけ**。★ほかの 18本に 広げない こと。
 
-   ★★ 強調は **1種類だけ**（設計図 §5.5）★★
-     ★ ★`.card.is-pick` … ★人が 押して えらんだ 札の わく。★★これ 1種類 です。
-     ★ ★暗くするのも、光らせるのも、点滅も ありません。
-     ★ ★（★`.is-no`＝ぷるっ・`.is-drag`＝運んで いる は **人の 指の 返事** なので 強調では ありません）
+   ★★ T180 で 社長から 来た 5つ ★★
+     ① ★★山からは **自動で** 引く（★人は 押さない）
+        ★ ★★ただし ―― ★★すて札が **すぐ つかえる** ときは **止まって 2択を 出します**（＝④）。
+        ★ ★★これが 無いと「すて札を もらう」が 丸ごと 消え、★勝率が **68.51% → 46.48%**
+          ★ ★（★−22.03ポイント）まで 落ちます【★実測・T180・6000試合・作業メモ §2】。
+        ★ ★★逆に「すぐ つかえる ときだけ」に しぼると **71.58%** ―― ★★代金は **0**（むしろ 上）。
+     ② ★★いま 出せる 札を **青いわく**で 囲う（`.card.is-play`）
+     ③ ★★2つの ボタン（★場に出す＝青／すてる）。★ドラッグも **残して あります**
+     ④ ★★すて札が つかえる ときは 止まって「もらう／そのまま」の 2択
+     ⑤ ★★押せない ボタンは **消さず 灰色**に する（★大富豪の「出す・パスする」が 手本）
+
+   ★★ この 1本で いちばん 気を つけた こと（★ルル T173 §18「コーダへ」から 生きて いる ぶん）★★
+     ★ ★★「上がれます！」「7は のこそう」は **いまも 出しません**
+        ―― ★T180 の 例外で ゆるされたのは「★★いま 出せるか どうか」だけ。★**得か 損かでは ありません**。
+     ★ ★★札の すみに 点を 書く（★7＝0／A＝20／絵札＝10／JOKER＝50。★ルル §2-2）
+     ★ ★★54枚を 遊ぶ前に まとめて 読む（★52枚 ＋ JOKER1 ＋ うら面。★足す絵 0枚）
+
+   ★★ 強調は **2種類**（★T180 で 1種類 増えました）★★
+     ★ ★`.card.is-play` … ★★青いわく ＝「いま 場に 出せる」（★機械が さがして 出します）
+     ★ ★`.card.is-pick` … ★ピンクのわく ＋ 持ち上げ ＝「人が 押して えらんだ」
+     ★ ★★色だけで 分けて いません（★青は 平ら・ピンクは 持ち上がる）。
+     ★ ★★青が 出るのは 1手番 あたり **0.51枚**、★**77.7% の 手番は 0枚**【実測・3000試合】――
+        ★ ★＝ ★ふだんの 画面は うるさく なって いません（★設計図 §5.5 の 心配ごと）。
+     ★ ★（★`.is-no`＝ぷるっ・`.is-drag`＝運んで いる・`.is-new`＝いま 引いた は
+        ★ ★**人の 指の 返事／出来事の 印**なので、★色を 足して いません）
 
    ★★ 測る ときの 決まり（★会社で 4回 かかった わな）★★
      ★ 動いて いる 途中を 測らない。★測る ときは .measuring を 付けて
@@ -55,6 +70,10 @@
         ★ ★★先に 言ったら、それは「教える」に なります。 */
   var SAY = {
     draw:    '山か すて札から 1枚 引こう！',
+    offer:   'すて札を もらう？ そのまま すすむ？',   /* ★ T180・④ の 2択（★どちらが 得かは 言いません）*/
+    drew:    '山から 1枚 引いたよ！',                /* ★ T180・① 自動で 引いた */
+    blue:    '青い わくの 札が 出せるよ！',           /* ★ T180・②⑤ ―― ★どれを 出すかは 人が 決めます */
+    pick1:   'どの 組に 足す？ 組を おしてね',        /* ★ 足せる 先が 2つ 以上 ある とき */
     play:    'さいごに 1枚 すてて、番を おわろう！',
     meld1:   'そろった！ やったね！',
     lay1:    '人の 組にも 足せたね！',
@@ -133,19 +152,29 @@
      ★ 部品
      ============================================================ */
   var titleScreen, playScreen, stageEl, cardsEl, zoneBots, scoreBand, feltTable;
-  var spotStock, spotDiscard, goWrap, btnGo, sayEl;
+  var spotStock, spotDiscard, btnGo, btnPass, sayEl;
   var resultWrap, resultBox, resultTitle, resultSay, resultScore, levelPickResult, btnNext;
   var botEl = [];
 
   var g = null, match = null, cardEl = {}, geo = null, built = false;
   var tblPos = [], pack = null;
   var busy = true, over = false, pressId = null, drag = null;
-  var picks = {};                              /* ★★ 人が 押して えらんだ 札（★おすすめは 1つも 入りません）*/
+  var picks = {};                              /* ★ 人が 押して えらんだ 札 */
+  /* ★★ T180 ―― ★機械が さがした「いま 出せる 札」（★設計図 追記②の 例外・2026-08-31）★★ */
+  var playSet = {};                            /* ★ 青いわくを 付ける 手札 */
+  var fitSet = [];                             /* ★ えらんだ 1枚を 足せる 場の 組の 番号 */
+  var newCard = -1;                            /* ★ いま 自動で 引いた 1枚（★人が 次に 何か したら 外れる）*/
+  var offerOn = false;                         /* ★ ④ の 2択が 出て いる */
   var rules = C.defaultRules();
   var rand = C.rng((Date.now() ^ 0x5bd1) | 0);
   var seedFixed = 0;
   var timers = [], sayTimer = 0;
   var toldMeld = false, toldLay = false;       /* ★ 場面2・3 は 1試合に 1回だけ */
+  /* ★★ T180・① ―― ★人の 番が 始まってから 自動で 引くまでの 間【★数字は ここ 1か所】★★
+     ★ ★★`sevenbridge-core.js` の TUNE は **1文字も さわって いません**（★決まりの ファイル だから）。
+     ★ ★★380ms ＝ ★「番が 回って きた」と 分かる ぎりぎり。★★手番は 1つも 増えて いません
+       ―― ★★前は ここで 人が **押して いた** ので、★時間は むしろ 減ります。 */
+  var AUTO_DRAW_MS = 380;
   var STORE = 'brage-sevenbridge-v1';
   var LV_STORE = 'brage-sevenbridge-lv';
 
@@ -318,8 +347,10 @@
     spotDiscard.style.left = geo.discardX + 'px';
     spotDiscard.style.top = geo.pileTop + 'px';
 
-    /* ★ 「出す」ボタン ―― ★台の 下ばしの まん中（★3枚 そろった ときだけ 出ます）*/
-    goWrap.style.top = (geo.feltTop + geo.feltH - 22) + 'px';
+    /* ★★ 2つの ボタン ―― ★山・すて札の 左右（★T180）★★
+       ★ ★★台の 上にも 手札の 上にも 置きません ―― ★かぶると verify ⑬ の
+         ★ ★「場の 組に 指が 届かない」／「手札の まん中を さして 当たらない」が 鳴ります。 */
+    layoutAct();
 
     /* ★★ たての 低い 画面（★横向き）は ハッピーの 帯を 出しません ――
        ★ ★ひとことだけを 台の 上ばしに 浮かべます（★ハーツ T167 と 同じ 形）。 */
@@ -385,6 +416,7 @@
     for (i = 0; i < g.hands[0].length; i++) putAt(g.hands[0][i], 'me', i, g.hands[0].length, 500 + i);
     if (instant) { void cardsEl.offsetWidth; cardsEl.classList.remove('no-move'); }
     refreshPick();
+    refreshPlay();
     refreshGo();
   }
   function putAt(c, where, i, n, z) {
@@ -477,12 +509,117 @@
   }
 
   /* ============================================================
-     ★★★ 強調は これ 1種類だけ ―― ★人が 押して えらんだ 札の わく ★★★
+     ★★★★ T180 ―― ★★「いま 場に 出せる 札」を **さがす** ★★★★
      ------------------------------------------------------------
+     ★ ★→ ★★設計図 §5.5「追記②の 例外」（2026-08-31・社長裁定）。
+       ★ ★★ここが、★ちょうど 1つ前の 形で **禁じられて いた** 場所 です。
+       ★ ★★`enumMelds` を 呼んで います。★★これで 合って います。★消さないで ください。
+
+     ★★ 「出せる」の 決め方 ―― ★★組みあわせ だけ で 決めます（★ロボットの 頭は 使いません）★★
+       ★ ★① 手札だけで 3枚以上の 組が 作れて、★すてる 1枚が のこる → ★その 組の 札 ぜんぶ
+       ★ ★② 場に 出て いる 組に 足せる（★手札が 2枚以上 ある とき）→ ★その 札
+     ⚠️★★ ★**「どれを 出すと 得か」は 1つも 返しません。**
+        ★ ★★ルルの 数え方（`planPlay`・`usefulness`）は ★★呼びません ―― ★それは「腕」であって
+          ★ ★「できる／できない」では ない から です。★★ここが 例外の **はし** です。
+     ============================================================ */
+  function playableSet() {
+    var out = {};
+    if (!g || over || g.cur !== 0 || g.phase !== 'play') return out;
+    var hand = g.hands[0], i, k;
+    /* ★ ① 手札だけで 作れる 組 */
+    var ms = C.enumMelds(hand);
+    for (i = 0; i < ms.length; i++) {
+      if (ms[i].cnt < 3) continue;
+      if (hand.length - ms[i].cnt < 1) continue;      /* ★ すてる 1枚が 要る（★決まり7）*/
+      for (k = 0; k < hand.length; k++) if (ms[i].mask & (1 << k)) out[hand[k]] = 1;
+    }
+    /* ★ ② 場の 組に 足せる 札 */
+    if (hand.length >= 2) {
+      for (i = 0; i < g.table.length; i++) {
+        for (k = 0; k < hand.length; k++) if (C.tableFits(g.table[i], hand[k])) out[hand[k]] = 1;
+      }
+    }
+    return out;
+  }
+  /* ★ その 1枚を 足せる 場の 組は どれか（★番号の ならび）*/
+  function fitMelds(card) {
+    var a = [];
+    if (!g || g.hands[0].length < 2) return a;
+    for (var i = 0; i < g.table.length; i++) if (C.tableFits(g.table[i], card)) a.push(i);
+    return a;
+  }
+  /* ★★ ④ ―― ★すて札の 一番上を もらったら、★★その 1枚が **すぐ つかえる** か ★★
+     ★ ★これが true の ときだけ 手が 止まり、★2択が 出ます。
+     ★ ★★false の ときは 山から 自動で 引きます（★社長指示①）。
+     ★ ★★止まる 回数【実測・T180・3000試合】：★引く 場面の **9.7%** ＝ ★1試合 **3.88回**。 */
+  function discardOffer() {
+    if (!g || over || g.cur !== 0 || g.phase !== 'draw') return false;
+    if (!g.discard.length) return false;
+    var c = g.discard[g.discard.length - 1], hand = g.hands[0], i;
+    /* ★ ② 場の 組に 足せる */
+    for (i = 0; i < g.table.length; i++) if (C.tableFits(g.table[i], c)) return true;
+    /* ★ ① その 1枚を 入れると 組が できる */
+    var h2 = hand.concat([c]);
+    var ms = C.enumMelds(h2);
+    for (i = 0; i < ms.length; i++) {
+      if (ms[i].cnt < 3) continue;
+      if (h2.length - ms[i].cnt < 1) continue;
+      if (ms[i].mask & (1 << (h2.length - 1))) return true;   /* ★ その 札を 使う 組 */
+    }
+    return false;
+  }
+
+  /* ============================================================
+     ★★ 青いわくを 盤に 付ける（★T180・社長指示②）★★
+     ★ ★手札 …「いま 出せる 札」／★場の 組 …「えらんだ 1枚を 足せる 組」
+     ★ ★すて札 …「もらえば すぐ つかえる 1枚」（★④ の とき だけ）
+     ============================================================ */
+  function refreshPlay() {
+    var all = cardsEl.querySelectorAll('.card.is-play'), i;
+    for (i = 0; i < all.length; i++) all[i].classList.remove('is-play');
+    spotDiscard.classList.remove('is-play');
+    playSet = {}; fitSet = [];
+    if (!g || over || busy) return;
+    if (g.cur !== 0) return;
+    if (g.phase === 'draw') {
+      if (offerOn) {
+        spotDiscard.classList.add('is-play');
+        var top = g.discard[g.discard.length - 1];
+        if (cardEl[top]) cardEl[top].classList.add('is-play');
+      }
+      return;
+    }
+    playSet = playableSet();
+    for (var k in playSet) if (playSet.hasOwnProperty(k)) {
+      var e = cardEl[+k];
+      if (e && e.where === 'me') e.classList.add('is-play');
+    }
+    /* ★ 1枚だけ えらんで いる ―― ★足せる 先の 組を 青く する */
+    var list = pickList();
+    if (list.length === 1) {
+      fitSet = fitMelds(list[0]);
+      for (i = 0; i < fitSet.length; i++) {
+        var m = g.table[fitSet[i]];
+        for (var j = 0; j < m.cards.length; j++) {
+          var te = cardEl[m.cards[j]];
+          if (te) te.classList.add('is-play');
+        }
+      }
+    }
+  }
+
+  /* ★ 「いま 引いた 1枚」の 持ち上げを 外す（★人が 次に 何か した 瞬間）*/
+  function clearNew() {
+    if (newCard < 0) return;
+    var e = cardEl[newCard];
+    if (e) e.classList.remove('is-new');
+    newCard = -1;
+  }
+
+  /* ============================================================
+     ★★ 人が 押して えらんだ 札の わく（★ピンク）★★
      ★ 設計図 追記④：★ピラミッドの「選ぶ → わく → 押す」と 同じ 形。
-     ★★ ここには **おすすめが 1つも ありません** ―― ★`picks` は 人が 押した 札 だけ。
-        ★ ★★`enumMelds`（＝ そろう 3枚を さがす）を **1度も 呼びません**。
-        ★ ★★verify ⑬ が この 関数を 1行ずつ 走査します。
+     ★ ★`picks` に 入るのは **人が 押した 札 だけ** です（★機械は 1枚も 入れません）。
      ============================================================ */
   function refreshPick() {
     var all = cardsEl.querySelectorAll('.card.is-pick'), i;
@@ -494,18 +631,59 @@
       if (e && e.where === 'me') e.classList.add('is-pick');
     }
   }
-  /* ★★ 「出す」ボタン ―― ★えらんだ 札が 組か どうかを **たしかめる だけ** ★★
-     ★ ★組に なって いれば 押せる。★なって いなければ 出ません（★押しても 何も 起きない ボタンを 置かない）。
-     ★ ★★「あと 1枚で そろうよ」の たぐいは 1文字も 出しません。 */
-  function refreshGo() {
-    var show = false;
-    if (g && !over && !busy && g.phase === 'play' && g.cur === 0) {
-      var list = pickList();
-      if (list.length >= 3 && g.hands[0].length - list.length >= 1) {
-        show = !!C.makeMeld(list, 0);
-      }
+  /* ============================================================
+     ★★★ 2つの ボタン（★T180・社長指示③④⑤）★★★
+     ------------------------------------------------------------
+     | ★いつ | ★左（白・btnPass） | ★右（★青・btnGo） |
+     |---|---|---|
+     | ★すて札が つかえる（④）| そのまま | ★もらう |
+     | ★出す 番 | すてる | ★場に出す |
+     ★ ★★押せない ときも **消しません** ―― ★灰色に して「いま 押せない」と 見せます（★社長指示⑤）。
+       ★ ★★これが 大富豪の「出す・パスする」と 同じ 形 です（★T116）。
+     ★ ★★「場に出す」が 押せる 条件は 2つ だけ：
+       ★ ★① えらんだ 札が **組に なって いる**（★`makeMeld` が たしかめる）
+       ★ ★② えらんだ **1枚** が 場の 組に **足せる**（★`tableFits` が たしかめる）
+     ============================================================ */
+  function goKind() {
+    if (!g || over || busy || g.cur !== 0) return null;
+    if (g.phase === 'draw') return offerOn ? { k: 'take' } : null;
+    if (g.phase !== 'play') return null;
+    var list = pickList();
+    if (list.length >= 3 && g.hands[0].length - list.length >= 1 && C.makeMeld(list, 0)) return { k: 'meld' };
+    if (list.length === 1) {
+      var f = fitMelds(list[0]);
+      if (f.length) return { k: 'lay', at: f };
     }
-    goWrap.classList.toggle('hidden', !show);
+    return null;
+  }
+  function refreshGo() {
+    var show = !!(g && !over && !busy && g.cur === 0 && (g.phase === 'play' || offerOn));
+    btnGo.classList.toggle('hidden', !show);
+    btnPass.classList.toggle('hidden', !show);
+    if (!show) return;
+    if (g.phase === 'draw') {
+      btnGo.textContent = 'もらう';
+      btnPass.textContent = 'そのまま';
+      btnGo.disabled = false;
+      btnPass.disabled = false;
+      return;
+    }
+    btnGo.textContent = '場に出す';
+    btnPass.textContent = 'すてる';
+    btnGo.disabled = !goKind();
+    btnPass.disabled = !(pickCount() === 1);
+  }
+  /* ★ ボタンの 置き場 ―― ★山・すて札の 左右（★台にも 手札にも かぶりません）*/
+  function layoutAct() {
+    var side = Math.max(0, geo.stockX - 4);                  /* ★ 左に あいて いる はば */
+    var w = Math.max(64, Math.min(150, side - 14));
+    var f = w >= 96 ? 15 : (w >= 78 ? 14 : 12.5);
+    setVar('--act-w', w + 'px');
+    setVar('--act-f', f + 'px');
+    setVar('--act-x', (geo.stockX - 14 - w) + 'px');          /* ★ 左（白）*/
+    setVar('--act-x2', (geo.discardX + geo.pw + 14) + 'px');  /* ★ 右（青）*/
+    setVar('--act-y', Math.round(geo.pileTop + (geo.ph - 46) / 2) + 'px');
+    geo.actW = w; geo.actF = f;
   }
 
   /* ★ ハッピーの ひとこと（★出しっぱなしに しない）*/
@@ -518,9 +696,18 @@
   }
   /* ★ 知らせが 消えた あと ―― ★人の 番なら「いま 何を する 番か」に 戻します
      ★ ★（★帯を 空に すると 壊れて 見えます。★ロボットの 番なら 消したまま）*/
+  /* ★★ T180・⑤ ―― ★「いま 何が できるか」を 1行で 出す ★★
+     ★ ★★出せる 札が ある ときだけ「青い わく」と 言います（★無い ときに 言うと うそに なる）。
+     ★ ★★どれを 出すと 得かは 1文字も 言いません（★例外の はしは「できる／できない」まで）。 */
+  function sayPlay() {
+    if (g && g.phase === 'play' && g.cur === 0) {
+      for (var k in playSet) if (playSet.hasOwnProperty(k)) return SAY.blue;
+    }
+    return SAY.play;
+  }
   function sayIdle() {
     if (g && !g.over && !over && g.cur === 0) {
-      sayEl.textContent = (g.phase === 'draw') ? SAY.draw : SAY.play;
+      sayEl.textContent = (g.phase === 'draw') ? (offerOn ? SAY.offer : SAY.draw) : sayPlay();
       sayEl.classList.remove('hidden');
       return;
     }
@@ -604,7 +791,8 @@
     clearTimers();
     over = false; busy = true; picks = {};
     toldMeld = false; toldLay = false;
-    goWrap.classList.add('hidden');
+    offerOn = false; newCard = -1; playSet = {}; fitSet = [];
+    btnGo.classList.add('hidden'); btnPass.classList.add('hidden');
     resultWrap.classList.add('hidden');
     var r = seedFixed ? C.rng((seedFixed + match.dealNo * 7919) | 0) : rand;
     g = C.makeGame(r, { rules: rules, dealNo: match.dealNo, startP: match.dealNo % 4 });
@@ -642,12 +830,24 @@
     if (g.over) { finishDeal(); return; }
     if (g.cur === 0) {
       busy = false;
-      /* ★★ 「いま 何を する 番か」は **出しっぱなし**に します（hold 0）★★
-         ★ ★§5.5 の「出しっぱなしに しない」は **知らせ**（起きた こと）の 話 です。
-         ★ ★★これは 帯が いつも 場所を 取って いる ところに 入る「いまの 番」の 1行 ――
-           ★ ★大富豪の `.status-line` と 同じ 立場 で、★消すと 帯が 空に なって 壊れて 見えます。
-         ★ ★★手を 教える 言葉は 1文字も 入って いません（★verify ⑫ が 毎回 走査します）。 */
-      say(g.phase === 'draw' ? SAY.draw : SAY.play, 0);
+      /* ★★★ T180・① ―― ★★山からは **自動で** 引きます ★★★
+         ★ ★★ただし ―― ★すて札が **すぐ つかえる** ときは 止まって 2択（④）。
+         ★ ★★「止まる 側」を 作らないと、★すて札を もらう 道が 丸ごと 消えて
+           ★ ★勝率が 68.51% → 46.48% に 落ちます【★実測・T180・6000試合】。 */
+      if (g.phase === 'draw') {
+        offerOn = discardOffer();
+        if (offerOn) {
+          say(SAY.offer, 0);
+          refreshPlay();
+          refreshGo();
+        } else {
+          refreshGo();
+          later(AUTO_DRAW_MS, function () { if (g && g.cur === 0 && g.phase === 'draw' && !over) autoDraw(); });
+        }
+        return;
+      }
+      say(sayPlay(), 0);
+      refreshPlay();
       refreshGo();
     } else {
       busy = true;
@@ -701,7 +901,7 @@
        ・★すてる … ★★人が すて札へ 運ぶ
      ★ ★★機械が 肩代わりして よい 側：★点を 数える・配る・山を 混ぜ直す・上がりの 判定。
      ============================================================ */
-  function humanDraw(from) {
+  function humanDraw(from, auto) {
     if (!g || busy || over || g.cur !== 0 || g.phase !== 'draw') return false;
     if (from === 'discard' && !g.discard.length) return false;
     var r = C.doDraw(g, from);
@@ -710,45 +910,104 @@
       return false;
     }
     busy = true;
+    offerOn = false;
+    /* ★★ T180・① ―― ★★引いた 1枚が 何だったかを **はっきり 見せます** ★★
+       ★ ★アイの ご注文：「★一瞬で 消さない」。
+       ★ ★★時間で 消さず、★★人が 次に 何か した 瞬間に 外します（★`clearNew`）。
+       ★ ★色は 足しません ―― ★**持ち上げる だけ**（★強調の 色を 3つに しない ため）。 */
+    clearNew();
+    newCard = r.card;
     rebuild();
+    if (cardEl[newCard]) cardEl[newCard].classList.add('is-new');
     warmFirst([C.nameOf(r.card)]);
     later(T.DRAW_MOVE, function () {
       busy = false;
-      say(SAY.play, 0);
+      refreshPlay();
+      /* ★ 自動で 引いた ときは「引いたよ」を 1秒 見せてから、★いつもの 1行に 戻します */
+      if (auto) say(SAY.drew, 1000); else say(sayPlay(), 0);
       refreshGo();
     });
     return true;
   }
+  /* ★★★ T180・① ―― ★★山から 自動で 1枚 引く ★★★
+     ★ ★★設計図 追記④「勝手に 引かない」を **社長指示で 上書き** した ところ です
+       （★設計図 §5.5「追記②の 例外」・2026-08-31）。
+     ★ ★★呼ばれるのは「★すて札が すぐ つかえない」ときだけ ＝ ★引く 場面の 90.3%【実測】。 */
+  function autoDraw() {
+    if (!g || over || g.cur !== 0 || g.phase !== 'draw') return;
+    busy = false;                                /* ★ humanDraw の 入口を 通す */
+    humanDraw('stock', true);
+  }
   function humanMeld() {
     if (!g || busy || over || g.cur !== 0 || g.phase !== 'play') return;
+    clearNew();
     var list = pickList();
     var r = C.doMeld(g, list);
     if (!r.ok) { refreshGo(); return; }
     picks = {};
     busy = true;
-    goWrap.classList.add('hidden');
+    btnGo.classList.add('hidden'); btnPass.classList.add('hidden');
     rebuild();
     if (!toldMeld) { toldMeld = true; say(SAY.meld1); }     /* ★ 場面2 ―― ★起きた あとで よろこぶ */
-    later(T.MELD_MOVE, function () { busy = false; refreshGo(); });
+    later(T.MELD_MOVE, function () { busy = false; refreshPlay(); refreshGo(); });
+  }
+  /* ★★★ T180・③ ―― ★「場に出す」ボタンが 押された ★★★
+     ★ ★① えらんだ 札が 組 → ★場へ 出す
+     ★ ★② えらんだ 1枚が 場の 組に 足せる → ★足す（★足せる 先が 2つ以上 なら 組を 押して もらう）
+     ★ ★★どちらに するかを 決めて いるのは **人が えらんだ 札** です（★機械は 場所を 探しません）。 */
+  function onGo() {
+    if (!g || busy || over || g.cur !== 0) return;
+    if (g.phase === 'draw') {                    /* ★ ④ すて札を もらう */
+      if (!offerOn) return;
+      clearNew();
+      if (!humanDraw('discard')) nope(btnGo);
+      return;
+    }
+    var k = goKind();
+    if (!k) return;
+    if (k.k === 'meld') { humanMeld(); return; }
+    if (k.k === 'lay') {
+      if (k.at.length === 1) { humanLayoff(pickList()[0], k.at[0]); return; }
+      /* ★ 足せる 先が 2つ 以上 ―― ★★どこに 足すかは **人が 決めます**（★青い 組を 押す）*/
+      say(SAY.pick1);
+    }
+  }
+  /* ★ 左の ボタン ―― ★「そのまま すすむ」／「すてる」 */
+  function onPass() {
+    if (!g || busy || over || g.cur !== 0) return;
+    clearNew();
+    if (g.phase === 'draw') {                    /* ★ ④ そのまま すすむ ＝ 山から 引く */
+      if (!offerOn) return;
+      offerOn = false;
+      refreshPlay(); refreshGo();
+      humanDraw('stock', true);
+      return;
+    }
+    var list = pickList();
+    if (list.length !== 1) return;
+    if (!humanDiscard(list[0])) nope(btnPass);
   }
   function humanLayoff(card, mi) {
     if (!g || busy || over || g.cur !== 0 || g.phase !== 'play') return false;
     var r = C.doLayoff(g, card, mi);
     if (!r.ok) return false;
+    clearNew();
     delete picks[card];
     busy = true;
     rebuild();
     if (!toldLay) { toldLay = true; say(SAY.lay1); }        /* ★ 場面3 ―― ★★この 動作に 気づく 唯一の 場面 */
-    later(T.LAY_MOVE, function () { busy = false; refreshGo(); });
+    later(T.LAY_MOVE, function () { busy = false; refreshPlay(); refreshGo(); });
     return true;
   }
   function humanDiscard(card) {
     if (!g || busy || over || g.cur !== 0 || g.phase !== 'play') return false;
     var r = C.doDiscard(g, card);
     if (!r.ok) return false;
+    clearNew();
     picks = {};
     busy = true;
-    goWrap.classList.add('hidden');
+    offerOn = false;
+    btnGo.classList.add('hidden'); btnPass.classList.add('hidden');
     rebuild();
     later(T.DISCARD_MOVE, function () {
       if (!g) return;
@@ -765,9 +1024,11 @@
   function togglePick(c, el) {
     if (!g || busy || over || g.cur !== 0) { nope(el); return; }
     if (g.phase !== 'play') { nope(el); return; }          /* ★ まだ 引いて いない */
+    clearNew();
     if (picks[c]) delete picks[c];
     else picks[c] = 1;
     refreshPick();
+    refreshPlay();
     refreshGo();
   }
 
@@ -778,8 +1039,8 @@
     if (over) return;
     if (!g || !g.over) return;
     over = true; busy = true;
-    picks = {};
-    refreshPick(); refreshGo();
+    picks = {}; offerOn = false;
+    clearNew(); refreshPick(); refreshPlay(); refreshGo();
     var pts = g.pts.slice();
     var before = match.total.slice();
     C.addDeal(match, pts);
@@ -959,6 +1220,20 @@
     }
     if (pid.card === undefined) { nope(pid.el); return; }
     if (t.card !== pid.card) { if (pid.el && pid.el.parentNode) nope(pid.el); return; }
+    /* ★★ T180 ―― ★1枚 えらんで いる ときに **青い 組**を 押したら 足す ★★
+       ★ ★★足せる 先が 2つ 以上 ある ときの 決め手 です（★どこに 足すかは 人が 決めます）。
+       ★ ★★ドラッグでも 同じ ことが できます（★残して あります）。 */
+    if (t.where === 'tbl') {
+      var one = pickList();
+      if (one.length === 1) {
+        for (var mi = 0; mi < g.table.length; mi++) {
+          if (g.table[mi].cards.indexOf(t.card) < 0) continue;
+          if (humanLayoff(one[0], mi)) return;
+          break;
+        }
+      }
+      nope(t); return;
+    }
     if (t.where !== 'me') { nope(t); return; }
     togglePick(pid.card, t);
   }
@@ -1017,7 +1292,8 @@
     stageEl.addEventListener('lostpointercapture', onCancel);
     stageEl.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     stageEl.addEventListener('dragstart', function (e) { e.preventDefault(); });
-    btnGo.addEventListener('click', humanMeld);
+    btnGo.addEventListener('click', onGo);
+    btnPass.addEventListener('click', onPass);
   }
   function start(resume) {
     var lv = match ? match.level : loadLevel();
@@ -1056,7 +1332,7 @@
     stageEl = $('stage'); cardsEl = $('cards');
     zoneBots = $('zoneBots'); scoreBand = $('scoreBand'); feltTable = $('feltTable');
     spotStock = $('spotStock'); spotDiscard = $('spotDiscard');
-    goWrap = $('goWrap'); btnGo = $('btnGo'); sayEl = $('say');
+    btnGo = $('btnGo'); btnPass = $('btnPass'); sayEl = $('say');
     resultWrap = $('resultWrap'); resultBox = $('resultBox');
     resultTitle = $('resultTitle'); resultSay = $('resultSay'); resultScore = $('resultScore');
     levelPickResult = $('levelPickResult'); btnNext = $('btnNext');
@@ -1127,7 +1403,7 @@
       '★いま 押せるか': (g && !g.over && !over && !busy && g.cur === 0) ? 'はい' : 'いいえ',
       '★自分の 手札': g ? handText(g.hands[0]) : '―',
       '★えらんで いる 札': a.length ? a.join(' ') : '（なし）',
-      '★★「出す」が 押せるか': goWrap && !goWrap.classList.contains('hidden') ? 'はい' : 'いいえ',
+      '★★「出す」が 押せるか': (btnGo && !btnGo.disabled) ? 'はい' : 'いいえ',
       '★場の 組': tableText(),
       '★場の 大きさ': g ? (g.table.length + '組 / ' + (function () {
         var n = 0; for (var k = 0; k < g.table.length; k++) n += C.meldLen(g.table[k]); return n;
@@ -1229,7 +1505,7 @@
      ============================================================ */
   /* ⚠️★ `.back` は **かならず .topbar で しぼる** こと ―― ★札の うら面の 絵も `img.back` です
      （★ページワン T152 で 60件の 誤りの もとに なりました）。 */
-  var TOUCH_SEL = '.topbar .back,.howto,.start-button,.sub-button,.dialog-ok,.close-dialog,.go-btn,.level-select';
+  var TOUCH_SEL = '.topbar .back,.howto,.start-button,.sub-button,.dialog-ok,.close-dialog,.act-btn,.level-select';
   function measureOnce() {
     var r = stageEl.getBoundingClientRect();
     var out = { over: 0, off: 0, offName: [], small: 0, outName: [],
@@ -1459,11 +1735,18 @@
         for (var i = 0; i < 53; i++) makeCard(i, false);
         var sc = SCENES[k % SCENES.length];
         makeScene(sc.c, 8, rd);
+        /* ★★★ T180 ―― ★★2つの ボタンを **出したまま** 測ります ★★★
+           ★ ★★ボタンは いつも 出て いる ように なりました（★社長指示⑤）。
+             ★ ★★かくして 測ったら、★「ボタンが 場の 組を かくして いる」を 1度も 見つけられません。
+           ★ ★★これが 会社で 5回 やった わな です（★T155・T168・T171・T174・ここ）。 */
+        busy = false; over = false;
+        g.cur = 0; g.phase = 'play'; g.over = false;
         if (k % 3 === 0 && g.hands[0].length >= 3) {
           picks[g.hands[0][0]] = 1; picks[g.hands[0][1]] = 1; picks[g.hands[0][2]] = 1;
         }
         rebuild();
         placeAll(true);
+        refreshGo();
         if (pack && pack.tight) tightN++;
         var m = measureOnce();
         if (m.over > worst) { worst = m.over; worstAt = sc.n + '：' + (m.outName[0] || ''); }
@@ -1659,7 +1942,8 @@
        ★ ★③ ★★**行を 走査**する（★画面側の 関数が `enumMelds` を 呼んで いないか）
      ============================================================ */
   function lineProbe() {
-    var out = { idleMarks: -1, dragMarks: -1, words: '―', sorted: '―', ok: 0, why: [] };
+    var out = { idleMarks: -1, dragMarks: -1, killMarks: -1, backMarks: -1, killRings: '―',
+                words: '―', sorted: '―', ok: 0, why: [] };
     if (!g || !cardsEl || !geo || !built) { out.why.push('★立ち上がって いない'); return out; }
     var snap = snapG();
     var kBusy = busy, kOver = over, kPicks = picks;
@@ -1669,17 +1953,36 @@
              ★★場の 組に ぴったり 足せる 1枚を **わざと 手札に 入れます**。
          ★ ★★それでも 印は 0個 で なければ なりません。 */
       busy = false; over = false; picks = {};
+      g.phase = 'play'; g.cur = 0; g.over = false;
       sayEl.classList.add('hidden');
       if (!makeScene([3, 4, 3, 5, 4], 8, C.rng(24680))) { out.why.push('★★試し方が おかしい：場面を 作れない'); return; }
       /* ★ 場の 1組目に 足せる 札を 1枚 手札へ（★53枚は 保った まま 入れかえ）*/
       var fit = bringFitFor(0);
       if (fit < 0) { out.why.push('★★試し方が おかしい：★足せる 札を 手札に 入れられなかった'); return; }
+      g.phase = 'play'; g.cur = 0;
       rebuild(); placeAll(true);
-      out.idleMarks = cardsEl.querySelectorAll('.card.is-pick,.card.is-no,.card.is-drag,.is-hint,.is-glow,.is-ok,.is-fit,.is-here,.is-set,.is-run,.is-match,.is-can').length;
-      if (out.idleMarks !== 0) {
-        out.why.push('★★★人が 1枚も 押して いない のに 印が ' + out.idleMarks + '個 付いて いる ' +
-                     '（★★そろう 3枚と 足せる 1枚を わざと 入れた 場面 です ―― ★設計図 追記② 違反）');
+      /* ★★★★ T180 ―― ★★ここは **向きが 逆に なりました** ★★★★
+         ★ ★前は「印が 0個 で ない と 鳴る」。★★いまは「★★0個 だったら 鳴る」。
+         ★ ★★場面には ★足せる 1枚（`fit`）を わざと 入れて あるので、★青いわくは
+           ★ ★★**必ず 1枚 以上** 出なければ なりません。 */
+      out.idleMarks = cardsEl.querySelectorAll('.card.is-play').length;
+      if (out.idleMarks < 1) {
+        out.why.push('★★★★足せる 1枚を わざと 手札に 入れたのに、★★青いわくが 1つも 出ません ' +
+                     '（★社長指示②・設計図 §5.5「追記②の 例外」2026-08-31 ―― ★★消さないで ください）');
       }
+      /* ★ ★「えらんで いないのに ピンクの わく」は いまも 出ては いけません */
+      var wrongPick = cardsEl.querySelectorAll('.card.is-pick').length;
+      if (wrongPick !== 0) {
+        out.why.push('★★★人が 1枚も 押して いない のに ピンクの わくが ' + wrongPick + '個 付いて います');
+      }
+      /* ★★ わざと 消して 鳴る ことを 見せる（★アイの ご注文・T180）★★ */
+      var kill = cardsEl.querySelectorAll('.card.is-play'), ki;
+      for (ki = 0; ki < kill.length; ki++) kill[ki].classList.remove('is-play');
+      out.killMarks = cardsEl.querySelectorAll('.card.is-play').length;
+      out.killRings = (out.killMarks === 0) ? '○ 剥がしたら 0個 ＝ 見張りは 鳴ります' : '★★✕ 剥がせない';
+      refreshPlay();
+      out.backMarks = cardsEl.querySelectorAll('.card.is-play').length;
+      if (out.backMarks < 1) out.why.push('★★★青いわくを 剥がしたら 戻って きません（★試し方が おかしい）');
       out.words = cardWords(cardsEl);
       if (out.words) out.why.push('★★札の 上に（点の 数字 いがいの）文字が ある：' + out.words);
       /* ★ 手札の ならびが「組が できる 順」に 並べかえられて いないか
@@ -1707,11 +2010,13 @@
         }
         el.dispatchEvent(mk('pointerdown', q.left + q.width / 2, q.top + q.height / 2));
         stageEl.dispatchEvent(mk('pointermove', tx, ty));
+        /* ★ 運んで いる 最中に **新しく** 光る ものが 出て いないか
+           ★ ★（★青いわくは 運ぶ 前から 出て います ―― ★ここで 数えるのは それ 以外）*/
         out.dragMarks = cardsEl.querySelectorAll('.is-hint,.is-glow,.is-ok,.is-fit,.is-here,.is-can,.is-target').length +
                         stageEl.querySelectorAll('.spot.is-hint,.spot.is-ok,.spot.is-can').length;
         if (out.dragMarks !== 0) {
-          out.why.push('★★★運んで いる 最中に「そこに 足せるよ」の 印が ' + out.dragMarks +
-                       '個 出て います（★★七並べ 2026-08-24 裁定と 同じ 罪）');
+          out.why.push('★★★運んで いる 最中に 新しい 印が ' + out.dragMarks +
+                       '個 出て います（★運びの 途中は 前と 同じ 線の まま です）');
         }
         stageEl.dispatchEvent(mk('pointercancel', tx, ty));
         onCancel({ pointerId: 3 });
@@ -1921,24 +2226,24 @@
 
       picks = {}; picks[set3[0]] = 1; picks[run3[0]] = 1; picks[other[0]] = 1;
       refreshGo();
-      out.bad = goWrap.classList.contains('hidden') ? '○ 出ない' : '★★✕ 出て しまう';
-      if (!goWrap.classList.contains('hidden')) {
+      out.bad = btnGo.disabled ? '○ 出ない' : '★★✕ 出て しまう';
+      if (!btnGo.disabled) {
         out.why.push('★★★そろって いない 3枚で「出す」が 押せます（★決まりが 効いて いません）');
       }
       picks = {}; picks[set3[0]] = 1; picks[set3[1]] = 1; picks[set3[2]] = 1;
       refreshGo();
-      out.set = goWrap.classList.contains('hidden') ? '★★✕ 出ない' : '○ 出る';
-      if (goWrap.classList.contains('hidden')) out.why.push('★★★同じ 数字 3枚で「出す」が 出ません');
+      out.set = btnGo.disabled ? '★★✕ 出ない' : '○ 出る';
+      if (btnGo.disabled) out.why.push('★★★同じ 数字 3枚で「出す」が 出ません');
       picks = {}; picks[run3[0]] = 1; picks[run3[1]] = 1; picks[run3[2]] = 1;
       refreshGo();
-      out.run = goWrap.classList.contains('hidden') ? '★★✕ 出ない' : '○ 出る';
-      if (goWrap.classList.contains('hidden')) out.why.push('★★★同じ マークの つづいた 数字 3枚で「出す」が 出ません');
+      out.run = btnGo.disabled ? '★★✕ 出ない' : '○ 出る';
+      if (btnGo.disabled) out.why.push('★★★同じ マークの つづいた 数字 3枚で「出す」が 出ません');
       /* ★ ④ 手札 ぜんぶ（★すてる 1枚が なくなる 出し方）*/
       g.hands[0] = set3.slice();
       picks = {}; picks[set3[0]] = 1; picks[set3[1]] = 1; picks[set3[2]] = 1;
       rebuild(); placeAll(true); refreshGo();
-      out.all = goWrap.classList.contains('hidden') ? '○ 出ない' : '★★✕ 出て しまう';
-      if (!goWrap.classList.contains('hidden')) {
+      out.all = btnGo.disabled ? '○ 出ない' : '★★✕ 出て しまう';
+      if (!btnGo.disabled) {
         out.why.push('★★★手札 ぜんぶを 出せて しまいます（★すてる 1枚が なくなり、手番が おわりません）');
       }
       /* ★ 本物の ボタンを 押して、★本当に 場へ 出るか */
@@ -2205,15 +2510,137 @@
     return out;
   }
 
+  /* ★★★ T182（🎨アト）★★ 青いわくが 札の「字」を 食べて いないか ★★★
+     ------------------------------------------------------------
+     ★ ★★なぜ 足したか【★T181 §4・トライ】：★★横向き スマホ（812×375・667×375）で、
+       ★ ★★青いわくが 札の 左上の **J・Q・K・10 の 字**を 上ぬり して 消して いました。
+       ★ ★★verify 28項目は **1つも 鳴りません でした** ―― ★どれも わくが「出て いるか」しか
+         ★ 見て いなかった から です。★★「出て いる」と「じゃま を して いない」は 別の こと でした。
+     ★ ★★組を 作るには 数字を 読む 必要が あります**（★J♠+J♥+J♦）。★横向きでは 札が
+       ★ 39px しか なく、★★左上の すみの 字が 唯一の 読み口 です ――
+       ★ ★★つまり 消えて いたのは 「★これから 使う 1枚」の 名前 でした。
+     ★ ★**2つの 目で 見ます**（★どちらか 1つでも こえたら 鳴る）：
+       ★ ★① ★★**わくの 太さ ÷ 札の はば ≦ 8%**（★設計は `--cw * .075` ＝ **7.5%**）
+         ★ ★★下限（`max(◯px, …)`）が 効いた ときだけ ここを こえます ―― ★つまり **原因**を 見ます。
+       ★ ★② ★★**札の 絵を 本当に 読んで**、★左上の 墨が わくの 下に 何% 入ったか ≦ 33%
+         ★ ★★canvas に 絵を 描いて 画素を 数えます ―― ★★computed style は 見ません
+           ★ ★（★コーダは 2回、★私は 1回、★トライは 1回、★★「computed style は 正しいのに
+             ★ 写真に 写らない／消えて いる」で 転んで います。★★絵を 読むのが いちばん 確か）。
+     ★ ★**3か所 ぜんぶ 見ます**：★手札（`--cw`）・★★場の札（`--tw`）・★すて札（`--pw`）。
+       ★ ★★T181 は 手札しか 見て いません でした。★★実際は **場の札が いちばん ひどく**（65.2%）、
+         ★ ★★すて札（★④の 2択で 読む 1枚）も 36.2% 食べられて いました【★実測・T182】。
+     ★ ★**戻すと 鳴る ことを 確かめて あります**（→ `logs/T182_青いわくの太さ_アト.md` §5）――
+       ★ ★★`max(4px` に 戻すと、★★320×480・320×568・667×375・812×375 で 鳴ります。
+     ⚠️★ ★絵が まだ 届いて いない 札は **数えません**（★空うち しない ため）。
+        ★ ★★1枚も 読めなかった ときは「読めません」と 書くだけ で、★★鳴らしません。 */
+  function eatProbe(face, cw, ch, bw, vis) {
+    var W = Math.max(2, Math.round(cw)), H = Math.max(2, Math.round(ch));
+    var cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var cx = cv.getContext('2d', { willReadFrequently: true });
+    if (!cx) return null;
+    try { cx.drawImage(face, 0, 0, W, H); } catch (e) { return null; }
+    /* ★ 左上の「字」の 箱 ―― ★見えて いる はば を こえない ように 切ります
+       ★ （★場の 札は 重なって 並ぶ ので、★見えて いるのは 左の ひとすじ だけ）*/
+    var bx = Math.max(2, Math.round(Math.min(vis || W, W * 0.34)));
+    var by = Math.max(2, Math.round(H * 0.24));
+    var d;
+    try { d = cx.getImageData(0, 0, bx, by).data; } catch (e) { return null; }  /* ★ 絵が 別の 家から 来て いたら 読めません */
+    var tot = 0, eat = 0, x, y, i;
+    for (y = 0; y < by; y++) {
+      for (x = 0; x < bx; x++) {
+        i = (y * bx + x) * 4;
+        if (d[i + 3] < 30) continue;                                 /* ★ すきとおって いる */
+        if (d[i] > 210 && d[i + 1] > 210 && d[i + 2] > 210) continue; /* ★ 白い 紙 */
+        tot++;
+        if (x < bw || y < bw) eat++;                                  /* ★ わくの 下に 入った 墨 */
+      }
+    }
+    return { tot: tot, eat: eat, pct: tot ? Math.round(eat / tot * 1000) / 10 : 0 };
+  }
+
+  function wakuProbe() {
+    var out = { rows: [], ratioMax: 0, why: [] };
+    if (!cardsEl) { out.why.push('★立ち上がって いない'); return out; }
+    var RATIO_NG = 8.0;
+    still(function () {
+      var kinds = [['手札', '', 'me'], ['場の札', ' is-tbl', 'tbl'], ['すて札', ' is-pile', 'discard']];
+      var all = [].slice.call(cardsEl.querySelectorAll('.card'));
+      for (var t = 0; t < kinds.length; t++) {
+        /* ★★ ① わくの 太さ ÷ 札の はば ―― ★★使い捨ての 札を 1枚 立てて 測る
+           ★ ★★なぜ 本物の 札を 使わない か【★私の 回り道①・T182】：
+             ★ ★はじめ 本物の 札から 測って いました。★★ところが verify は 配った 直後に 走る ので、
+               ★ ★★場には 組が 1つも 出て いません ―― ★★`場の札 ―― 読める 札が ありません` が
+                 ★ ★10サイズ とも 出て、★★場の札の わくを **1度も 見て いません でした**。
+             ★ ★★（★それは 見張りでは なく、★★見張って いる ふり です）
+           ★ ★→ ★画面の 外（left:-9999px）に 1枚 立てて、★CSS に 直に 聞きます。
+             ★ ★★盤が どんな 場面でも、★★かならず 3か所 とも 測れます。 */
+        var pr = document.createElement('div');
+        pr.className = 'card is-play' + kinds[t][1];
+        pr.style.cssText = 'left:-9999px;top:0;visibility:hidden;';
+        pr.innerHTML = '<div class="card-in"></div>';
+        cardsEl.appendChild(pr);
+        var w = pr.getBoundingClientRect().width;
+        var bw = parseFloat(getComputedStyle(pr.firstChild, '::after').borderTopWidth) || 0;
+        pr.parentNode.removeChild(pr);
+        if (!w) { out.rows.push(kinds[t][0] + ' ―― ★はばが 0'); continue; }
+        var ratio = Math.round(bw / w * 1000) / 10;
+        if (ratio > out.ratioMax) out.ratioMax = ratio;
+
+        /* ★★ ② 本物の 絵を 読んで、★左上の 墨が わくの 下に 何% 入ったか（★数字を 出すだけ）
+           ⚠️★★ ここは **鳴らしません**【★私の 回り道②・T182】――
+             ★ ★★はじめ「33% を こえたら NG」に して いました。★★きれいな ファイルで
+               ★ ★★10サイズ中 3サイズが 鳴りました（★空うち）。
+             ★ ★理由：★★この 数字は **どの 札が そこに あるか** で 大きく 動きます
+               ★ ★（★「10」の 字は「A」より はば が 広い。★同じ 375×812・同じ 太さ で
+                 ★ ★★21.4% と 34.3% の 両方が 出ました【★実測】）。
+             ★ ★★＝ ★★線を 引ける ほど 落ちついた 数字では ありません。
+           ★ ★★でも 消しません ―― ★①が 見て いるのは「太さ」で、★★こちらは
+             ★ ★★**本当に 字が 消えて いるか** そのもの です。★人が 読む ための 数字 として 残します。 */
+        var list = [], j;
+        for (j = 0; j < all.length; j++) if (all[j].where === kinds[t][2]) list.push(all[j]);
+        list.sort(function (a, b) { return a.getBoundingClientRect().left - b.getBoundingClientRect().left; });
+        var sum = 0, cnt = 0;
+        for (j = 0; j < list.length; j++) {
+          var e = list[j], f = e.faceImg;
+          if (!f || !f.complete || !f.naturalWidth || e.classList.contains('is-down')) continue;
+          var b = e.getBoundingClientRect();
+          if (!b.width) continue;
+          var vis = b.width, nx = list[j + 1];
+          if (nx) {
+            var q = nx.getBoundingClientRect();
+            if (Math.abs(q.top - b.top) < 2 && q.left > b.left) vis = Math.min(vis, q.left - b.left);
+          }
+          var ea = eatProbe(f, b.width, b.height, bw, vis);
+          if (ea && ea.tot >= 8) { sum += ea.pct; cnt++; }
+        }
+        out.rows.push(kinds[t][0] + ' ' + Math.round(w) + 'px → わく ' + (Math.round(bw * 10) / 10) +
+                      'px＝' + ratio + '%' +
+                      (cnt ? '・字が わくの 下 ' + (Math.round(sum / cnt * 10) / 10) + '%（' + cnt + '枚の 平均）'
+                           : '・（絵が まだ 出て いません）'));
+        if (ratio > RATIO_NG) {
+          out.why.push('★★★青いわくが 太すぎます ―― ★' + kinds[t][0] + 'で 札の はばの ' + ratio +
+                       '%（★設計は ' + (kinds[t][1] ? (kinds[t][1] === ' is-tbl' ? '--tw' : '--pw') : '--cw') +
+                       ' × .075 ＝ **7.5%**）。★★下限（`max(◯px, …)`）が 効いて います ―― ' +
+                       '★★札の 左上の 字（J・Q・K・10）を 上ぬり して 消します' +
+                       '【★T181 §4 で トライが 写真で 見つけ、★T182 で 数え直した もの】。' +
+                       '★→ ★`sevenbridge.css` の わくの 下限を **2px** に 戻して ください' +
+                       '（★★44px の 的は 1pxも 動きません。★`pointer-events:none` の 飾り です）');
+        }
+      }
+    });
+    return out;
+  }
+
   /* ============================================================
-     ★★★ verify ―― この 1本ならではの 見張り（24項目）★★★
+     ★★★ verify ―― この 1本ならではの 見張り（26項目）★★★
      ------------------------------------------------------------
        ①  決まりの 通り（★反則0・★札が いつも 53枚・★終わらない 0）
        ②  ★★★4回 配りの 直しが 生きて いる（★★わざと 1回配りに 戻して 鳴らす）
        ③  ★★つよさ 3段が はしごに なって いる（★わざと 弱い ものが 1つも ない）
        ④  ★★強調は **1種類だけ**（★光り 0個・★札に ぼかしの 影 0）
-       ⑤  ★★★★組・並びを 光らせて いない・さがして 見せて いない（★★この 1本の 生命線）
-       ⑥  ★★勝手に 出さない・勝手に 引かない・★付け札は 人が 運ぶ（★行を 走査）
+       ⑤  ★★★★T180 ―― ★★青いわくが **出て いるか**（★★向きが 逆に なりました）
+       ⑥  ★★勝手に **出さない**（★引くのは 自動に なりました。★すて札は 人が えらぶ）
        ⑦  ★選ばせるのは **つよさ 1つだけ**（★入口 0個・ルル §6-2）
        ⑧  ★寸法が 表どおり（★320×568 を 必ず 含む）
        ⑨  ★先読み 54枚・白い 札 0枚・JOKER2 を 読まない・裏面が 先頭
@@ -2225,6 +2652,10 @@
        ⑮  ★★運ぶ ―― ★合えば 乗り、合わなければ 戻り、すて札で 手番が おわる
        ⑯  ★★「出す」は 組の ときだけ 押せる（★そろって いない 3枚では 出ない）
        ⑰  ★★★点の 数字が 札の すみに あるか（★7＝0・A＝20）
+       ⑰-2 ★★T179 ―― ★点の まるが **となりの 札**に かくれて いないか（★面で 数える）
+       ⑰-3 ★★★T182 ―― ★★青いわくが **札の 字**を 食べて いないか
+            ★（★★鳴るのは ①わく ≦ 札の はばの 8.0%。★★手札・場の札・すて札 の 3か所 ぜんぶ
+            ★ ★②絵の 画素を 直に 読んだ「字が わくの 下 ◯%」は **数字を 出すだけ**・鳴りません）
        ⑱  ★しまう／続きから が 本当に 効くか
        ⑲  ★つよさの えらびが 2か所とも 押せる（★1回 おわりにも 出る）
        ⑳  ★勝ち負けの 画面が「誰が 勝ったか」を 言う（★「なぜ」は 言わない）
@@ -2232,6 +2663,8 @@
        ㉒  ★★★山も すて札も 空に なる 場面（★ルル §18 コーダ⑥ の ご注文）
        ㉓  ★★4回目が 終わるまで 合計を しまう（★ルル §18 コーダ⑦）
        ㉔  ★★手札は 8枚から 増えない（★決まりの 上で 増えようが ない ことを 数で 見る）
+       ㉕  ★★★★T180 の 5つが 出て いるか（★①自動で 引く ②青いわく ③2つの ボタン ④2択 ⑤灰色）
+       ㉕-2 ★★★わざと 青いわくを 剥がして、★見張りが 鳴る ことを その場で 見せる
      ============================================================ */
   function verify(n) {
     n = n || 600;
@@ -2307,13 +2740,14 @@
                            '（★ぜんぶ 気づいた人から 見た 勝率。★下がって いれば はしご）';
 
     /* ============================================================
-       ④ ★★強調は 1種類だけ（設計図 §5.5）★★
-       ★ ★この 1本の 強調は `.card.is-pick`（★人が 押して えらんだ 札の わく）だけ です。
+       ④ ★★強調は 2種類まで（★T180 で 1つ 増えました）★★
+       ★ ★`.card.is-play`（★★青いわく ＝ いま 出せる）と `.card.is-pick`（★えらんだ）の 2つ だけ。
+       ★ ★★3つ目を 足したら 鳴ります（★設計図 §5.5「1画面に 強調は 1種類まで」の 名残りの 線）。
        ============================================================ */
     var css = cssRulesText();
-    var lit = document.querySelectorAll('.is-win,.is-hint,.is-glow,.is-here,.is-ok,.is-fit,.is-can,.is-set,.is-run,.is-match,.is-target,.is-lead');
+    var lit = document.querySelectorAll('.is-win,.is-hint,.is-glow,.is-here,.is-ok,.is-fit,.is-can,.is-lead');
     if (lit.length) ng.push('★光って いる ものが ' + lit.length + '個 ある');
-    var litCss = css.match(/\.is-(win|hint|glow|here|ok|fit|can|set|run|match|target|lead)\b/g);
+    var litCss = css.match(/\.is-(win|hint|glow|here|ok|fit|can|lead)\b/g);
     if (litCss) ng.push('★★遊びの 情報を 出す 光りの 決まりが CSS に ある：' + litCss.join('・'));
     /* ★★ 札に「ぼかしの 影」＝ 光り を 書いて いないか
        ⚠️★ 文字あわせでは 見ません（★ブラウザが box-shadow を 書きなおすので、★色が 先頭に 来る）。
@@ -2332,57 +2766,109 @@
     });
     if (glowSel.length) ng.push('★★札に 光りが ある：' + glowSel.join('・'));
     if (!/\.card\.is-pick(?![\w-])/.test(css)) ng.push('★★「えらんだ 札に わく」決まりが CSS に 1行も 無い');
+    /* ★★★ T180 ―― ★★青いわくの 決まりが **ある** ことを 見張ります（★★前と 逆）★★★ */
+    if (!/\.card\.is-play(?![\w-])/.test(css)) {
+      ng.push('★★★★「出せる 札に 青いわく」の 決まりが CSS に 1行も ありません ' +
+              '（★設計図 §5.5「追記②の 例外」2026-08-31・社長指示② ―― ★消さないで ください）');
+    }
+    /* ★ 青いわくに transform が 付いて いないか（★重なりが 変わると ⑰-2 が こわれます）*/
+    cssRuleList().forEach(function (r) {
+      if (!/\.card\.is-play(?![\w-])/.test(r.sel)) return;
+      if (/transform:/.test(r.text)) {
+        ng.push('★★★`.card.is-play` に transform が あります（★となりの 札との 重なりが 変わり、' +
+                '★★点の まるが かくれます ―― ★verify ⑰-2）：' + r.sel);
+      }
+    });
     if (/\.card\.is-dim(?![\w-])/.test(css)) {
-      ng.push('★★「暗くする」決まりが CSS に あります ―― ★★この 1本の 強調は わく 1種類だけ です');
+      ng.push('★★「暗くする」決まりが CSS に あります ―― ★★この 1本の 強調は わく 2種類だけ です');
     }
     var bad4 = css.match(/\.(card|cards|spot|felt-table)[^{,]*:hover/g);
     if (bad4) ng.push('★札の 部品に 指を 置くと 変わる 決まりが ある：' + bad4.join('・'));
-    note['④ 強調'] = '光り ' + lit.length + '個／★わく（is-pick）' + (/\.card\.is-pick/.test(css) ? '○' : '★✕') +
+    note['④ 強調'] = '光り ' + lit.length + '個／★えらんだ わく（is-pick）' + (/\.card\.is-pick/.test(css) ? '○' : '★✕') +
+                     '／★★出せる 青いわく（is-play）' + (/\.card\.is-play/.test(css) ? '○' : '★✕') +
                      '／★ぼかしの 影 ' + glowSel.length + '件';
 
     /* ============================================================
-       ⑤ ★★★★組・並びを 光らせて いないか ―― ★★この 1本の 生命線 ★★★★
+       ⑤ ★★★★ 青いわくが **出て いるか** ―― ★★T180 で **向きが 逆に なりました** ★★★★
        ------------------------------------------------------------
-       ★ ルル §2-3：★「★組を 光らせたら、★★残るのは『押す』だけです。★★何も 残りません。」
-       ★ ★組を 見つける ＝ **21.6ポイント**。★このゲームで いちばん 重い 部品 です。
-       ★ ★2つの 目：★①本物の 場面で 印を 数える（lineProbe）★②行を 走査する
+       ★ ★→ ★★設計図 §5.5「追記②の 例外」（2026-08-31・社長裁定）。
+       ★ ★★前（T174）は「★光らせて いないか」を 数えて いました。★★いまは 逆 です ――
+         ★ ★★**光って いなかったら 鳴ります。**
+       ★ ★★アイの ご注文：「★わざと 消して 鳴る ことを 示して ください」。
+         ★ ★→ ★下の ㉕ が、★**本物の 青いわくを 剥がして 鳴る ことを その場で 見せます**。
+       ★ ★★ただし ―― ★★「どれを 出すと **得か**」は いまも 出しません（★例外の はし）。
+         ★ ★`planPlay`・`usefulness`・`botPlan` は 画面側から 1度も 呼びません。
        ============================================================ */
     var lnp = lineProbe();
     for (i = 0; i < lnp.why.length; i++) ng.push(lnp.why[i]);
-    /* ★ 行の 目 ―― ★★画面側の 関数が「さがす」道具を 呼んで いないか */
-    var drawSrc = String(refreshPick) + '\n' + String(refreshGo) + '\n' + String(placeAll) + '\n' +
+    /* ★★ 行の 目① ―― ★★「腕」を のぞく 道具は いまも 禁止 ★★
+       ★ ★`enumMelds`／`tableFits` は「できる／できない」を 数えあげる だけ ＝ ★★ゆるされた 側。
+       ★ ★`planPlay`／`usefulness`／`botPlan` は「どれが 得か」を 返す ＝ ★★禁じられた 側。 */
+    var drawSrc = String(refreshPick) + '\n' + String(refreshPlay) + '\n' + String(playableSet) + '\n' +
+                  String(fitMelds) + '\n' + String(discardOffer) + '\n' + String(refreshGo) + '\n' +
+                  String(goKind) + '\n' + String(sayPlay) + '\n' + String(placeAll) + '\n' +
                   String(putAt) + '\n' + String(makeCard) + '\n' + String(layoutTable) + '\n' +
                   String(spotOf) + '\n' + String(layout) + '\n' + String(rebuild) + '\n' + String(onMove);
-    var hunt = drawSrc.match(/enumMelds|planPlay|botPlan|usefulness|bestMeld|findMeld|hintOf/g);
+    var hunt = drawSrc.match(/planPlay|botPlan|usefulness|botDraw|botDiscard|botPlay/g);
     if (hunt) {
-      ng.push('★★★★画面が「そろう 3枚」を さがして います：' + hunt.join('・') +
-              '（★★設計図 追記② 違反 ―― ★遊びの 21.6ポイントを 奪います）');
+      ng.push('★★★★画面が「どれが **得か**」を のぞいて います：' + hunt.join('・') +
+              '（★★T180 の 例外で ゆるされたのは「出せるか どうか」だけ です ―― ★得か 損かでは ありません）');
     }
-    /* ★ ★運んで いる 最中に 落とし先を 調べて いないか（★調べたら 光らせられます）*/
+    /* ★★ 行の 目② ―― ★★「さがす」道具が **ちゃんと 呼ばれて いるか**（★★前と 逆）★★ */
+    if (String(playableSet).indexOf('enumMelds') < 0 || String(playableSet).indexOf('tableFits') < 0) {
+      ng.push('★★★★`playableSet` が 出せる 札を さがして いません（★enumMelds／tableFits が 無い）' +
+              ' ―― ★★社長指示② が 消えて います');
+    }
+    if (String(refreshPlay).indexOf('is-play') < 0) {
+      ng.push('★★★★`refreshPlay` が 青いわくを 付けて いません');
+    }
+    /* ★ ★運んで いる 最中に 落とし先を 調べて いないか（★ドラッグは 前の 形の まま 残して あります）*/
     if (/dropZone|tableFits/.test(String(onMove))) {
-      ng.push('★★★運んで いる 最中に 落とし先を 調べて います（★★そこから 光りが 生まれます）');
+      ng.push('★★★運んで いる 最中に 落とし先を 調べて います（★★運びの 途中は 前と 同じ 線の まま です）');
     }
     /* ★ ★「たしかめる」側は ちゃんと 通って いるか（★これが 無いと 見張りが 空うちに なる）*/
-    if (String(refreshGo).indexOf('makeMeld') < 0) {
+    if (String(goKind).indexOf('makeMeld') < 0) {
       ng.push('★★「出す」が 組を たしかめて いません（★試し方が おかしい か、機能が ありません）');
     }
-    note['⑤ ★★★線'] = '★何も 押して いない ときの 印 ' + lnp.idleMarks + '個（★そろう 3枚＋足せる 1枚を わざと 入れた 場面）' +
-                       '／★運んで いる 最中の 印 ' + lnp.dragMarks + '個／★さがす 行 ' + ((hunt || []).length) + '件／' + lnp.sorted;
+    note['⑤ ★★★青いわく'] = '★そろう 3枚＋足せる 1枚を わざと 入れた 場面の 青いわく ' + lnp.idleMarks + '個' +
+                       '（★★0個 だったら 鳴ります）／★運んで いる 最中の 印 ' + lnp.dragMarks +
+                       '個／★得を のぞく 行 ' + ((hunt || []).length) + '件／' + lnp.sorted;
 
     /* ============================================================
-       ⑥ ★★勝手に 出さない・勝手に 引かない（設計図 追記②④）★★
+       ⑥ ★★勝手に **出さない**（★T180 で「勝手に 引かない」だけ 外れました）★★
+       ------------------------------------------------------------
+       ★ ★★引く …… ★★自動に なりました（★社長指示①）。★★ただし **山からだけ** です。
+         ★ ★★「すて札を もらう」を 機械が 決めたら ―― ★★そこは 勝率 22.03ポイントの 判断 です
+           【★実測・T180・6000試合】。★★下の 見張りが それを 止めます。
+       ★ ★★出す・足す・すてる …… ★いまも **人だけ** です（★1つも 自動化して いません）。
        ============================================================ */
     var humanSrc = String(onDown) + '\n' + String(onUp) + '\n' + String(togglePick) + '\n' +
                    String(humanMeld) + '\n' + String(humanLayoff) + '\n' + String(humanDiscard) + '\n' +
-                   String(humanDraw);
-    var peek = humanSrc.match(/enumMelds|planPlay|botPlan|botDraw|botDiscard|botPlay/g);
+                   String(humanDraw) + '\n' + String(onGo) + '\n' + String(onPass);
+    var peek = humanSrc.match(/planPlay|botPlan|botDraw|botDiscard|botPlay|usefulness/g);
     if (peek) ng.push('★★★人の 手番で ロボットの 頭を 使って います：' + peek.join('・'));
     var auto = [];
     [['turnStart', turnStart], ['botStep', botStep], ['newDeal', newDeal], ['placeAll', placeAll],
-     ['rebuild', rebuild]].forEach(function (a) {
-      if (/humanMeld\s*\(|humanLayoff\s*\(|humanDiscard\s*\(|humanDraw\s*\(/.test(String(a[1]))) auto.push(a[0]);
+     ['rebuild', rebuild], ['autoDraw', autoDraw]].forEach(function (a) {
+      if (/humanMeld\s*\(|humanLayoff\s*\(|humanDiscard\s*\(/.test(String(a[1]))) auto.push(a[0]);
     });
-    if (auto.length) ng.push('★★人の ぶんを 勝手に 動かして いる 所が ある：' + auto.join('・'));
+    if (auto.length) ng.push('★★★人の ぶん（出す・足す・すてる）を 勝手に 動かして いる 所が ある：' + auto.join('・'));
+    /* ★★★ 自動で 引くのは **山からだけ**（★すて札を 機械が 勝手に もらったら 鳴ります）★★★ */
+    if (!/humanDraw\('stock'/.test(String(autoDraw))) {
+      ng.push('★★★自動で 引く ところが 山から 引いて いません（★試し方が おかしい）');
+    }
+    if (/humanDraw\(\s*'discard'/.test(String(autoDraw)) || /humanDraw\(\s*'discard'/.test(String(turnStart))) {
+      ng.push('★★★★機械が すて札を 勝手に もらって います ―― ★★これは 勝率 22.03ポイントの 判断 です' +
+              '（★実測・T180）。★★人に えらばせて ください（★社長指示④）');
+    }
+    /* ★★★ ④ の 止まりが 生きて いるか（★これが 死ぬと ①が「すて札を 消す」に 化けます）★★★ */
+    if (String(turnStart).indexOf('discardOffer') < 0) {
+      ng.push('★★★★人の 番に「すて札を もらうか」を 聞く ところが ありません（★社長指示④）' +
+              ' ―― ★★勝率が 68.51% → 46.48% に 落ちます【実測・T180】');
+    }
+    if (String(discardOffer).indexOf('tableFits') < 0 || String(discardOffer).indexOf('enumMelds') < 0) {
+      ng.push('★★★「すて札が つかえるか」を たしかめて いません');
+    }
     if (String(humanMeld).indexOf('pickList') < 0) ng.push('★★humanMeld が 人の えらんだ 札を 使って いない');
     if (String(humanLayoff).indexOf('doLayoff') < 0) ng.push('★humanLayoff が core を 通って いない');
     /* ★★ 付け札は **人が 運ぶ**（★設計図 追記④・ルル §2-2 の 3番）*/
@@ -2576,7 +3062,7 @@
     /* ⑯ ★★「出す」は 組の ときだけ */
     var gp = goProbe();
     for (i = 0; i < gp.why.length; i++) ng.push(gp.why[i]);
-    note['⑯ ★「出す」'] = 'そろって いない 3枚 ' + gp.bad + '／同じ 数字 ' + gp.set + '／つづいた 数字 ' + gp.run +
+    note['⑯ ★「場に出す」'] = 'そろって いない 3枚 ' + gp.bad + '／同じ 数字 ' + gp.set + '／つづいた 数字 ' + gp.run +
                           '／手札 ぜんぶ ' + gp.all + '／押したら ' + gp.played;
 
     /* ⑰ ★★★点の 数字が 札の すみに あるか */
@@ -2589,6 +3075,15 @@
     note['⑰-2 ★★となりに かくれて いないか'] =
         'かくれて いる ' + pp.hidden + '/' + pp.hand + '枚（★いちばん 深い もので ' + pp.hideMax + '%）' +
         (pp.hand ? '／★1枚ずつ ' + pp.hideList.join(',') + '%' : '');
+
+    /* ⑰-3 ★★★T182 ―― ★★青いわくが 札の「字」を 食べて いないか（★手札・場の札・すて札）
+       ★ ★★⑰-2 と 対に なって います：★⑰-2 は「となりの 札」に かくれて いないか、
+         ★ ★★⑰-3 は「★自分の 上に のった 青いわく」に 消されて いないか。 */
+    var wk = wakuProbe();
+    for (i = 0; i < wk.why.length; i++) ng.push(wk.why[i]);
+    note['⑰-3 ★★わくが 字を 食べて いないか'] =
+        wk.rows.join('／') + '（★鳴る 線：★★わく ≦ 札の はばの 8.0%。' +
+        '★「字が わくの 下 ◯%」は **読む ための 数字**で、★鳴りません ―― ★どの 札が そこに あるかで 動く ため）';
 
     /* ⑱ ★しまう／続きから */
     /* ⚠️★★ 見張りが 遊ぶ人の 設定を 書きかえて いました【★私の 失敗⑦】★★
@@ -2756,6 +3251,139 @@
     if (hm.handMax > 8) ng.push('★★★手札が ' + hm.handMax + '枚に なりました（★8枚 の はず・ルル §8-1）');
     if (C.FIT.HAND_N !== 8) ng.push('★寸法の 手札枚数が ' + C.FIT.HAND_N + '（★8 の はず）');
     note['㉔ 手札の 最大'] = hm.handMax + '枚（★' + hm.games + '試合・★決まりの 上で 増えようが ありません）';
+
+    /* ============================================================
+       ★★★★ ㉕ ―― ★★T180 の 5つが **本当に 出て いるか**（★向きは ぜんぶ 逆）★★★★
+       ------------------------------------------------------------
+       ★ ★→ ★★設計図 §5.5「追記②の 例外」（2026-08-31・社長裁定）。
+       ★ ★★アイの ご注文：「★わざと 消して 鳴る ことを 示して ください」。
+         ★ ★→ ★下の ㉕-2 は、★★本物の 青いわくを **剥がして 鳴らして みせて から** 戻します。
+       ★ ★見る 5つ：★①自動で 引く ★②青いわく ★③2つの ボタン ★④止まる 2択 ★⑤押せない 形
+       ============================================================ */
+    var t25 = { auto: '―', blue: '―', btn: '―', offer: '―', gray: '―', kill: '―', why: [] };
+    (function () {
+      var snap = snapG();
+      var kBusy = busy, kOver = over, kPicks = picks, kOffer = offerOn, kNew = newCard;
+      var tMark = timers.length;
+      var kSay = sayEl.classList.contains('hidden'), kSayTx = sayEl.textContent;
+      still(function () {
+        /* ── ② 青いわく ―― ★そろう 3枚を わざと 入れたら 3枚 以上 青に なるか ── */
+        restoreG(snap);
+        busy = false; over = false; picks = {}; offerOn = false;
+        g.cur = 0; g.phase = 'play'; g.over = false;
+        var set3 = [0 * 13 + 4, 1 * 13 + 4, 2 * 13 + 4];      /* ★ 5が 3枚 */
+        var other = [3 * 13 + 1, 3 * 13 + 9, 1 * 13 + 11];
+        var want = set3.concat(other), rest = [], i;
+        for (i = 0; i < 53; i++) if (want.indexOf(i) < 0) rest.push(i);
+        g.hands[0] = want.slice(); g.table = [];
+        g.hands[1] = rest.splice(0, 7); g.hands[2] = rest.splice(0, 7); g.hands[3] = rest.splice(0, 7);
+        g.discard = rest.splice(0, 2); g.stock = rest;
+        rebuild(); placeAll(true);
+        var blueN = cardsEl.querySelectorAll('.card.is-play').length;
+        t25.blue = blueN + '枚 青（★3枚 以上 の はず）';
+        if (blueN < 3) {
+          t25.why.push('★★★★そろう 3枚を わざと 入れたのに 青いわくが ' + blueN + '枚 しか 出ません' +
+                       '（★社長指示② ―― ★設計図 §5.5「追記②の 例外」2026-08-31）');
+        }
+        /* ★★ ㉕-2 ―― ★わざと 剥がして 鳴る ことを 見せる（★★見張りが 空うちして いない 証拠）★★ */
+        var kk = cardsEl.querySelectorAll('.card.is-play');
+        for (i = 0; i < kk.length; i++) kk[i].classList.remove('is-play');
+        var after = cardsEl.querySelectorAll('.card.is-play').length;
+        refreshPlay();
+        var back = cardsEl.querySelectorAll('.card.is-play').length;
+        t25.kill = '剥がすと ' + after + '枚（★見張りは ここで 鳴ります）→ 戻すと ' + back + '枚';
+        if (!(after === 0 && back >= 3)) {
+          t25.why.push('★★★青いわくを 剥がしても／戻しても 数が 変わりません（★試し方が おかしい）');
+        }
+        /* ── ③⑤ 2つの ボタン ―― ★出て いるか・押せない ときは 灰色か ── */
+        picks = {}; refreshPlay(); refreshGo();
+        var vis = !btnGo.classList.contains('hidden') && !btnPass.classList.contains('hidden');
+        t25.btn = vis ? '○ 2つ とも 出て いる' : '★★✕ 出て いない';
+        if (!vis) t25.why.push('★★★出す 番なのに ボタンが 出て いません（★社長指示③）');
+        var g0 = btnGo.disabled, p0 = btnPass.disabled;
+        picks = {}; picks[set3[0]] = 1; picks[set3[1]] = 1; picks[set3[2]] = 1;
+        refreshPlay(); refreshGo();
+        var g1 = btnGo.disabled;
+        picks = {}; picks[other[0]] = 1;
+        refreshPlay(); refreshGo();
+        var p1 = btnPass.disabled;
+        t25.gray = '何も えらばない：出す ' + (g0 ? '灰色' : '★押せる') + '／すてる ' + (p0 ? '灰色' : '★押せる') +
+                   '　組を えらぶ：出す ' + (g1 ? '★灰色' : '押せる') +
+                   '　1枚 えらぶ：すてる ' + (p1 ? '★灰色' : '押せる');
+        if (!g0 || !p0) t25.why.push('★★★何も えらんで いないのに ボタンが 押せます（★社長指示⑤）');
+        if (g1) t25.why.push('★★★組を えらんだのに「場に出す」が 押せません');
+        if (p1) t25.why.push('★★★1枚 えらんだのに「すてる」が 押せません');
+        if (!btnGo.classList.contains('hidden') && btnGo.disabled === undefined) {
+          t25.why.push('★★押せない ボタンが 消えて います（★★灰色で のこす のが 社長指示⑤）');
+        }
+        /* ── ①④ 自動で 引く／止まる 2択 ── */
+        restoreG(snap);
+        busy = false; over = false; picks = {}; offerOn = false;
+        g.cur = 0; g.phase = 'draw'; g.over = false;
+        /* ★★ すて札の 一番上を「ぜったい つかえない 1枚」に する ―― ★★自動で 引く はず ★★
+           ⚠️★★ ここは はじめ「山から 手札に 無い 1枚」を 適当に 乗せて いました【★私の 失敗④・T180】
+              ―― ★★たまたま つかえる 札が 乗ると 鳴る、★**気まぐれな 見張り** でした。
+              ★ ★実際に 812×375 で 1回 鳴り、★私が 気づきました。★★ここは 手で 組みます。
+           ★ ★手札 … マークも 数字も ばらばら（★組にも 並びにも ならない 5枚）
+           ★ ★すて札の 上 … ★4つ目の マークの 7（★手札に 同じ 数字も 同じ マークも ありません）
+           ★ ★場 … 空っぽ（★足せる 先が ありません） */
+        g.table = [];
+        var noHand = [0 * 13 + 0, 0 * 13 + 4, 0 * 13 + 8, 1 * 13 + 2, 2 * 13 + 10];
+        var noTop = 3 * 13 + 6;
+        var noRest = [], nz;
+        for (nz = 0; nz < 53; nz++) if (noHand.indexOf(nz) < 0 && nz !== noTop) noRest.push(nz);
+        g.hands[0] = noHand.slice();
+        g.hands[1] = noRest.splice(0, 7); g.hands[2] = noRest.splice(0, 7); g.hands[3] = noRest.splice(0, 7);
+        g.discard = [noTop]; g.stock = noRest;
+        var offA = discardOffer();
+        /* ★ こんどは「ぜったい つかえる 1枚」―― ★★止まる はず
+           ★ ★手札の 3枚組の うち 1枚を すて札の 上に 置くと、★のこり 2枚＋それで 組に なります */
+        restoreG(snap);
+        busy = false; over = false; picks = {}; offerOn = false;
+        g.cur = 0; g.phase = 'draw'; g.over = false;
+        g.table = [];
+        var w2 = set3.concat(other), rest2 = [], j;
+        for (j = 0; j < 53; j++) if (w2.indexOf(j) < 0) rest2.push(j);
+        g.hands[0] = [set3[0], set3[1]].concat(other);      /* ★ 5が 2枚 ＋ 3枚 */
+        g.hands[1] = rest2.splice(0, 7); g.hands[2] = rest2.splice(0, 7); g.hands[3] = rest2.splice(0, 7);
+        g.stock = rest2; g.discard = [set3[2]];             /* ★ すて札の 上 ＝ 3枚目の 5 */
+        var offB = discardOffer();
+        t25.offer = 'つかえない 1枚 → ' + (offA ? '★★✕ 止まる' : '○ 自動で 引く') +
+                    '　／つかえる 1枚 → ' + (offB ? '○ 止まって 2択' : '★★✕ 止まらない');
+        if (offA) t25.why.push('★★つかえない すて札でも 止まって います（★毎手番 聞かれます）');
+        if (!offB) {
+          t25.why.push('★★★★すて札が つかえる のに 止まりません（★社長指示④）―― ' +
+                       '★★これだと「すて札を もらう」が 消え、勝率が 68.51% → 46.48% に 落ちます【実測・T180】');
+        }
+        /* ★ 自動で 引く 道が つながって いるか（★本物の autoDraw を 通す）*/
+        restoreG(snap);
+        busy = false; over = false; picks = {}; offerOn = false;
+        g.cur = 0; g.phase = 'draw'; g.over = false;
+        var h0 = g.hands[0].length, s0 = g.stock.length;
+        autoDraw();
+        t25.auto = (g.hands[0].length === h0 + 1 && g.stock.length === s0 - 1 && g.phase === 'play')
+          ? '○ 山から 1枚 入った' : '★★✕ 引けない';
+        if (!(g.hands[0].length === h0 + 1 && g.phase === 'play')) {
+          t25.why.push('★★★自動で 引く ところが 動いて いません（★社長指示①）');
+        }
+        /* ★ 引いた 1枚が 見えて いるか（★一瞬で 消さない・アイの ご注文）*/
+        var newN = cardsEl.querySelectorAll('.card.is-new').length;
+        if (newN !== 1) t25.why.push('★★引いた 1枚の 印（is-new）が ' + newN + '個（★1個 の はず）');
+        t25.auto += '／★引いた 1枚の 印 ' + newN + '個';
+      });
+      for (var t = timers.length - 1; t >= tMark; t--) { clearTimeout(timers[t]); timers.splice(t, 1); }
+      picks = kPicks; offerOn = kOffer;
+      clearNew(); newCard = kNew;
+      restoreG(snap);
+      busy = kBusy; over = kOver;
+      sayEl.textContent = kSayTx;
+      if (kSay) sayEl.classList.add('hidden'); else sayEl.classList.remove('hidden');
+      if (g) { rebuild(); placeAll(true); refreshGo(); }
+    })();
+    for (i = 0; i < t25.why.length; i++) ng.push(t25.why[i]);
+    note['㉕ ★★T180 の 5つ'] = '①自動で 引く ' + t25.auto + '／②青いわく ' + t25.blue +
+                               '／③ボタン ' + t25.btn + '／④' + t25.offer + '／⑤' + t25.gray;
+    note['㉕-2 ★★わざと 消して 鳴らす'] = t25.kill + '（★' + lnp.killRings + '）';
 
     /* ★ さわった ものを 戻す（★ハッピーの ひとこと・★1回だけの 知らせの ふだ）*/
     if (sayTimer) { clearTimeout(sayTimer); sayTimer = 0; }
