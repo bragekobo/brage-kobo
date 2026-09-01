@@ -62,7 +62,8 @@
   function withRandom(s, fn) {
     var keep = Math.random, r = rng(s);
     Math.random = r;
-    try { return fn(); } finally { Math.random = keep; }
+    if (busyRun) busyRun.add(function () { if (Math.random === r) Math.random = keep; });
+    try { return fn(); } finally { if (Math.random === r) Math.random = keep; }
   }
 
   /* ★★ 時計を 借りる ―― ★★ゲームの ながれは ぜんぶ `later()`＝`window.setTimeout` を 通ります。
@@ -70,30 +71,117 @@
      ★ ★★これが 大事な ところ：★決まりを 2か所に 書かない（★写しの エンジンを 作らない）。
        ★ ★写しを 作ると、★写しの 中の 決まりしか 見張れません。 */
   var vq = null, vseq = 0, vnow = 0, vErr = [];
+  /* ★ いま 借りて いる 箱に、まだ 仕事が 残って いるか */
+  function clockPending() { var b = clocks.length ? clocks[clocks.length - 1] : null; return !!(b && b.q.length); }
+
+  /* ★★★ 借りた ものを 返す 綱（★T188 ①）★★★
+     ------------------------------------------------------------
+     ⚠️★★ 私は ここを 落として いました【★私の 失敗⑪】。
+        ★ ★秘書アイが verify を **45秒で 打ち切った** あと、★次に 遊んだ ときに
+          ★ ★★遊びの 中（game.js の おしらせ）から こう 出ました：
+          ★ ★★`TypeError: Cannot read properties of null (reading 'push') at root.setTimeout`
+        ★ ★★＝ ★時計を 借りたまま 返さずに 終わって いた。
+        ★ ★★こわいのは、★あとから 読む 人が「★大富豪の game.js が こわれて いる」と 思う ことです。
+          ★ ★★こわして いたのは 見張りの ほう でした。
+     ★ ★★直しは 3つ 重ねます（★1つでも 通れば 遊びは 助かる）：
+       ★ ①★借りて いない ときは **本物へ そのまま 流す**（★null に 書きに 行かない）
+       ★ ②★終わり わすれを 見つけたら **その場で 返す**
+       ★ ③★★本物の 時計で 60秒の 見はりを 立て、★打ち切られても かならず 返す
+     ============================================================ */
+  var realSetTimeout = root.setTimeout, realClearTimeout = root.clearTimeout;
+  var busyRun = null;                     /* いま 走って いる 仕事（★中身は 返し方）*/
+
+  /* ⚠️★★ 箱は **借りるたびに 1つ**（★積み木に する）【★私の 失敗⑬ ＝ 秘書アイが 踏んだ もの】。
+     ★ ★はじめ 箱（`vq`）を **1つだけ** 持って いました。★見張りの 中で
+       ★ ★★時計を **入れ子で** 借りる ところが あり（⑬ の 8切りしらべ）、
+         ★ ★★内がわが 終わる とき `vq = null` に して、★外がわが まだ 使って いる 箱を 消して いました。
+     ★ ★★すると 外がわの setTimeout が `null.push` で こけます ―― ★秘書アイが 見た これ：
+       ★ ★★`TypeError: Cannot read properties of null (reading 'push') at showFlash (game.js)`
+     ★ ★★＝ ★遊びの 中で こけて 見えますが、★★こわして いたのは 見張りの ほうです。 */
+  var clocks = [];
   function clockOn() {
-    var realS = root.setTimeout, realC = root.clearTimeout;
-    vq = []; vseq = 0; vnow = 0;
-    root.setTimeout = function (f, ms) {
-      var id = ++vseq;
-      vq.push({ id: id, f: f, t: vnow + (ms || 0), s: vseq });
+    var realS = realSetTimeout, realC = realClearTimeout;
+    var box = { q: [], seq: 0, now: 0 };
+    clocks.push(box);
+    vq = box.q; vseq = 0; vnow = 0;
+    var mine;
+    mine = function (f, ms) {
+      var top = clocks.length ? clocks[clocks.length - 1] : null;
+      /* ★ 借りて いない のに 呼ばれたら、★本物へ 流す（★ここが 遊びを 助ける 1行）*/
+      if (!top) { if (root.setTimeout === mine) root.setTimeout = realS; return realS.call(root, f, ms); }
+      var id = ++top.seq;
+      top.q.push({ id: id, f: f, t: top.now + (ms || 0), s: top.seq });
       return id;
     };
+    root.setTimeout = mine;
     root.clearTimeout = function (id) {
-      if (!vq) return realC.call(root, id);
-      for (var i = 0; i < vq.length; i++) if (vq[i].id === id) { vq.splice(i, 1); return; }
+      var top = clocks.length ? clocks[clocks.length - 1] : null;
+      if (!top) return realC.call(root, id);
+      for (var i = 0; i < top.q.length; i++) if (top.q[i].id === id) { top.q.splice(i, 1); return; }
+      return realC.call(root, id);
     };
-    return function off() { root.setTimeout = realS; root.clearTimeout = realC; vq = null; };
+    var done = false;
+    return function off() {
+      if (done) return;                   /* ★ 2回 呼ばれても 平気 */
+      done = true;
+      var at = clocks.indexOf(box);
+      if (at >= 0) clocks.splice(at, 1);
+      if (!clocks.length) {
+        if (root.setTimeout === mine) root.setTimeout = realS;
+        root.clearTimeout = realC;
+        vq = null;
+      } else {
+        vq = clocks[clocks.length - 1].q;  /* ★ 外がわの 箱に 戻す */
+      }
+    };
+  }
+
+  /* ★★ ③ 走る 前に かならず これで つつむ ―― ★打ち切られても 60秒後に ぜんぶ 返る。 */
+  var runDepth = 0;
+  function guarded(fn) {
+    /* ★ 入れ子（verify の 中から autoPlay）なら、★外の 綱を そのまま 使う */
+    if (runDepth > 0 && busyRun) return fn(busyRun);
+    /* ★★ 前の 走りが 打ち切られた まま 残って いたら、★先に ぜんぶ 返す */
+    var api = beginGuard();
+    runDepth++;
+    try { return fn(api); } finally { runDepth--; api.release(); }
+  }
+  /* ★ 綱を 張るだけ（★release を 呼ぶまで 続く。★60秒たてば ひとりでに 返る）*/
+  function beginGuard() {
+    if (busyRun) busyRun.release();
+    var undo = [], watchdog = 0;
+    var api = {
+      add: function (f) { undo.push(f); },
+      release: function () {
+        if (watchdog) { realClearTimeout.call(root, watchdog); watchdog = 0; }
+        while (undo.length) { try { undo.pop()(); } catch (e) {} }
+        try { liveDrop(); } catch (e) {}   /* ★★ 走って いる 間に たまった ぶんは 捨てる */
+        if (busyRun === api) busyRun = null;
+      }
+    };
+    busyRun = api;
+    watchdog = realSetTimeout.call(root, function () {
+      if (root.console) console.warn('[大富豪] ★見張りが 途中で 止まりました。★借りた ものを 返します。');
+      api.release();
+    }, 60000);
+    return api;
+  }
+  /* ★ 外に 出す ものは ぜんぶ この 綱を 通す */
+  function wrap(fn) {
+    return function () { var a = arguments, me = this; return guarded(function () { return fn.apply(me, a); }); };
   }
   /* ★ たまって いる ものを 早い順に 全部 走らせる。★1件ずつ 例外を 拾う。 */
   function pump(limit) {
     var n = 0;
-    while (vq && vq.length && n++ < (limit || 4000)) {
+    var box = clocks.length ? clocks[clocks.length - 1] : null;
+    if (!box) return 0;
+    while (box.q.length && n++ < (limit || 4000)) {
       var b = 0;
-      for (var i = 1; i < vq.length; i++) {
-        if (vq[i].t < vq[b].t || (vq[i].t === vq[b].t && vq[i].s < vq[b].s)) b = i;
+      for (var i = 1; i < box.q.length; i++) {
+        if (box.q[i].t < box.q[b].t || (box.q[i].t === box.q[b].t && box.q[i].s < box.q[b].s)) b = i;
       }
-      var job = vq.splice(b, 1)[0];
-      vnow = job.t;
+      var job = box.q.splice(b, 1)[0];
+      box.now = job.t; vnow = job.t;
       try { job.f(); } catch (e) { vErr.push(String(e && e.message || e)); }
     }
     return n;
@@ -246,6 +334,95 @@
        ★ ＝ ★★「その 札が 画面に 現れた しゅんかん、絵は もう 手元に あったか」。
      ★ ★★白い札（絵も 文字の 仮の札も 見えない）も 同時に 数えます。
      ============================================================ */
+  /* ============================================================
+     ★★★ 実時間の 見はり ―― ★★「人が 見られる ところ」で 数える（T190 で 入れ直し）
+     ------------------------------------------------------------
+     ⚠️★★ 私は ここを まちがえて いました【★私の 失敗⑭・★秘書アイが 見つけた もの】。
+        ★ ★T184〜T188 の ③ は、★★**早送りの 走りの 中**で `img.complete` を 見て いました。
+        ★ ★★【実測・T190】★verify の 5.60秒の あいだ、★画面が 描かれた 回数は ―― ★★**0回**。
+          ★ ★（★ふだんは 1秒に 61回）★★＝ ★あの 844枚は **1枚も 人の 目に 入りません**。
+        ★ ★★あそこで `complete` が 立つか どうかは、★ブラウザの 中の 覚え方しだい ――
+          ★ ★私の 機械では 0/844、★秘書アイの 機械では 251/844。★★同じ 遊び・同じ 試合 なのに。
+     ★ ★★だから ―― ★★数える 場所を「★画面が 動いて いる 実時間」に 移しました。
+       ★ ★見るのは ★**1コマ後（次に 描かれる とき）に まだ 絵が 無いか**。
+         ★ ★★それが「★人が 2段階を 見た」の 本当の 定義です（★T120 と 同じ 数え方）。
+     ============================================================ */
+  var live = { n: 0, sugu: 0, koma: 0, shiro: 0, who: [] };
+  var liveObs = null;
+  /* ★★ 見張りが 作った ぶんを 捨てる ―― ★★これを 忘れると 自分の 早送りを 数えます【私の 失敗⑮】。
+     ★ ★`busyRun` を 見るだけでは 足りません：★MutationObserver の 呼び出しは **あとから** 来るので、
+       ★ ★★その ころには 走りは もう 終わって いて、★★2万枚 ぜんぶ 数えて しまいました。
+     ★ ★★だから「★走りが 終わる とき、たまって いる ぶんを 捨てる」を 足します。 */
+  function liveDrop() { if (liveObs) liveObs.takeRecords(); }
+
+  function watchLive() {
+    var box = $('field');
+    if (!box || typeof MutationObserver !== 'function') return;
+    liveObs = new MutationObserver(function (recs) {
+      /* ★★ 見張りが 早送りで 走って いる あいだは 数えない ―― ★画面が 止まって いるので */
+      if (busyRun) return;
+      for (var r = 0; r < recs.length; r++) {
+        var add = recs[r].addedNodes;
+        for (var i = 0; i < add.length; i++) {
+          var el = add[i];
+          if (!el || !el.querySelectorAll) continue;
+          /* ★ 見張りが わざと 置いた 札は 数えない（★③-3 の ためし札）*/
+          if (el.getAttribute && el.getAttribute('data-dfv')) continue;
+          var imgs = (el.matches && el.matches('.card')) ? [el.querySelector('img.face-img')] : el.querySelectorAll('img.face-img');
+          for (var j = 0; j < imgs.length; j++) {
+            var im = imgs[j];
+            if (!im) continue;
+            live.n++;
+            if (im.complete && im.naturalWidth > 0) continue;
+            live.sugu++;
+            (function (im2, card) {
+              requestAnimationFrame(function () {
+                if (im2.complete && im2.naturalWidth > 0) return;   /* ★描かれる ころには 絵が あった */
+                /* ⚠️★★ もう 画面から 消えて いる 札は 数えない【私の 失敗⑰】。
+                   ★ ★`#field` は 1試合に 173回 まるごと 作り直されます（★T120 §3-3【実測】）。
+                     ★ ★★1コマ後には その 札は もう 外れて いる ことが あり、
+                       ★ ★★外れた 札は 大きさ 0 ―― ★それを「白い札」と 数えて 27件 うそを 言いました。 */
+                if (!card || !document.contains(card)) return;
+                live.koma++;
+                var fb = card.querySelector ? card.querySelector('.fallback') : null;
+                var seen = !!(fb && getComputedStyle(fb).display !== 'none' && fb.getBoundingClientRect().width > 0.5);
+                if (!seen) live.shiro++;
+                if (live.who.length < 5) live.who.push((card && card.getAttribute && card.getAttribute('aria-label')) || '?');
+              });
+            })(im, el.closest ? el.closest('.card') : null);
+          }
+        }
+      }
+    });
+    liveObs.observe(box, { childList: true, subtree: true });
+  }
+
+  /* ★★ 決まりで 見る ぶん（★機械しだいで 変わらない・★これは かならず 鳴らせます）
+     ★ ★T120 の 故障の 正体は「★出す 札の 絵を 先読みの 名簿に 入れて いない」でした。
+       ★ ★★それは 実時間を 待たずに、★名簿と 画面を 突き合わせれば 分かります。 */
+  function warmCheck() {
+    var w = DF.warm ? DF.warm() : null;
+    var out = { total: w ? w['ぜんぶ'] : -1, done: w ? w['読み終えた'] : -1, usable: w ? w['絵が使える'] : -1,
+                unknown: [], seen: 0 };
+    var names = {};
+    if (DF.card) {
+      /* ★ 54枚の 名簿を 作る（★game.js の createDeck と 同じ 出どころ）*/
+      var keys = deckKeys();
+      for (var i = 0; i < keys.length; i++) {
+        var c = DF.card(keys[i]);
+        if (c) names[c.file] = 1;
+      }
+    }
+    var imgs = document.querySelectorAll('#field img.face-img,#hand img.face-img');
+    for (var k = 0; k < imgs.length; k++) {
+      out.seen++;
+      var src = imgs[k].getAttribute('src') || '';
+      var file = decodeURIComponent(src.split('/').pop().replace(/\.png.*$/, ''));
+      if (!names[file] && out.unknown.indexOf(file) < 0) out.unknown.push(file);
+    }
+    return out;
+  }
+
   function scanImgs(root2) {
     var out = { n: 0, notReady: 0, white: 0, who: [] };
     var cards = root2.querySelectorAll('.card');
@@ -392,7 +569,7 @@
       if (watch) watch(st);
       var r = humanStep(policy);
       if (r === 'stuck') { st.stuck++; break; }
-      if (r === 'wait' && vq && !vq.length) { st.frozen++; break; }   /* ★★誰の 番でも なくなった */
+      if (r === 'wait' && !clockPending()) { st.frozen++; break; }   /* ★★誰の 番でも なくなった */
       pump();
       if (S.players[0].cards.length === last && r === 'nomove') { st.nomove++; break; }
       last = S.players[0].cards.length;
@@ -433,14 +610,27 @@
     ensureStyle();
     if (fast) h.classList.add('dfv-fast');
     var off = clockOn();
+    /* ★★ 借りた ものを ぜんぶ 綱に つなぐ（★打ち切られても 返る）*/
+    if (busyRun) {
+      busyRun.add(off);
+      busyRun.add(function () { if (fast) h.classList.remove('dfv-fast'); });
+      busyRun.add(function () { uiOn = keepUi; });
+    }
     vErr = [];
     /* ★★ どの ルールが 何回 出たか（★T94：4つの ルールが 60試合 ねむって いた）
        ★ ★のぞきあな（DF.hook）は game.js が 前から 持って いる ―― ★私は 何も 足しません。 */
     var keepHook = DF.hook.rule;
     DF.hook.rule = function (id) { st.fired[id] = (st.fired[id] || 0) + 1; };
+    /* ⚠️★★ 走って いる あいだ ONだった ルールを **その場で** 控える【★私の 失敗⑫】。
+       ★ ★はじめ これを **finally の あと**で 数えて いました。★finally は 元の ルール（ふつう・4個）に
+         ★ 戻して しまう ので、★★⑲は いつも「ふつうの 4個」だけを 見て いて、
+           ★ ★★どの 打ち方でも「ねむった ルールは 無い」と **黙って いました**。
+       ★ ★★鳴りすぎる 見張りより、★黙る 見張りの ほうが こわい ―― ★アト（T182）の 言うとおりでした。 */
+    var onIds = [];
     try {
       withRandom(opt.seed || seedFixed || 20260831, function () {
         DF.preset(preset);
+        onIds = DF.RULES.filter(function (r) { return S.ruleOn[r.id]; }).map(function (r) { return r.id; });
         DF.start(false);
         pump();
         for (var i = 0; i < n; i++) playOne(policy, opt.watch, st);
@@ -470,8 +660,11 @@
       '★人が1位': (st.games ? (st.win / st.games * 100).toFixed(2) : '―') + '%（★五分 25.00%）',
       '★人の⭐平均': (st.games ? (st.pts / st.games).toFixed(2) : '―'),
       '★例外（画面の中で投げられたもの）': vErr.length + '件' + (vErr.length ? '（' + vErr.slice(0, 3).join('／') + '）' : ''),
-      '★★出たルール': DF.RULES.map(function (r) { return r.name + ' ' + (st.fired[r.id] || 0); }).join('／'),
-      '★★一度も出なかったルール': DF.RULES.filter(function (r) { return S.ruleOn[r.id] && !st.fired[r.id]; }).map(function (r) { return r.name; }),
+      '★★出たルール': DF.RULES.filter(function (r) { return onIds.indexOf(r.id) >= 0; })
+        .map(function (r) { return r.name + ' ' + (st.fired[r.id] || 0); }).join('／'),
+      '★★一度も出なかったルール': DF.RULES.filter(function (r) { return onIds.indexOf(r.id) >= 0 && !st.fired[r.id]; })
+        .map(function (r) { return r.name; }),
+      '★ONだったルール': onIds.length + '個',
       'かかった時間': (Date.now() - t0) + 'ms（★1試合 ' + (st.games ? Math.round((Date.now() - t0) / st.games) : '―') + 'ms）'
     };
     if (opt.ui) {
@@ -817,6 +1010,12 @@
     DF.preset(S.preset);
     if (k.preset === 'custom') { S.preset = 'custom'; for (var id in k.ruleOn) S.ruleOn[id] = k.ruleOn[id]; }
 
+    /* ⚠️★★ 強さの 向き（革命・Jバック）を **手札を 戻す 前に** 直す【私の 失敗⑯】。
+       ★ ★`DF.hand()` は 中で 並べ直し（sortHand）を します。★並び順は「いまの 強さ」で 決まる ので、
+         ★ ★★逆転の 向きが ちがう まま 戻すと、★★枚数は 同じ なのに **並びが ちがう** 手札に なります。
+       ★ ★★⑪（さわった ものを 戻したか）が それを 見つけました ―― ★見張りが 見張りを 捕まえた 形です。 */
+    S.revolution = k.rev; S.jackBack = k.jb; S.revDir = k.rd; S.lock = k.lk;
+
     if (!k.hands.length) {
       S.players = []; S.field = null;
       $('field').innerHTML = ''; $('hand').innerHTML = ''; $('cpuArea').innerHTML = ''; $('flagRow').innerHTML = '';
@@ -829,7 +1028,6 @@
       }
       if (k.fieldKeys) DF.put(k.fieldKeys, k.fieldBy); else S.field = null;
     }
-    S.revolution = k.rev; S.jackBack = k.jb; S.revDir = k.rd; S.lock = k.lk;
     S.crown = k.crown; S.lastRank = k.lastRank; S.nextStarter = k.nextStarter; S.turn = k.turn;
     S.totals = JSON.parse(k.totals); S.gameNo = k.gameNo;
     S.over = k.over; S.busy = k.busy;
@@ -877,10 +1075,27 @@
       Ⓑ 強調の種類の数
       ⑥・⑦-2 の はみ出しpx と 指の的（★もとから 44pxを 割って いる ところ）
      ============================================================ */
+  /* ============================================================
+     ★★★ 何試合 回すか（★T188 ①：★45秒で 終わらない を 直した ところ）
+     ------------------------------------------------------------
+     ★ ★秘書アイ：「`DAIFUGO.verify()` を 2回とも 45秒で 打ち切られました」。
+     ★ ★★私は 150試合に して いました。★理由は 正しかった ―― ★★いちばん まれな
+       ★ ★「階段革命」が 出きる ところ、で 決めた 数 です。
+     ★ ★★でも 数を 減らさずに 速くする 道が ありました：★★**打ち手を 変える**。
+       ★ ★★「まとめて出す」人は、★4枚 そろえ・階段を **自分から 作りに 行く** ので、
+         ★ ★★階段革命・革命・階段が ずっと 早く 出ます。
+     ★ ★★【実測・種を 8つ 変えて】ぜんぶONで「15個 ぜんぶ 出る」までに 要る 試合数：
+       ★ ★弱いから出す …… 20試合で 1/8の 種が ねむる／30試合で 0/8
+       ★ ★★まとめて出す … ★★**20試合で 0/8**（★1回 734ms）
+     ★ → ★★**ルールの 目ざめ しらべは「まとめて出す」で 40試合**（★2倍の 余裕）に した。
+       ★ ★★数を 減らして 甘く したのでは ありません。★★同じ ことを 5分の1の 時間で 見ています。
+     ============================================================ */
+  var WAKE_N = 40, WAKE_HUMAN = 'many';
+
   function verify(n) {
-    /* ★ 150 は「★階段革命（★いちばん まれな ルール・100試合で 2回）が 出きる」ところで 決めました。
-       ★ ★これより 少ないと ⑲は 鳴らしません（★空うちを させない ため）。 */
-    n = n || 150;
+    /* ★ n ＝「ふだんの 打ち手で 何試合 回すか」。★引数なしなら 40（★数秒で 終わる）。
+       ★ ★深く 見たい ときは `DAIFUGO.verify(150)`。★どちらでも 目は 1つも 減りません。 */
+    n = n || 40;
     var ng = [], note = {}, t0 = Date.now(), i;
     var keep = snapshot();
     var ver = { ring: 0, tried: 0, why: [] };   /* ★わざと壊した 回数／鳴った 回数 */
@@ -888,8 +1103,10 @@
     /* ── ①【共】決まりの通り ───────────────────────── */
     var a1 = autoPlay(n, { preset: 'all', human: 'weak', seed: 31337 });
     var a2 = autoPlay(Math.max(8, Math.round(n / 3)), { preset: 'normal', human: 'strong', seed: 90210 });
-    var a3 = autoPlay(Math.max(8, Math.round(n / 3)), { preset: 'easy', human: 'many', seed: 246810 });
-    [['ぜんぶON', a1], ['ふつう', a2], ['かんたん', a3]].forEach(function (p) {
+    var a3 = autoPlay(Math.max(8, Math.round(n / 3)), { preset: 'easy', human: 'one', seed: 246810 });
+    /* ★★ ルールの 目ざめ しらべ（⑲）は 専用の 走り ―― ★「まとめて出す」人で ' + WAKE_N + '試合 */
+    var aw = autoPlay(Math.max(WAKE_N, n), { preset: 'all', human: WAKE_HUMAN, seed: 4649 });
+    [['ぜんぶON', a1], ['ふつう', a2], ['かんたん', a3], ['ぜんぶON・まとめて出す', aw]].forEach(function (p) {
       var r = p[1];
       if (parseInt(r['★★配った直後が54枚でない'], 10)) ng.push('★★★' + p[0] + '：配った直後が 54枚では ありません（' + r['★★配った直後が54枚でない'] + '）');
       if (parseInt(r['★★札が増えた'], 10)) ng.push('★★★' + p[0] + '：札が 増えました（' + r['★★札が増えた'] + '）');
@@ -911,18 +1128,18 @@
        ★ ★T94【実測】：★ロボットが 1枚出ししか しなかった せいで、
          ★ ★★革命・階段・階段革命・ジョーカーワイルドの 4つが **60試合で 1回も 出ません でした**。
          ★ ★★ONに なって いる ことと、★出る ことは 別 です。 */
-    var sleepy = a1['★★一度も出なかったルール'];
-    var enough = a1['回数'] >= 100;
-    if (enough && sleepy.length) ng.push('★★★ぜんぶONの ' + a1['回数'] + '試合で 一度も 出なかった ルールが ' +
-      sleepy.length + '個：' + sleepy.join('・'));
-    note['⑲ 【富】出たルール（ぜんぶON・' + a1['回数'] + '試合）'] = a1['★★出たルール'] +
-      (enough ? '' : '　★★試合数が 100に とどかないので 鳴らしません（★階段革命は 100試合で 2回。' +
-                     '★少ない 回数で 鳴らすと きれいな 版でも 鳴ります ―― ★T182 の 教え）');
+    var sleepy = aw['★★一度も出なかったルール'];
+    if (sleepy.length) ng.push('★★★「まとめて出す」人が ' + aw['回数'] + '試合 遊んでも 一度も 出なかった ルールが ' +
+      sleepy.length + '個：' + sleepy.join('・') + '（★ONは ' + aw['★ONだったルール'] + '）');
+    note['⑲ 【富】出たルール（ぜんぶON・まとめて出す・' + aw['回数'] + '試合）'] = aw['★★出たルール'] +
+      '　★★【実測・種8つ】この 打ち手なら 20試合で 8/8の 種が 15個ぜんぶ 出ます（★弱いから出す だと 30試合 要る）';
+    note['⑲-2 【富】ふだんの打ち手（' + a1['回数'] + '試合）'] = a1['★★出たルール'] +
+      (a1['★★一度も出なかったルール'].length ? '　★出なかった：' + a1['★★一度も出なかったルール'].join('・') +
+        '（★★これは 鳴らしません ―― ★★まれな ルールは 試合数しだいで 出ないので、★鳴らすのは ⑲ の 専用の 走りだけ）' : '');
 
     /* ── ②③④⑤【共】画面つきで 1手ずつ 見る ─────────────── */
     var ui = autoPlay(Math.max(4, Math.round(n / 8)), { preset: 'all', human: 'weak', seed: 555, ui: true });
     if (parseInt(ui['★★押せるものが1つも無い場面'], 10)) ng.push('★★★押せるものが 1つも無い場面が ' + ui['★★押せるものが1つも無い場面']);
-    if (parseInt(ui['★★札が出た時に絵が無かった'], 10)) ng.push('★★★2段階：札が出た時に 絵が 手元に ありませんでした（' + ui['★★札が出た時に絵が無かった'] + '）');
     if (parseInt(ui['★★白い札'], 10)) ng.push('★★★白い札（絵も 文字の札も 見えない）が ' + ui['★★白い札']);
     if (parseInt(ui['★★光りとみどりが混ざった'], 10)) ng.push('★★★光り（出せる）と みどり（いっしょに出せる）が 同時に 出ました（' + ui['★★光りとみどりが混ざった'] + '）');
     /* ★★ 本物の 試合の 1手ごとに 測った「見切れ」（★七並べ T177 #7 と 同じ 形）*/
@@ -933,9 +1150,27 @@
     note['② 【共】押せるもの'] = ui['★★押せるものが1つも無い場面'];
     note['②-2 【共】★★本物の試合での見切れ'] = '自分の番 ' + ui['★★自分の番の場面'] +
       '／★手札が 画面の外 ' + ui['★★手札の札が画面の外'] + '／★ボタンが 画面の外 ' + ui['★★「出す」「パス」が画面の外'];
-    note['③ 【共】★★2段階'] = '札が出た時に 絵が 無かった ' + ui['★★札が出た時に絵が無かった'] +
-                              '／★読み終えた絵 ' + (DF.warm ? DF.warm()['読み終えた'] + '/' + DF.warm()['ぜんぶ'] : '―');
-    note['④ 【共】白い札'] = ui['★★白い札'];
+    /* ── ③【共】★★2段階（★実時間・★人が 見られる ところ）───────────
+       ★ ★数えるのは「★1コマ後（次に 画面が 描かれる とき）に まだ 絵が 無い」札だけ。
+         ★ ★★早送りの 走りの 中の 数字では ありません（→ ③-3 に 格下げ）。 */
+    if (live.koma) ng.push('★★★2段階：ロボットが 出した 札が、★★次に 画面が 描かれる ときも まだ 絵に なって いません（' +
+      live.koma + ' / ' + live.n + '枚：' + live.who.join('・') + '）');
+    if (live.shiro) ng.push('★★★白い札（絵も 文字の仮の札も 見えない）が ' + live.shiro + '件');
+    note['③ 【共】★★2段階（★実時間・人が見られるところ）'] = live.n
+      ? ('★遊んだ ぶんで 場に 出た 札 ' + live.n + '枚／出た しゅんかんに 絵が 無かった ' + live.sugu +
+         '枚／★★1コマ後も まだ 無かった ' + live.koma + '枚／白い札 ' + live.shiro + '件')
+      : '★★まだ 1枚も 場に 出て いないので 数えられません（★遊んでから もう一度 呼んで ください）――★だから 鳴らしません';
+
+    /* ── ③-2【共】先読みの 名簿（★機械しだいで 変わらない・★かならず 鳴らせる）───── */
+    var wc = warmCheck();
+    if (wc.total > 0 && wc.done < wc.total) ng.push('★★★先読みが 終わって いません（' + wc.done + ' / ' + wc.total + '枚）');
+    if (wc.total > 0 && wc.usable < wc.total) ng.push('★★★先読みした のに 使えない 絵が あります（使える ' + wc.usable + ' / ' + wc.total + '枚）');
+    if (wc.unknown.length) ng.push('★★★先読みの 名簿に 無い 絵を 画面に 出して います：' + wc.unknown.join('・') +
+      '（★★T120 の 故障は これ ―― ★名簿に 無い 絵は 出した しゅんかんに 読みに 行きます）');
+    note['③-2 【共】先読みの名簿'] = '読み終えた ' + wc.done + ' / ' + wc.total + '枚・使える ' + wc.usable +
+      '／★いま画面に出ている絵 ' + wc.seen + '枚・名簿に無いもの ' + wc.unknown.length + '件';
+
+    note['④ 【共】白い札（早送りの中）'] = ui['★★白い札'];
     note['⑤ 【共】強調が混ざらない'] = ui['★★光りとみどりが混ざった'];
 
     /* ── ③-2【共】★★わざと 絵を 剥がして 鳴らす ─────────────
@@ -943,20 +1178,30 @@
          ★ ★T181 の「その画面を回さないと鳴らない」を 避ける ため。 */
     ver.tried++;
     var kill3 = (function () {
+      /* ★★ 名簿に 無い 絵を 1枚 画面に 出して、★③-2 が 見つけるか（★実時間も 機械も 関係なく 鳴る）*/
       var box = $('field'), keepHtml = box.innerHTML;
-      var bust = Date.now() + '-' + Math.random();
       box.innerHTML =
-        '<div class="card black" role="img" aria-label="わざと壊した札">' +
+        '<div class="card black" data-dfv="ためし" role="img" aria-label="わざと壊した札">' +
         '<span class="fallback"><span class="pip">♠</span></span>' +
-        '<img class="face-img" src="../cards/' + encodeURIComponent('スペードA') + '.png?dfv=' + bust + '" alt="">' +
+        '<img class="face-img" src="../cards/' + encodeURIComponent('しらない札') + '.png" alt="">' +
         '</div>';
-      var s = scanImgs(box);
+      var got = warmCheck().unknown.length;
       box.innerHTML = keepHtml;
-      return s.notReady;
+      liveDrop();                      /* ★ ためし札は 実時間の 数に 入れない */
+      return got;
     })();
     if (kill3 >= 1) ver.ring++;
-    else { ng.push('★★★見張りが 死んでいます：★絵を わざと 剥がしても ③が 鳴りません'); ver.why.push('③'); }
-    note['③-2 【共】★★わざと剥がす'] = kill3 >= 1 ? '★鳴った（' + kill3 + '件）' : '★★鳴らない';
+    else { ng.push('★★★見張りが 死んでいます：★名簿に無い絵を 出しても ③-2が 鳴りません'); ver.why.push('③-2'); }
+    note['③-3 【共】★★わざと名簿の外の絵を出す'] = kill3 >= 1 ? '★鳴った（' + kill3 + '件）' : '★★鳴らない';
+
+    /* ── ③-4【共】★早送りの 中の 数字（★★鳴らしません・★T190 で 格下げ）─────────
+       ★ ★【実測・T190】★verify の 5.60秒の あいだ、★画面が 描かれた 回数は **0回**（ふだん 61回/秒）。
+         ★ ★★＝ ★ここで 数えた 札は 1枚も 人の 目に 入りません。
+       ★ ★★立つか どうかは ブラウザの 中の 覚え方しだい ―― ★私 0/844・★秘書アイ 251/844。
+         ★ ★★同じ 遊び・同じ 試合 なのに ちがう 数が 出る ものは、★★ものさしでは ありません。
+       ★ ★それでも 数字は 残します（★大きく 動いたら 何か あった、の 目やす）。 */
+    note['③-4 【共】早送りの中の数（★鳴らない・★機械しだいで変わる）'] =
+      ui['★★札が出た時に絵が無かった'] + '　★★この数は 人の目に 入りません（★描かれる 回数 0回）';
 
     /* ── ⑥⑦【共】はみ出し・44px ─────────────────────── */
     var ft = fitTest();
@@ -1425,14 +1670,23 @@
   /* ============================================================
      ★ 7. 出口
      ============================================================ */
+  /* ★ 実時間の 見はりを ここで 始める（★遊んで いる あいだ ずっと 数え続けます）*/
+  watchLive();
+
   root.DAIFUGO = {
-    now: now, autoPlay: autoPlay, verify: verify, seed: seed, geo: geoInfo,
-    fitTest: fitTest, rates: rates,
+    now: now, seed: seed, geo: geoInfo,
+    /* ★★ 走る もの（★時計や Math.random を 借りる もの）は ぜんぶ 綱を 通す ―― ★T188 ② */
+    autoPlay: wrap(autoPlay), verify: wrap(verify), fitTest: wrap(fitTest), rates: wrap(rates),
     /* ★ 中を のぞく ため（★トライ・アト用）*/
     _probe: {
       tap: function () { return tapList().map(function (e) { return tapName(e) + (reallyTappable(e) ? ' ○' : ' ✕'); }); },
       reach: function (sel) { var e = document.querySelector(sel); return e ? reach(e) : null; },
       hit: hitAt, img: function () { return { 場: scanImgs($('field')), 手札: scanImgs($('hand')) }; },
+      /* ★★ 実時間で 見た「2段階」の 記録（★遊べば たまります）*/
+      live: function () { return { '場に出た札': live.n, '出た瞬間に絵が無かった': live.sugu,
+        '★1コマ後もまだ無かった': live.koma, '白い札': live.shiro, 'どの札': live.who.slice() }; },
+      liveReset: function () { live = { n: 0, sugu: 0, koma: 0, shiro: 0, who: [] }; return '★数え直します'; },
+      warm: warmCheck,
       unreach: function () {
         return tapList().map(function (e) {
           var q = e.getBoundingClientRect();
@@ -1441,7 +1695,26 @@
       },
       scene: function (i) { return still(function () { SCENES[i].f(); return SCENES[i].n; }); },
       scenes: SCENES.map(function (s) { return s.n; }),
-      snapshot: snapshot, restore: restore, fire: firePointer, humans: HUMANS
+      snapshot: snapshot, restore: restore, fire: firePointer, humans: HUMANS,
+      /* ★★ わざと「時計を 借りたまま 返さない」―― ★60秒の 見はりが 効くかを 見る ため（T188 ②）。
+         ★ ★これを 呼んだ あと、★60秒 たてば ひとりでに 本物に 戻ります。 */
+      kariru: function () {
+        var api = beginGuard();
+        api.add(clockOn());
+        return { '★時計を借りたまま 返さずに 抜けました': (root.setTimeout + '').indexOf('native code') < 0,
+                 '★60秒 待てば ひとりでに 戻ります': true };
+      },
+      /* ★ いま 借りっぱなしの ものが 無いか（★トライ用の 目視） */
+      kaeshita: function () {
+        return {
+          'setTimeout は本物': (root.setTimeout + '').indexOf('native code') >= 0,
+          'clearTimeout は本物': (root.clearTimeout + '').indexOf('native code') >= 0,
+          'Math.random は本物': (Math.random + '').indexOf('native code') >= 0,
+          '画面をかくしていない': !document.documentElement.classList.contains('dfv-fast'),
+          '時計の積み木': clocks.length,
+          '走っている仕事': busyRun ? 'あり' : 'なし'
+        };
+      }
     }
   };
 
