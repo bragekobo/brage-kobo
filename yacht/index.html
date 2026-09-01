@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ヨット ― ブラゲ工房</title>
+  <meta name="description" content="サイコロ 5個を ふって、13の 役に 点を 書く。2回まで ふり直せる ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <!-- ============================================================
+       ★★ この1本は 設計図 §9（トランプの 絵札）が **効きません** ★★
+         ★ ★読む 絵は **0枚**。★`office/games/cards/` の 55枚（2.01MB）を 1枚も 使いません。
+         ★ ★サイコロは **CSSの 丸**（★3×3の ますに 丸を 1〜6個）―― ★ルル T192 §6-1。
+         ★ ★★＝ ★盤の 4本（リバーシ・6×6・四目・五目）と まったく 同じ 形 です。
+         ★ ★★外への 通信は **0件**。★足す 絵も **0枚**。
+
+       ★★ og:image（見出しの 絵）は **まだ ありません** ★★
+         ★ ★リバーシ・四目・五目・6×6 は `og/og-*.png` を 持って います（★T158・🎨アト）。
+         ★ ★★ヨットの ぶんは まだ 無い ので、★**404に なる 行を 書きません**。
+         ★ ★→ ★🎨アトが `og/og-yacht.png`（600×600）を 作ったら、ここに 4行 足す：
+             ★ og:image ／ og:image:type ／ og:image:width・height ／ og:image:alt
+       ============================================================ -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="ヨット ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="サイコロ 5個を ふって、13の 役に 点を 書く。2回まで ふり直せる。13回で おわり。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/yacht/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="ヨット ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="サイコロ 5個を ふって、13の 役に 点を 書く。2回まで ふり直せる。" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存19本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="yacht.css" />
+</head>
+<body>
+
+<!-- ハッピー（看板ねこ）の かお。既存19本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell">
+
+  <!-- ── 上の帯 ─────────────────────────────────── -->
+  <header class="topbar">
+    <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span>ヨット</span>
+    </div>
+    <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★★★ 選ばせるのは **ロボットの つよさ 1つだけ**（★設計図 追記①・ルル §8-4）★★★
+         ★ ★★決まりの 入口（設定）は **0個** です ―― ★ルル §13：
+           ★ ★人数（1〜4人）… ★作りません。★★自分の 点は 1点も 変わりません（★検算7）
+             ★ ★＝ ★手ごたえでは なく **待ち時間** を えらばせる ことに なる（★2026-08-24 裁定）
+           ★ ★ふり直しの 回数 … ★作りません。★★2回が いちばん 良い（★ルル §4-1）
+           ★ ★35点ボーナスの ON/OFF … ★作りません。★★深さが 変わりません（★ルル §4-2）
+         ★ ★★初期値は 1段目「はじめて」―― ★はじめての 人が ちょうど 五分。
+
+       ★★ 囲い（.start-card）と はじめるボタンは **大富豪 ＝ ページワン T162 ＝ セブンブリッジ の 形**
+       ⚠️★ `.title-screen` の 子は **2つの まま**（★囲い と ハッピー）――
+          ★T160 の `> :first-child{margin-top:auto}` / `> :last-child{margin-bottom:auto}` が 効きます。 -->
+  <section class="title-screen" id="titleScreen">
+    <div class="start-card">
+      <p class="eyebrow">サイコロを ふって 点を のばそう！</p>
+      <h1>ヨット</h1>
+      <p class="intro">5個 ふって、13の 役に 書く！</p>
+
+      <label class="level-pick" for="levelTitle">
+        <span class="level-pick-name">ロボットの つよさ</span>
+        <select class="level-select" id="levelTitle"></select>
+      </label>
+
+      <button class="start-button" type="button" id="btnStart">
+        <span>はじめる <b>▶</b></span><small>あなた ＋ ロボット3人 ／ 13回で おわり</small>
+      </button>
+      <!-- ★★ さいこう点（★ルル §8-3・§18 コーダ⑨）★★
+           ★ ★★おぼえて おくのは **1つ だけ**。★★1人あそびは 作りません
+             ―― ★4人で 遊びながら、じぶんの さいこう点は そのまま のびます（★検算7）。
+           ★ ★まだ 1回も 遊んで いない 人には **出ません**（★はじめは ボタン 1つだけ・§5.5-②）。 -->
+      <p class="best-line hidden" id="bestLine"></p>
+    </div>
+
+    <!-- ★ ハッピー（★大富豪・ページワン・ハーツ・セブンブリッジと 同じ ならび）-->
+    <div class="mascot">
+      <p class="bubble">のこす 目を えらんで、ふり直そう！</p>
+      <svg class="happy-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="cat-name">ハッピー</p>
+    </div>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       ★★ 置き場は 5つ（上から）★★
+         ★ じぶんの 点と あと 何回 ／ ★★13の 役の 表 ／ ★ロボット3人の 点 ／ ★サイコロ 5個 ／ ★ボタン
+
+       ★★★★ ここが この 1本の 生命線（★ルル §5-4・§18 コーダ①〜⑦）★★★★
+         ★ ★★画面が やって よい：
+             ★ ★①13マスに「いま 書いたら 何点か」を **数字で** 出す（★追記②の 表に「点数の 計算」と 名指し）
+             ★ ★②ふり直しの **のこり 回数**を ボタンの 中に 書く（★これで 説明が 0行に なります）
+             ★ ★③えらんだ サイコロに **青わく**（★★強調は これ 1種類だけ）
+             ★ ★④1〜6の 合計を「◯／63」と 数える（★★これで ボーナスの 説明が 0行に なります）
+         ★ ★★★画面が やっては いけない：
+             ★ ★★★のこすと よい サイコロを 光らせる（★★−19.85ポイント。★いちばん 重い 罪）
+             ★ ★★★いちばん 点が 高い マスを 光らせる・色を 変える・上に 動かす（★★−12.07）
+             ★ ★★★0点に なる マスを 先に 暗くする（★あきらめの えらびを 奪います）
+             ★ ★★★ふり直しを 自動で やる／自動で 止める（★9手番に 1回、やめる ほうが 得）
+             ★ ★★★「ヨットまで あと 1個！」「ここは あきらめよう」
+         ⚠️★★ ★★**セブンブリッジの「追記②の 例外」を、ここに 広げないで ください。**
+             ★ ★設計図 §5.5：「★この 例外は セブンブリッジ 1本だけです」。
+             ★ ★★そして ―― ★ヨットには 広げようが ありません。★光らせる 対象が 画面に ありません。 -->
+  <section class="play-screen hidden" id="playScreen">
+
+    <!-- ★★ ハッピーの 帯（★T167・社長指示「大富豪みたいに 統一して ほしい」の 数字を そのまま）★★
+         ★ ネコの 器 … 48×36px（はば 650px 以下）／64×48px
+         ⚠️★ たての 低い 画面（★横向き）では この 帯を 出しません（yacht.css の @media max-height）。 -->
+    <div class="talk" id="talk">
+      <div class="cat-wrap">
+        <svg class="happy-cat" id="happyMid" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+        <p class="cat-name">ハッピー</p>
+      </div>
+      <p class="banner hidden" id="say"></p>
+    </div>
+
+    <div class="stage" id="stage">
+
+      <!-- ★★ 器は 2つ（★pane-a ／ pane-b）★★
+           ★ ★たての 画面 … ★★上から そのまま 縦に ならびます（★中身の 順番が そのまま 見た目）
+           ★ ★横向きの 画面（★812×375）… ★★左右に 分かれます（★yacht.css の @media）
+           ⚠️★ ★★どちらでも **触る ところは 1つも 消えません**（★追記③：見切れて よいのは 使わない側 だけ）。 -->
+    <div class="pane-a" id="paneA">
+
+      <!-- ★ じぶんの 点と、あと 何回（★見えて いる 事実だけ。★「あぶない」の たぐいは 1文字も 出しません）-->
+      <div class="me-band" id="meBand">
+        <span class="me-name">あなた</span>
+        <span class="me-pt" id="mePt">0</span>
+        <span class="me-turn" id="meTurn">1回目 / 13回</span>
+      </div>
+
+      <!-- ★★★ 13の 役の 表（★2列×7行 ＝ 14マス。★ルル §10-2）★★★
+           ★ ★左の 列 … 1の目〜6の目 ＋ **7つ目に「◯／63」**
+             ★ ★★左の 列を 上から 見ると、何を 足せば ボーナスに 届くかが 見えます
+               ―― ★★これが 決まり7 の 説明を 0行に して います。
+           ★ ★右の 列 … 同じ目3つ／同じ目4つ／3つと2つ／4つ並び／5つ並び／ヨット／なんでも
+           ⚠️★★ **ならびを 動かさないで ください**（★点の 高い 順に 並べかえるのは 追記② 違反）。
+           ★ ★中身は JS が 入れます。 -->
+      <div class="sheet" id="sheet"></div>
+    </div>
+
+    <div class="pane-b" id="paneB">
+      <!-- ★ ロボット3人の 点（★1行）-->
+      <div class="bot-band" id="botBand"></div>
+
+      <!-- ★★ サイコロ 5個（★CSSの 丸。★絵は 0枚）★★
+           ★ ★タップ ＝「のこす」。★青わくが つきます（★強調は これ 1種類だけ）。
+           ★ ★★🎨アトへ：★★ここに「転がり」を 足して ください（→ yacht.css の いちばん 下）。 -->
+      <div class="dice-row" id="diceRow"></div>
+
+      <!-- ★★ ふり直す ボタン（★ルル §5-3）★★
+           ★ ★★文字が「（あと◯回）」と 言います ―― ★★これで あそびかたが 1行も 増えません。
+           ★ ★★「やめる ボタン」は **作りません**。★役の マスを 押した 瞬間が「やめた 瞬間」です
+             ―― ★これで 決まりが 1つ 減ります（★ルル §5-3）。
+           ⚠️★ 入れものの たけは 決め打ち（★ボタンが 消えても **表が 動きません**）。 -->
+      <div class="btn-row">
+        <button type="button" class="roll-btn" id="btnRoll">ふり直す（あと2回）</button>
+      </div>
+    </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── おわりの 画面 ────────────────────────────
+     ★★ つよさの えらび は **終わった あとの 画面にだけ** 置きます
+        （設計図 §5.5 の 線引き：★遊んで いる 最中の 画面には 置かない）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result-head">
+      <p class="result-title" id="resultTitle">勝ち！</p>
+      <p class="result-say" id="resultSay"></p>
+    </div>
+    <div class="result-score" id="resultScore"></div>
+    <label class="level-pick" for="levelResult" id="levelPickResult">
+      <span class="level-pick-name">ロボットの つよさ</span>
+      <select class="level-select" id="levelResult"></select>
+    </label>
+    <div class="result-row">
+      <button class="dialog-ok" type="button" id="btnAgain">もう 1回 <b>▶</b></button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（遊ぶ前に 1回 読む ところ）──────────────
+     ★★ ルルの 決まりは **8個**。★★見せる 説明は **3行**（★8個の うち 4個は 説明 0行）。
+        ★ ★決まり3（ふり直しは 2回まで）… ★★ボタンが「あと◯回」と 言う（0行）
+        ★ ★決まり5（同じ 役は 1回だけ）… ★★書いた マスが 押せなく なる（★4と 同じ行）
+        ★ ★決まり6（点が つかなくても どこかに 書く）… ★★13マスの 数字が 0 と 出る（0行）
+        ★ ★決まり7（1〜6の 合計 63で ＋35点）… ★★表の 14マス目が「◯／63」を 数える（0行）
+     ⚠️★★ ★★「同じ目3つ ＝ 5個ぜんぶの 合計」は **書きません**（★ルル §2-3）。
+        ★ ★★13マスの 数字を 1回 見れば 分かります。★★説明を 足すと 行が 増えるだけ です。
+     ⚠️★★ ★★「6を のこすと いい」「ここは あきらめよう」の たぐいは **1文字も 書きません**。
+        ★ ★★それが 追記②の「気づく ことを 先に 奪う」そのもの です。 -->
+<dialog id="helpDialog">
+  <button class="close-dialog" data-close="helpDialog" type="button">×</button>
+  <h2>🐾 遊び方</h2>
+  <p class="dialog-lead">5個 ふって、13の 役に 書く！</p>
+  <ol class="help-list">
+    <li>サイコロ <b>5個</b>を ふる。のこす 目を えらんで、<b>2回まで</b> ふり直せる。</li>
+    <li>出た 目を、<b>13の 役</b>の どれか 1つに 書く。同じ 役は <b>1回だけ</b>。</li>
+    <li><b>13回</b>で おわり。点が いちばん <b>多い</b> 人の 勝ち。</li>
+  </ol>
+  <p class="help-note">ロボットの <b>つよさ</b>は、はじめの 画面と、終わった あとに えらべる。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<script src="yacht-core.js"></script>
+<script src="yacht-game.js"></script>
+<script src="verify.js"></script>
+</body>
+</html>
