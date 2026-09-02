@@ -79,8 +79,9 @@
     lay1:    '人の 組にも 足せたね！',
     outMe:   '上がり！ この回は 0点！',
     outBot:  '{名前}が 上がった！',
-    sevenMe: '7で 上がった！ ほかの 3人の 点が 2倍！',
-    sevenBot:'{名前}が 7で 上がった！ みんなの 点が 2倍…',
+    /* ★★★ T198-2 ―― ★★ここに あった ハッピーの ひとこと 2つ（★7で 上がった！ 点が 2倍！）は
+       ★ ★★決まりごと 消しました（2026-09-02・社長裁定）。
+       ⚠️★ ★★書き置き：★足し直さないで ください ―― ★★もう 起きない 場面 です。 */
     dry:     '山が なくなった。この回は ここまで！'
   };
   var SAY_DEAL_ME = '🐱 この回は あなたが いちばん 少なかった！';
@@ -165,6 +166,11 @@
   var fitSet = [];                             /* ★ えらんだ 1枚を 足せる 場の 組の 番号 */
   var newCard = -1;                            /* ★ いま 自動で 引いた 1枚（★人が 次に 何か したら 外れる）*/
   var offerOn = false;                         /* ★ ④ の 2択が 出て いる */
+  /* ★★★ T198 ―― ★★見張り（⑯-2）が **わざと 7の 決まりを 外す** ための 1つの 札 ★★★
+     ★ ★ふだんは いつも false ＝ ★★本物の 決まり（7は 1枚でも 出せる）が 入って います。
+     ★ ★★verify だけが 一瞬 true に して、★「7が 1枚で 出せなく なったら 鳴る」ことを その場で 見せます。
+     ★ ★★㉕-2（青いわくを 剥がして 鳴らす）と 同じ 形 です。 */
+  var killSeven = false;
   var rules = C.defaultRules();
   var rand = C.rng((Date.now() ^ 0x5bd1) | 0);
   var seedFixed = 0;
@@ -275,7 +281,7 @@
   /* ============================================================
      ★★★ 場の 組を たたむ（★core の packTable を 呼ぶ だけ）★★★
      ------------------------------------------------------------
-     ★ ★ふだんの 形（★5組・19枚）を いちばん 大きく。★まれな 8組・25枚は 静かに 詰める。
+     ★ ★ふだんの 形（★5組・19枚）を いちばん 大きく。★まれな ★★10組・25枚は 静かに 詰める。
      ★ ★★戻って くるのは **座標だけ** です ―― ★「どこに 足せるか」は 1文字も 返りません。
      ============================================================ */
   function layoutTable() {
@@ -526,10 +532,10 @@
     var out = {};
     if (!g || over || g.cur !== 0 || g.phase !== 'play') return out;
     var hand = g.hands[0], i, k;
-    /* ★ ① 手札だけで 作れる 組 */
-    var ms = C.enumMelds(hand);
+    /* ★ ① 手札だけで 作れる 組（★T198：★7は 1枚・2枚 でも 組 に なります）*/
+    var ms = C.enumMelds(hand, killSeven);
     for (i = 0; i < ms.length; i++) {
-      if (ms[i].cnt < 3) continue;
+      if (!C.enumOk(ms[i])) continue;                 /* ★ T198：★3枚以上 か、★7の 1〜2枚 */
       if (hand.length - ms[i].cnt < 1) continue;      /* ★ すてる 1枚が 要る（★決まり7）*/
       for (k = 0; k < hand.length; k++) if (ms[i].mask & (1 << k)) out[hand[k]] = 1;
     }
@@ -560,9 +566,9 @@
     for (i = 0; i < g.table.length; i++) if (C.tableFits(g.table[i], c)) return true;
     /* ★ ① その 1枚を 入れると 組が できる */
     var h2 = hand.concat([c]);
-    var ms = C.enumMelds(h2);
+    var ms = C.enumMelds(h2, killSeven);
     for (i = 0; i < ms.length; i++) {
-      if (ms[i].cnt < 3) continue;
+      if (!C.enumOk(ms[i])) continue;                          /* ★ T198 */
       if (h2.length - ms[i].cnt < 1) continue;
       if (ms[i].mask & (1 << (h2.length - 1))) return true;   /* ★ その 札を 使う 組 */
     }
@@ -649,11 +655,18 @@
     if (g.phase === 'draw') return offerOn ? { k: 'take' } : null;
     if (g.phase !== 'play') return null;
     var list = pickList();
-    if (list.length >= 3 && g.hands[0].length - list.length >= 1 && C.makeMeld(list, 0)) return { k: 'meld' };
+    /* ★★★ T198 ―― ★★1枚を えらんだ ときの 順番（★ここを 決めるのに 少し 悩みました）★★★
+       ★ ★7を 1枚 えらぶと、★★「場の 組に 足す」と「7を 1枚で 出す」の **両方が できます**。
+       ★ ★★足せる 先が ある ときは **これまで どおり「足す」**に します ――
+         ★ ★① 人が すでに 教わって いる 動き（★青い 組が 出て、★押すと 乗る）を 変えない
+         ★ ★② どちらも 手札は 1枚 減る ＝ ★★得は 同じ（★私の 実測：★得の 差 0.00）
+       ★ ★★足せる 先が 1つも 無い ときだけ、★「7を 1枚で 出す」に なります。 */
     if (list.length === 1) {
       var f = fitMelds(list[0]);
       if (f.length) return { k: 'lay', at: f };
     }
+    if (list.length >= 1 && g.hands[0].length - list.length >= 1 &&
+        C.makeMeld(list, 0, killSeven)) return { k: 'meld' };
     return null;
   }
   function refreshGo() {
@@ -880,8 +893,7 @@
         later(T.DISCARD_MOVE, function () {
           if (!g) return;
           if (g.over) {
-            if (g.winner >= 0) say(g.doubled ? SAY.sevenBot.replace('{名前}', botName(g.winner))
-                                             : SAY.outBot.replace('{名前}', botName(g.winner)), 0);
+            if (g.winner >= 0) say(SAY.outBot.replace('{名前}', botName(g.winner)), 0);
             finishDeal();
             return;
           }
@@ -1012,7 +1024,7 @@
     later(T.DISCARD_MOVE, function () {
       if (!g) return;
       if (g.over) {
-        if (g.winner === 0) say(g.doubled ? SAY.sevenMe : SAY.outMe, 0);
+        if (g.winner === 0) say(SAY.outMe, 0);
         finishDeal();
         return;
       }
@@ -1068,16 +1080,17 @@
       resultSay.textContent = (pts[0] === lo) ? SAY_DEAL_ME : SAY_DEAL_OT;
       btnNext.innerHTML = 'つぎへ <b>▶</b>';
     }
-    resultScore.innerHTML = resultRows(pts, match.total, g ? g.doubled : false, g ? g.winner : -1);
+    resultScore.innerHTML = resultRows(pts, match.total, g ? g.winner : -1);
     resultWrap.classList.remove('hidden');
     resultBox.classList.add('is-locked');
     later(T.RESULT_LOCK, function () { resultBox.classList.remove('is-locked'); });
   }
-  /* ★ 点の 表（★この回 と 合計）―― ★7で 上がった 回は そう 書きます（★ルル §14-2 場面4）*/
-  function resultRows(pts, tot, doubled, winner) {
+  /* ★ 点の 表（★この回 と 合計）
+     ★★ T198-2 ―― ★★前は ここに「この回 ×2」の 見出しが ありました。★決まりごと 消しました。 */
+  function resultRows(pts, tot, winner) {
     var i, head = '<b></b>';
     for (i = 0; i < 4; i++) head += '<span class="sb-name' + (i === 0 ? ' sb-me' : '') + '">' + seatName(i) + '</span>';
-    var row1 = '<b>' + (doubled ? 'この回 ×2' : 'この回') + '</b>';
+    var row1 = '<b>この回</b>';
     for (i = 0; i < 4; i++) row1 += '<i' + (i === winner ? ' class="sb-out"' : '') + '>' + pts[i] + '</i>';
     var row2 = '<b>合計</b>';
     for (i = 0; i < 4; i++) row2 += '<i>' + tot[i] + '</i>';
@@ -1467,7 +1480,6 @@
       '★ロボットの つよさ': lv.label, '★人の 打ち手': hu.label,
       '★★反則・札の 数ちがい': st.illegal + '件',
       '★流れ（誰も 上がれない）': (st.nofin / st.games * 100).toFixed(2) + '%',
-      '★7上がり（点が 2倍）': (st.doubled / st.games * 100).toFixed(2) + '%',
       '★人が 勝つ': (st.win / st.games * 100).toFixed(2) + '%（★五分 25.0%）',
       '★自分の 点': (st.pts / st.games).toFixed(1),
       '★手番 まん中': C.pct(st.turnList, 0.5) + '／9割 ' + C.pct(st.turnList, 0.9) + '／99% ' + C.pct(st.turnList, 0.99),
@@ -1706,14 +1718,21 @@
   }
 
   /* ★★ はみ出し しらべ（設計図 追記③）★★
-     ★ ★★ふだんの 形（5組・19枚）から まれな 形（8組・25枚・1組14枚）まで まぜて 測ります。 */
+     ★ ★★ふだんの 形（5組・19枚）から まれな 形（★★10組・25枚・1組14枚）まで まぜて 測ります。 */
   var SCENES = [
     { n: '★5組19枚（ふだんの形）', c: [3, 4, 3, 5, 4] },
     { n: '3組11枚',               c: [3, 4, 4] },
     { n: '6組23枚',               c: [3, 4, 3, 5, 4, 4] },
     { n: '7組25枚',               c: [3, 4, 3, 5, 4, 3, 3] },
     { n: '★8組25枚（99%の外）',   c: [3, 3, 3, 3, 3, 3, 3, 4] },
-    { n: '★1組13枚（いちばん長い）', c: [13] },
+    /* ★★★ T198 ―― ★7が 1枚でも 出せる ように なって、★★場の 組が 増えました ★★★
+       ★ ★【実測・4万回 配る】：★組 4.7 → **5.6**（★99% 7 → **8**・★いちばん 多い 8 → **10**）。
+       ★ ★★下の 2つは **本当に 出た 形** です（★私が 手で 作った 形 では ありません）：
+         ★ ★・10組25枚 …… [1,3,3,1,1,3,4,3,3,3]（★1枚の 7の 組が 3つ）＝ ★4万回に 8回（0.02%）
+         ★ ★・1組14枚 …… [14,4]（★A から K ＋ 上の A）
+       ★ ★★札の 枚数は 25枚の まま です ―― ★★増えたのは「組の 数」だけ。 */
+    { n: '★★10組25枚（T198・いちばん多い）', c: [1, 3, 3, 1, 1, 3, 4, 3, 3, 3] },
+    { n: '★1組14枚（いちばん長い）', c: [14, 4] },
     { n: '空っぽ',                c: [] }
   ];
   function fitTest(n) {
@@ -1766,7 +1785,7 @@
     var out = {
       '画面': window.innerWidth + '×' + window.innerHeight,
       '★札': geo.cw + '×' + geo.ch + 'px（★見えて いる はば ' + geo.pitch.toFixed(1) + 'px）',
-      '調べた場面': n + '（★5組19枚〜8組25枚・1組13枚・空っぽ）',
+      '調べた場面': n + '（★5組19枚〜★★10組25枚・1組14枚・空っぽ）',
       '★はみ出し（一番 大きい）': worst + 'px' + (worst ? '（' + worstAt + '）' : ''),
       '★押す ところが 画面外': offTotal + '件',
       '★44pxより 小さい ボタン': smallTotal + '件',
@@ -1879,7 +1898,7 @@
     if (!g) return null;
     var s = { hands: [], table: C.cloneTable(g.table), stock: g.stock.slice(), discard: g.discard.slice() }, p;
     for (p = 0; p < 4; p++) s.hands.push(g.hands[p].slice());
-    ['phase', 'cur', 'over', 'winner', 'turn', 'lastDiscard', 'doubled', 'drawGame'].forEach(function (k) { s[k] = g[k]; });
+    ['phase', 'cur', 'over', 'winner', 'turn', 'lastDiscard', 'drawGame'].forEach(function (k) { s[k] = g[k]; });
     s.pts = g.pts ? g.pts.slice() : null;
     return s;
   }
@@ -1888,7 +1907,7 @@
     for (var p = 0; p < 4; p++) g.hands[p] = s.hands[p].slice();
     g.table = C.cloneTable(s.table);
     g.stock = s.stock.slice(); g.discard = s.discard.slice();
-    ['phase', 'cur', 'over', 'winner', 'turn', 'lastDiscard', 'doubled', 'drawGame'].forEach(function (k) { g[k] = s[k]; });
+    ['phase', 'cur', 'over', 'winner', 'turn', 'lastDiscard', 'drawGame'].forEach(function (k) { g[k] = s[k]; });
     g.pts = s.pts ? s.pts.slice() : null;
   }
   function tapDom(el, x, y) {
@@ -2238,6 +2257,69 @@
       refreshGo();
       out.run = btnGo.disabled ? '★★✕ 出ない' : '○ 出る';
       if (btnGo.disabled) out.why.push('★★★同じ マークの つづいた 数字 3枚で「出す」が 出ません');
+
+      /* ============================================================
+         ★★★ ⑯-2 ―― ★★T198：★7は 1枚でも 出せるか ★★★
+         ------------------------------------------------------------
+         ★ 本物の 決まり（任天堂 ④）：「1枚だけでも公開することができます」
+           ★ ★「7と6、7と8、このように7があれば、2枚だけでもシークエンスとして公開できます」
+         ★ ★★社長の ご指摘で 見つかった 落としもの です（★ルル T197 §14 失敗1）。
+         ★ ★見るのは 5つ：
+           ★ ★① 7が 1枚 → ★出る　② 7＋6 → ★出る　③ 7＋8 → ★出る
+           ★ ★④ ★7いがいの 1枚 → ★出ない　⑤ ★7が ない 2枚 → ★出ない
+         ★ ★★そして ―― ★★わざと 決まりを 外して、★「7が 1枚で 出せなく なる」ことを その場で 見せます。
+         ============================================================ */
+      var s7 = run3[1], s6 = run3[0], s8 = run3[2];         /* ★ スペードの 7・6・8 */
+      function goTry(cs) {
+        picks = {};
+        for (var q = 0; q < cs.length; q++) picks[cs[q]] = 1;
+        refreshGo();
+        return !btnGo.disabled;
+      }
+      out.seven1 = goTry([s7]) ? '○ 出る' : '★★✕ 出ない';
+      if (btnGo.disabled) {
+        out.why.push('★★★★7が 1枚で「出す」が 押せません（★本物の 決まり・T198・社長の ご指摘 ' +
+                     '―― ★★「1枚だけでも公開することができます」）');
+      }
+      out.seven67 = goTry([s6, s7]) ? '○ 出る' : '★★✕ 出ない';
+      if (btnGo.disabled) out.why.push('★★★7＋6 の 2枚で「出す」が 押せません（★T198）');
+      out.seven78 = goTry([s7, s8]) ? '○ 出る' : '★★✕ 出ない';
+      if (btnGo.disabled) out.why.push('★★★7＋8 の 2枚で「出す」が 押せません（★T198）');
+      out.one = goTry([set3[0]]) ? '★★✕ 出て しまう' : '○ 出ない';
+      if (!btnGo.disabled) out.why.push('★★★7 いがいの 札 1枚で「出す」が 押せて しまいます（★T198）');
+      out.two = goTry([set3[0], set3[1]]) ? '★★✕ 出て しまう' : '○ 出ない';
+      if (!btnGo.disabled) out.why.push('★★★7を ふくまない 2枚で「出す」が 押せて しまいます（★T198）');
+      /* ★★ わざと 決まりを 外して 鳴る ことを 見せる（★㉕-2 と 同じ 形）★★ */
+      killSeven = true;
+      var killOff = !goTry([s7]);
+      killSeven = false;
+      var killBack = goTry([s7]);
+      out.sevenKill = (killOff && killBack)
+        ? '○ 決まりを 外すと 出なく なる ＝ 見張りは 鳴ります（★戻すと また 出る）'
+        : '★★✕ 外しても 変わらない（★★この 見張りは 空うちして います）';
+      if (!killOff || !killBack) {
+        out.why.push('★★★「7は 1枚でも 出せる」の 見張りが 空うちして います ' +
+                     '（★決まりを 外しても 同じ 返事 ―― ★★見張りとしては 死んで います）');
+      }
+      /* ★ ★本物の ボタンで 7を 1枚 出して、★★本当に 場へ 出るか */
+      picks = {}; picks[s7] = 1;
+      var t7 = g.table.length, h7 = g.hands[0].length;
+      refreshGo();
+      btnGo.click();
+      out.sevenPlayed = (g.table.length === t7 + 1 && g.hands[0].length === h7 - 1 &&
+                         C.meldLen(g.table[t7]) === 1)
+        ? '○ 7が 1枚で 場に 出た' : '★★✕ 出ない';
+      if (g.table.length !== t7 + 1) out.why.push('★★★7を 1枚 えらんで 押しても 場に 出ません（★T198）');
+      /* ★ 場を 元に もどす（★見張りは 見るだけ・★T144 §7-5）
+         ★ ★★`btnGo.click()` は 中で `busy = true` に します ―― ★ここで 戻さないと
+           ★ ★★この 下の 試しが ぜんぶ「押せない」に なり、★★見張りが 空うちします。 */
+      g.hands[0] = want.slice();
+      g.table = [];
+      picks = {};
+      busy = false;
+      btnGo.classList.remove('hidden'); btnPass.classList.remove('hidden');
+      rebuild(); placeAll(true);
+
       /* ★ ④ 手札 ぜんぶ（★すてる 1枚が なくなる 出し方）*/
       g.hands[0] = set3.slice();
       picks = {}; picks[set3[0]] = 1; picks[set3[1]] = 1; picks[set3[2]] = 1;
@@ -2285,7 +2367,7 @@
       var keep = resultWrap.classList.contains('hidden');
       var keepScore = resultScore.innerHTML, keepSay = resultSay.textContent;
       resultSay.textContent = SAY_LOSE.replace('{名前}', 'ロボット1と ロボット3');
-      resultScore.innerHTML = resultRows([26, 0, 13, 26], [99, 52, 41, 66], true, 1);
+      resultScore.innerHTML = resultRows([26, 0, 13, 26], [99, 52, 41, 66], 1);
       levelPickResult.classList.remove('hidden');
       resultWrap.classList.remove('hidden');
       var box = resultBox.getBoundingClientRect();
@@ -2633,7 +2715,7 @@
   }
 
   /* ============================================================
-     ★★★ verify ―― この 1本ならではの 見張り（26項目）★★★
+     ★★★ verify ―― この 1本ならではの 見張り（27項目）★★★
      ------------------------------------------------------------
        ①  決まりの 通り（★反則0・★札が いつも 53枚・★終わらない 0）
        ②  ★★★4回 配りの 直しが 生きて いる（★★わざと 1回配りに 戻して 鳴らす）
@@ -2651,6 +2733,8 @@
        ⑭  ★★人が さわれるか（★「押せる ものが 1つも ない」場面が 作れないか）
        ⑮  ★★運ぶ ―― ★合えば 乗り、合わなければ 戻り、すて札で 手番が おわる
        ⑯  ★★「出す」は 組の ときだけ 押せる（★そろって いない 3枚では 出ない）
+       ⑯-2 ★★★T198 ―― ★★7は **1枚でも** 出せる（★7＋6・7＋8 の 2枚も）
+            ★（★7いがいの 1枚・7の ない 2枚では 出ない。★★わざと 決まりを 外して 鳴る ことも 見せます）
        ⑰  ★★★点の 数字が 札の すみに あるか（★7＝0・A＝20）
        ⑰-2 ★★T179 ―― ★点の まるが **となりの 札**に かくれて いないか（★面で 数える）
        ⑰-3 ★★★T182 ―― ★★青いわくが **札の 字**を 食べて いないか
@@ -2665,11 +2749,67 @@
        ㉔  ★★手札は 8枚から 増えない（★決まりの 上で 増えようが ない ことを 数で 見る）
        ㉕  ★★★★T180 の 5つが 出て いるか（★①自動で 引く ②青いわく ③2つの ボタン ④2択 ⑤灰色）
        ㉕-2 ★★★わざと 青いわくを 剥がして、★見張りが 鳴る ことを その場で 見せる
+     ★★★ ＋ ★★「この 結果は 読めるか」（★T198-3・★★鳴りません・★読み だけ）★★★
+        ★ ★盤が 何かに おおわれて いると、★「指で さす」目が ぜんぶ 壊れて 見えます。
+        ★ ★★NG は 増やさず、★★「いま おおわれて いるので 読めません」と 1行 言います。
      ============================================================ */
+  /* ============================================================
+     ★★★ T198-3 ―― ★★「盤が おおわれて いませんか」★★★
+     ------------------------------------------------------------
+     ★ ★見張りは **指で さして** たしかめます（`document.elementFromPoint`）。
+       ★ ★★だから ―― ★★盤の 上に 何かが かぶさって いると、★指が ぜんぶ そこに 当たり、
+         ★ ★「山が 無い」「札が 返らない」「すてられない」と 出ます ―― ★★壊れて いなくても です。
+     ★ ★★私は それで 1度 転びました（★1回おわりの 箱を 開いた まま 走らせて **6件**）。
+       ★ ★★トライは 透明な 板を 1枚 かぶせて **12件** 鳴らしました。
+       ★ ★★★12件 鳴った のを 見た 人は、★★公開を 止める 側に 倒れます。★だから 要ります。
+
+     ⚠️★★★ ★★これは **鳴る 見張りでは ありません**（★★NG を 1つも 増やしません）★★★
+        ★ ★アトの 言葉：「★鳴る 見張りより、★★鳴らない ときに 黙って いる 見張りの ほうが 難しい」。
+        ★ ★★だから ―― ★★**「いま おおわれて いるので、この 結果は 読めません」と 言うだけ** です。
+        ★ ★★「無い ことを 数える 目」も 足して いません ―― ★★指が 届いた 数を 数えて います。
+     ============================================================ */
+  function coverProbe() {
+    if (!g || !built || !geo || playScreen.classList.contains('hidden')) {
+      return { read: false, txt: '★★盤が まだ 出て いません（★はじめの 画面）―― ★「指で さす」目は 読めません' };
+    }
+    var pts = [], i, e;
+    for (i = 0; i < g.hands[0].length; i++) {
+      e = cardEl[g.hands[0][i]];
+      if (e) pts.push(e.getBoundingClientRect());
+    }
+    if (spotStock) pts.push(spotStock.getBoundingClientRect());
+    if (spotDiscard) pts.push(spotDiscard.getBoundingClientRect());
+    var n = 0, bad = 0, by = {};
+    for (i = 0; i < pts.length; i++) {
+      var q = pts[i];
+      if (q.width < 2 || q.height < 2) continue;
+      n++;
+      var x = Math.round(q.left + q.width / 2), y = Math.round(q.top + q.height / 2);
+      if (hitAt(x, y)) continue;                       /* ★ 指が 札か 山に 届いた */
+      bad++;
+      var top = document.elementFromPoint(x, y);
+      var nm = '（なし）';
+      if (top) {
+        nm = top.id ? ('#' + top.id) : '';
+        if (top.className && top.className.split) nm += '.' + top.className.split(/\s+/).join('.');
+        if (!nm) nm = top.tagName;
+      }
+      by[nm] = (by[nm] || 0) + 1;
+    }
+    if (!n) return { read: false, txt: '★★さす ところが ありません ―― ★「指で さす」目は 読めません' };
+    if (!bad) return { read: true, txt: '○ 盤は 見えて います（★' + n + 'か所 ぜんぶ 指が 届きました）' };
+    return { read: false,
+             txt: '★★★盤が おおわれて います（★' + bad + ' / ' + n + 'か所で 指が 届きません：' +
+                  Object.keys(by).join('・') + '）★★→ ★★この 結果の うち「指で さす」目は 読めません。' +
+                  '★★1回おわりの 箱・遊びかたの 窓を **閉じてから** もう 一度 走らせて ください' };
+  }
+
   function verify(n) {
     n = n || 600;
     var ng = [], t0 = Date.now(), note = {};
     var L = C.LEVELS, i, k;
+    /* ★★ T198-3 ―― ★★走らせる **前** に、★盤が 見えて いるかを 読みます（★鳴りません）★★ */
+    var cover = coverProbe();
     /* ⚠️★★ 見張りは 見るだけ ―― ★さわった ものは 1つ 残らず 戻します（★T144 §7-5）★★
        ★ ★★ここを 足す 前は、★verify の あと ハッピーが「そろった！ やったね！」と
          ★ 言った ままに なって いました（★⑯ が 本物の「出す」を 押す ので）。
@@ -2684,7 +2824,9 @@
       tot.illegal += st.illegal;
       tot.nofin += st.nofin;
       if (st.handMax > tot.handMax) tot.handMax = st.handMax;
-      txt.push(L[i].label + ' 7上がり ' + (st.doubled / st.games / C.LIM.DEALS * 100).toFixed(2) + '%');
+      /* ★★ T198-2 ―― ★前は ここで「7上がり ○%」を 出して いました。★決まりを 消した ので
+         ★ ★★数える ものが ありません。★★かわりに「誰も 上がれない 回」を 出します（★①の 本来の 目）。 */
+      txt.push(L[i].label + ' 上がれない ' + (st.nofin / st.games / C.LIM.DEALS * 100).toFixed(2) + '%');
     }
     if (tot.illegal) ng.push('★★★反則・札の 数ちがいが ' + tot.illegal + '件（★53枚 きっちり 保てて いません）');
     note['① ' + (n * 3) + '試合'] = txt.join('／') + '／★反則 ' + tot.illegal + '件／★手札の 最大 ' + tot.handMax + '枚';
@@ -2903,9 +3045,9 @@
       if (fl.w !== want[i][2]) ng.push('★寸法が ちがう（' + want[i][3] + '：' + fl.w + 'px ／ 表 ' + want[i][2] + 'px）');
       if (fl.pitch < C.FIT.PITCH_MIN - 0.05) ng.push('★★' + want[i][3] + ' で 見えて いる はばが ' + fl.pitch.toFixed(1) + 'px（★21px 以上 の はず）');
       if (fl.pitch < fl.w * 0.5) ng.push('★★★' + want[i][3] + ' で 札の まん中が かくれる（見え ' + fl.pitch.toFixed(1) + 'px ／ 札 ' + fl.w + 'px）');
-      /* ★★ いちばん 長い 組（★13枚）が 1行に 入るか */
-      var pk = C.packRows([13], want[i][0] - C.FIT.EDGE * 2, fl.tw, fl.step);
-      if (pk.length !== 1) ng.push('★★★' + want[i][3] + ' で 13枚の 組が 1行に 入りません（★端が 切れます）');
+      /* ★★ いちばん 長い 組（★T198【実測】14枚）が 1行に 入るか */
+      var pk = C.packRows([C.FIT.WIDEST], want[i][0] - C.FIT.EDGE * 2, fl.tw, fl.step);
+      if (pk.length !== 1) ng.push('★★★' + want[i][3] + ' で ' + C.FIT.WIDEST + '枚の 組が 1行に 入りません（★端が 切れます）');
     }
     note['⑧ 寸法'] = sizeTxt.join('／');
 
@@ -3064,6 +3206,11 @@
     for (i = 0; i < gp.why.length; i++) ng.push(gp.why[i]);
     note['⑯ ★「場に出す」'] = 'そろって いない 3枚 ' + gp.bad + '／同じ 数字 ' + gp.set + '／つづいた 数字 ' + gp.run +
                           '／手札 ぜんぶ ' + gp.all + '／押したら ' + gp.played;
+    /* ★★★ ⑯-2 ―― ★T198：★7は 1枚でも 出せるか（★本物の 決まり・社長の ご指摘）★★★ */
+    note['⑯-2 ★★7は 1枚でも 出せる'] =
+        '7が 1枚 ' + gp.seven1 + '／7＋6 ' + gp.seven67 + '／7＋8 ' + gp.seven78 +
+        '／★7いがい 1枚 ' + gp.one + '／★7の ない 2枚 ' + gp.two +
+        '／押したら ' + gp.sevenPlayed + '／★★' + gp.sevenKill;
 
     /* ⑰ ★★★点の 数字が 札の すみに あるか */
     var pp = ptProbe();
@@ -3325,11 +3472,19 @@
               ―― ★★たまたま つかえる 札が 乗ると 鳴る、★**気まぐれな 見張り** でした。
               ★ ★実際に 812×375 で 1回 鳴り、★私が 気づきました。★★ここは 手で 組みます。
            ★ ★手札 … マークも 数字も ばらばら（★組にも 並びにも ならない 5枚）
-           ★ ★すて札の 上 … ★4つ目の マークの 7（★手札に 同じ 数字も 同じ マークも ありません）
-           ★ ★場 … 空っぽ（★足せる 先が ありません） */
+           ★ ★すて札の 上 … ★4つ目の マークの 札（★手札に 同じ 数字も 同じ マークも ありません）
+           ★ ★場 … 空っぽ（★足せる 先が ありません）
+
+           ⚠️★★★ T198 ―― ★★ここは **7 では いけなく なりました** ★★★
+              ★ ★T180 の 私は ここに ★**スペードの 7**（3*13+6）を 置いて いました。
+                ★ ★「7は 0点で つかい道が ない」と 思って いた から です。
+              ★ ★★7が 1枚でも 出せる ように なった いま、★★7は **いつでも つかえる 札** です
+                ―― ★★だから この 見張りが 正しく 鳴りました（★★これが 見張りの 仕事 です）。
+              ★ ★★スペードの K に かえました（★手札に K も スペードも ありません）。
+                ★ ★★ここを また 7に 戻すと、★同じ ところが また 鳴ります。 */
         g.table = [];
         var noHand = [0 * 13 + 0, 0 * 13 + 4, 0 * 13 + 8, 1 * 13 + 2, 2 * 13 + 10];
-        var noTop = 3 * 13 + 6;
+        var noTop = 3 * 13 + 12;                  /* ★ スペードの K（★T198：★7では なくなりました）*/
         var noRest = [], nz;
         for (nz = 0; nz < 53; nz++) if (noHand.indexOf(nz) < 0 && nz !== noTop) noRest.push(nz);
         g.hands[0] = noHand.slice();
@@ -3393,9 +3548,14 @@
 
     var out = {
       '★NG': ng.length, '中身': ng.length ? ng : 'ぜんぶ OK ✅',
+      /* ★★ T198-3 ―― ★★NG の すぐ 下。★★「読めるか どうか」を 先に 目に 入れる ため ★★ */
+      '★★この 結果は 読めるか': cover.txt,
       '画面': window.innerWidth + '×' + window.innerHeight,
       'かかった 時間': (Date.now() - t0) + 'ms'
     };
+    if (!cover.read) {
+      console.warn('[セブンブリッジ] ★★' + cover.txt);
+    }
     for (var kk in note) if (note.hasOwnProperty(kk)) out[kk] = note[kk];
     console.log('[セブンブリッジ] verify', out);
     return out;

@@ -125,7 +125,12 @@
   }
   function setFits(m, c) {
     if (m.n >= 4) return false;
-    if (isJk(c)) return m.jk === 0;
+    /* ★★★ T198 ―― ★★7が 1枚だけの 組に ジョーカーは 足せません ★★★
+       ★ ★足せると「7＋ジョーカー」の 2枚の 組が 場に 残ります ―― ★★決まり③
+         （★2枚以下の 組に ジョーカーは 使わない）に 反する 形 です。
+       ★ ★★これは 私が 机の 上で 決めた のでは なく、★★2万回 配って 見つけた 反則 2件 です
+         【★実測・T198・作業メモ §4】。★★見張りが 先に 鳴らして くれました。 */
+    if (isJk(c)) return m.jk === 0 && m.n >= 2;
     return rankOf(c) === m.rank && !m.suits[suitOf(c)];
   }
   function tableFits(m, c) { return m.t === 's' ? setFits(m, c) : (runFits(m, c) !== 0); }
@@ -154,6 +159,65 @@
   function meldLen(m) { return m.t === 's' ? m.n : (m.hi - m.lo + 1); }
 
   /* ============================================================
+     ★★★ T198 ―― ★★7は 1枚でも 出せる（★本物の 決まり・社長の ご指摘）★★★
+     ------------------------------------------------------------
+     ★ 任天堂の 説明④：★★「1枚だけでも公開することができます」
+       ★ ★★「7と6、7と8、このように7があれば、2枚だけでもシークエンスとして公開できます」
+     ★ ★ルル T173 は この 決まりを **1つも 数えて いませんでした**（★T197 §14 失敗1）。
+       ★ ★私（コーダ）も T174 で そのまま 写しました。★★2人 とも 落として います。
+
+     ★★ 決まりの 形（★ルル T197 §差1 の 読みを そのまま 使います）★★
+       ★ ★① 7だけの 組 …… **1枚・2枚 でも 出せる**（★3枚以上は もともと 出せる）
+       ★ ★② 7を ふくむ **同じ マークの 2枚の 並び** …… ★6-7 ／ 7-8
+       ★ ★③ ★★2枚以下の 組に **ジョーカーは 使いません**（★本物の 説明に 無い ので 足さない）
+     ★ ★★①は「7の 組」として 場に 出ます ―― ★あとから 7を 足せます（★tableFits が そのまま 効く）。
+
+     ⚠️★★★ ここが いちばん 大事な ところ ―― ★★決まりは **いつも ON** です ★★★
+       ★ ★ルルは T197 で「★ロボットに 決まりを 渡し忘れて 得が 49.12 と 出た」と 書いて います
+         （★T173 §15 失敗4 と 同じ 罪を 2回）。★★私も T174 で 同じ 形の 事故を 1回 起こしました。
+       ★ ★★だから **スイッチを ON に する 形に しませんでした。**
+         ★ ★`off` を 渡した ときだけ 決まりが **消えます**（＝ ★何も 渡さなければ 本物の 決まり）。
+         ★ ★★渡すのは **見張り（verify ⑯-2）が わざと 壊す ときだけ** です。
+         ★ ★★＝ ★「渡し忘れ」で 数字が 良く 出る 事故が、★★構造の 上で 起きません。
+
+     ⚠️★★★ ★★次に ここを さわる 人へ ―― ★★私の 言い方は 半分 まちがって いました ★★★
+        ★ ★T198 で 私（コーダ）は「★人の 道と ロボットの 道が 同じ 決まりを 通る 形に した ――
+          ★ ★★渡し忘れが **構造上** 起きない」と 書きました。★★トライに 正されました：
+
+        ★ ★★**この 2つは 同じ 関数では ありません。★★別々に 書かれた 2つの 決まり です。**
+          ★ ★・ロボットの 道 …… `enumMelds`（★7の 塊）＋ `enumOk`
+          ★ ★・人の 道 ……… ★★`makeMeld`（★★7の 特別扱いを **もう 一度** 書いて います）
+          ★ ★・場の 見張り …… `meldOk`（★★これも もう 一度）
+
+        ★ ★★正しくは：★「**渡し忘れ**（★opts に 入れ忘れる）は 起きない」まで です。
+          ★ ★★「★2つの 決まりが ずれない」ことは **保証されて いません** ――
+            ★ ★トライが **1431通り 数えて**「いま 一致して いる」ことを 確かめただけ です
+            （★★1枚で 出せるのは ♠7♥7♦7♣7 の 4通り・★2枚は 14通り・★くいちがい 0件）。
+
+        ★ ★★★だから ―― ★★**この 3つの うち 1つだけを 直さないで ください。**
+          ★ ★7の 決まりを 変える ときは、★★`enumMelds` / `makeMeld` / `meldOk` の
+            ★ ★★**3つ とも** 直して、★もう 一度 数え直して ください。
+     ============================================================ */
+  /* ★ 場に ある 組が 決まりに 合って いるか（★人・ロボット・見張り ぜんぶ ここを 通します）*/
+  function meldOk(m) {
+    if (!m) return false;
+    var n = meldLen(m);
+    if (n >= 3) return true;                 /* ★ ふつうの 組・並び */
+    if (n < 1) return false;
+    if (m.jk) return false;                  /* ★ ③ 2枚以下に ジョーカーは 使わない */
+    if (m.t === 's') return m.rank === 7;    /* ★ ① 7の 組（1枚・2枚）*/
+    return m.lo <= 7 && m.hi >= 7;           /* ★ ② 7を ふくむ 2枚の 並び（6-7／7-8）*/
+  }
+  /* ★ 数えあげた 組の 候補（enumMelds が 返す 形）が 決まりに 合って いるか */
+  function enumOk(m) {
+    if (!m) return false;
+    if (m.cnt >= 3) return true;
+    if (m.useJk) return false;
+    if (m.kind === 's') return m.rank === 7;
+    return m.lo <= 7 && m.hi >= 7;
+  }
+
+  /* ============================================================
      ★★★ 手札から 出せる 組を ぜんぶ 数えあげる（★ルルの enumMelds そのまま）★★★
      ------------------------------------------------------------
      ⚠️★★★ この 関数は **ロボットだけの もの** です ★★★
@@ -162,10 +226,34 @@
           ―― ★★設計図 追記② 違反・★このゲームで いちばん 重い 部品（21.6ポイント）を 奪います。
         ★ ★★verify ⑬ が、画面側の 関数の 中身を 1行ずつ 走査して 見張ります。
      ============================================================ */
-  function enumMelds(hand) {
+  function enumMelds(hand, off) {
     var n = hand.length, out = [], i, r, s, k;
     var jkIdx = [];
     for (i = 0; i < n; i++) if (isJk(hand[i])) jkIdx.push(i);
+
+    /* ★★★ T198 ―― ★7だけの 組（1枚・2枚）と、7を ふくむ 2枚の 並び ★★★
+       ★ ★★ルル T197 の エンジンの この 塊を **1行ずつ 写しました**（★書き直して いません）
+         ―― ★★だから ルルの 数（★得 23.71・★手番 22.0・★はじめての人 26.20%）と
+           ★ ★この 画面の ロボットは **同じ 打ち手** です。
+       ★ ★★`off` が 真の ときだけ 消えます（★見張りが わざと 壊す とき だけ）。 */
+    if (!off) {
+      var s7 = [];
+      for (i = 0; i < n; i++) if (!isJk(hand[i]) && rankOf(hand[i]) === 7) s7.push(i);
+      for (s = 1; s < (1 << s7.length); s++) {
+        var c7 = 0, mk7 = 0;
+        for (i = 0; i < s7.length; i++) if (s & (1 << i)) { c7++; mk7 |= 1 << s7[i]; }
+        if (c7 >= 1 && c7 <= 2) out.push({ mask: mk7, cnt: c7, kind: 's', rank: 7, useJk: 0 });
+      }
+      for (k = 0; k < s7.length; k++) {
+        var i7 = s7[k], su7 = suitOf(hand[i7]);
+        for (var j7 = 0; j7 < n; j7++) {
+          if (isJk(hand[j7]) || suitOf(hand[j7]) !== su7) continue;
+          r = rankOf(hand[j7]);
+          if (r === 6) out.push({ mask: (1 << i7) | (1 << j7), cnt: 2, kind: 'r', suit: su7, lo: 6, hi: 7, useJk: 0 });
+          if (r === 8) out.push({ mask: (1 << i7) | (1 << j7), cnt: 2, kind: 'r', suit: su7, lo: 7, hi: 8, useJk: 0 });
+        }
+      }
+    }
 
     /* --- 組（同じ 数字）--- */
     for (r = 1; r <= 13; r++) {
@@ -260,14 +348,47 @@
      ★ ★返すのは 組 か null。★★「どこが 惜しい」も「あと 1枚で そろう」も 返しません
        ―― ★★それを 返したら、★さがす 仕事を 半分 肩代わりした ことに なります。
      ============================================================ */
-  function makeMeld(cards, owner) {
+  /* ⚠️★★ ★★7の 決まりは ここにも 書いて あります（★下の `cards.length < 3` の 中）★★
+     ★ ★★`enumMelds`（ロボット）・`meldOk`（場の 見張り）と ★★合わせて 3か所 です。
+     ★ ★★1つだけ 直すと ずれます ―― ★上の「次に ここを さわる 人へ」を 読んで ください。 */
+  function makeMeld(cards, owner, off) {
     var i, jkN = 0, real = [];
-    if (!cards || cards.length < 3) return null;
+    if (!cards || !cards.length) return null;
     for (i = 0; i < cards.length; i++) {
       if (isJk(cards[i])) jkN++;
       else real.push(cards[i]);
     }
     if (jkN > 1) return null;                 /* ★ 決まり6：★1組に ジョーカーは 1枚まで */
+
+    /* ★★★ T198 ―― ★7の 特別扱い（★1枚・2枚）★★★
+       ★ ★★ここも「たしかめる」だけ です ―― ★人が えらんだ 札を そのまま 見て、
+         ★ ★合って いるか 合って いないかを 返します。★★「7を えらぶと 得」は 1文字も 返しません。 */
+    if (cards.length < 3) {
+      if (off) return null;                   /* ★ 見張りが わざと 壊す とき */
+      if (jkN) return null;                   /* ★ 2枚以下に ジョーカーは 使わない */
+      var has7 = false;
+      for (i = 0; i < real.length; i++) if (rankOf(real[i]) === 7) has7 = true;
+      if (!has7) return null;                 /* ★ 7が 無ければ 3枚 要る（★決まりは そのまま）*/
+      if (real.length === 1) {                /* ★ ① 7が 1枚 ―― ★「7の 組」として 場へ */
+        var u1 = [false, false, false, false];
+        u1[suitOf(real[0])] = true;
+        return { t: 's', rank: 7, suits: u1, jk: 0, n: 1, owner: owner, cards: [real[0]] };
+      }
+      var ra = real[0], rb = real[1];
+      if (rankOf(ra) === 7 && rankOf(rb) === 7) {   /* ★ ① 7が 2枚（ちがう マーク）*/
+        if (suitOf(ra) === suitOf(rb)) return null;
+        var u2 = [false, false, false, false];
+        u2[suitOf(ra)] = true; u2[suitOf(rb)] = true;
+        return { t: 's', rank: 7, suits: u2, jk: 0, n: 2, owner: owner, cards: [ra, rb] };
+      }
+      /* ★ ② 7を ふくむ 同じ マークの 2枚の 並び（★6-7 ／ 7-8）*/
+      if (suitOf(ra) !== suitOf(rb)) return null;
+      var lo2 = Math.min(rankOf(ra), rankOf(rb)), hi2 = Math.max(rankOf(ra), rankOf(rb));
+      if (hi2 - lo2 !== 1) return null;
+      if (!(lo2 === 6 && hi2 === 7) && !(lo2 === 7 && hi2 === 8)) return null;
+      return { t: 'r', suit: suitOf(ra), lo: lo2, hi: hi2, jk: 0, owner: owner,
+               cards: (rankOf(ra) === lo2) ? [ra, rb] : [rb, ra] };
+    }
     if (real.length < 2) return null;         /* ★ 本物が 2枚は 要る */
 
     /* ── 組（同じ 数字）── */
@@ -328,7 +449,10 @@
      ============================================================ */
   function planPlay(hand, table, opts, me, mustLeave) {
     var nH = hand.length;
-    var melds = enumMelds(hand), i, k;
+    /* ★★ T198 ―― ★`opts.noSeven` は **見張りだけ** が 渡します。
+       ★ ★★何も 渡さなければ 7の 決まりは 入って います ＝ ★★ロボット3人 とも 自動で 同じ 決まり。
+       ★ ★（★ルル T197 §14 失敗2「ロボットに 決まりを 渡し忘れて 得が 49.12」の 再発 よけ）*/
+    var melds = enumMelds(hand, opts.noSeven), i, k;
     if (!opts.useSet) melds = melds.filter(function (m) { return m.kind !== 's'; });
     if (!opts.useRun) melds = melds.filter(function (m) { return m.kind !== 'r'; });
     if (opts.noJoker) melds = melds.filter(function (m) { return m.useJk === 0; });
@@ -346,9 +470,11 @@
       }
     }
 
-    var bonus = opts.sevenOut
-      ? function (rest) { return (rest.length === 1 && !isJk(hand[rest[0]]) && rankOf(hand[rest[0]]) === 7) ? 1 : 0; }
-      : function () { return 0; };
+    /* ★★★ T198-2 ―― ★★「7上がりで 2倍」を 消した ので、★ここの おまけ点も 消しました ★★★
+       ★ ★前は `opts.sevenOut` が「★さいごに 7 を すてて 上がる」に **＋1点** を 付けて いました。
+       ★ ★★2倍の 決まりが 無く なった いま、★この ＋1点は **何の ためでも ありません**。
+       ★ ★★書き置き（★次の 人へ）：★★ここに おまけ点を 足し直さないで ください。
+         ★ ★「7で 上がると 得」は ★★本物の セブンブリッジの 決まりでは ありません（★ルル T197 差10）。 */
 
     function evaluate() {
       var used = 0, j;
@@ -359,7 +485,7 @@
         for (j = 0; j < chosen.length; j++) played += chosen[j].cnt;
         if (nH - played < mustLeave) return;
         for (j = 0; j < nH; j++) if (!(used & (1 << j))) rest.push(j);
-        sc = played * 10 + bonus(rest);
+        sc = played * 10;
         if (!best || sc > best.sc) best = { sc: sc, played: played, melds: chosen.slice(), laid: [], rest: rest };
         return;
       }
@@ -384,11 +510,11 @@
       }
       played = nH - rest.length;
       if (nH - played < mustLeave) return;
-      sc = played * 10 + bonus(rest);
+      sc = played * 10;
       if (!best || sc > best.sc) best = { sc: sc, played: played, melds: chosen.slice(), laid: laid.slice(), rest: rest.slice() };
     }
 
-    var top = cap * 10 + (opts.sevenOut ? 1 : 0);
+    var top = cap * 10;
     function dfs(start, usedMask) {
       evaluate();
       if (best && best.sc >= top) return;
@@ -469,21 +595,38 @@
   ];
 
   /* ============================================================
-     ★★ 決まり（★13個。★見せる 説明は 6行 ―― ★ルル §9）★★
+     ★★ 決まり（★★13個。★見せる 説明は 6行 ―― ★ルル §9）★★
+       ★ ★★T198 で 1つ 足して（4-2）、★★T198-2 で 1つ 消しました（★もとの 11）＝ ★★13 → 14 → 13個。
+       ⚠️★★ ★★下の 番号を 数えて ください（★1〜12 ＋ 4-2 ＝ ★★13個）。
+          ★ ★★T198-2 の 私は ここを「12個」と 書きまちがえました【★私の 失敗・§9-9】――
+            ★ ★消えた 決まりを **2つ** と 数えて いました（★本当は 1つ。★もう 1つは
+              ★ ★ロボットの おまけ点 で、★決まりでは ありません）。★トライが 見つけました。
+         ★ ★どちらも 説明の 行数は 動いて いません（★足したのは 同じ 行に 1文・消したのは 0行の 決まり）。
      ------------------------------------------------------------
        1  7枚ずつ 配る。のこりが 山。1枚 めくって すて札の はじまり  → 画面が やる（0行）
        2  山から 1枚 引く。または すて札の 一番上を もらう          → 1行
        3  同じ 数字 3枚以上 ＝ 組。場に 出せる                      → （4と 同じ行）
        4  同じ マークの つづいた 数字 3枚以上 ＝ 並び               → 1行
+      ★4-2 ★★T198 ―― ★**7は 1枚でも 出せる**（★7＋6・7＋8 の 2枚の 並びも）→ ★★同じ 行に 足す
+            ★ ★本物の 決まり（任天堂 ④）。★★ルル T173 が 落として いた 14個目 です。
+            ★ ★★あそびかたは **6行の まま**（★②の 行の おしりに 1文 足しただけ）。
        5  場の 組に 自分の 札を 足せる（★だれの ものでも）          → 1行
        6  ジョーカーは どの 札の かわりにも（1組に 1枚まで）        → 0行（★触れば 分かる）
        7  手番の さいごに 1枚 すてる                                → （8と 同じ行）
        8  手札が 0枚に なったら 上がり                              → 1行
        9  上がった 人は 0点                                         → 0行
       10  のこった 札が 点（7＝0／A＝20／絵札＝10／JOKER＝50）       → 1行（★札の すみに 書く）
-      11  さいごに すてた 札が 7 なら、ほかの 人の 点が 2倍          → 0行（★ハッピーが 言う）
-      12  山が なくなったら すて札を 混ぜ直して 山に する            → 0行
-      13  ★4回 くりかえして 合計点が いちばん 少ない 人の 勝ち       → 1行
+      11  山が なくなったら すて札を 混ぜ直して 山に する            → 0行
+      12  ★4回 くりかえして 合計点が いちばん 少ない 人の 勝ち       → 1行
+     ★★★ 消した 決まり（★T198-2・2026-09-02・社長裁定）★★★
+       ★ ★もとの 11「★さいごに すてた 札が 7 なら、ほかの 人の 点が 2倍」―― ★★消しました。
+       ★ ★★理由：★① ★本物の 決まりでは ありません（★任天堂の ⑧⑨ に 載って いません・ルル T197 差10）
+         ★ ★★② ★T198 で「7は 1枚でも 出せる」に した ので、★★起きなく なりました
+           ―― ★★20.99% → **0.03%**【実測・T198】。★7は 出して しまう ので、手に 残りません。
+       ★ ★★社長の 言葉：「★本物に 無く、★実際にも 起きなく なった 決まりを、
+         ★ ★★動かないまま 残すのは いちばん 値打ちが ない」。
+       ⚠️★★ ★★書き置き ―― ★★これを「本物の ルールに 戻す」と 言って 足しに 来ないで ください。
+          ★ ★★本物には **無い** 決まり です。★足すと 決まりが 1つ 増えるだけ です。
      ★★ 入口（設定）は **0個** です（★ルル §6-2：★切りかえて 面白くなる 決まりが 1つも 無い）。
      ============================================================ */
   var DEALS = 4;
@@ -491,7 +634,7 @@
   var LIM = { DEALS: DEALS, MAXTURN: 600, MAXRESHUFFLE: 6 };
 
   function defaultRules() {
-    return { nP: 4, handSize: HAND_SIZE, jokers: 1, sevenDouble: true, sevenZero: true,
+    return { nP: 4, handSize: HAND_SIZE, jokers: 1, sevenZero: true,
              layoffNeedsOwn: false, reshuffle: true, maxTurns: LIM.MAXTURN };
   }
 
@@ -522,7 +665,7 @@
       hands: hands, stock: deck, discard: discard, table: [],
       cur: (opt.startP || 0) % nP,
       phase: 'draw', turn: 0, reshuffles: 0,
-      winner: -1, lastDiscard: -1, doubled: false, drawGame: false,
+      winner: -1, lastDiscard: -1, drawGame: false,
       over: false, pts: null,
       st: { turns: 0, draws: 0, tookDiscard: 0, meldTurns: 0, layoffCards: 0,
             handMax: R.handSize + 1, reshuffles: 0, dryTurns: 0 }
@@ -613,7 +756,13 @@
     return { ok: true, out: false };
   }
 
-  /* ★★ 1回 おわり ―― ★点を つける（★決まり 9・10・11）★★ */
+  /* ★★ 1回 おわり ―― ★点を つける（★決まり 9・10）★★
+     ★★★ T198-2 ―― ★★ここに あった「7上がりで 2倍」を 消しました（2026-09-02・社長裁定）★★★
+       ★ ★前は この 下に「★さいごに すてた 札が 7 なら ほかの 人の 点を ×2」が ありました。
+       ★ ★★点は もう **手札の 点を 足すだけ** です。★かけ算は 1か所も ありません。
+       ⚠️★★ ★★書き置き ―― ★★ここに ×2 を 足し直さないで ください。
+          ★ ★★本物の セブンブリッジには この 決まりが ありません（★任天堂 ⑧⑨・ルル T197 差10）。
+          ★ ★★そして T198 の あと、★★実際にも 起きません（20.99% → 0.03%【実測】）。 */
   function finishDeal(g, winner) {
     var PEN = g.rules.sevenZero ? penOf : penFlat;
     var pts = [], p, i;
@@ -622,12 +771,6 @@
       var s = 0;
       for (i = 0; i < g.hands[p].length; i++) s += PEN(g.hands[p][i]);
       pts.push(s);
-    }
-    g.doubled = false;
-    if (winner >= 0 && g.rules.sevenDouble && g.lastDiscard >= 0 &&
-        !isJk(g.lastDiscard) && rankOf(g.lastDiscard) === 7) {
-      g.doubled = true;
-      for (p = 0; p < g.nP; p++) if (p !== winner) pts[p] *= 2;
     }
     g.winner = winner;
     g.drawGame = (winner < 0);
@@ -795,7 +938,7 @@
       for (var s = 0; s < steps.length; s++) {
         if (steps[s].kind === 'meld') {
           var mm = g.table[steps[s].at];
-          if (meldLen(mm) < 3) bad++;
+          if (!meldOk(mm)) bad++;             /* ★ T198：★3枚以上 か、★7の 1〜2枚 */
         }
       }
       if (g.hands[g.cur].length < 1) bad++;
@@ -810,20 +953,19 @@
     for (p = 0; p < g.nP; p++) total += g.hands[p].length;
     for (i = 0; i < g.table.length; i++) total += meldLen(g.table[i]);
     if (total !== 53) bad += 100;
-    return { winner: g.winner, pts: g.pts, st: g.st, doubled: g.doubled,
+    return { winner: g.winner, pts: g.pts, st: g.st,
              drawGame: g.drawGame, bad: bad, table: g.table };
   }
 
   function simMatch(rand, os, R, deals) {
     deals = deals || LIM.DEALS;
     var tot = [0, 0, 0, 0], turns = 0, draws = 0, handMax = 0, bad = 0;
-    var melds = 0, tblCards = 0, widest = 0, doubled = 0, d, p;
+    var melds = 0, tblCards = 0, widest = 0, d, p;
     for (d = 0; d < deals; d++) {
       var r = simDeal(rand, os, R, d);
       for (p = 0; p < 4; p++) tot[p] += r.pts[p];
       turns += r.st.turns; bad += r.bad;
       if (r.drawGame) draws++;
-      if (r.doubled) doubled++;
       if (r.st.handMax > handMax) handMax = r.st.handMax;
       if (r.st.melds > melds) melds = r.st.melds;
       if (r.st.tableCards > tblCards) tblCards = r.st.tableCards;
@@ -835,11 +977,11 @@
     var win = [];
     for (p = 0; p < 4; p++) win.push(tot[p] === lo ? 1 / nw : 0);
     return { tot: tot, win: win, turns: turns, draws: draws, handMax: handMax,
-             melds: melds, tblCards: tblCards, widest: widest, doubled: doubled, bad: bad };
+             melds: melds, tblCards: tblCards, widest: widest, bad: bad };
   }
 
   function newStat() {
-    return { games: 0, win: 0, illegal: 0, nofin: 0, doubled: 0, pts: 0,
+    return { games: 0, win: 0, illegal: 0, nofin: 0, pts: 0,
              turns: 0, turnList: [], handMax: 0, melds: 0, tblCards: 0, widest: 0,
              meldList: [], cardList: [], scores: [] };
   }
@@ -855,7 +997,6 @@
         if (r.pts[0] === lo) st.win += 1 / nw;
         st.illegal += r.bad;
         if (r.drawGame) st.nofin++;
-        if (r.doubled) st.doubled++;
         st.pts += r.pts[0];
         st.turns += r.st.turns; st.turnList.push(r.st.turns);
         if (r.st.handMax > st.handMax) st.handMax = r.st.handMax;
@@ -870,7 +1011,6 @@
         st.win += m.win[0];
         st.illegal += m.bad;
         st.nofin += m.draws;
-        st.doubled += m.doubled;
         st.pts += m.tot[0];
         st.turns += m.turns; st.turnList.push(m.turns);
         if (m.handMax > st.handMax) st.handMax = m.handMax;
@@ -1098,7 +1238,7 @@
     suitOf: suitOf, rankOf: rankOf, isJk: isJk, nameOf: nameOf, markOf: markOf, isRed: isRed,
     penOf: penOf, penFlat: penFlat, allNames: allNames,
     runFits: runFits, setFits: setFits, tableFits: tableFits, tablePut: tablePut,
-    cloneTable: cloneTable, meldLen: meldLen,
+    cloneTable: cloneTable, meldLen: meldLen, meldOk: meldOk, enumOk: enumOk,
     enumMelds: enumMelds, meldToTable: meldToTable, makeMeld: makeMeld,
     planPlay: planPlay, usefulness: usefulness,
     P: P, LEVELS: LEVELS, LEVEL_START: LEVEL_START, HUMANS: HUMANS,
