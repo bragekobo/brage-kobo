@@ -123,6 +123,40 @@
     }
     return 0;
   }
+  /* ============================================================
+     ★★★★ T205 ―― ★★「7を ふくむ 2枚」の 決まりを **ここ 1か所**に しました ★★★★
+     ------------------------------------------------------------
+     ★ ★社長：「場に ハートの7が あるのに、手札の ハートの8が 場に 出せません。
+       ★ ★★場に ハートの7が あるので、ハートの 6、8は 場に 出せる（つける）ように して ください」
+
+     ★ ★★T198 で 私は「7の 決まりは 3か所に ある」と 書き置きました。★★4か所目が ありました ――
+       ★ ★★**付け足しの 道**（tableFits / tablePut）です。★数え落として いました。
+     ★ ★★だから 今回は 数を 減らしました ―― ★★2枚の 決まりは **この pair7 だけ** です。
+       ★ ★makeMeld（★人が えらぶ 道）も、★下の 付け足しの 道も、★★ここを 通ります。
+
+     ★★ 1枚だけの 7は「まだ 決まって いない」★★
+       ★ ★7が 1枚で 場に 出た とき、★それが「7の 組」に なるか「6-7-8… の 並び」に なるかは
+         ★ ★★まだ 決まって いません。★★ solo7 の ふだを 立てて 待ちます。
+       ★ ★2枚目が 乗った 瞬間に、★組か 並びかが 決まります（★tablePut が 作り変えます）。
+     ============================================================ */
+  function pair7(a, b, owner) {
+    if (isJk(a) || isJk(b)) return null;          /* ★ 2枚に ジョーカーは 使いません */
+    var ra = rankOf(a), rb = rankOf(b);
+    if (ra !== 7 && rb !== 7) return null;        /* ★ 7が 1枚は 要る */
+    if (ra === 7 && rb === 7) {                   /* ★ 7が 2枚（ちがう マーク）→ 組 */
+      if (suitOf(a) === suitOf(b)) return null;
+      var u = [false, false, false, false];
+      u[suitOf(a)] = true; u[suitOf(b)] = true;
+      return { t: 's', rank: 7, suits: u, jk: 0, n: 2, owner: owner, cards: [a, b], solo7: 0 };
+    }
+    if (suitOf(a) !== suitOf(b)) return null;     /* ★ 並びは 同じ マーク */
+    var lo = Math.min(ra, rb), hi = Math.max(ra, rb);
+    if (hi - lo !== 1) return null;
+    if (!(lo === 6 && hi === 7) && !(lo === 7 && hi === 8)) return null;
+    return { t: 'r', suit: suitOf(a), lo: lo, hi: hi, jk: 0, owner: owner,
+             cards: (ra === lo) ? [a, b] : [b, a] };
+  }
+
   function setFits(m, c) {
     if (m.n >= 4) return false;
     /* ★★★ T198 ―― ★★7が 1枚だけの 組に ジョーカーは 足せません ★★★
@@ -133,8 +167,33 @@
     if (isJk(c)) return m.jk === 0 && m.n >= 2;
     return rankOf(c) === m.rank && !m.suits[suitOf(c)];
   }
-  function tableFits(m, c) { return m.t === 's' ? setFits(m, c) : (runFits(m, c) !== 0); }
+  function tableFits(m, c, off) {
+    /* ★★ T205：★1枚だけの 7 ―― ★★もう 1枚の 7 でも、★同じ マークの 6・8 でも 乗ります
+       ⚠️★ ★★ off を 渡すと「7しか 乗らない」古い 形に 戻ります ―― ★★見張りが わざと 壊す とき だけ。
+          ★ ★★何も 渡さなければ 本物の 決まり です（★渡し忘れで ゆるく なりません）。
+          ★ ★★（★T205 で 1度 つまずきました：★見張りが C.pair7 を 外から 差しかえて いたのに、
+            ★ ★★中の tableFits は 元の pair7 を 見て いて **空うち** して いました） */
+    if (m.solo7) {
+      var q7 = pair7(m.cards[0], c, m.owner);
+      return !!(q7 && (!off || q7.t === 's'));
+    }
+    return m.t === 's' ? setFits(m, c) : (runFits(m, c) !== 0);
+  }
   function tablePut(m, c) {
+    /* ★★ T205：★1枚だけの 7に 2枚目が 乗った ―― ★★ここで 組か 並びかが **決まります** */
+    if (m.solo7) {
+      var pp = pair7(m.cards[0], c, m.owner);
+      if (!pp) return;
+      m.t = pp.t; m.cards = pp.cards; m.jk = 0; m.solo7 = 0;
+      if (pp.t === 's') {
+        m.rank = pp.rank; m.suits = pp.suits; m.n = pp.n;
+        m.suit = undefined; m.lo = undefined; m.hi = undefined;
+      } else {
+        m.suit = pp.suit; m.lo = pp.lo; m.hi = pp.hi;
+        m.rank = undefined; m.suits = undefined; m.n = undefined;
+      }
+      return;
+    }
     if (m.t === 's') {
       if (isJk(c)) m.jk = 1; else m.suits[suitOf(c)] = true;
       m.n++;
@@ -151,7 +210,8 @@
     for (i = 0; i < T.length; i++) {
       var m = T[i];
       out.push(m.t === 's'
-        ? { t: 's', rank: m.rank, suits: m.suits.slice(), jk: m.jk, n: m.n, owner: m.owner, cards: m.cards.slice() }
+        ? { t: 's', rank: m.rank, suits: m.suits.slice(), jk: m.jk, n: m.n, owner: m.owner,
+            cards: m.cards.slice(), solo7: m.solo7 || 0 }
         : { t: 'r', suit: m.suit, lo: m.lo, hi: m.hi, jk: m.jk, owner: m.owner, cards: m.cards.slice() });
     }
     return out;
@@ -237,20 +297,23 @@
            ★ ★この 画面の ロボットは **同じ 打ち手** です。
        ★ ★★`off` が 真の ときだけ 消えます（★見張りが わざと 壊す とき だけ）。 */
     if (!off) {
-      var s7 = [];
-      for (i = 0; i < n; i++) if (!isJk(hand[i]) && rankOf(hand[i]) === 7) s7.push(i);
-      for (s = 1; s < (1 << s7.length); s++) {
-        var c7 = 0, mk7 = 0;
-        for (i = 0; i < s7.length; i++) if (s & (1 << i)) { c7++; mk7 |= 1 << s7[i]; }
-        if (c7 >= 1 && c7 <= 2) out.push({ mask: mk7, cnt: c7, kind: 's', rank: 7, useJk: 0 });
+      /* ★ 7が 1枚 ―― ★「まだ 決まって いない 7」として 出せます */
+      for (i = 0; i < n; i++) {
+        if (!isJk(hand[i]) && rankOf(hand[i]) === 7) out.push({ mask: 1 << i, cnt: 1, kind: 's', rank: 7, useJk: 0 });
       }
-      for (k = 0; k < s7.length; k++) {
-        var i7 = s7[k], su7 = suitOf(hand[i7]);
-        for (var j7 = 0; j7 < n; j7++) {
-          if (isJk(hand[j7]) || suitOf(hand[j7]) !== su7) continue;
-          r = rankOf(hand[j7]);
-          if (r === 6) out.push({ mask: (1 << i7) | (1 << j7), cnt: 2, kind: 'r', suit: su7, lo: 6, hi: 7, useJk: 0 });
-          if (r === 8) out.push({ mask: (1 << i7) | (1 << j7), cnt: 2, kind: 'r', suit: su7, lo: 7, hi: 8, useJk: 0 });
+      /* ★★★ T205 ―― ★★2枚の 決まりは **pair7 だけ** です（★ここに 書き写しません）★★★
+         ★ ★T198 の 私は ここに「r === 6 なら…／r === 8 なら…」と **書き写して** いました。
+           ★ ★★同じ 決まりが 2か所に あり、★★4か所目（付け足しの 道）を 数え落としました。
+         ★ ★★いまは ―― ★ここも、makeMeld も、付け足しの 道も、★★pair7 を 呼びます。
+           ★ ★★＝ ★★2枚の 決まりを 直す ときに 直す 場所は **1つ** です。 */
+      for (var a7 = 0; a7 < n; a7++) {
+        for (var b7 = a7 + 1; b7 < n; b7++) {
+          var pp7 = pair7(hand[a7], hand[b7], 0);
+          if (!pp7) continue;
+          var mk2 = (1 << a7) | (1 << b7);
+          out.push(pp7.t === 's'
+            ? { mask: mk2, cnt: 2, kind: 's', rank: 7, useJk: 0 }
+            : { mask: mk2, cnt: 2, kind: 'r', suit: pp7.suit, lo: pp7.lo, hi: pp7.hi, useJk: 0 });
         }
       }
     }
@@ -322,7 +385,9 @@
         else { suits[suitOf(hand[i])] = true; cards.push(hand[i]); }
       }
       if (jk >= 0) cards.push(jk);
-      return { t: 's', rank: m.rank, suits: suits, jk: m.useJk, n: cnt, owner: owner, cards: cards };
+      /* ★★ T205：★1枚だけの 7は「まだ 決まって いない」―― ★人の 道（makeMeld）と そろえます */
+      return { t: 's', rank: m.rank, suits: suits, jk: m.useJk, n: cnt, owner: owner, cards: cards,
+               solo7: (cnt === 1 && m.rank === 7 && !m.useJk) ? 1 : 0 };
     }
     /* ★ 並び ―― ★値（lo〜hi）の 順に ならべ直す */
     var at = {};
@@ -369,25 +434,15 @@
       var has7 = false;
       for (i = 0; i < real.length; i++) if (rankOf(real[i]) === 7) has7 = true;
       if (!has7) return null;                 /* ★ 7が 無ければ 3枚 要る（★決まりは そのまま）*/
-      if (real.length === 1) {                /* ★ ① 7が 1枚 ―― ★「7の 組」として 場へ */
+      if (real.length === 1) {
+        /* ★★ ① 7が 1枚 ―― ★★組か 並びかは **まだ 決めません**（★solo7 の ふだ・T205）
+           ★ ★★あとから 7が 乗れば 組、★同じ マークの 6か8が 乗れば 並びに なります。 */
         var u1 = [false, false, false, false];
         u1[suitOf(real[0])] = true;
-        return { t: 's', rank: 7, suits: u1, jk: 0, n: 1, owner: owner, cards: [real[0]] };
+        return { t: 's', rank: 7, suits: u1, jk: 0, n: 1, owner: owner, cards: [real[0]], solo7: 1 };
       }
-      var ra = real[0], rb = real[1];
-      if (rankOf(ra) === 7 && rankOf(rb) === 7) {   /* ★ ① 7が 2枚（ちがう マーク）*/
-        if (suitOf(ra) === suitOf(rb)) return null;
-        var u2 = [false, false, false, false];
-        u2[suitOf(ra)] = true; u2[suitOf(rb)] = true;
-        return { t: 's', rank: 7, suits: u2, jk: 0, n: 2, owner: owner, cards: [ra, rb] };
-      }
-      /* ★ ② 7を ふくむ 同じ マークの 2枚の 並び（★6-7 ／ 7-8）*/
-      if (suitOf(ra) !== suitOf(rb)) return null;
-      var lo2 = Math.min(rankOf(ra), rankOf(rb)), hi2 = Math.max(rankOf(ra), rankOf(rb));
-      if (hi2 - lo2 !== 1) return null;
-      if (!(lo2 === 6 && hi2 === 7) && !(lo2 === 7 && hi2 === 8)) return null;
-      return { t: 'r', suit: suitOf(ra), lo: lo2, hi: hi2, jk: 0, owner: owner,
-               cards: (rankOf(ra) === lo2) ? [ra, rb] : [rb, ra] };
+      /* ★★ ② 7を ふくむ 2枚 ―― ★★決まりは pair7 に 1つ だけ（★T205）*/
+      return pair7(real[0], real[1], owner);
     }
     if (real.length < 2) return null;         /* ★ 本物が 2枚は 要る */
 
@@ -595,9 +650,9 @@
   ];
 
   /* ============================================================
-     ★★ 決まり（★★13個。★見せる 説明は 6行 ―― ★ルル §9）★★
+     ★★ 決まり（★★14個。★見せる 説明は ★★7行 ―― ★ルル §9／T207 §5-1）★★
        ★ ★★T198 で 1つ 足して（4-2）、★★T198-2 で 1つ 消しました（★もとの 11）＝ ★★13 → 14 → 13個。
-       ⚠️★★ ★★下の 番号を 数えて ください（★1〜12 ＋ 4-2 ＝ ★★13個）。
+       ⚠️★★ ★★下の 番号を 数えて ください（★1〜13 ＋ 4-2 ＝ ★★14個）。
           ★ ★★T198-2 の 私は ここを「12個」と 書きまちがえました【★私の 失敗・§9-9】――
             ★ ★消えた 決まりを **2つ** と 数えて いました（★本当は 1つ。★もう 1つは
               ★ ★ロボットの おまけ点 で、★決まりでは ありません）。★トライが 見つけました。
@@ -617,7 +672,12 @@
        9  上がった 人は 0点                                         → 0行
       10  のこった 札が 点（7＝0／A＝20／絵札＝10／JOKER＝50）       → 1行（★札の すみに 書く）
       11  山が なくなったら すて札を 混ぜ直して 山に する            → 0行
-      12  ★4回 くりかえして 合計点が いちばん 少ない 人の 勝ち       → 1行
+      12  ★★4・8・12・16回 から えらんで、合計点が いちばん 少ない 人の 勝ち → 1行
+      13  ★★★T208 ―― ★すてられた 札と 同じ 数字を 2枚 持って いたら「ポン」して もらえる → ★★1行
+            ★ ★本物の 決まり（任天堂 ⑦）。★★ルル T207 の 仕様どおり（★§5-2 の 11個）。
+            ★ ★★これで 6行 → **7行**（★社長の お決め・案「甲」）。
+            ★ ★T201（2026-09-02・社長ご指示）：★★4回 固定 → **えらべる** に なりました。
+            ★ ★★4の倍数だけ ＝ ★全員が 同じ 回数 親を やる（★ルル §3-3）。★初期値は 4回。
      ★★★ 消した 決まり（★T198-2・2026-09-02・社長裁定）★★★
        ★ ★もとの 11「★さいごに すてた 札が 7 なら、ほかの 人の 点が 2倍」―― ★★消しました。
        ★ ★★理由：★① ★本物の 決まりでは ありません（★任天堂の ⑧⑨ に 載って いません・ルル T197 差10）
@@ -632,6 +692,36 @@
   var DEALS = 4;
   var HAND_SIZE = 7;
   var LIM = { DEALS: DEALS, MAXTURN: 600, MAXRESHUFFLE: 6 };
+
+  /* ============================================================
+     ★★★ T201 ―― ★★何回戦に するかを 選べる ように しました（2026-09-02・社長ご指示）★★★
+     ------------------------------------------------------------
+     ★ ★社長：「10回戦 固定じゃ なくて、★3、5、7、10、15回戦とかで、はじめの 画面で 選べる ように」
+       ★ ★→ ★ルルが「★親の 回数が そろわないと 席が ゆがむ」を 数字で 出し、
+         ★ ★★→ ★社長ご自身が「★★それなら 4の倍数に しましょう。★4、8、12、16回」と 決められました。
+
+     ★★ なぜ 4の倍数か ―― ★★4人 だから です（★ルル §3-3・T173）★★
+       ★ ★親（先に 打つ 人）は 1回ごとに 1つ ずれます。★★4の倍数なら **全員が 同じ 回数 親を やります**。
+       ★ ★★そろわないと、★先に 打つ 席が 得を します（★ルル T173：★親の ずらしが 無いと 得 5.26）。
+
+     ★★ ルルの【計算・各30000試合】★★
+       | 回戦 | ★席の ゆがみ | ★長さ【見立て】| ★気づく人の 得 | ★ためる人 |
+       | ★4回 | 0.52 | 3分30秒  | 23.55 | 負け |
+       | ★8回 | 0.54 | 6分59秒  | 24.82 | 負け |
+       | ★12回| 0.57 | 10分28秒 | 25.57 | 負け |
+       | ★16回| ★0.22 | 13分57秒 | 24.90 | 0.93% |
+       ★ ★★誤差の 底は 0.52 ―― ★★4つ とも そこ以下 ＝ ★どれも 公平 です。
+
+     ⚠️★★★ ★★試合の 途中では 変えさせません ★★★
+        ★ ★ルル：「★回戦数を 試合の 途中で 変えると ★★合計点の 意味が 壊れます」。
+        ★ ★★だから 入口は **はじめの 画面だけ**（★つよさは 結果の 画面でも 変えられますが、これは 別）。
+
+     ⚠️★ ★設計図 追記①「★1ゲームに つき 選ばせるのは 1つまで」―― ★★これは 社長ご指示で
+        ★ ★**この 1本だけ 2つに なりました**（★つよさ ＋ 回戦数）。★消しに 来ないで ください。
+     ============================================================ */
+  var DEALS_LIST = [4, 8, 12, 16];
+  var DEALS_START = DEALS;                 /* ★ 初期値 ＝ 4回（★いちばん 短い）*/
+  function dealsOk(d) { return DEALS_LIST.indexOf(d | 0) >= 0; }
 
   function defaultRules() {
     return { nP: 4, handSize: HAND_SIZE, jokers: 1, sevenZero: true,
@@ -666,9 +756,12 @@
       cur: (opt.startP || 0) % nP,
       phase: 'draw', turn: 0, reshuffles: 0,
       winner: -1, lastDiscard: -1, drawGame: false,
+      /* ★★ T208 ―― ★ポンの 窓（★phase が 'pon' の あいだ だけ 中身が あります）★★ */
+      ponCard: -1, ponFrom: -1, ponCands: [],
       over: false, pts: null,
       st: { turns: 0, draws: 0, tookDiscard: 0, meldTurns: 0, layoffCards: 0,
-            handMax: R.handSize + 1, reshuffles: 0, dryTurns: 0 }
+            handMax: R.handSize + 1, reshuffles: 0, dryTurns: 0,
+            pon: 0, ponAsk: 0, ponSkip: 0, ponBoth: 0 }
     };
   }
 
@@ -690,11 +783,52 @@
     return 'ok';
   }
 
+  /* ============================================================
+     ★★★★ T205 ―― ★★すて札を もらえるのは「ポン／チーの とき だけ」★★★★
+     ------------------------------------------------------------
+     ★ ★社長：「ハートの8を 持って いる ときに、ハートの7が 捨てられると 拾うという 動作を して、
+       ★ ★★ハートの7、8が 場に 出せた 場面が ありました。★★捨てられた ものを 拾える ときは
+       ★ ★★ポンと チーの ときのみの はずなので 修正して ください」
+
+     ★★ 入れる もの ★★
+       ★ ★もらえるのは、★もらった 1枚を 使って ★★**3枚以上**の 組か 並びが できる とき だけ。
+         ★ ★・同じ 数字が **3枚**に なる …… ★ポンの 条件
+         ★ ★・同じ マークの **3枚以上**の 並びに なる …… ★チーの 条件
+       ★ ★★7を ふくむ **2枚**では もらえません ―― ★★社長が 挙げられた 場面が これ です。
+       ★ ★★場の 組に 足せる から、では もらえません（★前は これで もらえて いました）。
+
+     ⛔★★ 入れて いない もの ―― ★★割り込み（★誰でも・いつでも ポン）★★
+        ★ ★ルル T197：★割り込みは「ロボットの 番の 最中に 人を 4.73回 止める」決まり です。
+        ★ ★★社長の 2026-08-24 の 裁定（★「待たされるのが 嫌」）と 正面から ぶつかります。
+        ★ ★★＝ ★★順番は これまで どおり まっすぐ 回ります。
+
+     ⚠️★ ★★ off を 渡した ときだけ 決まりが 消えます（★見張りが わざと 壊す とき だけ）。
+        ★ ★★何も 渡さなければ 決まりは 入って います ―― ★★渡し忘れで ゆるく なりません。
+     ============================================================ */
+  function takeOk(g, off) {
+    if (off) return true;
+    if (!g.discard.length) return false;
+    var hand = g.hands[g.cur];
+    var c = g.discard[g.discard.length - 1];
+    var h2 = hand.concat([c]);
+    var ms = enumMelds(h2), i;
+    var last = 1 << (h2.length - 1);            /* ★ もらった 1枚 */
+    for (i = 0; i < ms.length; i++) {
+      if (ms[i].cnt < 3) continue;              /* ★★ 3枚 そろう ときだけ（★2枚の 7は だめ）*/
+      if (!(ms[i].mask & last)) continue;       /* ★ その 1枚を 使う 組で ある こと */
+      if (h2.length - ms[i].cnt < 1) continue;  /* ★ すてる 1枚が のこる こと（★決まり7）*/
+      return true;
+    }
+    return false;
+  }
+
   /* ★ 引く ―― ★from ＝ 'stock' ／ 'discard' */
-  function doDraw(g, from) {
+  function doDraw(g, from, off) {
     if (g.over || g.phase !== 'draw') return { ok: false };
     if (from === 'discard') {
       if (!g.discard.length) return { ok: false };
+      /* ★★ T205：★ポン／チーの 条件を 満たさない ときは もらえません */
+      if (!takeOk(g, off)) return { ok: false, why: 'その 札は もらえません' };
       var c = g.discard.pop();
       g.hands[g.cur].push(c);
       g.st.tookDiscard++; g.st.draws++;
@@ -738,8 +872,80 @@
     return { ok: true, at: mi, pos: m.cards.indexOf(card) };
   }
 
+  /* ============================================================
+     ★★★★ T208 ―― ★★ポン（★割り込み）★★★★（★ルル T207 §5-2 の 11個 そのまま）
+     ------------------------------------------------------------
+     ★ ★本物の 決まり（任天堂 ⑦）：「捨てられたカードと同じ同位札を2枚以上持っている人は、
+       ★ ★誰でも、いつでも『ポン』と 言って その カードを もらう ことが できます」
+
+     ★★ ルルが 数えて 決めた こと（★私が 迷わなくて よい ところ）★★
+       ★ ★人に 聞くのは ★1回の 配りで **0.35〜0.58回**（★1試合 1.4〜2.3回）
+       ★ ★★同時に 2人 ポンできる のは ★★**47,109回中 0件** ―― ★優先順位は 書きません
+       ★ ★★ロボットも **必ず** ポンします ―― ★切ると はじめての人が 26% → **51%** に 跳ねます
+
+     ⚠️★★★ ★★ロボットの ポンを スイッチに しない ★★★
+        ★ ★ botPon は ★★何も 渡さなければ **いつも true** です。
+        ★ ★★ o.noPon を 渡した ときだけ 止まります ―― ★★見張り（⑳-4）が わざと 壊す ときだけ。
+        ★ ★★＝ ★渡し忘れで「人だけ ポンできる 世界」に なりません（★T197 §14 失敗2 よけ）。
+     ============================================================ */
+  /* ★ ポンできる 人を さがす（★決まり 1・2・3・10・11）*/
+  function ponCands(g, card, discarder) {
+    var out = [], p, i, n;
+    if (isJk(card)) return out;                        /* ★ 3：ジョーカーは 同位札で ない */
+    if (g.stock.length === 0 && g.discard.length <= 1) return out;  /* ★ 11：山も すて札も 尽きかけ */
+    var r = rankOf(card);
+    var nextP = (discarder + 1) % g.nP;
+    for (p = 0; p < g.nP; p++) {
+      if (p === discarder) continue;                   /* ★ 1：すてた 人は だめ */
+      if (p === nextP) continue;                       /* ★ 2：すぐ次の 人は 出しません（§3-5）*/
+      n = 0;
+      for (i = 0; i < g.hands[p].length; i++) {
+        if (!isJk(g.hands[p][i]) && rankOf(g.hands[p][i]) === r) n++;
+      }
+      if (n < 2) continue;                             /* ★ 1：同位札 2枚以上 */
+      /* ★ 10：もらって 公開した あと、★すてる 1枚が のこるか
+         ★ ★手札 h ＋ もらう 1 ＝ h+1。★公開で n+1 枚 出る → ★のこり h-n。★1以上 要ります。 */
+      if (g.hands[p].length - n < 1) continue;
+      out.push(p);
+    }
+    return out;
+  }
+  /* ★ ロボットが ポンするか ―― ★★いつも します（★§3-3）*/
+  function botPon(g, p, card, o) { return !(o && o.noPon); }
+
+  /* ★ ポンする ―― ★もらう → ★そろった 同位札を **ぜんぶ** 公開（★決まり4：選ばせません）*/
+  function doPon(g, p) {
+    if (g.over || g.phase !== 'pon') return { ok: false, why: 'いま ポンできません' };
+    if (g.ponCands.indexOf(p) < 0) return { ok: false, why: 'その 人は ポンできません' };
+    var card = g.ponCard, i;
+    g.discard.pop();
+    g.hands[p].push(card);
+    if (g.hands[p].length > g.st.handMax) g.st.handMax = g.hands[p].length;
+    g.cur = p;
+    g.phase = 'play';
+    g.ponCard = -1; g.ponFrom = -1; g.ponCands = [];
+    /* ★ そろった 同位札を ぜんぶ */
+    var r = rankOf(card), cs = [];
+    for (i = 0; i < g.hands[p].length; i++) {
+      if (!isJk(g.hands[p][i]) && rankOf(g.hands[p][i]) === r) cs.push(g.hands[p][i]);
+    }
+    var res = doMeld(g, cs);
+    if (!res.ok) return { ok: false, why: res.why };
+    g.st.pon++;
+    g.st.tookDiscard++;
+    return { ok: true, card: card, cards: cs, meld: res.meld, at: res.at };
+  }
+  /* ★ ポンしない ―― ★ふつうに 次の 人へ */
+  function ponPass(g) {
+    if (g.over || g.phase !== 'pon') return { ok: false };
+    g.cur = (g.ponFrom + 1) % g.nP;
+    g.phase = 'draw';
+    g.ponCard = -1; g.ponFrom = -1; g.ponCands = [];
+    return { ok: true };
+  }
+
   /* ★ すてる ―― ★ここで 手番が おわります。★手札が 0枚に なったら 上がり */
-  function doDiscard(g, card) {
+  function doDiscard(g, card, noPon) {
     if (g.over || g.phase !== 'play') return { ok: false, why: 'いま すてられません' };
     var hand = g.hands[g.cur];
     var k = hand.indexOf(card);
@@ -751,6 +957,17 @@
     g.st.turns = g.turn;
     if (hand.length === 0) { finishDeal(g, g.cur); return { ok: true, out: true }; }
     if (g.turn >= g.rules.maxTurns) { finishDeal(g, -1); return { ok: true, out: false, stop: true }; }
+    /* ★★★ T208 ―― ★★ここが ポンの 窓 です（★ルル §5-3：★手番を 進める **直前**）★★★
+       ★ ★★ noPon を 渡した ときだけ 窓が 開きません（★見張りが わざと 壊す とき だけ）。 */
+    var cands = noPon ? [] : ponCands(g, card, g.cur);
+    if (cands.length) {
+      if (cands.length > 1) g.st.ponBoth++;      /* ★ ⑳-3：★同時ポン（★起きない はず）*/
+      g.phase = 'pon';
+      g.ponCard = card;
+      g.ponFrom = g.cur;
+      g.ponCands = cands;
+      return { ok: true, out: false, pon: cands.slice() };
+    }
     g.cur = (g.cur + 1) % g.nP;
     g.phase = 'draw';
     return { ok: true, out: false };
@@ -796,7 +1013,9 @@
      ★ ★数える 側（simDeal）も 同じ 3つを 呼びます ＝ ★ズレようが ない。
      ============================================================ */
   function botDraw(g, o) {
-    if (o.smartDraw && g.discard.length) {
+    /* ★★ T205 ―― ★★ロボットも 同じ 決まりを 通ります（★ルル T197 §14 失敗2 の 再発 よけ）★★
+       ★ ★★ここを 忘れると「ロボットだけ 拾い放題」に なり、★数字が 大きく ずれます。 */
+    if (o.smartDraw && g.discard.length && takeOk(g)) {
       /* ★ 見えない 山の 札は のぞきません。★見えて いる すて札 だけで 決めます */
       var h3 = g.hands[g.cur];
       var h2 = h3.concat([g.discard[g.discard.length - 1]]);
@@ -903,11 +1122,13 @@
      ★ ★★4回 ＝ 4人。★「1人 1回ずつ 親を やったら 終わり」（★ルル §3-3）。
      ★ ★親を ずらすと 先手の 得が **5.26 → 0.45** に なります（★ルル §3-2）。
      ============================================================ */
-  function newMatch(level) {
-    return { total: [0, 0, 0, 0], dealNo: 0, deals: LIM.DEALS,
+  /* ★ T201：★deals を 渡さなければ 4回（★一覧に 無い 数を 渡しても 4に まるめます ―― ★捨てません）*/
+  function newMatch(level, deals) {
+    return { total: [0, 0, 0, 0], dealNo: 0, deals: (dealsOk(deals) ? (deals | 0) : DEALS),
              level: (level == null ? LEVEL_START : level), over: false, winners: [] };
   }
   function addDeal(m, pts) {
+    if (!dealsOk(m.deals)) m.deals = DEALS;          /* ★ T201：★念のため（★まるめる）*/
     for (var p = 0; p < 4; p++) m.total[p] += pts[p];
     m.dealNo++;
     if (m.dealNo >= m.deals) {
@@ -928,10 +1149,27 @@
     var bad = 0, guard = 0;
     while (!g.over && guard++ < (R && R.maxTurns ? R.maxTurns : LIM.MAXTURN) + 10) {
       var o = os[g.cur];
-      if (g.stock.length === 0 && g.discard.length <= 1) g.st.dryTurns++;
-      var from = botDraw(g, o);
-      var dr = doDraw(g, from);
-      if (!dr.ok) { if (dr.dry) break; bad++; break; }
+      /* ★★★ T208 ―― ★★ポンの 窓（★数える 側も 画面と 同じ 道を 通ります）★★★
+         ★ ★★ここを 通さないと、★数字は ぜんぶ うそに なります（★ルル T197 §14 失敗2）。 */
+      if (g.phase === 'pon') {
+        var pc = g.ponCands[0];
+        if (botPon(g, pc, g.ponCard, os[pc])) {
+          var pr = doPon(g, pc);
+          if (!pr.ok) { bad++; break; }
+          /* ★ ⑳-2：★ポンで 出た 組は 必ず 3枚以上 */
+          if (!meldOk(g.table[g.table.length - 1])) bad++;
+          o = os[g.cur];
+        } else {
+          g.st.ponSkip++;
+          ponPass(g);
+          continue;
+        }
+      } else {
+        if (g.stock.length === 0 && g.discard.length <= 1) g.st.dryTurns++;
+        var from = botDraw(g, o);
+        var dr = doDraw(g, from);
+        if (!dr.ok) { if (dr.dry) break; bad++; break; }
+      }
       var before = g.hands[g.cur].length;
       var steps = botPlay(g, o);
       /* ★ 反則の 見張り ―― ★出した 組は 本当に 組か */
@@ -954,7 +1192,8 @@
     for (i = 0; i < g.table.length; i++) total += meldLen(g.table[i]);
     if (total !== 53) bad += 100;
     return { winner: g.winner, pts: g.pts, st: g.st,
-             drawGame: g.drawGame, bad: bad, table: g.table };
+             drawGame: g.drawGame, bad: bad, table: g.table,
+             pon: g.st.pon, ponBoth: g.st.ponBoth };
   }
 
   function simMatch(rand, os, R, deals) {
@@ -1217,7 +1456,27 @@
     LAY_MOVE:      200,   /* ★ 付け札が 場へ */
     DISCARD_MOVE:  220,   /* ★ すて札へ */
     TURN_GAP:      160,   /* ★ 次の 人へ 移る まで */
-    SAY_HOLD:     1700,
+    /* ============================================================
+       ★★★★ T208-3 ―― ★★ハッピーの ことばは **字数で** 消えます ★★★★
+       ------------------------------------------------------------
+       ★ ★前は どの 文も **1700ms で 決め打ち** でした。
+         ★ ★★いちばん 長い 文（26字）は ★★**65ms/字** ―― ★読み終わる 前に 消えて いました。
+       ★ ★トライの 実測：★おとなは **100〜150ms/字**。★★この 本は 小学生が 遊びます。
+       ★ ★★だから ―― ★おとなの 上の線（150）より 上に 置きます：★★**160ms/字**。
+
+       ★★ 数の 決め方（★ぜんぶ 実測の 字数から）★★
+         ★ ★いちばん 長い 文 …… 26字（「組に 足す？ 1枚で 出す？ 組を おすと 足せるよ」）
+           ★ ★→ 26 × 160 ＝ ★★4160ms（★上の 線 4500 の 中）
+         ★ ★いちばん 短い 文 …… 11字（「そろった！ やったね！」）
+           ★ ★→ 11 × 160 ＝ ★★1760ms（★いままでと ほぼ 同じ）
+         ★ ★★下の 線 900ms …… ★短い 文が 一瞬で 消えない ため（★3字なら 300ms/字）
+         ★ ★★上の 線 4500ms …… ★じゃまに ならない ため。
+           ★ ★★＝ ★★30字を こえる 文は 線（150ms/字）を 割ります ―― ★★見張り ㉛ が 鳴ります。
+           ★ ★★＝ ★「文を 短くしろ」の 線 でも あります（★設計図 §5.5「説明は 足すより 減らす」）。
+       ============================================================ */
+    SAY_MS_PER_CHAR: 160,   /* ★★ 1字あたり（★おとなの 上の線 150 より 上）*/
+    SAY_MS_MIN:      900,   /* ★ 短い 文でも これだけは 出す */
+    SAY_MS_MAX:     4500,   /* ★ 長すぎる ときの ふた（★★こえたら 文を 短くする）*/
     RESULT_WAIT:   520,
     RESULT_LOCK:   550,
     DRAG_SLOP:       6    /* ★ ここまでは「押した」。★これを こえたら「運んで いる」*/
@@ -1238,13 +1497,15 @@
     suitOf: suitOf, rankOf: rankOf, isJk: isJk, nameOf: nameOf, markOf: markOf, isRed: isRed,
     penOf: penOf, penFlat: penFlat, allNames: allNames,
     runFits: runFits, setFits: setFits, tableFits: tableFits, tablePut: tablePut,
-    cloneTable: cloneTable, meldLen: meldLen, meldOk: meldOk, enumOk: enumOk,
+    cloneTable: cloneTable, meldLen: meldLen, meldOk: meldOk, enumOk: enumOk, pair7: pair7,
     enumMelds: enumMelds, meldToTable: meldToTable, makeMeld: makeMeld,
     planPlay: planPlay, usefulness: usefulness,
     P: P, LEVELS: LEVELS, LEVEL_START: LEVEL_START, HUMANS: HUMANS,
     LIM: LIM, HAND_SIZE: HAND_SIZE, defaultRules: defaultRules,
+    DEALS_LIST: DEALS_LIST, DEALS_START: DEALS_START, dealsOk: dealsOk,
     rng: rng, makeGame: makeGame, refill: refill,
     doDraw: doDraw, doMeld: doMeld, doLayoff: doLayoff, doDiscard: doDiscard, finishDeal: finishDeal,
+    takeOk: takeOk, ponCands: ponCands, doPon: doPon, ponPass: ponPass, botPon: botPon,
     botDraw: botDraw, botPlan: botPlan, botPlay: botPlay, botDiscard: botDiscard,
     newMatch: newMatch, addDeal: addDeal,
     simDeal: simDeal, simMatch: simMatch, runMany: runMany, newStat: newStat, pct: pct,
