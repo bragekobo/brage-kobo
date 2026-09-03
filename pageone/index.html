@@ -128,9 +128,19 @@
       <h1>ページワン</h1>
       <p class="intro">先に 手札を 0枚に した 人の 勝ち。</p>
 
+      <!-- ★★★ T211-3 ―― ★★箱は **2つ** です（★社長の お決め）★★★
+           ★ ★① トランプ そのものの 決まり ＝「特別な 札を 決める」（★T211 の 前の 形に もどしました）
+           ★ ★② 札が 出せない ときの 決まり ＝「札が ないときの 決まり」（★新しい 箱）
+           ★ ★★新しい 部品は 作って いません ―― ★.rule-fold / .rule-list / .rule-row を
+             ★ ★そのまま もう 1組 置いた だけ です（★CSS は 1文字も さわって いません）。 -->
       <details class="rule-fold" id="ruleFold">
         <summary>▾ 特別な 札を 決める <b id="ruleCount"></b></summary>
         <div class="rule-list" id="ruleList"></div>
+      </details>
+
+      <details class="rule-fold" id="drawFold">
+        <summary>▾ 札が ないときの 決まり <b id="drawCount"></b></summary>
+        <div class="rule-list" id="drawList"></div>
       </details>
 
       <button class="start-button" type="button" id="btnStart">
@@ -263,7 +273,7 @@
   <p class="dialog-lead">同じ マークか 同じ 数字を つなげよう！</p>
   <ol class="help-list">
     <li>場札と <b>同じ マーク</b>か <b>同じ 数字</b>の 札を 1枚 出す。</li>
-    <li>出せない ときは <b>山札を おして 引く</b>。出せる 札が 来るまで 引こう。</li>
+    <li>出せない ときは <b>山札を おして 引く</b>。<span id="helpDraw">1枚だけ 引いて、出せなければ つぎの 人。</span></li>
     <li>先に <b>手札が 0枚</b>に なった 人の 勝ち。</li>
   </ol>
   <p class="help-note" id="helpRules"></p>

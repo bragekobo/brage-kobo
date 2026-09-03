@@ -75,6 +75,13 @@
      ★ gain は ルルの【計算・各8万試合】＝「気づく人の 得（単独で 入れた とき）」。
        ★ ここには 出しません（★画面に 数字を 出さない）。★覚え書きとして だけ 置きます。
      ============================================================ */
+  /* ★★ T211 ―― ★引き方の 名前（★画面の 言葉は ルル §4-2 の とおり）★★ */
+  var DRAW_MODES = [
+    { id: 'one',   name: '1枚だけ 引く' },
+    { id: 'until', name: '出せるまで 引く' }
+  ];
+  var DRAW_START = 'one';                 /* ★★ 初期値（★2026-09-03・社長の お決め）*/
+
   var RULES = [
     { id: 'eight', on: true,  name: '8＝マークを 決める',
       desc: '8は いつでも 出せる。次の マークを 自分で 決められる', gain: 6.8 },
@@ -90,11 +97,35 @@
   /* ★★ 初期値は「8だけ ON」★★
      ★ 設計図 §5.5-②：★何も 触らずに 始めた 人が、★いちばん 深くて いちばん 短い 形で 遊べる。
      ★ ルル §1-2【計算】：★8の あとに 何を 足しても まっすぐ 下がる（6.8→6.1→5.0→4.9→4.3）。 */
+  /* ============================================================
+     ★★★★ T211 ―― ★★引き方（★社長ご指示・ルル T210 の 仕様）★★★★
+     ------------------------------------------------------------
+     ★ ★社長：「出せる札が でるまで 永遠と 山札を 引く、で やって いるけど、
+       ★ ★★『出せる札が 引けるまで 引く』と『出せる札が ない ときは 1枚だけ 引く』を 選べるように」
+
+     ★★ 'one'（1枚だけ）の 中身は **甲** です（★ルル §1）★★
+       ★ ★引いた 1枚が 出せたら ―― ★★その場で 出せます（★引いたら 必ず 次の人、では ありません）。
+       ★ ★★乙（引いたら 必ず 次の人）を ページワンの 決まりと 書いた 出どころは ★5件中 0件。
+
+     ⚠️★★★ ★★RULES とは **別の 入れもの** です（★ルル §5-1）★★★
+        ★ ★ RULES は 特殊札の 数えあげ（ruleCount）に 使われて います。
+        ★ ★★ここに 混ぜると 数が 狂います ―― ★だから drawMode は 別に 置きます。
+
+     ★★ 初期値は 'one'（★2026-09-03・社長の お決め）★★
+       ★ ★2026-08-25 の お決め（「出せる札が あるまで 引き続ける」）を ★★ひっくり返します。
+       ★ ★ルル T210【計算】：★手番の 99.9% が 308 → **92**／★手札の 最大 28枚 → **13枚**／
+         ★ ★★1手番に 山を 押す 最大 25回 → **1回**／★24回の 打ち止め 593件 → **0件**。
+         ★ ★★深さは −0.4 だけ（+7.7 → +7.3）。
+     ============================================================ */
   function defaultRules() {
     var o = {};
     for (var i = 0; i < RULES.length; i++) o[RULES[i].id] = RULES[i].on;
+    o.drawMode = DRAW_START;
     return o;
   }
+  /* ★ 引き方を 読む ―― ★★'until' と はっきり 書いて ある ときだけ 引き続けます。
+     ★ ★★＝ ★書き忘れ・古い 入れものは **1枚だけ**（★新しい 初期値）に なります。 */
+  function drawModeOf(R) { return (R && R.drawMode === 'until') ? 'until' : 'one'; }
   function ruleCount(R) {
     var n = 0;
     for (var i = 0; i < RULES.length; i++) if (R[RULES[i].id]) n++;
@@ -301,6 +332,7 @@
       pending: 0,                         /* ★ 2 が かさなって いる 枚数 */
       over: false, winner: -1, byShort: false,
       plays: 0, draws: 0, mixes: 0, stuck: false,
+      drew: 0,                                 /* ★★ T211：★この 手番で 引いた 枚数 */
       rand: rand, nextId: function () { return nextId; }
     };
     return g;
@@ -346,6 +378,7 @@
      ============================================================ */
   function drawOne(g, seat) {
     var mixed = false;
+    g.drew = (g.drew || 0) + 1;               /* ★★ T211：★この 手番で 引いた 枚数 */
     if (g.deck.length === 0) {
       /* ★★ 山切れ ―― ★2つの どちらかで 終わります ★★
          ① ★場に 1枚しか 無い（★山に もどせる 札が 1枚も 無い）
@@ -433,6 +466,12 @@
   /* ★ 次の 席へ（★skip 枚ぶん とばす。★extra なら 動かない）*/
   function nextTurn(g, skip, extra) {
     if (g.over) return g.cur;
+    /* ★★ T211 ―― ★★「この 手番で 何枚 引いたか」は **盤の 側**に 置きます ★★
+       ★ ★★はじめ 画面側の 変数に 置いて いました ―― ★★見張りが 6件 鳴りました。
+         ★ ★見張りは 盤を 手で 組み立てる ので、★画面側の 数だけ 古いまま 残る から です
+         ★ ★【★私の 失敗・T211。★セブンブリッジ T205-4 と 同じ 形 です】。
+       ★ ★★手番が 変わる ところは ここ 1つ ―― ★だから ここで 0に 戻します。 */
+    g.drew = 0;
     if (extra) return g.cur;
     var n = 1 + (skip || 0);
     for (var i = 0; i < n; i++) g.cur = ((g.cur + g.dir) % g.nP + g.nP) % g.nP;
@@ -531,6 +570,7 @@
     opt = opt || {};
     var g = makeGame(rand, opt);
     var lv = opt.levels || [3, 3, 3, 3];
+    g.drewMax = 0; g.drewSum = 0; g.passN = 0;             /* ★ T211：★引いた 枚数・出せず 終わった 数 */
     var ply = 0, myMax = g.handN, anyMax = g.handN, opt2 = 0, optSum = 0, optTurns = 0;
     var reach1 = 0, was1 = false;
 
@@ -543,12 +583,22 @@
         if (g.over) break;
         if (g.stuck) break;
       } else {
-        /* ★★ 出せる札が 来るまで 引く（★社長裁定・ルル (c)）★★ */
-        var guard = 0;
-        while (!canPlay(g, seat) && guard++ < 120) {
-          var d = drawOne(g, seat);
-          if (!d.ok) break;
+        /* ★★ T211 ―― ★引き方は 2つ（★ルル T210 §5-2）★★
+           ★ ★'until' … ★出せる札が 来るまで 引く（★いままでの 形。★1文字も 変えて いません）
+           ★ ★'one' …… ★★出せない ときだけ **1枚**。★出せれば その場で 出せます（★甲）*/
+        var mode = drawModeOf(g.rules);
+        var guard = 0, drewN = 0;
+        if (mode === 'one') {
+          if (!canPlay(g, seat)) { var d1 = drawOne(g, seat); if (d1.ok) drewN++; }
+        } else {
+          while (!canPlay(g, seat) && guard++ < 120) {
+            var d = drawOne(g, seat);
+            if (!d.ok) break;
+            drewN++;
+          }
         }
+        if (drewN > g.drewMax) g.drewMax = drewN;          /* ★ 見張り用：1手番に 引いた 最大 */
+        g.drewSum += drewN;
         if (g.over) break;
         if (g.stuck) break;
         if (seat === 0) {
@@ -556,11 +606,16 @@
           optTurns++; optSum += l.length; if (l.length >= 2) opt2++;
           if (g.hands[0].length === 1) { if (!was1) { reach1++; was1 = true; } } else was1 = false;
         }
-        var ch = botChoose(g, seat, lv[seat]);
-        if (!ch) break;                                    /* ★ ここに 来たら 詰まり */
-        var r = playCard(g, seat, ch.idx, ch.suit);
-        if (!r.ok) break;
-        skip = r.skip; extra = r.extra;
+        /* ★★ 1枚だけ 引いても 出せなかった ―― ★出さずに 手番を おわります（★ルル §5-2）*/
+        if (mode === 'one' && !canPlay(g, seat)) {
+          g.passN++;
+        } else {
+          var ch = botChoose(g, seat, lv[seat]);
+          if (!ch) break;                                  /* ★ ここに 来たら 詰まり */
+          var r = playCard(g, seat, ch.idx, ch.suit);
+          if (!r.ok) break;
+          skip = r.skip; extra = r.extra;
+        }
       }
       for (var p = 0; p < g.nP; p++) {
         if (g.hands[p].length > anyMax) anyMax = g.hands[p].length;
@@ -627,6 +682,7 @@
     R_A: R_A, R_TWO: R_TWO, R_EIGHT: R_EIGHT, R_J: R_J, R_Q: R_Q,
     rankOf: rankOf, suitOf: suitOf, nameOf: nameOf, allNames: allNames,
     RULES: RULES, defaultRules: defaultRules, ruleCount: ruleCount, isSpecial: isSpecial,
+    DRAW_MODES: DRAW_MODES, DRAW_START: DRAW_START, drawModeOf: drawModeOf,
     FIT: FIT, TUNE: TUNE, LIM: LIM, MAX_MIX: MAX_MIX, PLY_CAP: PLY_CAP,
     cardH: cardH, gapFor: gapFor, pickLayout: pickLayout,
     rng: rng, makeGame: makeGame, topOf: topOf, topIsEight: topIsEight,
