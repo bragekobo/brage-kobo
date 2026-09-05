@@ -9,7 +9,7 @@
       ★ ★node でも そのまま 走ります（★下の module.exports）―― ★数を 実測する ため。
 
    ★★ もとに した 紙：★`logs/T192_ヨットの仕様_ルル.md`（★🎲ルル）
-      ★ ★13の 役の 名前・35点ボーナス・ふり直し2回・4人固定・つよさ3段 は、
+      ★ ★役の 名前・35点ボーナス・ふり直し2回・つよさ3段 は、
         ★ ★★ぜんぶ そこで 決まって います。★私は 1つも 変えて いません。
 
    ★★★ この ファイルが ぜったいに しない こと（★ルル §5-4・§18）★★★
@@ -22,28 +22,45 @@
 (function (root) {
 
   /* ============================================================
-     ★ 1. 13の 役（★ルル §2-1。★名前は 1文字も 変えて いません）
+     ★ 1. 12の 役（★T226・★社長の ご指摘 ②）
      ------------------------------------------------------------
-       ★ col … ★0＝左の 列（1〜6の目）／1＝右の 列（のこり 7つ）
-       ★ ★表は **2列×7行 ＝ 14マス**。★左の 列の 7つ目が「◯／63」（★役では ない）
+       ★ col … ★0＝左の 列（1〜6の目）／1＝右の 列（のこり 6つ）
+       ★ ★表は **2列×7行**。★左の 列の 7つ目が「◯／63」（★役では ない）／★右の 7つ目は 空き
+
+       ★★★ T226 で 変わった ところ（★社長の お決め・2026-09-04）★★★
+         ★ ①★★役の 名前を **正式名称**に しました（★社長の ご指摘②）。
+           ★ ★なんでも→チョイス／同じ目4つ→フォーダイス／3つと2つ→フルハウス
+             ★ ／4つ並び→S.ストレート／5つ並び→B.ストレート。★★点は 1つも 変えて いません。
+           ★ ★★設計図 §9.6 の 例外リストに 足す ―― ★★ポーカーの 役10個と 同じ 裁定です。
+         ★ ②★★`k3`（同じ目3つ ＝ スリーダイス）を **消しました**（★社長の お決め②）。
+           ★ ★★本物の「ヨット」は 12役【ルル T225 §2・出典4件】。★★13役は ヤッツィーの ほう。
+           ★ ★深さの 代金は **−0.15**（★ばらつき ±0.13 の きわ ＝ ★ルル T225 §9-2：誤差の 中）。
+         ★ ③★★`desc` を 1行ずつ 足しました（★社長の ご指摘⑥）。
+           ★ ★★画面の「役の 説明」は **この データから 作ります** ―― ★手書きの 表を 作らない
+             ★ ★（★お手本：`office/games/poker-core.js:35〜44`）。
      ============================================================ */
   var CATS = [
-    { id: 'n1', col: 0, row: 0, name: '1の目',     kind: 'num',    n: 1 },
-    { id: 'n2', col: 0, row: 1, name: '2の目',     kind: 'num',    n: 2 },
-    { id: 'n3', col: 0, row: 2, name: '3の目',     kind: 'num',    n: 3 },
-    { id: 'n4', col: 0, row: 3, name: '4の目',     kind: 'num',    n: 4 },
-    { id: 'n5', col: 0, row: 4, name: '5の目',     kind: 'num',    n: 5 },
-    { id: 'n6', col: 0, row: 5, name: '6の目',     kind: 'num',    n: 6 },
-    { id: 'k3', col: 1, row: 0, name: '同じ目3つ', kind: 'kind',   n: 3 },
-    { id: 'k4', col: 1, row: 1, name: '同じ目4つ', kind: 'kind',   n: 4 },
-    { id: 'fh', col: 1, row: 2, name: '3つと2つ',  kind: 'full',   pt: 25 },
-    { id: 's4', col: 1, row: 3, name: '4つ並び',   kind: 'run',    n: 4, pt: 30 },
-    { id: 's5', col: 1, row: 4, name: '5つ並び',   kind: 'run',    n: 5, pt: 40 },
-    { id: 'yt', col: 1, row: 5, name: 'ヨット',    kind: 'yacht',  pt: 50 },
-    { id: 'ch', col: 1, row: 6, name: 'なんでも',  kind: 'chance' }
+    { id: 'n1', col: 0, row: 0, name: '1の目',       kind: 'num',   n: 1 },
+    { id: 'n2', col: 0, row: 1, name: '2の目',       kind: 'num',   n: 2 },
+    { id: 'n3', col: 0, row: 2, name: '3の目',       kind: 'num',   n: 3 },
+    { id: 'n4', col: 0, row: 3, name: '4の目',       kind: 'num',   n: 4 },
+    { id: 'n5', col: 0, row: 4, name: '5の目',       kind: 'num',   n: 5 },
+    { id: 'n6', col: 0, row: 5, name: '6の目',       kind: 'num',   n: 6 },
+    { id: 'ch', col: 1, row: 0, name: 'チョイス',    kind: 'chance',
+      desc: 'サイコロ 5個の 目を ぜんぶ 足した 数', ptLabel: '合計' },
+    { id: 'k4', col: 1, row: 1, name: 'フォーダイス', kind: 'kind',  n: 4,
+      desc: '同じ 目が 4個 いじょう', ptLabel: '5個 ぜんぶの 合計' },
+    { id: 'fh', col: 1, row: 2, name: 'フルハウス',  kind: 'full',   pt: 25,
+      desc: '同じ 目が 3個と、べつの 同じ 目が 2個', ptLabel: '25点' },
+    { id: 's4', col: 1, row: 3, name: 'S.ストレート', kind: 'run',   n: 4, pt: 30,
+      desc: '目が 4個 つづく（2・3・4・5 など）', ptLabel: '30点' },
+    { id: 's5', col: 1, row: 4, name: 'B.ストレート', kind: 'run',   n: 5, pt: 40,
+      desc: '目が 5個 つづく（1〜5 か 2〜6）', ptLabel: '40点' },
+    { id: 'yt', col: 1, row: 5, name: 'ヨット',       kind: 'yacht', pt: 50,
+      desc: '5個 ぜんぶ 同じ 目', ptLabel: '50点' }
   ];
-  var NCAT = 13;
-  var TURNS = 13;                 /* ★ 手番は かならず 13回（★ルル §12-1・ばらつき 0）*/
+  var NCAT = CATS.length;         /* ★★ 12（★数を 手で 書かない ―― ★2か所に 書くと ずれます）*/
+  var TURNS = NCAT;               /* ★ 手番は かならず 12回（★ばらつき 0）*/
   var REROLL = 2;                 /* ★★ ふり直しは 2回まで（★ルル §4-1・曲がり角）★★
                                      ★ ★★これは **出荷した 決まり**。★★動かしません。
                                        ★ ★見張り（verify.js ⑤）は、★★本物の 指で ボタンを 5回 押して、
@@ -56,16 +73,34 @@
             ―― ★★外に 出した 数字は **写し** で、★中の `var` は 別物 だった から です。
         ★ ★★「ふり直し 0回・1回・2回・3回」の 4行が **ぜんぶ 同じ 数**に なって、やっと 気づきました。
           ★ ★★数が 動かない ときは、★★まず「本当に 動かして いるか」を 疑う。 */
-  var CFG = { reroll: REROLL };
+  /* ★★ T226 ―― ★`bonusNeed` / `bonusPt` を ここに 足しました
+     ★ ★理由：★★見張り ⑫（★63点で ＋35点・★★62点では 付かない）を、
+       ★ ★★**わざと 壊して 鳴らせる ように する** ため（★型の ④）。
+       ★ ★★`reroll` と まったく 同じ 置き方です ―― ★遊びの 中では 1度も 動きません。
+     ⚠️★ ★ロボットの 打ち手（`writeValue` / `fvTable`）は **`BONUS_NEED` の まま**に して あります。
+        ★ ★★あそこの 数字は「★ボーナスを どれくらい 追うか」の 手加減 なので、
+          ★ ★決まりの 側を 壊した ときに いっしょに 動くと、★★何が 鳴ったのか 分からなく なります。 */
   var NDICE = 5;
   var BONUS_NEED = 63, BONUS_PT = 35;
-  var NP = 4;                     /* ★ 4人 固定（★ルル §8）*/
+  var CFG = { reroll: REROLL, bonusNeed: BONUS_NEED, bonusPt: BONUS_PT };
+  /* ★★★ T226・★社長の ご指摘① ―― ★★1対1（★あなた と ロボット 1体）★★★
+     ★ ★★これは ⑤（ロボットの ふり方を 見せる）の **代金を 払う ため**でも あります
+       ★ ★【ルル T225 §7-4】：★1試合を 140秒 以内に 収めると すると ――
+         ★ ★★2人 … ★ロボットの 手番は 12回。★1手番 **3,140ms** まで 使えます（★A案は 2,410ms）
+         ★ ★★4人 … ★ロボットの 手番は 36回。★1手番 **1,048ms** しか なく、
+           ★ ★★ふる 動きだけで 490×2.85 ＝ 1,394ms ―― ★★★どうしても 入りません。
+       ★ ★★＝ ★①と ⑤は セット です。★★4人に 戻すと ⑤が 死にます。
+     ★ ★代金【ルル T225 §4-2・計算 各40000試合】：★深さが 天井比 97.9% → 89.4%（−8.5）。
+       ★ ★かわりに ★★はじめての人が 191試合に 1回 → **19試合に 1回** 勝てる ように なります。 */
+  var NP = 2;
 
   /* ★ 役の「ねうち」＝ ★上手い 人が その 役で 平均 何点 取るか
      ★ ★出どころ：★★ルル T192 §2-1 の 表【ルルの 数え上げ】。★私が 作った 数では ありません。
      ★ ★これを 引き算に 使うと「先を 見て 書く」に なります（★ルル §3-1：−12.07ポイントの 部品）。 */
+  /* ⚠️★★ `k3`（スリーダイス）の 22.72 は **消しました**（★T226・役ごと 無く なった ため）。
+     ★ ★のこりの 12個は 1つも 動かして いません。 */
   var WORTH = { n1: 1.87, n2: 4.75, n3: 7.61, n4: 10.98, n5: 14.26, n6: 17.77,
-                k3: 22.72, k4: 18.87, fh: 24.11, s4: 29.96, s5: 36.58, yt: 9.33, ch: 23.17 };
+                k4: 18.87, fh: 24.11, s4: 29.96, s5: 36.58, yt: 9.33, ch: 23.17 };
 
   /* ============================================================
      ★ 2. 点の 計算（★機械の 仕事。★追記②の 表に 名指しで「点数の 計算」と あります）
@@ -100,10 +135,10 @@
     }
     return 0;
   }
-  /* ★ 表（sheet）＝ 13マス。★まだ 書いて いない ところは null */
+  /* ★ 表（sheet）＝ NCAT マス（★12）。★まだ 書いて いない ところは null */
   function newSheet() { var a = [], i; for (i = 0; i < NCAT; i++) a.push(null); return a; }
   function upperSum(sh) { var s = 0, i; for (i = 0; i < 6; i++) if (sh[i] != null) s += sh[i]; return s; }
-  function bonusOf(sh) { return upperSum(sh) >= BONUS_NEED ? BONUS_PT : 0; }
+  function bonusOf(sh) { return upperSum(sh) >= CFG.bonusNeed ? CFG.bonusPt : 0; }
   function totalOf(sh) {
     var t = 0, i;
     for (i = 0; i < NCAT; i++) if (sh[i] != null) t += sh[i];
@@ -161,7 +196,7 @@
   }
   buildTables();
 
-  /* ★★ 13の 役 × 252の 出目 ＝ ★3276マスの 点の 表（★読みこみの ときに 1回 だけ）★★
+  /* ★★ 12の 役 × 252の 出目 ＝ ★3024マスの 点の 表（★読みこみの ときに 1回 だけ）★★
      ⚠️★★ ここは **速さの ため だけ** の 表です【★私の 回り道①】――
         ★ ★はじめ `fvTable` の 中で `scoreOf` を 3276回 呼んで いました。
           ★ ★`scoreOf` は 中で `counts()` ＝ **7個の 配列を 毎回 作ります**。
@@ -193,6 +228,20 @@
       seen[key] = 1;
       list.push({ mask: m, keep: pre, ki: KEEPI[key] });
     }
+    /* ⚠️★★★ T226 で 足した 1行 ―― ★★ここに 「ならび順で 答えが 変わる」わなが ありました ★★★
+       ★ ★上の for は `d` を **並んで いる 順**に 読みます。★だから 同じ 5個でも
+         ★ ★★置き場所が ちがうと、★★この list の 順番が 変わります。
+       ★ ★`decideKeep` の 'ev' は `e > bv` で えらぶ ので、★★見こみが **ぴったり 同点**の とき
+         ★ ★★先に 出た ほうが 勝ちます ―― ★★★＝ ならび順で 手が 変わって いました。
+       ★ ★★【実測】★T226 で 私が botTurn の ふり直しを「場所を そのまま」に 直した とき、
+         ★ ★48000手番の うち **138手番** が 前と ちがう 手に なりました（★0.29%）。
+         ★ ★★中身を 見たら ぜんぶ 同点の えらび。★★どちらが 正しい でも ない ―― ★★★決まって いなかった。
+       ★ ★→ ★★`ki`（★のこし方 462とおりの 通し番号）で そろえます。
+         ★ ★★これで `d` の ならび順に よらず、★同点の ときは いつも 同じ 手を えらびます。
+       ★ ★★代金【実測・T225 の 13役 の 中身で 各40000試合】：
+         ★ ★はじめて 144.9096 → **144.9096**（★0.0000）／ふつう 192.6613 → **192.6613**（★0.0000）
+         ★ ★★つよい 232.4211 → **232.4352**（★**＋0.0141**。★ばらつき ±0.13 の 中）*/
+    list.sort(function (x, y) { return x.ki - y.ki; });
     return list;
   }
 
@@ -248,7 +297,7 @@
     return v;
   }
 
-  /* ★ 13マスの うち 空いて いる ところから、★いちばん 良い 1つを えらぶ */
+  /* ★ NCAT マスの うち 空いて いる ところから、★いちばん 良い 1つを えらぶ */
   function decideWrite(sh, d, o, rnd) {
     var open = [], i, u = upperSum(sh);
     for (i = 0; i < NCAT; i++) if (sh[i] == null) open.push(i);
@@ -325,35 +374,73 @@
      ============================================================ */
   function rollDice(n, rnd) { var a = [], i; for (i = 0; i < n; i++) a.push(1 + Math.floor(rnd() * 6)); return a; }
 
-  function botTurn(sh, o, rnd) {
-    var d = rollDice(NDICE, rnd), fv = null, r, keep, i;
+  /* ★★ 「のこす 目」（★値の ならび）を、★いま 手元に ある 5個の **どの 場所か** に 直す
+     ★ ★同じ 目が 2個 ある ときは、★前から 1個ずつ 当てて いきます。 */
+  function keepMask(d, keep) {
+    var mask = [], used = keep.slice(), i, j;
+    for (i = 0; i < d.length; i++) mask.push(false);
+    for (j = 0; j < used.length; j++) {
+      for (i = 0; i < d.length; i++) {
+        if (!mask[i] && d[i] === used[j]) { mask[i] = true; break; }
+      }
+    }
+    return mask;
+  }
+
+  /* ★★★ ロボットの 1手番 ★★★
+     ------------------------------------------------------------
+       ★ `trace` を 渡すと、★★1回ふる ごとに `{ dice, keep }` を 積みます
+         ―― ★★これが 社長の ご指摘⑤（★ロボットの ふり方を 見せる）の 材料 です。
+       ★★ ⚠️ `trace` は **見せる ため だけ**。★★打ち手は 1行も 変わりません
+         ―― ★★`trace` を 渡しても 渡さなくても、★出る 点は **1点も 同じ**（★下の 数で 確かめました）。
+
+     ⚠️★★★ T226 で 1つだけ 中を 直しました（★★見せる ために 必要 だった もの）★★★
+       ★ ★もとは `d = keep.concat(rollDice(のこり))` ―― ★★のこした 目が **先頭へ 寄って** いました。
+         ★ ★数える だけなら これで 良い（★点は ならび順を 見ない）。
+         ★ ★★でも 画面に 出すと、★★のこした サイコロが 毎回 場所を 変えて 見えます。
+       ★ ★→ ★★**場所を そのままに して、ふり直す ぶん だけ 上書き** します。
+         ★ ★★ふる 回数も、★rnd() を 引く 回数も、★出る 目の 組み合わせも まったく 同じ
+           ―― ★★点は ならび順を 見ない ので、★★数は 1つも 動きません
+             ★（★`logs/T226_計測どうぐ/T226_基準.cjs` で 手を 入れる 前と 突き合わせました）。 */
+  function botTurn(sh, o, rnd, trace) {
+    var d = rollDice(NDICE, rnd), fv = null, r, keep, mask, i;
     if (o.keep === 'ev') fv = fvTable(sh, o);
+    if (trace) trace.push({ dice: d.slice(), keep: [false, false, false, false, false] });
     for (r = 0; r < CFG.reroll; r++) {
       keep = decideKeep(sh, d, o, fv, rnd);
+      mask = keepMask(d, keep);
+      if (trace) trace[trace.length - 1].keep = mask.slice();
       if (keep.length >= NDICE) break;                   /* ★ 5個 のこす ＝ ここで やめる */
-      d = keep.slice().concat(rollDice(NDICE - keep.length, rnd));
+      for (i = 0; i < NDICE; i++) if (!mask[i]) d[i] = 1 + Math.floor(rnd() * 6);
+      if (trace) trace.push({ dice: d.slice(), keep: mask.slice() });
     }
     var ci = decideWrite(sh, d, o, rnd);
+    /* ⚠️★★ 空きマスが 1つも 無い とき ―― ★★`decideWrite` は −1 を 返します。
+       ★ ★★ふつうの 遊びでは ここに 来ません（★席ごとに ちょうど TURNS 回 しか 書かない）。
+       ★ ★★でも 見張りや 道具が 手番を 動かすと 来ます ―― ★★★T226 で 1回 来て、
+         ★ ★★`CATS[-1].kind` で **画面ごと 止まりました**（★私が 手で `g.cur = 1` に した とき）。
+       ★ ★→ ★★止めずに、★★「反則 1件」として 返します（★見張りの ③が 数えます）。 */
+    if (ci < 0) return { ci: -1, pt: 0, bad: 1, dice: d };
     var pt = scoreOf(CATS[ci], d);
     sh[ci] = pt;
     for (i = 0; i < d.length; i++) if (d[i] < 1 || d[i] > 6) return { ci: ci, pt: pt, bad: 1 };
     return { ci: ci, pt: pt, bad: 0, dice: d };
   }
 
-  /* ★ 1人ぶん 13手番 まるごと */
+  /* ★ 1人ぶん TURNS 手番（★12回）まるごと */
   function playOne(o, rnd) {
     var sh = newSheet(), t, bad = 0, yacht = 0, zero = 0;
     for (t = 0; t < TURNS; t++) {
       var r = botTurn(sh, o, rnd);
       bad += r.bad;
       if (r.pt === 0) zero++;
-      if (CATS[r.ci].id === 'yt' && r.pt > 0) yacht = 1;
+      if (r.ci >= 0 && CATS[r.ci].id === 'yt' && r.pt > 0) yacht = 1;
     }
     return { sheet: sh, total: totalOf(sh), turns: TURNS, bad: bad + (filled(sh) === NCAT ? 0 : 1),
              upper: upperSum(sh), bonus: bonusOf(sh) ? 1 : 0, yacht: yacht, zero: zero };
   }
 
-  /* ★ 4人（★席0が 人の 模型。★相手の 手は 自分に 1つも ひびきません ―― ルル 検算7）*/
+  /* ★ NP人（★T226 から 2人。★席0が 人の 模型。★相手の 手は 自分に 1つも ひびきません ―― ルル 検算7）*/
   function simMatch(rnd, os) {
     var r = [], i;
     for (i = 0; i < NP; i++) r.push(playOne(os[i], rnd));
@@ -396,11 +483,11 @@
      ------------------------------------------------------------
        ★ ★ルル T192 §1-1：「★ヨットは 相手の 手が 自分に 1つも 影響しない」。
          ★ ★★＝ ★★点の ちらばり さえ あれば、★勝率は **たし算で 出せます**。
-       ★ ★4人の うち 1人が 人、★3人が 同じ ロボット。★同点は 山分け：
-         ★ ★★P ＝ Σ[人の点 s] p(s) × Σ[k=0..3] C(3,k)・B(s)^k・A(s)^(3−k) ／ (k+1)
+       ★ ★NP人の うち 1人が 人、★のこりが 同じ ロボット。★同点は 山分け：
+         ★ ★★P ＝ Σ[人の点 s] p(s) × Σ[k=0..m] C(m,k)・B(s)^k・A(s)^(m−k) ／ (k+1)　（★m ＝ NP−1）
          ★ ★（A ＝ ロボットが s より 下 ／ B ＝ ロボットが ちょうど s）
        ★ ★★これで、★同じ 試合数でも 勝率の ぶれが うんと 小さく なります
-         ★ ★（★4人ぶん 走らせる 必要も なくなる ので、★4倍 速い）。
+         ★ ★（★人数ぶん 走らせる 必要も なくなる ので、★その ぶん 速い）。
      ============================================================ */
   var SCORE_MAX = 500;
   function scoreHist(n, seed, o) {
@@ -416,19 +503,29 @@
     return { h: h, n: n, avg: sum / n, bad: bad, upper: up / n, bonus: bn / n,
              yacht: yt / n, zero: zr / n, list: list };
   }
-  /* ★ 人 1人 vs 同じ ロボット 3人（★4人固定）。★返すのは 0〜1 */
-  function winRateFrom(hh, hb) {
+  /* ★ 人 1人 vs 同じ ロボット (NP−1)体。★返すのは 0〜1
+     ⚠️★★ T226 まで、ここは **C(3,k) ＝ 1,3,3,1 の 決め打ち** でした（★4人 固定 だった ため）。
+        ★ ★★1対1に すると、★★★決め打ちの ままでは 勝率が 4人の 式で 出て しまいます
+          ―― ★★数字が だまって まちがう（★いちばん こわい 形）。
+        ★ ★→ ★★人数から C(m,k) を その場で 作ります（★数を 2か所に 書かない）。 */
+  function winRateFrom(hh, hb, np) {
+    var m = ((np == null ? NP : np) | 0) - 1, cm = [1], k;
+    if (m < 0) m = 0;
+    for (k = 1; k <= m; k++) cm.push(cm[k - 1] * (m - k + 1) / k);
     var A = 0, p = 0, s;
     for (s = 0; s <= SCORE_MAX; s++) {
       var B = hb[s], ph = hh[s];
       if (ph > 0) {
-        /* ★ C(3,k) ＝ 1,3,3,1 */
-        p += ph * (A * A * A + 3 * B * A * A / 2 + 3 * B * B * A / 3 + B * B * B / 4);
+        var t = 0;
+        for (k = 0; k <= m; k++) t += cm[k] * Math.pow(B, k) * Math.pow(A, m - k) / (k + 1);
+        p += ph * t;
       }
       A += B;
     }
     return p;
   }
+  /* ★ 同じ 腕どうしなら 何%か（★1／人数）―― ★画面に 出す「五分」の 数字 */
+  function evenPct() { return 100 / NP; }
 
   /* ============================================================
      ★ 6. つよさ 3段（★ルル §7-3）／ ★人の 模型（★数える ときだけ）
@@ -452,8 +549,11 @@
     { label: '★ボーナスを 知らない', o: P.noBonus() }
   ];
 
-  /* ★ 長さ【見立て】の もと（★ルル §12-2。★トライが 測るまで 確定させません）*/
-  function machineMs() { return 0.6 * 3 * TURNS * 1000; }   /* ★ ロボット3人 × 13手番 × 0.6秒 */
+  /* ★ 長さ【見立て】の もと（★トライが 測るまで 確定させません）
+     ★ ★perTurnMs … ★ロボット 1体の 1手番（★T226 の A案 ＝ 2410ms。★画面の 側が 渡します）*/
+  function machineMs(perTurnMs) {
+    return (perTurnMs == null ? 2410 : perTurnMs) * (NP - 1) * TURNS;
+  }
 
   var API = {
     CATS: CATS, NCAT: NCAT, TURNS: TURNS, REROLL: REROLL, NDICE: NDICE, NP: NP,
@@ -462,10 +562,10 @@
     MS: MS, MSI: MSI, MSP: MSP, KEEPS: KEEPS, KEEPI: KEEPI,
     counts: counts, sum5: sum5, scoreOf: scoreOf, newSheet: newSheet, SCORE: SCORE, msIndex: msIndex,
     upperSum: upperSum, bonusOf: bonusOf, totalOf: totalOf, filled: filled,
-    keepOptions: keepOptions, fvTable: fvTable,
+    keepOptions: keepOptions, fvTable: fvTable, keepMask: keepMask,
     decideKeep: decideKeep, decideWrite: decideWrite, botTurn: botTurn,
     rollDice: rollDice, playOne: playOne, simMatch: simMatch, runMany: runMany,
-    scoreHist: scoreHist, winRateFrom: winRateFrom, SCORE_MAX: SCORE_MAX,
+    scoreHist: scoreHist, winRateFrom: winRateFrom, evenPct: evenPct, SCORE_MAX: SCORE_MAX,
     rng: rng, pct: pct, machineMs: machineMs
   };
 

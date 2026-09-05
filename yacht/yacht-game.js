@@ -39,8 +39,13 @@
        ⚠️★★ ★★点の 高い 順に 並べかえるのは 追記② 違反 です。
           ★ ★★見張り（verify ⑬）が、★毎回 この 表と DOM の 順番を 突き合わせて います。
      ============================================================ */
+  /* ★★★ T226 ―― ★`k3`（同じ目3つ ＝ スリーダイス）が 消えました（★社長の お決め②）★★★
+     ★ ★右の 列が 7つ → **6つ** に なります。★★2列×7行 の かたちは そのまま。
+     ★ ★→ ★★右の 列の 7行目は **空きマス**（`@blank`）。★押せません・字も 出しません。
+       ★ ★★空きを 作らずに 詰めると、★★左の「◯／63」と 右の「ヨット」が 同じ 行に 来ません。
+         ★ ★★ならびを 動かすのは 追記② 違反 に 見える 形 なので、★★かたちを 守ります。 */
   var LEFT  = ['n1', 'n2', 'n3', 'n4', 'n5', 'n6', '@bonus'];
-  var RIGHT = ['k3', 'k4', 'fh', 's4', 's5', 'yt', 'ch'];
+  var RIGHT = ['ch', 'k4', 'fh', 's4', 's5', 'yt', '@blank'];
   var GRID = (function () {
     var a = [], r;
     for (r = 0; r < 7; r++) { a.push(LEFT[r]); a.push(RIGHT[r]); }
@@ -58,8 +63,34 @@
     6: [[1, 1], [2, 1], [3, 1], [1, 3], [2, 3], [3, 3]]
   };
 
-  var SEATS = ['あなた', 'ロボット1', 'ロボット2', 'ロボット3'];
-  var BOT_MS = 600;                 /* ★ ロボット 1人の 手番（★結果だけ・ルル §8-2）*/
+  /* ★★ T226・★社長の ご指摘① ―― ★★1対1（★`C.NP` ＝ 2）★★ */
+  var SEATS = ['あなた', 'ロボット'];
+
+  /* ============================================================
+     ★★★ T226・★社長の ご指摘⑤ ―― ★ロボットの ふり方を 見せる（★ルル T225 §7-3 A案）★★★
+     ------------------------------------------------------------
+       ★ ★★もとは `BOT_MS = 600` の 1本 だけ ―― ★★結果だけ 0.6秒 で 終わって いました。
+         ★ ★★何が 出て、何回 ふり直して、どこに 書いたのか ―― ★1つも 見えません でした。
+       ★ ★★いまは 1手番を **こま切れ**に して 見せます：
+         ★ ①ふる（★人と 同じ 転がり）→ ②のこす サイコロに 青わく → ③くり返し → ④書いた 役を 帯に 出す
+
+       ★★★ 秒の 天井（★ルル T225 §7-4 の 数字を そのまま 守ります）★★★
+         ★ ★1試合を **140秒 以内**に 収める ―― ★まとめサイトの「1試合 2分ほど」を 守る ため。
+         ★ ★★1対1なら ロボットの 手番は 12回。★★1手番に 使えるのは **3,140ms** まで。
+         ★ ★★いちばん 長い 場合（★3回 ふる）＝ 600×3 ＋ 700 ＝ ★**2,500ms**。★640ms の 余り。
+         ★ ★★ふつうは 2.838回 ふる【計算・20000試合】＝ ★**2,403ms**。
+         ★ ★→ ★★見張り ⑭ が、★★★本物の 時計で 1手番を 測って 3,140ms を こえたら 鳴らします
+           ★ ★（★上の 線）。★★そして 800ms を 下回っても 鳴らします（★下の 線 ―― ★見せて いない）。
+     ============================================================ */
+  /* ★★ 1か所に まとめて 持ちます（★`yacht-core.js` の `CFG` と 同じ 置き方）★★
+     ★ ★遊びの 中では 1度も 動きません。★★見張りが **わざと 壊して 鳴らす** ときだけ 動かします。 */
+  var BOT = {
+    roll:  600,                     /* ★ ロボットが 1回 ふって、目が 読める まで */
+    write: 700,                     /* ★ 書いた 役を 帯に 出して いる 間 */
+    cap:   3140,                    /* ★★ 上の 線（★ルル T225 §7-4：1試合 140秒）*/
+    min:   800                      /* ★★ 下の 線 ―― ★これを 割ったら「見せて いない」*/
+  };
+  var BOT_MS = BOT.roll;            /* ★ 前の 名前（★トライの 紙が 見て います）*/
   /* ★★ 転がりの 長さは **`yacht.css` が 持ち主** です（★🎨アトの もの）★★
      ⚠️★★ ★ここに 320 と 書いて いました【★私の 失敗⑧・T193 追記】――
         ★ ★★アトが 270ms に した あとも、★私の 数字は 320 の まま でした。
@@ -67,7 +98,28 @@
         ★ ★→ ★★いまは `animationend`（★★CSS が 終わりを 教えて くれる）で 外します。
           ★ ★下の 数は **もしもの 天井** です ―― ★アトが 何msに しても 正しく 動きます。 */
   var ROLL_CEIL = 1200;             /* ★ もしもの 天井（★animationend が 来なかった とき だけ）*/
-  var BEST_KEY = 'brage-yacht-best';
+  /* ============================================================
+     ★★★ しまう ところの 鍵 ―― ★T226 で **名前を 変えました**（★理由が あります）★★★
+     ------------------------------------------------------------
+       ★ ★T225 まで：★13役・13手番。★★ぜんぶ 気づいた人の 点は **232点**。
+       ★ ★T226 から：★12役・12手番。★★同じ 人でも **206点**（★−26点）。
+         ★ ★★＝ ★**点の ものさしが 変わりました**。
+       ★ ★★もし 古い さいこう点（★232点）を そのまま 持ちこむと ――
+         ★ ★★前に 遊んだ 人は、★★★もう 二度と さいこう点を こえられません。
+         ★ ★★「まえの 記録が 破れない」を、★何の 説明も なく 押しつける ことに なります。
+       ★ ★★＝ ★★ハーツ T168 の 🔴-1（★古い 保存を そのまま 読んだ）と 同じ 穴 です。
+
+       ★★ どう したか（★はっきり 決めました）
+         ★ ①★★鍵の 名前を `-v2` に 変える（★12役の 記録は、12役の 中だけで くらべる）
+         ★ ②★★古い 鍵は **消す**（★読みこみの ときに 1回だけ）
+           ★ ★理由：★のこすと 見張り ⑥（★しまう ものは 1つ だけ）が 鳴ります。
+             ★ ★★そして のこして おいても、★★もう 二度と 使いません。
+         ★ ③★★点は **持ちこみません**（★ものさしが ちがう ので、くらべたら うそに なります）
+       ★ ★★代金：★★前に 遊んだ 人の さいこう点は、★★★1回だけ 0に もどります。
+         ★ ★★正直に 書いて おきます ―― ★★これは 私が えらんだ 代金 です。
+     ============================================================ */
+  var BEST_KEY = 'brage-yacht-best-v2';
+  var BEST_KEY_OLD = 'brage-yacht-best';        /* ★ 13役 の ころの 鍵（★消します）*/
 
   /* ============================================================
      ★ 1. いまの じょうたい
@@ -111,6 +163,11 @@
   function bestPut(n) {
     try { root.localStorage.setItem(BEST_KEY, String(n | 0)); } catch (e) {}
   }
+  /* ★ 13役の ころの 鍵を 片づける（★読みこみの ときに 1回だけ。★遊びは 止めません）*/
+  function bestSweepOld() {
+    try { if (root.localStorage.getItem(BEST_KEY_OLD) != null) root.localStorage.removeItem(BEST_KEY_OLD); }
+    catch (e) {}
+  }
   function showBest() {
     var b = bestGet(), el = $('bestLine');
     if (!el) return;
@@ -126,7 +183,7 @@
     built = true;
     var i, r, id, el;
 
-    /* ★ 13の 役 ＋「◯／63」＝ 14マス */
+    /* ★ 12の 役 ＋「◯／63」＋ 空き 1マス ＝ 14マス（★2列×7行）*/
     sheetEl.textContent = '';
     for (i = 0; i < GRID.length; i++) {
       id = GRID[i];
@@ -138,7 +195,11 @@
       var pt = document.createElement('span'); pt.className = 'cell-pt';
       el.appendChild(nm); el.appendChild(pt);
       if (id === '@bonus') { el.classList.add('is-bonus'); el.disabled = true; }
-      else {
+      else if (id === '@blank') {
+        /* ★ 右の 列の 7行目（★スリーダイスが あった ところ）―― ★★何も 出しません・押せません */
+        el.classList.add('is-blank-cell'); el.disabled = true;
+        el.setAttribute('aria-hidden', 'true'); el.tabIndex = -1;
+      } else {
         el.addEventListener('click', (function (cid) {
           return function () { onCell(cid); };
         })(id));
@@ -168,15 +229,21 @@
       dieEl.push(el);
     }
 
-    /* ★ ロボット3人の 点 */
+    /* ★★ ロボットの 帯（★T226 から **1体**）★★
+       ★ ★空いた ところに 「★何を 書いたか」が 入ります（★社長の ご指摘⑤の 後半）。
+       ⚠️★★ ★★ここに 出すのは **すでに 起きた 事実** だけ です
+          ★ ★（★ロボットが どこに 書いたか）。★★「あなたは ここが おすすめ」は 1文字も 出しません。 */
     botBand.textContent = '';
     botEl.length = 0;
     for (i = 1; i < C.NP; i++) {
       el = document.createElement('div');
       el.className = 'bot-cell';
-      el.innerHTML = '<span>' + SEATS[i] + '</span><b>0</b>';
+      var bn = document.createElement('span'); bn.className = 'bot-name'; bn.textContent = SEATS[i];
+      var bp = document.createElement('b');    bp.className = 'bot-pt';   bp.textContent = '0';
+      var bm = document.createElement('span'); bm.className = 'bot-move'; bm.textContent = '';
+      el.appendChild(bn); el.appendChild(bp); el.appendChild(bm);
       botBand.appendChild(el);
-      botEl.push(el);
+      botEl.push({ el: el, pt: bp, move: bm });
     }
     void r;
   }
@@ -207,21 +274,46 @@
     var W = stageEl.clientWidth, H = stageEl.clientHeight;
     var gapD = 6;
 
-    /* ★ ① サイコロ ―― ★まず よこはばで 決める（★44px の 会社の 線を 守る）*/
+    /* ★ ① サイコロ ―― ★まず よこはばで 決める（★44px の 会社の 線を 守る）
+       ★★★ T226 で 見つけた 穴（★★追記⑥ の 9画面を 数えて 出て きました）★★★
+         ★ ★**568×320**（★iPhone SE 初代 の 横向き）で ★★サイコロが **42px**。★44px を 割って いました。
+           ★ ★★T225 の 控えでも 同じ 42px【実測】―― ★★私が こわしたのでは なく、
+             ★ ★★**その たてを 誰も 開いて いなかった** だけ です（★アトが ハーツで 書いた とおり）。
+         ★ ★中身：★横向きでは `.pane-b` が はばの 44%。★568px だと 約 240px。
+           ★ ★5個 × 44px ＝ 220px。★すきま 6px × 4 ＝ 24px。★★足すと 248px ―― ★8px 足りません。
+         ★ ★→ ★★**すきまを 静かに 詰めます**（★設計図 追記③ の 順番：★①静かに 詰める → ②見切れる）。
+           ★ ★★6px で 44px に とどく 画面は、★1pxも 変わりません（★下の while が 走りません）。
+           ★ ★★568×320 だけ 6→4px に なり、★★サイコロが 42 → **44px** に なります【実測】。 */
     var wb = paneB.clientWidth || W;
     var die = Math.floor((wb - (C.NDICE - 1) * gapD - 4) / C.NDICE);
+    while (die < 44 && gapD > 3) {
+      gapD--;
+      die = Math.floor((wb - (C.NDICE - 1) * gapD - 4) / C.NDICE);
+    }
     die = Math.max(38, Math.min(78, die));
     s.setProperty('--die', die + 'px');
     s.setProperty('--die-gap', gapD + 'px');
 
     /* ★ ② 表の 1マス ―― ★★本物の pane-a を 測って から 決める
-       ★ ★入りきらなければ サイコロを 1pxずつ 小さく して やり直す（★8回まで）*/
+       ★ ★入りきらなければ サイコロを 1pxずつ 小さく して やり直す（★8回まで）
+
+       ★★★ T227（★🎨アトの 判じ）―― ★★横向きでは、サイコロを 削っても 表は 1pxも 広がりません ★★★
+         ★ ★`.stage` が `flex-direction:row` の とき、★pane-a と pane-b は **左右に** 並びます。
+           ★ ★★＝ ★pane-a の たけは 画面の たけ そのもの。★サイコロは そこに 入って いません。
+         ★ ★★そのまま だと 568×272（★実在の 底）で サイコロが 44 → **38px** に 落ち、
+           ★ ★★T122 の 会社の 線（★指の 的 44px）を 割ります ―― ★★何も 買わずに。
+         ★ ★★【★アト実測・T227】★9画面は 1pxも 変わりません／★底だけ 38 → 44px。
+           ★ ★★表の 1マスは 底でも **23px の まま**（★★＝ 削った 6px は 何も 買って いなかった）。
+         ★ ★★これは 設計図 追記③（★まれな 最悪ケース）では ありません ―― ★★引きかえが 0 だから です。
+           ★ ★★引きかえが ある とき（★たての 画面）は、★ループは いままで どおり 走ります
+             ★ ★（★320×568 で pane-a が 288 → 301px ―― ★ちゃんと 買って います）。 */
+    var wideNow = getComputedStyle(stageEl).flexDirection === 'row';
     var cellH = 32, k, avail = 0;
     for (k = 0; k < 10; k++) {
       var ha = paneA.clientHeight, meH = meBand.getBoundingClientRect().height;
       avail = ha - meH - 4 - 6 * 2;                  /* ★ すきま 2px × 6 */
       cellH = Math.floor(avail / 7);
-      if (cellH >= 24 || die <= 38) break;
+      if (cellH >= 24 || die <= 38 || wideNow) break;
       die--; s.setProperty('--die', die + 'px');
     }
     /* ★★ PC では 2列×7行の まま **1マスを 大きく** します（★ルル §10-2）★★
@@ -246,25 +338,37 @@
   function startGame() {
     clearTimers();
     rand = newRand();
-    g = { sheets: [], turn: 0, cur: 0, dice: null, keep: [], rolls: 0, over: false };
+    g = { sheets: [], turn: 0, cur: 0, dice: null, keep: [], rolls: 0, over: false, botMove: '' };
     for (var i = 0; i < C.NP; i++) g.sheets.push(C.newSheet());
     busy = false; over = false;
     titleScreen.classList.add('hidden');
     playScreen.classList.remove('hidden');
     resultWrap.classList.add('hidden');
     build(); layout();
-    say('のこす 目を えらんで、ふり直そう！', 'start');
+    /* ★ T226 ―― ★★サイコロは まだ 1つも 出て いません。★はじめの ひとことも それに そろえます。 */
+    say('サイコロを ふろう！', 'start');
     beginTurn();
   }
 
+  /* ★★★ T226・★社長の ご指摘④ ―― ★★はじめの 1ふりを、機械が 横取りしない ★★★
+     ------------------------------------------------------------
+       ★ ★社長の 言葉：「★ゲームを開始したら サイコロが 振られている状態に なっていて、
+         ★ ★★サイコロを振る楽しみが 1回分 なくなっている」
+       ★ ★★T225 まで：★`beginTurn()` が 自分で `throwDice(true)` を 呼んで いました。
+         ★ ★★＝ ★1手番に つき 1回、★★ふる 楽しみを 機械が 先に 食べて いました（★1試合で 12回）。
+       ★ ★★いまは ―― ★★★サイコロを **1つも 出しません**。★人が ボタンを 押したら、はじめて ふります。
+       ★ ★★ことばの 導き：★★ボタンの 文字が「サイコロを ふる」と 言います（★あそびかたは 0行 増えません）。
+         ★ ★★＋ 手番の はじめに ハッピーが「サイコロを ふろう！」（★★決まりの 案内。
+           ★ ★★「どの 目を のこせ」は 1文字も 言いません ―― ★★追記②の 線の 手前 です）。 */
   function beginTurn() {
     if (!g) return;
     if (g.turn >= C.TURNS) { finish(); return; }
     if (g.cur === 0) {
-      /* ★ 人の 手番 ―― ★まず 5個 ふる（★決まり1）。★そこから 先は 人が 決めます。 */
-      g.dice = []; g.keep = []; g.rolls = 0;
-      for (var i = 0; i < C.NDICE; i++) { g.dice.push(1); g.keep.push(false); }
-      throwDice(true);
+      /* ★ 人の 手番 ―― ★★サイコロは 出しません。★ふるのは 人 です。 */
+      g.dice = null; g.keep = [];
+      for (var i = 0; i < C.NDICE; i++) g.keep.push(false);
+      g.rolls = 0;
+      g.botMove = '';
     } else {
       botStep();
     }
@@ -275,6 +379,9 @@
      ★ first ＝ 手番の はじめの 1回目。★あとは のこして いない ぶん だけ。 */
   function throwDice(first) {
     var i, n = 0;
+    /* ★ T226 ―― ★★手番の はじめは `g.dice` が **null**（★まだ 1つも 出て いない）*/
+    if (!g.dice) { g.dice = []; for (i = 0; i < C.NDICE; i++) g.dice.push(1); }
+    if (!g.keep || !g.keep.length) { g.keep = []; for (i = 0; i < C.NDICE; i++) g.keep.push(false); }
     for (i = 0; i < C.NDICE; i++) {
       if (first || !g.keep[i]) {
         g.dice[i] = 1 + Math.floor(rand() * 6);
@@ -299,10 +406,19 @@
           ★ ②★★`animationend` で 1個ずつ 外す（★★CSS が 終わりを 教えて くれる）
             ★ ★→ ★アトが 転がりを 何msに しても 正しく 動きます（★数を 2か所に 書かない）
        ★ ★★`yacht.css` は 1文字も 触って いません（★アトの 持ち物）。 */
+    rollAnim(first ? null : g.keep);
+    return n;
+  }
+
+  /* ★★ 転がりを 見せる ―― ★`held[i]` が true の サイコロは 動かしません
+     ★ ★★人の ふり直し でも、★T226 から ロボットの ふり直し でも、★★ここ 1本を 通ります
+       ★ ★（★同じ 動きを 2か所に 書かない ―― ★見た目が ずれる もと）。 */
+  function rollAnim(held) {
+    var i;
     if (rollTimer) { root.clearTimeout(rollTimer); rollTimer = 0; }
     for (i = 0; i < C.NDICE; i++) {
       dieEl[i].classList.remove('is-roll');
-      if (first || !g.keep[i]) {
+      if (!held || !held[i]) {
         /* ★ 一度 外して から 付け直す（★同じ 動きを 2回 見せる ため）*/
         void dieEl[i].offsetWidth;
         dieEl[i].classList.add('is-roll');
@@ -312,11 +428,19 @@
       rollTimer = 0;
       for (var j = 0; j < C.NDICE; j++) dieEl[j].classList.remove('is-roll');
     }, ROLL_CEIL);
-    return n;
   }
 
-  function rerollLeft() { return g ? Math.max(0, C.CFG.reroll - (g.rolls - 1)) : 0; }
-  function canAct() { return !!g && !over && !busy && g.cur === 0 && g.rolls > 0; }
+  /* ★★ T226 ―― ★2つに 分けました（★④の ため）★★
+     ★ `myTurn()`  … ★★自分の 番か（★★まだ 1回も ふって いなくても はい）―― ★ふる ボタンは これ
+     ★ `canAct()`  … ★★もう ふった あとか（★のこす・書く は これ）
+       ★ ★★これが 1つの ままだと、★★「サイコロを ふる」ボタンが 押せません でした。 */
+  function isMyTurn() { return !!g && !over && !busy && g.cur === 0; }
+  function rerollLeft() {
+    if (!g) return 0;
+    if (g.rolls === 0) return C.CFG.reroll;         /* ★ まだ ふって いない ＝ ふり直しは まるまる のこって います */
+    return Math.max(0, C.CFG.reroll - (g.rolls - 1));
+  }
+  function canAct() { return isMyTurn() && g.rolls > 0; }
 
   /* ★ サイコロを タップ ＝「のこす」（★青わくが つく）*/
   function onDie(i) {
@@ -327,7 +451,9 @@
 
   /* ★★ ふり直す ―― ★★自動で やらない・自動で 止めない（★ルル §5-2：9手番に 1回 やめる ほうが 得）*/
   function onRoll() {
-    if (!canAct() || rerollLeft() <= 0) return;
+    if (!isMyTurn()) return;
+    if (g.rolls === 0) { throwDice(true); render(); return; }   /* ★ T226・④ ―― ★1回目 */
+    if (rerollLeft() <= 0) return;
     throwDice(false);
     render();
   }
@@ -345,6 +471,15 @@
     if (C.CATS[ci].id === 'yt' && pt > 0) { say('ヨットが 出た！ 50点！'); jump(); }
     else if (!beforeBonus && C.bonusOf(g.sheets[0])) { say('1〜6の 合計が 63に とどいた！ ＋35点！'); jump(); }
     busy = true;
+    /* ★★★ T228 ―― ★★指図を 消すのは「席が 変わった とき」では なく
+       ★★★**人が 押せなく なった とき** です（★🧪トライの 実測：★★ここが 267ms 空いて いました）★★★
+       ★ ★★`busy = true` から `nextSeat()` まで 260ms あり、★その 間 `g.cur` は まだ **0**。
+         ★ ★★★＝ ★もう 押せない のに「サイコロを ふろう！」が 出た まま でした。
+       ★ ★★T227 では `botStep()` の はじめに 置きました ―― ★★★1こま 遅かった。
+         ★ ★★`busy = true` の すぐ 下が、★「人の 手番が 終わった」いちばん 早い こま です。
+       ★ ★★声は 1つも 足して いません（★T227-2 §T2-2 の 分け方の まま ―― ★消す だけ）。
+         ★ ★★上の `say('ヨットが 出た！')` は key なし ＝ ★事実の 知らせ なので 消えません。 */
+    if (HUSH.onWrite) hushOrder();
     g.dice = null; g.keep = [];
     render();
     later(nextSeat, 260);
@@ -357,13 +492,76 @@
     beginTurn();
   }
 
-  /* ★ ロボットの 手番（★結果だけ 0.6秒 ―― ★ふり直しを 見せると 2分44秒 かかります・ルル §8-2）*/
+  /* ============================================================
+     ★★★ ロボットの 手番 ―― ★T226・★社長の ご指摘⑤（★ルル T225 §7-3 A案）★★★
+     ------------------------------------------------------------
+       ★ ★社長の 言葉：「★ロボットも サイコロを振って、何が出て、何回振りなおして、
+         ★ ★★どれを選んだのか 分かるようにして。」
+       ★★ 見せる 順番（★人の サイコロと **同じ ところ** で ふります）：
+         ★ ①ころがる（★人と 同じ 動き。★のこした ぶんは 動きません）
+         ★ ②のこす サイコロに **青わく**（★★人と まったく 同じ 見た目 ―― ★別の 色を 作らない）
+         ★ ③ ①②を、★ロボットが ふり直した 回数だけ くり返す（★2.838回【計算】・★多くて 3回）
+         ★ ④ ★★書いた 役を 帯に 出す（「フルハウス 25点」）
+
+       ★★★ やって いない こと（★ルル T225 §7-5 の 表・★★ここが いちばん こわい ところ）★★★
+         ★ ★★★「ロボットは 6を のこしました」と **文字で 言う** … ★書いて いません
+         ★ ★★★人の 表の マスを 光らせる・色を 変える … ★★1マスも 触って いません
+           ★ ★★（★ルルの A案 ④に「書いた 役の マスが 一瞬 光り」と ありましたが、
+             ★ ★★★**採りません でした** ―― ★表は **人の 表**です。★そこが 光ると、
+               ★ ★★★人が 次に「どこに 書こう」と 考える ところを 先に 指す ことに なります。
+               ★ ★★★→ ★帯に 文字で 出す だけに しました。★ルル §7-5 の 表と 合います。）
+         ★ ★★★「あと1個で ヨット」の たぐい … ★1文字も ありません
+
+       ★★ 秒（★上の 線と 下の 線 ―― ★★見張り ⑭ が 本物の 時計で 数えます）
+         ★ ★ふつう 2.838 × 600 ＋ 700 ＝ ★**2,403ms**／★いちばん 長くて 3 × 600 ＋ 700 ＝ ★**2,500ms**
+         ★ ★上の 線 3,140ms（★1試合 140秒）／★下の 線 800ms（★これを 割ったら 見せて いない）
+     ============================================================ */
+  var botLedger = { rolls: 0, shown: 0, wrote: 0 };
   function botStep() {
     busy = true;
-    var seat = g.cur;
-    C.botTurn(g.sheets[seat], C.LEVELS[level].o, rand);
-    render();
-    later(function () { busy = false; nextSeat(); }, BOT_MS);
+    /* ★★★ T227 ―― ★★人への 指図を、★ロボットの 手番に 持ちこまない（★→ `hushOrder()`）*/
+    hushOrder();
+    var seat = g.cur, myG = g;
+    var trace = [];
+    var before = C.totalOf(g.sheets[seat]);
+    var r = C.botTurn(g.sheets[seat], C.LEVELS[level].o, rand, trace);
+    /* ★★ 見張り ⑭ が「★ふった 回数」と「★画面に 出した 回数」を 突き合わせる ため の 台帳 ★★
+       ⚠️★★ ★★出目の **中身**で 数えては いけません【★T226・私の 失敗】――
+          ★ ★★4個 のこして 1個 ふり直すと、★★同じ 目に なる ことが 6回に 1回 あります。
+            ★ ★★★出目で 数えると「3回 ふったのに 2回しか 見せて いない」に 見えました。
+          ★ ★→ ★★**ふった 回数**と **見せた 回数**を、それぞれ 数えます。 */
+    botLedger = { rolls: trace.length, shown: 0, wrote: 0 };
+    /* ★★ 点は **書いた ところで** 出します ―― ★ころがって いる 間に 点が 先に 動くと、
+       ★ ★★「もう 終わって いる ものを 見せられて いる」ように 見えます。 */
+    g.botFreeze = { seat: seat, pt: before };
+    g.botMove = '';
+    var step = 0;
+    function showStep() {
+      if (!g || g !== myG || over) return;               /* ★ 新しい 試合が 始まって いたら 何も しない */
+      if (step < trace.length) {
+        g.dice = trace[step].dice.slice();
+        g.keep = trace[step].keep.slice();
+        rollAnim(step === 0 ? null : trace[step - 1].keep);
+        step++;
+        botLedger.shown++;
+        render();
+        later(showStep, BOT.roll);
+        return;
+      }
+      /* ★ 書いた ―― ★★ここで はじめて 点が 動きます */
+      g.botFreeze = null;
+      g.botMove = (r.ci >= 0) ? (C.CATS[r.ci].name + ' ' + r.pt + '点') : '';
+      botLedger.wrote++;
+      render();
+      later(function () {
+        if (!g || g !== myG || over) return;
+        g.botMove = ''; g.botFreeze = null;
+        g.dice = null; g.keep = [];
+        busy = false;
+        nextSeat();
+      }, BOT.write);
+    }
+    showStep();
   }
 
   function finish() {
@@ -382,7 +580,9 @@
 
     /* ★ 点の 一覧（★見えて いる 事実だけ）*/
     var box = $('resultScore'); box.textContent = '';
-    var ord = [0, 1, 2, 3].sort(function (a, b) { return tot[b] - tot[a]; });
+    /* ★ T226 ―― ★★[0,1,2,3] の 決め打ちを やめました（★人数を 変えると こわれます）*/
+    var ord = []; for (i = 0; i < C.NP; i++) ord.push(i);
+    ord.sort(function (a, b) { return tot[b] - tot[a]; });
     for (i = 0; i < ord.length; i++) {
       var row = document.createElement('div');
       row.className = 'rs-row' + (ord[i] === 0 ? ' rs-me' : '');
@@ -409,7 +609,7 @@
      ============================================================ */
   function render() {
     if (!g || !built) return;
-    var i, ci, id, el, myTurn = canAct();
+    var i, ci, id, el, acting = canAct(), mine = isMyTurn();
 
     /* ★ じぶんの 点と、あと 何回 */
     mePt.textContent = String(C.totalOf(g.sheets[0]));
@@ -419,6 +619,7 @@
     for (i = 0; i < GRID.length; i++) {
       id = GRID[i]; el = cellEl[id];
       var nm = el.firstChild, pt = el.lastChild;
+      if (id === '@blank') { nm.textContent = ''; pt.textContent = ''; continue; }
       if (id === '@bonus') {
         var u = C.upperSum(g.sheets[0]);
         nm.textContent = u + ' / ' + C.BONUS_NEED;
@@ -435,15 +636,15 @@
         pt.textContent = String(g.sheets[0][ci]);
       } else {
         el.classList.add('is-open'); el.classList.remove('is-done');
-        el.disabled = !myTurn;
+        el.disabled = !acting;
         /* ★★ ここが「点数の 計算」―― ★★機械の 仕事（★追記②の 表に 名指しで あります）★★
            ★ ★★0点でも そのまま 0 と 出します。★★暗くも しません・目立たせも しません。 */
-        pt.textContent = (myTurn && g.dice) ? String(C.scoreOf(C.CATS[ci], g.dice)) : '―';
+        pt.textContent = (acting && g.dice) ? String(C.scoreOf(C.CATS[ci], g.dice)) : '―';
       }
     }
 
     /* ★★ サイコロ ★★ */
-    var canKeep = myTurn && rerollLeft() > 0;
+    var canKeep = acting && rerollLeft() > 0;
     for (i = 0; i < C.NDICE; i++) {
       el = dieEl[i];
       if (g.dice) { drawDie(el, g.dice[i]); el.classList.remove('is-blank'); }
@@ -454,9 +655,16 @@
       el.disabled = !canKeep;
     }
 
-    /* ★★ ふり直す ボタン ―― ★★文字が「あと◯回」と 言います（★説明 0行）★★ */
+    /* ★★ ふる ボタン ―― ★★文字が ぜんぶ 言います（★あそびかたは 0行 増えません）★★
+       ★ ★T226・④：★★まだ 1回も ふって いない ときは「サイコロを ふる」。
+         ★ ★★はじめて 来た 人は、★★★何も 出て いない 画面で この ボタンだけを 見ます。
+         ★ ★★＝ ★押す ところが 1つしか 無い ので、迷いようが ありません（★§5.5「迷いを 消す」）。 */
     var left = rerollLeft();
-    if (myTurn && left > 0) {
+    if (mine && g.rolls === 0) {
+      btnRoll.classList.remove('hidden');
+      btnRoll.disabled = false;
+      btnRoll.textContent = 'サイコロを ふる';
+    } else if (acting && left > 0) {
       btnRoll.classList.remove('hidden');
       btnRoll.disabled = false;
       btnRoll.textContent = 'ふり直す（あと' + left + '回）';
@@ -476,12 +684,19 @@
        ⚠️★★ ★★「どれかの」です ―― ★★**どの 役かは 1文字も 言いません**（★追記②）。
          ★ ★★これは 決まり4・6（★13の 役の どれか 1つに 書く／点が つかなくても どこかに 書く）
            ★ ★そのもの であって、★★得な 手では ありません。★見張り ①-4 も 鳴りません。 */
-    if (myTurn && left === 0 && sayKey === 'start') say('どれかの 役に 書こう！', 'write');
+    if (acting && left === 0 && sayKey === 'start') say('どれかの 役に 書こう！', 'write');
 
-    /* ★ ロボット3人の 点 */
+    /* ★★ ロボットの 帯（★T226 から 1体）★★
+       ★ ★点 … ★★ころがって いる 間は **前の 点の まま**（★書いた ところで はじめて 動きます）
+       ★ ★★何を 書いたか … ★書いた 直後の 0.7秒 だけ 出ます（★すでに 起きた 事実 だけ）*/
     for (i = 0; i < botEl.length; i++) {
-      botEl[i].lastChild.textContent = String(C.totalOf(g.sheets[i + 1]));
-      botEl[i].classList.toggle('is-turn', !over && g.cur === i + 1);
+      var seat = i + 1;
+      var shown = (g.botFreeze && g.botFreeze.seat === seat)
+                  ? g.botFreeze.pt : C.totalOf(g.sheets[seat]);
+      botEl[i].pt.textContent = String(shown);
+      botEl[i].move.textContent = (!over && g.cur === seat && g.botMove) ? g.botMove : '';
+      botEl[i].el.classList.toggle('is-turn', !over && g.cur === seat);
+      botEl[i].el.classList.toggle('has-move', !!botEl[i].move.textContent);
     }
   }
 
@@ -495,11 +710,81 @@
     if (sayTimer) { root.clearTimeout(sayTimer); sayTimer = 0; }
     sayTimer = later(function () { sayEl.classList.add('hidden'); sayKey = ''; sayTimer = 0; }, 2600);
   }
+
+  /* ★★★ T227 ―― ★★手番が 変わったら、★★★前の 手番の ことばは 消す ★★★
+     ------------------------------------------------------------
+       ★ ★★【★🎨アトが 写真で 見つけた もの・T227 §9-3】
+         ★ ★「★ハッピーが『サイコロを ふろう！』と 言った まま ロボットの 手番に 入る ことが ある」
+       ★ ★★中身：★`say()` の 2600ms は **人の 手番の はじめ**から 数えます。
+         ★ ★★人が 2.6秒 より 速く 書くと（★★連打する 子は ふつうに 速い）、
+           ★ ★★ロボットが ふって いる 最中に「サイコロを ふろう！」が 残ります。
+           ★ ★★★＝ ★画面が、★★いま できない ことを すすめて いる。
+       ★ ★★私の 失敗⑩（★ふり直せない のに「ふろう」）と **まったく 同じ 形** です。
+         ★ ★★あちらは「★ボタンが 消えた のに ことばが 残る」、★こちらは「★手番が 変わった のに 残る」。
+       ★ ★★直し方：★★**声は 1つも 足しません**（★ルル §14 の 5場面を 増やさない）。
+         ★ ★★★消す だけ です。
+       ⚠️★ ★★消すのは **人への 指図**だけ（★下の `ORDER`）。
+         ★ ★★「ヨットが 出た！」「63に とどいた！」は ★★★もう 起きた 事実の 知らせ なので
+           ★ ★★ロボットの 手番に 残って いても 嘘に なりません ―― ★消しません。
+         ★ ★★（★これを 混ぜて 全部 消すと、★★人が 書いた 直後の よろこびが 260ms で 消えます）*/
+  var SAY_ORDER = { start: 1, write: 1 };   /* ★ 人への 指図 ＝ ★人の 手番でしか 正しく ない ことば */
+  /* ★ T228 ―― ★★消す 場面の スイッチ（★★見張り ㉕ が「書いた 瞬間」だけを 外します）*/
+  var HUSH = { onWrite: 1 };
+  function hushOrder() {
+    if (!sayEl) return;
+    if (!SAY_ORDER[sayKey]) return;
+    sayEl.classList.add('hidden');
+    sayKey = '';
+    if (sayTimer) { root.clearTimeout(sayTimer); sayTimer = 0; }
+  }
   function jump() {
     if (!happyMid) return;
     happyMid.classList.remove('is-jump');
     void happyMid.offsetWidth;
     happyMid.classList.add('is-jump');
+  }
+
+  /* ============================================================
+     ★★★ 役の 説明（★T226・★社長の ご指摘⑥）★★★
+     ------------------------------------------------------------
+       ★ ★★中身は `yacht-core.js` の `CATS[].desc` から 作ります ―― ★★手書きの 表を 作りません
+         ★ ★（★役を 直したら、説明も いっしょに 直る。★★2か所に 書かない）。
+       ★★ 行数は **8行**：
+         ★ ①1の目〜6の目（★6つを **1行に まとめました**）　②ボーナス
+         ★ ③〜⑧ ★★社長が 挙げられた 6つ（★チョイス・フォーダイス・フルハウス・
+           ★ ★S.ストレート・B.ストレート・ヨット）
+         ★ ★★ルルの 納品文（T225 §8-3）は 1の目〜6の目を 1行ずつ 書いて 13行 でしたが、
+           ★ ★★社長の ⑥は「★★6つの役が 何なのか」―― ★★★下の 段の 6つ の こと です。
+           ★ ★★上の 6つは 決まりが 同じ なので 1行に まとめました（★13行 → **8行**）。
+       ⚠️★★ ★★「どう 打つか」は 1文字も ありません（★追記②）。
+     ============================================================ */
+  function buildCatHelp() {
+    var ul = $('catList');
+    if (!ul) return 0;
+    ul.textContent = '';
+    var rows = [
+      /* ⚠️★ 320×454 で 行が 2つに 折れて 読みにくかった ので 短く しました【★実測・T226】*/
+      { name: '1の目 〜 6の目', desc: '出た 数だけ 点に なる（3が 3個なら 9点）', pt: '' },
+      { name: 'ボーナス',
+        desc: '1〜6の目の 合計が ' + C.BONUS_NEED + '点 いじょう',
+        pt: '＋' + C.BONUS_PT + '点' }
+    ], i;
+    for (i = 0; i < C.CATS.length; i++) {
+      if (!C.CATS[i].desc) continue;                 /* ★ 1〜6の目は 上で 1行に まとめました */
+      rows.push({ name: C.CATS[i].name, desc: C.CATS[i].desc, pt: C.CATS[i].ptLabel || '' });
+    }
+    for (i = 0; i < rows.length; i++) {
+      var li = document.createElement('li');
+      var b = document.createElement('b'); b.className = 'cat-nm'; b.textContent = rows[i].name;
+      var d = document.createElement('span'); d.className = 'cat-ds'; d.textContent = rows[i].desc;
+      li.appendChild(b); li.appendChild(d);
+      if (rows[i].pt) {
+        var p = document.createElement('i'); p.className = 'cat-pt'; p.textContent = rows[i].pt;
+        li.appendChild(p);
+      }
+      ul.appendChild(li);
+    }
+    return rows.length;
   }
 
   function fillLevelSelect(sel) {
@@ -524,7 +809,8 @@
       '★何回目': g ? (Math.min(C.TURNS, g.turn + 1) + '回目 / ' + C.TURNS + '回') : '―',
       '★手番': g ? (over ? '終わり' : SEATS[g.cur]) : '―',
       '★いま 押せるか': canAct() ? 'はい' : 'いいえ',
-      '★サイコロ': g && g.dice ? g.dice.join(' ') : '（なし）',
+      '★サイコロ': g && g.dice ? g.dice.join(' ') : '（★まだ 1つも 出て いません）',
+      '★★ロボットが 何を 書いたか': g && g.botMove ? g.botMove : '（いま 出て いません）',
       '★のこして いる': g && g.dice ? (function () {
         var a = [], i; for (i = 0; i < C.NDICE; i++) if (g.keep[i]) a.push(g.dice[i]);
         return a.length ? a.join(' ') : '（なし）';
@@ -535,7 +821,11 @@
       '★1〜6の 合計': g ? (C.upperSum(g.sheets[0]) + ' / ' + C.BONUS_NEED +
                           (C.bonusOf(g.sheets[0]) ? '（＋35点 ついて います）' : '')) : '―',
       '★書いた マス': g ? (C.filled(g.sheets[0]) + ' / ' + C.NCAT) : '―',
-      '★みんなの 点': g ? [0, 1, 2, 3].map(function (i) { return C.totalOf(g.sheets[i]); }).join(' / ') : '―',
+      /* ★ T226 ―― ★★ここも 決め打ちの [0,1,2,3] でした（★ルル T225 §11-1 の ⑰）*/
+      '★みんなの 点': g ? (function () {
+        var a = [], i; for (i = 0; i < C.NP; i++) a.push(C.totalOf(g.sheets[i]));
+        return a.join(' / ');
+      })() : '―',
       '★さいこう点': bestGet(),
       '★1マス': geo ? (geo.cellH + 'px') : '―',
       '★サイコロ 1個': geo ? (geo.die + 'px（★44pxに 対して ' + Math.round(geo.die / 44 * 100) + '%）') : '―'
@@ -579,12 +869,15 @@
     var hh = C.scoreHist(n, opt.seed || 4649, hu.o);
     var hb = C.scoreHist(n, (opt.seed || 4649) + 1, lv.o);
     var wr = C.winRateFrom(hh.h, hb.h) * 100;
-    var one = C.machineMs() / 1000;
+    /* ★ T226 ―― ★★ロボットの 1手番は ふる 回数で 変わります（★A案）。
+       ★ ★いちばん ありそうな 2.838回 で 見積もります（★★上の 線は 見張り ⑭ が 本物の 時計で 数えます）*/
+    var botTurnMs = 2.838 * BOT.roll + BOT.write;
+    var one = C.machineMs(botTurnMs) / 1000;
     var out = {
       '回数': n,
       '★ロボットの つよさ': lv.label, '★人の 打ち手': hu.label,
       '★★反則（同じ 役に 2回・13マス 埋まらない・目が 1〜6の 外）': hh.bad + hb.bad + '件',
-      '★人が 勝つ': wr.toFixed(2) + '%（★五分 25.00%）',
+      '★人が 勝つ': wr.toFixed(2) + '%（★五分 ' + C.evenPct().toFixed(2) + '%）',
       '★自分の 点': hh.avg.toFixed(2),
       '★点の ちらばり': '下 ' + C.pct(hh.list, 0) + '／4分の1 ' + C.pct(hh.list, .25) +
                         '／まん中 ' + C.pct(hh.list, .5) + '／上位1割 ' + C.pct(hh.list, .9) +
@@ -594,9 +887,9 @@
       '★ヨットが 出る': (hh.yacht * 100).toFixed(1) + '%',
       '★0点を 書く': hh.zero.toFixed(2) + '回 / 13回',
       '★手番': C.TURNS + '回（★かならず。★ばらつき 0）',
-      '★★長さ【見立て】': '★人 13手番 × 9.6秒 ＋ ロボット ' + one.toFixed(1) +
-                          '秒 ＋ おわりの 画面 4.0秒 ＝ ' +
-                          ((13 * 9.6 + one + 4) / 60).toFixed(1) + '分（★ルル §12-2。★トライが 測るまで 確定させません）',
+      '★★長さ【見立て】': '★人 ' + C.TURNS + '手番 × 6.0秒 ＋ ふる 動き ＋ ロボット ' + one.toFixed(1) +
+                          '秒（★1手番 ' + Math.round(botTurnMs) + 'ms）＋ おわりの 画面 4.0秒 ＝ 約 ' +
+                          ((C.TURNS * 6.0 + C.TURNS * 1.0 + one + 4)).toFixed(0) + '秒（★★トライが 測るまで 確定させません）',
       'かかった 時間': (Date.now() - t0) + 'ms'
     };
     console.log('[ヨット] autoPlay', out);
@@ -667,7 +960,12 @@
     var kg = g, kb = busy, ko = over;
     titleScreen.classList.add('hidden');
     playScreen.classList.remove('hidden');
-    if (!g) { g = { sheets: [C.newSheet(), C.newSheet(), C.newSheet(), C.newSheet()], turn: 0, cur: 0, dice: [1, 1, 1, 1, 1], keep: [false, false, false, false, false], rolls: 1, over: false }; }
+    if (!g) {
+      /* ★ T226 ―― ★★4枚 決め打ちを やめて `C.NP` から 作ります */
+      var sh0 = [], q; for (q = 0; q < C.NP; q++) sh0.push(C.newSheet());
+      g = { sheets: sh0, turn: 0, cur: 0, dice: [1, 1, 1, 1, 1],
+            keep: [false, false, false, false, false], rolls: 1, over: false, botMove: '' };
+    }
     build(); layout();
     var worst = 0, off = 0, small = 0, sx = 0, sy = 0, names = {}, sm = {};
     var rd = C.rng(90909);
@@ -683,7 +981,7 @@
           sh[order[i]] = Math.floor(rd() * 40);
         }
         g.sheets[0] = sh;
-        g.sheets[1][0] = 30; g.sheets[2][0] = 6; g.sheets[3][0] = 18;
+        for (i = 1; i < C.NP; i++) g.sheets[i][0] = [30, 6, 18][(i - 1) % 3];
         g.dice = C.rollDice(C.NDICE, rd);
         for (i = 0; i < C.NDICE; i++) g.keep[i] = rd() < 0.4;
         g.rolls = 1 + (k % 3);
@@ -729,7 +1027,10 @@
       return { turn: g ? g.turn : -1, cur: g ? g.cur : -1, rolls: g ? g.rolls : 0,
                left: rerollLeft(), dice: g && g.dice ? g.dice.slice() : null,
                keep: g ? g.keep.slice() : [], over: over, busy: busy,
-               sheet: g ? g.sheets[0].slice() : null, act: canAct() };
+               sheet: g ? g.sheets[0].slice() : null, act: canAct(),
+               /* ★ T226 ―― ★★「自分の 番だが、まだ 1回も ふって いない」を 見分ける ため */
+               mine: isMyTurn(), botMove: g ? (g.botMove || '') : '',
+               bots: g ? (function () { var a = [], i; for (i = 1; i < C.NP; i++) a.push(C.totalOf(g.sheets[i])); return a; })() : [] };
     },
     /* ★ 出目を 仕こむ（★見張りが 同じ 場面を 何度でも 出す ため）*/
     setDice: function (a, rolls) {
@@ -740,6 +1041,14 @@
       render(); return g.dice.slice();
     },
     setSheet: function (a) { if (g) { g.sheets[0] = a.slice(); render(); } return g ? g.sheets[0].slice() : null; },
+    /* ★ T226 ―― ★★「まだ 1つも ふって いない」に 戻す（★手番の はじめ そのもの）*/
+    blankDice: function () {
+      if (!g) return null;
+      g.dice = null; g.rolls = 0; g.botMove = ''; g.botFreeze = null;
+      g.keep = [false, false, false, false, false];
+      over = false; busy = false;
+      render(); return true;
+    },
     setTurn: function (t, cur) { if (!g) return; g.turn = t; g.cur = cur == null ? 0 : cur; render(); },
     /* ★ 画面の 上の ならび（★DOM の 順番を そのまま）*/
     order: function () {
@@ -787,19 +1096,41 @@
       if (!e) return null;
       return e.closest ? (e.closest('.cell,.die,button,a[href],[data-close]') || e) : e;
     },
-    el: { die: dieEl, cell: cellEl, roll: function () { return btnRoll; }, sheet: function () { return sheetEl; } },
+    el: { die: dieEl, cell: cellEl, roll: function () { return btnRoll; }, sheet: function () { return sheetEl; },
+          bot: function () { return botEl; }, band: function () { return botBand; } },
     layout: layout, render: render, still: still,
     startGame: startGame, beginTurn: beginTurn, throwDice: function (f) { return throwDice(f); },
     onDie: onDie, onRoll: onRoll, onCell: onCell, finish: finish,
     setLevel: function (n) { level = n | 0; return C.LEVELS[level].label; },
+    level: function () { return level; },
     clearTimers: clearTimers, timers: function () { return timers.length; },
-    BEST_KEY: BEST_KEY, GRID: GRID, SEATS: SEATS, ROLL_CEIL: ROLL_CEIL, BOT_MS: BOT_MS,
+    buildCatHelp: buildCatHelp,
+    BEST_KEY: BEST_KEY, BEST_KEY_OLD: BEST_KEY_OLD, GRID: GRID, SEATS: SEATS, ROLL_CEIL: ROLL_CEIL,
+    BOT_MS: BOT_MS, BOT: BOT,
+    /* ★ T226 ―― ★★見張り ⑭ が ロボットの 手番を 見る ための 口 */
+    isMyTurn: isMyTurn,
+    botMove: function () { return g ? (g.botMove || '') : ''; },
+    botMoveShown: function () {
+      var b = botEl[0]; return b ? b.move.textContent : '';
+    },
+    /* ★ T226 ―― ★★ロボットが「何回 ふって」「何回 画面に 出して」「何回 書いたか」の 台帳 */
+    botLedger: function () { return { rolls: botLedger.rolls, shown: botLedger.shown, wrote: botLedger.wrote }; },
     /* ★ 転がりの 本当の 長さは **CSS が 持ち主**。★ここでは 聞くだけ（★数を 写さない）*/
     rollMs: function () {
       var cs = getComputedStyle(dieEl[0]);
       return { 'animation-duration': cs.animationDuration, 'animation-delay': cs.animationDelay };
     },
     sayNow: function () { return { text: sayEl.classList.contains('hidden') ? '' : sayEl.textContent, key: sayKey }; },
+    /* ★ T227 ―― ★★見張り ⑲ が、★★★この 直しを **わざと 外して** 鳴らす ための 口。
+       ★ ★★中身を 空に すると `hushOrder()` が 何も しなく なり、★T226 の 姿に 戻ります
+         ★ ★（★★＝ ★見た目を 作りものに するのでは なく、★★★直しそのものを 外して 試せます）。 */
+    SAY_ORDER: SAY_ORDER,
+    /* ★ T228 ―― ★★見張り ⑲ が、★★★「書いた 瞬間の 消し」だけを 外して 鳴らす ための 口。
+       ★ ★★`onWrite` を 0 に すると、★★席が 変わる ときの 消し（`botStep`）は 生きた まま
+         ★ ★★★T228 の 姿（★書いた 直後 267ms だけ 残る）に そのまま 戻ります。
+       ★ ★★★＝ ★これが「★トライが 実測した 病気」を もう一度 起こす ための 口 です
+         ★ ★（★`SAY_ORDER` を 空に する ㉓ は T226 の 姿＝2.4秒 に 戻す もの ―― ★別の 病気）。 */
+    HUSH: HUSH,
     rollTimer: function () { return rollTimer; }
   };
 
@@ -815,6 +1146,8 @@
     resultWrap = $('resultWrap'); resultBox = $('resultBox');
     void resultBox;
 
+    bestSweepOld();                 /* ★ T226 ―― ★13役の ころの 鍵を 片づける（★1回だけ）*/
+    buildCatHelp();                 /* ★ T226・⑥ ―― ★役の 説明を データから 作る */
     fillLevelSelect($('levelTitle'));
     showBest();
 

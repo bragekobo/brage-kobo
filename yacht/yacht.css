@@ -276,8 +276,15 @@ body {
   font-family:inherit; color:var(--ink); text-align:left; cursor:pointer;
   overflow:hidden;
 }
+/* ⚠️★★★ T227（🎨アト）―― ★★字の 床は **11px**（★`max()` で 下から 支えます）★★★
+   ★ ★もとは `font-size:var(--cell-f)` だけ でした。★★`--cell-f` は JS が
+     ★ `Math.max(10, cellH × 0.40)` で 入れて います ―― ★★★床が **10px**。
+   ★ ★★追記⑥ の 9画面を 数えたら、★**320×480・320×454 の 2画面**（★＋底 568×272）で
+     ★ ★★ちょうど その 床に 落ちて いました【実測】。★★10px の カタカナは 私には 読めません。
+   ★ ★★JS（`layout()`）は コーダの 持ちもの なので、★**CSS の 側から 支えます**。
+     ★ ★→ ★11px に しても 1マス 23px の 中に 入り、★★役名は 1つも 切れません【★9画面 実測】。 */
 .cell-name {
-  flex:1 1 auto; min-width:0; font-size:var(--cell-f); font-weight:900;
+  flex:1 1 auto; min-width:0; font-size:max(11px, var(--cell-f)); font-weight:900;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.3px;
 }
 .cell-pt {
@@ -573,4 +580,244 @@ dialog#helpDialog h2 { margin:0 0 6px; font-size:17px; font-weight:900; color:va
 /* ── ★測る ときは 動きを 止める（★会社で 4回 かかった わな）── */
 body.measuring *, body.measuring *::before, body.measuring *::after {
   transition:none !important; animation:none !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ★★★★ T226 で 画面に 出た もの ―― ★🎨アトが 仕上げました（★T227・2026-09-05）★★★★
+   ------------------------------------------------------------
+   ★ ★★💻コーダが「とりあえず 読める 形」まで 作って くれた 3つ（★①空きマス ②ロボットの 帯
+     ★ ★③役の 説明）を、★★追記⑥ の 9画面 ぜんぶで 測って から 仕上げました。
+   ★ ★★足した 決まりで **画面の たてで 分ける もの（`max-height`）は 1本も ありません**。
+     ★ ★はばの 線を 1本だけ 引きました（★412px）―― ★★下の §3 に 数えた 結果を 書いて います。
+   ════════════════════════════════════════════════════════════ */
+
+/* ★ ① 空きマス ―― ★★見えません・押せません・でも 場所は 取ります（★2列×7行の かたちを 守る）*/
+.cell.is-blank-cell {
+  background:transparent; box-shadow:none; cursor:default; pointer-events:none;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ★★★ §1 ―― ★★「いま だれの 番か」を、★★★サイコロの 場所で 言う（★社長の ご指摘⑤）
+   ------------------------------------------------------------
+   ★ ★★私が 写真を 見て いちばん 困った ところ です【★T227・前_320x568_C1.png】：
+     ★ ★★★ロボットが ふって いる 最中の 画面は、★★人の 手番と **ほとんど 同じ 絵** でした。
+       ★ ★サイコロは 同じ 場所・青わくも 同じ 色（★これは ルルの 決め。★正しい）。
+       ★ ★★＝ ★★★はじめて 来た 人には「★自分が 押したの？」に 見えます。
+   ★ ★★どう したか ―― ★**新しい 色を 作らず**、★★もう 画面に ある 金色を **のばしました**：
+     ★ ★ロボットの 帯（`.bot-cell.is-turn` ＝ もとから 金色）と、★★その 下の サイコロの 台を
+       ★ ★★ひと続きの「ロボットの 場所」に 見せます。★★人の 手番では 台は 出ません。
+   ★ ★★★これが「強調は 1種類まで」（★§5.5）に ぶつからない 理由：
+     ★ ★★青わく ＝ **えらび**（★人が 決める もの）／★金 ＝ **番**（★決める もの では ない）。
+     ★ ★★そして 2つは **同じ 画面に 並びません** ―― ★金が 出て いる あいだ、人は 押せません。
+   ★ ★★★字は 1文字も 足して いません（★§5.5「説明は 足すより 減らす」）。
+   ════════════════════════════════════════════════════════════ */
+.bot-band { min-height:30px; }
+.bot-cell {
+  gap:6px; padding:0 8px;
+  transition:background-color .18s ease, box-shadow .18s ease, color .18s ease;
+}
+/* ★ いま ロボットの 番（★もとから ある 金色を、★★わく で すこし 強く しました）*/
+.bot-cell.is-turn { box-shadow:inset 0 0 0 2px var(--gold); }
+
+/* ★★ ロボットが 何を 書いたか（★0.7秒 だけ 出ます）★★
+   ★ ★★T226 では 出て いる あいだ 名前（「ロボット」）を 引っこめて いました
+     ★ ★―― ★★「はばが 足りない かも」でした。★★★数えたら 足りて いました【実測】：
+       ★ ★★いちばん せまい 568×320 の 帯 **241px** に 対して、
+         ★ ★★名前 ＋ 点 ＋「S.ストレート 30点」（★いちばん 長い 役）で **163px**。
+     ★ ★→ ★★名前を 出した ままに しました。★★★だれが 何を 書いたかが、1行で 続けて 読めます。
+   ★ ★★白い 丸わく（★チップ）に したのは、★★「たった今 起きた こと」に 見せる ため です。 */
+/* ⚠️★★★ ★★丸わくは `.has-move` が ついた ときだけ ―― ★★★私の 失敗①（★写真で 見つけました）
+   ★ ★はじめ `.bot-cell .bot-move` に 書いて いました。★★字が 空の ときも 内よはくが 残り、
+     ★ ★★★白い 丸が 1つ、★点の 右に 浮いて いました【★後_320x568_C1.png・★18px】。
+   ★ ★★大きさ（getBoundingClientRect）でも 字の 中身でも 出ません ―― ★★写真だけが 教えました。
+     ★ ★★＝ ★「印は 見て いるが 出た 絵は 見て いない」の 6つ目。★★私は これで 2度目 です
+       ★ ★（★1度目は ハーツ T220 の 順位の 重なり）。★★見張り ㊳-2 が 空の 丸を 数えます。 */
+.bot-cell .bot-name { flex:0 0 auto; }
+.bot-cell .bot-move {
+  flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:12px; font-weight:900; color:#7a5205;
+}
+.bot-cell.has-move .bot-move {
+  padding:1px 9px 2px; border-radius:999px;
+  background:var(--white); box-shadow:0 1px 0 #E3C583;
+}
+
+/* ★★★ ロボットの サイコロの 台 ★★★
+   ⚠️★★ `:has()` が 使えない 古い 見る道具では、★★この 1かたまり が **まるごと 落ちます**。
+      ★ ★★そのとき 残るのは 上の 金色の 帯（★どの 見る道具でも 出ます）―― ★★下の 線が 消えません。
+      ★ ★★＝ ★わざと 2段に して あります（★上の 線：台／★下の 線：帯）。
+   ★ ★大きさは 1pxも 変えて いません（★色 だけ）―― ★★サイコロも ボタンも 動きません。 */
+.dice-row { border-radius:18px; transition:background-color .2s ease, box-shadow .2s ease; }
+.bot-band:has(.bot-cell.is-turn) + .dice-row {
+  background:#FFF7E3;
+  box-shadow:inset 0 0 0 2px var(--gold-soft);
+}
+
+/* ════════════════════════════════════════════════════════════
+   ★★ §2 ―― ★★はじめの 画面（★社長の ご指摘④・★「盤が さみしく ないか」）
+   ------------------------------------------------------------
+   ★ ★★T226 から、★押す 前は サイコロが **1つも 出て いません**（★丸 0個）。★★これは 正しい。
+   ★ ★★ただ ―― ★白い 四角が 5つ 並ぶ だけ で、★★「ここに サイコロが 出る」と 分かりません でした。
+   ★ ★→ ★★**うすい 点線の 場所じるし**に しました（★★丸は 0個 のまま。★1つも 描きません）。
+     ★ ★★「まだ 何も 出て いない」と「ここに 出る」を、★同時に 言う 形 です。
+   ⚠️★★ ★★ここに 目（丸）を 1つでも 出したら ④ が 死にます ―― ★見張り ⑬ が 数えて います。 */
+.die[data-v=""], .die:not([data-v]) {
+  background:#FFFDF6;
+  box-shadow:inset 0 0 0 2px #F0E3CE, 0 2px 0 #e8ded4;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ★★★ §3 ―― ★役の 説明（★社長の ご指摘⑥。★お手本は ブラックジャック）
+   ------------------------------------------------------------
+   ★ ★★コーダの 引きつぎ ④：「★320×454 で 行が 2つに 折れ、点が 1行目の 右に 来ます」。
+     ★ ★★数えました ―― ★★★はば 320 の 3画面で **8行中 7行が 2行に 折れて** いました【実測】。
+       ★ ★折れる こと 自体は 悪く ありません。★★悪いのは **折れかたが 毎行 ちがう** ことでした
+         ★ ★（★flex-wrap は 入る ところまで 詰める ので、★点が 1行目の 右・2行目の 右・
+           ★ ★行の まん中 と、★★行ごとに 場所が 変わります）。
+   ★ ★★どう したか ―― ★**ならびを 決め打ちに** しました（`grid`）：
+     ★ ★せまい 画面 … ★★1行目「★役の 名前 …………… 点」／★2行目「★説明」
+     ★ ★広い 画面 … ★★1行「★役の 名前 ／ 説明 ／ 点」（★★もとから 折れて いません）
+     ★ ★★どちらでも **点は かならず 右はし**。★★目が 縦に 落ちて 読めます（★ブラックジャックの .glist と 同じ 考え）。
+   ★ ★★字を 11.5 → **12.5px** に しました（★ブラックジャックの 説明は 13px）。
+   ★ ★★点は 金色の 丸わく（★盤の「◯／63」の マスと 同じ 色 ―― ★★見た 目が つながります）。
+
+   ⚠️★★★ ★★はばで 分ける 線を **1本** 引きました（★412px）。★追記⑥ の 決まり2 のとおり 数えます：
+     ★ ★9画面の はば … ★320・320・812・667・844・736・926・320・568（★＋底 568）
+     ★ ★★★どれも またぎません。★下がわの いちばん 近い 画面が **320**（★92px 下）、
+       ★ ★★上がわの いちばん 近い 画面が **568**（★156px 上）―― ★★両側とも 余裕が あります。
+     ★ ★★なぜ 412px か：★窓の はばは `min(92vw, 430px)`。★★1行に 収めるには 説明の 字が
+       ★ ★★372px 要ります【実測】―― ★92vw が それを こえる のが **はば 413px から** です。
+   ════════════════════════════════════════════════════════════ */
+.cat-help { margin:0 0 10px; }
+.cat-help > summary {
+  cursor:pointer; list-style:none; min-height:44px; display:flex; align-items:center; gap:6px;
+  padding:0 12px; border-radius:12px; background:var(--cream);
+  box-shadow:inset 0 0 0 2px var(--gold-soft);
+  font-size:12.5px; font-weight:900; color:#7a5205;
+}
+.cat-help > summary::-webkit-details-marker { display:none; }
+/* ★ 開く・閉じる が 分かる しるし（★字では なく かたち。★§9.6 に かかりません）*/
+.cat-help > summary::after {
+  content:'▼'; margin-left:auto; font-size:10px; color:#B8934A;
+  transition:transform .18s ease;
+}
+.cat-help[open] > summary::after { transform:rotate(180deg); }
+.cat-help[open] > summary { margin-bottom:6px; }
+
+.cat-list {
+  margin:0; padding:0; list-style:none;
+  font-size:12.5px; font-weight:700; line-height:1.5; color:var(--ink);
+}
+/* ★★ せまい 画面（★はば 412px 以下）… ★1行目「名前 ／ 点」・2行目「説明」 */
+.cat-list li {
+  display:grid; grid-template-columns:1fr auto;
+  column-gap:8px; row-gap:1px; align-items:baseline;
+  padding:5px 8px 6px; border-radius:10px;
+}
+.cat-list li:nth-child(odd) { background:#FFF7E8; }
+.cat-list .cat-nm { grid-column:1; grid-row:1; font-weight:900; color:var(--pink-dark); }
+.cat-list .cat-ds { grid-column:1 / -1; grid-row:2; min-width:0; }
+.cat-list .cat-pt {
+  grid-column:2; grid-row:1; justify-self:end;
+  padding:1px 8px 2px; border-radius:999px; background:var(--gold-soft);
+  font-style:normal; font-size:11.5px; font-weight:900; color:#7a5205; white-space:nowrap;
+}
+/* ★★ 広い 画面（★はば 413px 以上）… ★1行に ならべます（★もとから 折れて いません）*/
+@media (min-width:413px) {
+  .cat-list li { grid-template-columns:auto 1fr auto; }
+  .cat-list .cat-ds { grid-column:2; grid-row:1; }
+  .cat-list .cat-pt { grid-column:3; grid-row:1; }
+}
+
+/* ============================================================
+   ★★★★ T227-2／T227-3 ―― ★★はじめの 画面が「低い 画面」で 縮みません（★🎨アト）
+   ------------------------------------------------------------
+   ★ ★★トライ T228 §7-🔴-1：★**568×272（★実在の 底）で「はじめる」が 2px しか 見えず、
+     ★ ★★★指で 押せません** ―― ★★遊びを 始められません。
+     ★ ★★（★T226 の 控え ＝ 出荷ずみの すがた でも 1pxも 同じ。★★もとから です）
+   ★ ★★T227-3（★★★社長の お決め・2026-09-05）：★線を **300px → 330px** に 上げました。
+     ★ ★★★理由は ★568×320（★追記⑥ の 9画面の 1つ）の「はじめる」が **43px** ―― ★会社の 線 44px に
+     ★ ★★★1px 足りなかった から です（★T227-2 §T2-6 で 数を 出し、★社長が 道A を お決めに なりました）。
+
+   ★★★ 線を どこに 引くか ―― ★★★たてを **1pxずつ** 変えて 実測しました（`t2273_sweep.cjs`）
+     ★ ★・はば 568：★たて **301〜320px** で 帯が 44px を 割る（★320 で 43px・★321 で 44px）
+     ★ ★・はば 320：★たて **301〜308px** で 割る
+     ★ ★★→ ★★壊れて いる 帯は **301〜320**。★★★330 は その すぐ 上 ―― ★★1本で ぜんぶ 覆います。
+
+   ★★★ 線が 9画面の どれも「またいで いない」ことの 数え（★追記⑥ 決まり2）
+     ★ ★・9画面の たて … 568・480・375・375・390・414・428・454・**320**
+     ★ ★・`max-height:330px` が 入れる もの … ★★**320（568×320）だけ**。★★★あとの 8つは ぜんぶ 375 以上。
+     ★ ★  ★★下の いちばん 近い 画面 **320**（★10px 下）／★上の いちばん 近い 画面 **375**（★45px 上）
+     ★ ★  ★★＝ ★★★どの 画面の 上にも 乗って いません（★またぎ 0件）。
+     ★ ★・`min-width:560px`  … ★★もとから この ファイルに ある 線（`@media (max-height:460px)
+     ★ ★   and (min-width:560px)`）の **使い回し**。★★新しい 数を 増やして いません。
+     ★ ★・★★この かたまりの `max-height` の 線は **1本**。★はばの 線は **0本**。
+
+   ★★★ 何を したか ―― ★★消したのは 1つ、★あとは **並べ替え** だけ
+     ★ ★①`.eyebrow`（★大見出しの 上の 小さい 1行「サイコロを ふって 点を のばそう！」）
+     ★ ★  ★→ ★★★まったく 同じ 言葉が ハッピーの ふきだしに 出て います（★重なり）。
+     ★ ★②つよさの えらび と はじめる を **左右に ならべた**（★遊ぶ 画面の 横ならびと 同じ 考え）
+     ★ ★③ハッピーを **囲いの 横に 置いた**（★★消して いません ―― ★§9.5 は 守られます）
+
+   ★★★ 触る ところは **1つも 消して いません**（★大きさも 44px を 割りません）
+     ★ ★・ゲームを選ぶ 44px ／ ？遊び方 44px ／ つよさ 44px ／ ★★はじめる **57px**
+     ★ ★・★★568×320 の「はじめる」… ★★★43px → **50px**【実測・T227-3】
+   ============================================================ */
+@media (max-height:330px) {
+  /* ★ 詰める（★静かに。★★注意書きは 1文字も 出しません ―― ★追記③）*/
+  .title-screen { padding:2px 4px; gap:8px; }
+  .start-card {
+    margin-block:auto;              /* ★上下 まん中へ（★あふれたら 0に なり、上から 巻けます）*/
+    padding:10px 13px 11px; border-width:3px; border-radius:20px;
+  }
+  .eyebrow { display:none; }        /* ★★同じ 言葉が ハッピーの ふきだしに あります */
+  .start-card h1 { margin:0; font-size:34px; letter-spacing:0; text-shadow:0 3px #9E2A47, 0 5px #FFE0E8; }
+  .intro { margin:3px 0 8px; font-size:11.5px; }
+
+  /* ⚠️★ `.level-pick` は **おわりの 画面（.result-box）にも あります** ――
+     ★ ★★だから かならず `.start-card` の 中 に かぎります（★はみ出させない）*/
+  .start-card .level-pick { padding:3px 8px; border-width:2px; gap:2px 8px; }
+  .start-card .level-pick-name { font-size:11px; }
+  .start-card .level-select { min-height:44px; padding:3px 9px; font-size:13px; border-width:2px; }
+
+  .start-button {
+    margin-top:8px; min-height:48px; padding:7px 12px 6px;
+    border-width:3px; border-radius:40px; font-size:17px;
+    box-shadow:0 5px 0 var(--pink-dark), 0 8px 12px rgba(196,58,115,.24);
+  }
+  /* ★★ 小さい 字が 2行に なる とき、★★★「12回で」の まん中で 折らない
+     ★ ★（`keep-all` ＝ ★★すきま の ところ でしか 折りません。★写真で 見つけました）
+     ⚠️★★★ 字の 床は **11px**。★★★これは 私が T227 §2-2 で 引いた 線 です ――
+     ★ ★★★「10px の カタカナは、私には 読めません」。★★ここでも 割りません。 */
+  .start-button small { font-size:11px; line-height:1.3; word-break:keep-all; }
+  .best-line { margin:6px 0 0; font-size:11px; }
+  .best-line b { font-size:13px; }
+
+  .mascot { margin-top:10px; }
+  .mascot .bubble { font-size:11px; padding:5px 9px; margin-bottom:10px; border-width:2px; }
+  .mascot .happy-cat { width:52px; height:40px; }
+  /* ★ `.cat-name` は もとから 11px。★★下げません（★字の 床）*/
+}
+
+/* ★★ 横に 広い ぶんを 使って ―― ★★①囲いの 中を 左右 2つに ★★②ハッピーを 囲いの 横に
+   ★ ★（★`min-width:560px` は ★★遊ぶ 画面の 横ならびで もう 使って いる 線 の 使い回し）*/
+@media (max-height:330px) and (min-width:560px) {
+  .title-screen { flex-direction:row; align-items:center; justify-content:center; gap:10px; }
+  .title-screen > :first-child { margin-top:0; }   /* ★ 横ならびでは たての auto は 要りません */
+  .title-screen > :last-child  { margin-bottom:0; }
+
+  .start-card {
+    flex:1 1 auto; width:auto; max-width:none; margin-block:0;
+    display:grid; grid-template-columns:minmax(0,auto) minmax(0,1fr);
+    column-gap:14px; align-items:center;
+  }
+  /* ★★ 上の 段 ＝「ヨット ／ つよさ」・★★下の 段 ＝ ★★★はじめる（★横 いっぱい）
+     ★ ★★大きい ボタンに した ので、★★小さい 字が **1行**に 入ります（★写真で 見つけました）*/
+  .start-card h1 { grid-column:1; grid-row:1; align-self:center; }
+  .intro         { grid-column:1; grid-row:2; margin:2px 0 0; align-self:start; }
+  .start-card .level-pick { grid-column:2; grid-row:1 / span 2; align-self:center; }
+  .start-button  { grid-column:1 / -1; grid-row:3; margin:9px 0 0; }
+  .best-line     { grid-column:1 / -1; grid-row:4; }
+
+  .mascot { flex:0 0 auto; min-width:0; margin:0; }
 }
