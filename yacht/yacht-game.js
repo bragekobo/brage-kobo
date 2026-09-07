@@ -270,11 +270,17 @@
     for (i = 1; i < C.NP; i++) {
       el = document.createElement('div');
       el.className = 'bot-cell';
-      var bn = document.createElement('span'); bn.className = 'bot-name'; bn.textContent = SEATS[i];
+      /* ★★★ T243・★社長の ご指摘 ―― ★★この 帯の 名前は **いま 手番の 主** です ★★★
+         ★ ★社長の 言葉：「★ヨットの 自分の番の時、★★ロボットじゃなくて『あなた』とかにして」
+         ★ ★★T243 まで：★ここに `SEATS[i]`（「ロボット」）を **作った ときに 1回 だけ** 入れて いました。
+           ★ ★★＝ ★人の 手番でも「ロボット」の まま（★社長の 写真 そのもの）。
+         ★ ★→ ★★名前は `render()` が 毎回 書きます（★`is-turn` の 金色と **同じ 1行** で）。
+           ★ ★★ここでは 空に して おきます ―― ★作った 直後に render() が 通る ので 空は 見えません。 */
+      var bn = document.createElement('span'); bn.className = 'bot-name'; bn.textContent = '';
       var bm = document.createElement('span'); bm.className = 'bot-move'; bm.textContent = '';
       el.appendChild(bn); el.appendChild(bm);
       botBand.appendChild(el);
-      botEl.push({ el: el, move: bm });
+      botEl.push({ el: el, move: bm, name: bn });
     }
     void r;
   }
@@ -780,10 +786,19 @@
 
     /* ★★ ロボットの 帯（★T230 から **合計点は 上の 帯へ**。★ここは 番の しるしと 書いた 役）★★
        ★ ★★何を 書いたか … ★書いた 直後の 0.7秒 だけ 出ます（★すでに 起きた 事実 だけ）*/
+    /* ★★★ T243・★社長の ご指摘 ―― ★★帯の 名前 ＝ いま 手番の 主（★「あなた」／「ロボット」）★★★
+       ★ ★社長の 言葉：「★ヨットの 自分の番の時、★★ロボットじゃなくて『あなた』とかにして」
+       ★ ★★名前と 金色（`is-turn`）は **同じ 1つの 判定**（`itsBot`）から 書きます ――
+         ★ ★★★片方だけ 先に 変わる こま を、★はじめから 作れなく して います
+           ★ ★（★T228 の「267ms 残った」穴と 同じ 形を、★★名前と 色の 間に 作らない ため）。
+       ★ ★★見張り ㉜ が、★★★人の 手番の 帯に「ロボット」／★ロボットの 手番に「あなた」／
+         ★ ★★金色と 名前の 食いちがい を、★こま ごとに 数えます。
+       ★ ★★上の 帯（`.me-band`）の「ロボット ◯点」は **点の 見出し** なので 変えません（★T230）。 */
     for (i = 0; i < botEl.length; i++) {
-      var seat = i + 1;
-      botEl[i].move.textContent = (!over && g.cur === seat && g.botMove) ? g.botMove : '';
-      botEl[i].el.classList.toggle('is-turn', !over && g.cur === seat);
+      var seat = i + 1, itsBot = !over && g.cur === seat;
+      botEl[i].move.textContent = (itsBot && g.botMove) ? g.botMove : '';
+      botEl[i].name.textContent = BAND_NAME.follow ? (itsBot ? SEATS[seat] : SEATS[0]) : SEATS[seat];
+      botEl[i].el.classList.toggle('is-turn', itsBot);
       botEl[i].el.classList.toggle('has-move', !!botEl[i].move.textContent);
     }
   }
@@ -800,6 +815,10 @@
      ★ ★0 に すると、★★ロボットが まだ 書いて いない のに 表に 点が 出ます
        ★ ★（★★＝ ★社長の ご指摘⑤「★ロボットの ふり方を 見せる」を 内がわから 壊す 形）。 */
   var FREEZE = { botSheet: 1 };
+  /* ★ T243 ―― ★★見張り ㉜ が、★★★この 直しを **わざと 外して** 鳴らす ための 口。
+     ★ ★`follow` を 0 に すると、★帯の 名前が いつも「ロボット」に 戻ります
+       ★ ★（★★＝ ★社長の 写真の 姿。★★見た目を 作りものに するのでは なく、直しそのものを 外します）。 */
+  var BAND_NAME = { follow: 1 };
   function botSheetShown(seat) {
     if (!g) return null;
     return (FREEZE.botSheet && g.botFreeze && g.botFreeze.seat === seat && g.botFreeze.sheet)
@@ -1317,6 +1336,7 @@
        ★ ★★`turns` を 0 に すると その ことばが 出なく なります（★★わざと 壊す ため）。 */
     SAY_PLAN: SAY_PLAN,
     FREEZE: FREEZE,
+    BAND_NAME: BAND_NAME,           /* ★ T243 ―― ★見張り ㉜ の 口（★帯の 名前 ＝ 手番の 主）*/
     BONUS_TEXT: BONUS_TEXT,
     botCellText: botCellText, botTotalShown: botTotalShown,
     rollTimer: function () { return rollTimer; }

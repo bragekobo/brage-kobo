@@ -3337,6 +3337,134 @@
       '／★社長の 絵 ' + t31.eNum + '通り・1本の ならび ' + t31.ichiNum + '通り' +
       '／★ゆるし ' + T31.yurushi + 'px';
 
+    /* ============================================================
+       ★★★★ ㉜ ―― ★★サイコロの 上の 帯の 名前 ＝ **いま 手番の 主**（★T243・社長の ご指摘）
+       ------------------------------------------------------------
+       ★ ★社長の 言葉：「★ヨットの 自分の番の時、★★ロボットじゃなくて『あなた』とかにして」
+         ★ ★★写真：★人の 手番 なのに、★サイコロ 5個の 上の 帯に「ロボット」。
+       ★ ★★T243 まで：★帯の 名前は 作った ときに 1回 「ロボット」を 入れた きり でした。
+         ★ ★★金色（`is-turn`）は 手番で 動くのに、★★★名前は 動かない ―― ★色と 字が 別の ことを 言って いた。
+       ★★ 数える もの（★★こま ごとに・★人の 手番も ロボットの 手番も）：
+         ★ ①★★席が 0 なら 帯は「あなた」、★席が 1 なら「ロボット」（★★見本は 決め打ち）
+         ★ ②★★`is-turn` は 席1 の ときだけ
+         ★ ③★★★金色の わくは「ロボット」の ときだけ（★「あなた」に 金色／「ロボット」に 金色なし → 鳴る）
+           ★ ★★＝ ★🎨アトの T227「ロボットの 手番は 金色」を、★★名前と 食いちがわせない
+         ★ ④★★名前が 消えて いない・切れて いない
+         ★ ⑤★★★手番が 変わった **その こま** で 見る（★T228 の「267ms 残った」穴を、名前で 作らせない）
+           ★ ★★人→ロボット は `nextSeat` の こま、★ロボット→人 は 書いた あとの こま。★両方 見ます。
+       ★★ 下の 線（★測れなかった ときも 鳴る）：
+         ★ ・人の こま／ロボットの こま を 3つずつ 見て いない … ★★見張りが 死んで います
+         ★ ・切りかえの こまを 2回（両向き）見て いない … ★★同上
+         ★ ・「あなた」の わくと「ロボット」の わくが 同じ … ★★色が 番を 言って いません（★⑱ と 別の 目）
+       ★ ★★⑱ との ちがい：★⑱ は「ロボットの 番が 絵で 分かるか」（★帯 or 台の どちらか）。
+         ★ ★★㉜ は「★★★字と 色が 同じ ことを 言って いるか」を、★人の 手番 まで ふくめて こま ごとに 見ます。
+       ★ ★★金色は 決め打ち（`--gold` ＝ #F1A426 ＝ rgb(241, 164, 38)）。★アトが 色を 変えたら ここも 直す
+         ★ ★（★下の 線が「ロボットの わくに 金色が ありません」と 教えます）。
+       ============================================================ */
+    var T32 = { hito: 'あなた', robo: 'ロボット', kin: 'rgb(241, 164, 38)', koma: 3, kirikae: 2 };
+    function check32() {
+      var t = { why: [], bad: [], koma: 0, hitoKoma: 0, roboKoma: 0, kirikae: 0, kieta: 0, kire: 0,
+                ringHito: {}, ringRobo: {}, turns: 0, mita: {} };
+      var off = clockOn(), keepLevel = P.level ? P.level() : null;
+      /* ★ ふきだしは 見た あとで 元に 戻す ―― ★★この 見張りは 人の 手番で 終わる ので、
+         ★ ★★戻さないと「サイコロを ふろう！」が（★消す 時計を 失った まま）出っぱなしに なります【★実測・T243-B】。 */
+      var kSay32 = $('say') ? $('say').textContent : '', kHid32 = $('say') ? $('say').classList.contains('hidden') : true;
+      try {
+        P.setLevel(2);
+        withRandom(24243, function () { P.startGame(); });
+        pump(60);
+        var cell = document.querySelector('#botBand .bot-cell');
+        var nm = cell ? cell.querySelector('.bot-name') : null;
+        if (!cell || !nm) { t.why.push('★★サイコロの 上の 帯（.bot-cell / .bot-name）が 見つかりません（★★★下の 線）'); off(); return t; }
+        /* ★ 1こま 見る ―― ★★中の 席（g.cur）と、★帯の 字・印・色を 突き合わせる */
+        function look(tag) {
+          var st = P.state();
+          if (st.over) return st;
+          var want = (st.cur === 1) ? T32.robo : T32.hito;
+          var got = nm.textContent || '';
+          var isTurn = cell.classList.contains('is-turn');
+          /* ★ 動きは 外の still() が 1回 だけ 止めて います（★こま ごとに 止めると 遅い ―― ★下 参照）*/
+          var ring = getComputedStyle(cell).boxShadow, q = nm.getBoundingClientRect();
+          var cut = nm.scrollWidth > nm.clientWidth + 0.5;
+          var gold = ring.indexOf(T32.kin) >= 0;
+          t.koma++;
+          if (st.cur === 1) t.roboKoma++; else t.hitoKoma++;
+          t.mita[got] = (t.mita[got] || 0) + 1;
+          if (got !== want) t.bad.push(tag + '：席' + st.cur + '（' + want + 'の 番）なのに 帯が「' + got + '」');
+          if (isTurn !== (st.cur === 1)) t.bad.push(tag + '：席' + st.cur + ' なのに is-turn が ' + (isTurn ? 'ついて' : '外れて') + ' います');
+          if (gold !== (got === T32.robo)) t.bad.push(tag + '：帯が「' + got + '」なのに 金色の わくが ' + (gold ? 'ついて' : '無く') + ' なって います');
+          if (!q || q.width < 1 || q.height < 1) t.kieta++;
+          if (cut) t.kire++;
+          (got === T32.robo ? t.ringRobo : t.ringHito)[ring] = 1;
+          return st;
+        }
+        /* ⚠️★ ★★still() は **この 1回** だけ ―― ★こま ごとに 止める と 320×480 で 通しが 31.2秒 に なり、
+           ★ ★★★30秒の 線を 越えました【★実測・T243-D】。★1回に すると 動きを 止めた まま こまを 見られます。 */
+        var guard = 0;
+        P.still(function () {
+        while (guard++ < 400 && t.turns < T32.koma) {
+          var st = look('人の こま');
+          if (st.over) break;
+          if (st.mine) {
+            if (st.rolls === 0) { realTap(P.el.roll()); look('ふった 直後'); continue; }
+            var sh = st.sheet, wrote = false, k;
+            for (k = 0; k < C.NCAT; k++) {
+              if (sh[k] == null) {
+                var el = P.el.cell[C.CATS[k].id];
+                if (el && !el.disabled) { realTap(el); wrote = true; }
+                break;
+              }
+            }
+            if (!wrote) break;
+            look('書いた 直後');                       /* ★ 席は まだ 0・busy だけ（260ms）*/
+            /* ★★ ロボットの 手番を 1こま ずつ ―― ★★★人に 戻った その こま まで 見ます */
+            var safety = 0, sawRobo = 0;
+            while (safety++ < 80) {
+              var before = P.state().cur;
+              if (!pumpOne()) break;
+              var s2 = look('こま' + safety);
+              if (s2.over) break;
+              if (s2.cur === 1) sawRobo++;
+              if (before !== s2.cur) t.kirikae++;       /* ★ ⑤ 切りかえの こま（★look が もう 見ました）*/
+              if (sawRobo && s2.cur === 0) break;
+            }
+            t.turns++;
+            continue;
+          }
+          if (!pumpOne()) break;
+        }
+        });
+      } catch (e) { t.why.push(String(e && e.message || e)); }
+      if (keepLevel != null) P.setLevel(keepLevel);
+      off();
+      if ($('say')) { $('say').textContent = kSay32; if (kHid32) $('say').classList.add('hidden'); else $('say').classList.remove('hidden'); }
+
+      /* ★★★ 下の 線 ★★★ */
+      if (t.hitoKoma < T32.koma) t.why.push('★★人の 手番の こまを ' + t.hitoKoma + ' しか 見られません でした（★★見張りが 死んで います）');
+      if (t.roboKoma < T32.koma) t.why.push('★★ロボットの 手番の こまを ' + t.roboKoma + ' しか 見られません でした（★★見張りが 死んで います）');
+      if (t.kirikae < T32.kirikae) t.why.push('★★手番の 切りかえの こまを ' + t.kirikae + ' 回 しか 見られません でした（★人→ロボット・ロボット→人 の 両方が 要ります ―― ★★見張りが 死んで います）');
+      var rh = Object.keys(t.ringHito), rr = Object.keys(t.ringRobo);
+      if (rh.length > 1) t.why.push('★★「' + T32.hito + '」の こまで わくが ' + rh.length + ' 通り あります（★同じ 名前なら 同じ 色の はず）');
+      if (rr.length > 1) t.why.push('★★「' + T32.robo + '」の こまで わくが ' + rr.length + ' 通り あります（★同じ 名前なら 同じ 色の はず）');
+      if (rh.length && rr.length && rh[0] === rr[0]) t.why.push('★★★「' + T32.hito + '」と「' + T32.robo + '」で 帯の わくが 同じ です（★色が 番を 言って いません）');
+      if (t.kieta) t.why.push('★★帯の 名前が 見えない こまが ' + t.kieta + ' あります');
+      if (t.kire) t.why.push('★★帯の 名前が 切れて いる こまが ' + t.kire + ' あります');
+      /* ★★★ 上の 線 ―― ★★字・印・色の 食いちがい ★★★ */
+      if (t.bad.length) {
+        t.why.push('★★★名前・印・色が 合って いない こまが ' + t.bad.length + '／' + t.koma + '：' +
+                   t.bad.slice(0, 3).join('／') + (t.bad.length > 3 ? '／…' : ''));
+      }
+      return t;
+    }
+    var t32 = check32();
+    for (i = 0; i < t32.why.length; i++)
+      ng.push('★★★★ 帯の 名前 ＝ 手番の 主：' + t32.why[i] + '（★T243・社長の ご指摘・💻コーダ）');
+    note['㉜ ★★★サイコロの 上の 帯の 名前 ＝ いま 手番の 主'] =
+      '見た こま ' + t32.koma + '（★人 ' + t32.hitoKoma + '・ロボット ' + t32.roboKoma + '・切りかえ ' + t32.kirikae + '回・' + t32.turns + '手番）' +
+      '／★出た 名前 ' + Object.keys(t32.mita).map(function (k) { return '「' + k + '」' + t32.mita[k]; }).join('・') +
+      '／★食いちがい ' + t32.bad.length + '／★消え ' + t32.kieta + '・切れ ' + t32.kire +
+      '／★わく：あなた ' + Object.keys(t32.ringHito).length + '通り・ロボット ' + Object.keys(t32.ringRobo).length + '通り（★金 ' + T32.kin + '）';
+
 
 
 
@@ -4258,6 +4386,51 @@
          'html body .me-band .me-turn{ min-width:1em !important; }');
     br31('(80)★★★字の 床（8px）を 割る（★★「点」だけ ―― ★はばは 1pxも 動きません）',
          'html body .me-band .me-pt::after{ font-size:7px !important; }');
+
+    /* ★★★★ ここから T243 ―― ★★㉜（★帯の 名前 ＝ 手番の 主）を わざと 壊す (81)〜(87) ★★★★
+       ★ ★★(81) だけは **直しそのものを 外す**（★`BAND_NAME.follow = 0` ＝ 社長の 写真の 姿）。
+       ★ ★★(82)(83) は 名前を すり替える、★(84) は **267ms 遅らせる**（★T228 の 穴の 形）、
+       ★ ★★(85)(86) は 色だけ 食いちがわせる（★🎨アトの 金色を 守る 線）、★(87) は 名前を 消す。 */
+    function ng32() { return check32().why.length > 0; }
+    function br32(name, doIt, undoIt) {
+      killN++;
+      if (one(name, ng32, doIt, undoIt)) killOk++;
+    }
+    var kFollow = P.BAND_NAME.follow;
+    br32('(81)★★★直しそのものを 外す（★BAND_NAME.follow=0 ＝ ★★人の 手番でも「ロボット」―― ★社長の 写真の 姿）',
+         function () { P.BAND_NAME.follow = 0; }, function () { P.BAND_NAME.follow = kFollow; });
+    var kSeat0 = P.SEATS[0], kSeat1 = P.SEATS[1];
+    br32('(82)★★★人の 席の 名前を「ロボット」に する（★★人の 手番の 帯に「ロボット」）',
+         function () { P.SEATS[0] = 'ロボット'; }, function () { P.SEATS[0] = kSeat0; });
+    br32('(83)★★★ロボットの 席の 名前を「あなた」に する（★★ロボットの 手番の 帯に「あなた」―― ★逆）',
+         function () { P.SEATS[1] = 'あなた'; }, function () { P.SEATS[1] = kSeat1; });
+    /* ★★ (84) ―― ★★名前の 書きかえ だけを 267ms 遅らせる（★★★色は その こまに 変わる・字は 1こま 遅れる）
+       ★ ★★この 帯の 字 1つ だけ、`textContent` の 書き手を 遅らせる 形に すり替えます（★中身は 触りません）。
+       ★ ★★遅らせる 267ms は、★T228 で 🧪トライが 実測した「指図が 残った 時間」と 同じ 数 です。 */
+    var nm84 = document.querySelector('#botBand .bot-cell .bot-name');
+    var desc84 = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent');
+    br32('(84)★★★名前の 切りかえを 267ms 遅らせる（★★色は 変わった のに 字が 前の まま ―― ★T228 の 穴の 形）',
+         function () {
+           if (!nm84 || !desc84) throw new Error('帯なし');
+           Object.defineProperty(nm84, 'textContent', {
+             configurable: true,
+             get: function () { return desc84.get.call(this); },
+             set: function (v) { var self = this; root.setTimeout(function () { desc84.set.call(self, v); }, 267); }
+           });
+         },
+         function () { if (nm84) delete nm84.textContent; });
+    var st85 = document.createElement('style');
+    br32('(85)★★★ロボットの 手番の 金色を 外す（★★「ロボット」なのに 金色なし ―― ★色と 名前の 食いちがい）',
+         function () { st85.textContent = 'html body .bot-cell.is-turn{ box-shadow:none !important; }'; document.head.appendChild(st85); },
+         function () { if (st85.parentNode) st85.parentNode.removeChild(st85); });
+    var st86 = document.createElement('style');
+    br32('(86)★★★人の 手番にも 金色を つける（★★「あなた」なのに 金色 ―― ★色と 名前の 食いちがい）',
+         function () { st86.textContent = 'html body .bot-cell:not(.is-turn){ box-shadow:inset 0 0 0 2px #F1A426 !important; }'; document.head.appendChild(st86); },
+         function () { if (st86.parentNode) st86.parentNode.removeChild(st86); });
+    var st87 = document.createElement('style');
+    br32('(87)★★帯の 名前を 消す（★★★下の 線 ―― ★名前が 見えない）',
+         function () { st87.textContent = 'html body .bot-cell .bot-name{ display:none !important; }'; document.head.appendChild(st87); },
+         function () { if (st87.parentNode) st87.parentNode.removeChild(st87); });
 
     if (killOk !== killN) {
       ng.push('★★★★見張りが 死んで います：★わざと 壊しても ' + (killN - killOk) + ' / ' + killN + ' 通りが 鳴りません');
