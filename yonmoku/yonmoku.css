@@ -230,7 +230,18 @@ button { font-family:inherit; cursor:pointer; }
    touch-action:none を 置かないと、指が 少し ぶれた 瞬間に ブラウザが
    「これは 画面を すべらせる 指だ」と 決めて、指を はなしても 落ちない ことが ある。
    ★ このゲームは 指を すべらせて 列を 選び直す ので、ここは 絶対に 消さない。 */
-.hold, .board-frame, .board, .board-back, .pieces, .grid, .flier { touch-action:none; }
+.hold, .board-frame, .board, .board-back, .pieces, .grid, .flier, .grab-pad { touch-action:none; }
+
+/* ★★ 横向きの「コマの 下」を 受ける 見えない 板（T253-3・🧪トライ T255 🟡）★★
+   ------------------------------------------------------------
+   ★ 横向きは コマが 上の帯の 高さに 出る（T129）ので、★コマの 下が .hold の 外 でした
+     ＝ 待っている コマを さわっても 何も 起きなかった。
+   ★ たての next-row（盤の 上の 帯）と 同じ 場所を、★横向きの ときだけ .hold の 中に 置きます。
+     ★ 置き場所と 大きさは game.js の layout() が 決める（★px を ここに 書かない）。
+   ★ 色も 字も 無い ―― ★見た目は 0。★たて・パソコンでは display:none（★1pxも 変わらない）。
+   ★ 絶対配置 ―― ★場所を 取らない ので、★盤は 1pxも 動きません。 */
+.grab-pad { position:absolute; display:none; }
+.hold.is-side .grab-pad { display:block; }
 
 /* ★★ 青い わく（社長の 写真に 寄せる・ルル §5-1）★★
    ------------------------------------------------------------

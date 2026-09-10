@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>四目並べ ― ブラゲ工房</title>
+  <title>コネクトフォー ― ブラゲ工房</title>
   <meta name="description" content="赤と 黄色を、たて よこ ななめに 4つ そろえよう ― ブラゲ工房" />
   <meta name="theme-color" content="#BCEBF0" />
 
@@ -21,25 +21,37 @@
          ★★ 下の width / height は **PNG の 頭から 読んだ 本当の 数**（600×600）。
             ⚠️★ 絵を 差しかえたら、★この 2つの 数も かならず 直すこと（T157 §6-3 の 落とし穴）。
 
-       ★★ よその 会社の 商品名は 1文字も 使いません（ルル §9-2）★★
-         ★ 画面・紹介文・タグ・フォルダ名 すべてで「四目並べ」。
-         ★ リバーシ（T88）で「オセロ」を 使わなかったのと 同じ 判断です。
+       ★★★ 名前は「コネクトフォー」・フォルダ名は yonmoku の まま（T253・2026-09-10）★★★
+         ★★ 社長の ご指示：「四目並べって 名前じゃなくて コネクトフォーって 名前にして」。
+         ★★ ⚠️ フォルダ名（yonmoku）・URL・id・class は **1文字も 変えて いません**。
+            ★ 直し忘れでは ありません。★★変えると
+              https://bragekobo.github.io/brage-kobo/yonmoku/ が **死にます**。
+              ★ もう 世に 出て いる URL で、★og:url も この 住所を 指して います（→ 上の T157）。
+            ★★ ＝ **見える 名前と フォルダ名が わざと 食いちがって います。**★そろえに 来ないこと。
+         ★★ この 名前は、前に ここに 書いて あった
+            「よその 会社の 商品名は 1文字も 使いません（ルル §9-2）」を **上書き して います**。
+            ★ 前の 書き置き：「★画面・紹介文・タグ・フォルダ名 すべてで『四目並べ』。
+              ★リバーシ（T88）で『オセロ』を 使わなかったのと 同じ 判断です」。
+            ★★ ＝ ★リバーシ／オセロ の 線とは **逆の 決め** です。★消さずに 残します
+              （設計図 追記⑤：★「できない」と 言った 理由は 消さない）。
+            ⚠️★ yonmoku-game.js の verify ⑥（言っては いけない 言葉）から
+               「コネクトフォー」を 外しました。★リバーシ 側の 線は さわって いません。
        ============================================================ -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="ブラゲ工房" />
   <meta property="og:locale" content="ja_JP" />
-  <meta property="og:title" content="四目並べ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:title" content="コネクトフォー ― ブラウザですぐ遊べる｜ブラゲ工房" />
   <meta property="og:description" content="赤と 黄色を、たて よこ ななめに 4つ そろえよう。ダウンロードはいりません。開いたらすぐ遊べます。" />
   <meta property="og:url" content="https://bragekobo.github.io/brage-kobo/yonmoku/" />
-  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/og/og-yonmoku.png" />
+  <meta property="og:image" content="https://bragekobo.github.io/brage-kobo/og/og-yonmoku.png?v=2" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="600" />
   <meta property="og:image:height" content="600" />
-  <meta property="og:image:alt" content="四目並べの 青い 盤。赤と 黄色の コマが 下から 積まれて います" />
+  <meta property="og:image:alt" content="コネクトフォーの 青い 盤。赤と 黄色の コマが 下から 積まれて います" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="四目並べ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:title" content="コネクトフォー ― ブラウザですぐ遊べる｜ブラゲ工房" />
   <meta name="twitter:description" content="赤と 黄色を、たて よこ ななめに 4つ そろえよう。開いたらすぐ遊べます。" />
-  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/og/og-yonmoku.png" />
+  <meta name="twitter:image" content="https://bragekobo.github.io/brage-kobo/og/og-yonmoku.png?v=2" />
 
   <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存13本と おなじ。 -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
@@ -89,7 +101,7 @@
     <a class="back" href="../"><b>◀</b><span> ゲームを選ぶ</span></a>
     <div class="brand">
       <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
-      <span>四目並べ</span>
+      <span>コネクトフォー</span>
     </div>
     <div class="topbar-pad"></div>
   </header>

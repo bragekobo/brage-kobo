@@ -47,7 +47,10 @@
 </head>
 <body>
 
-<!-- 飾りの もと（花）。外部画像は使えないので SVG で自作 -->
+<!-- 飾りの もと（花）と、トランプを 使わない ゲームの 絵。
+     外部画像は 使えないので SVG で 自作（＝ 外への 通信 0件・ファイル 0個 のまま）。
+     ★ viewBox は どれも「0 0 210 318」＝ 絵札と 同じ 比率（419:635）。
+       .game-art の わくと 同じ 比率なので、つぶれず・すきま なく うまる。 -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
     <symbol id="flower" viewBox="0 0 40 40">
@@ -59,6 +62,56 @@
         <circle cx="7"  cy="17" r="8"/>
       </g>
       <circle cx="20" cy="21" r="6.5" fill="#FFD766"/>
+    </symbol>
+
+    <!-- ▼ コネクトフォー ―― 青い 盤を 2列×3段 だけ 切り取った 絵。
+         社長の 写真の 2×2（空・赤 ／ 赤・黄）を 上2段に そのまま 置き、
+         その 下に もう1段 足して 2:3（＝絵札と同じ 比率）に している。
+           左の列（下から）：黄色・赤・空
+           右の列（下から）：赤・黄色・赤
+         赤3・黄2・空1。コマは 下から つみ上がる 遊びなので、
+         空は かならず 一番上 ―― 本当の 手番の 順でも 起こる ならびに してある。 -->
+    <symbol id="art-connect4" viewBox="0 0 210 318">
+      <rect width="210" height="318" fill="#3F9BE0"/>
+      <rect width="210" height="318" fill="none" stroke="#2C7CBC" stroke-width="10"/>
+      <g stroke-width="6">
+        <!-- 上の段：空／赤 -->
+        <circle cx="52.5"  cy="53"  r="39" fill="#25406B" stroke="#1A3050"/>
+        <circle cx="157.5" cy="53"  r="39" fill="#EF4E4E" stroke="#C22C2C"/>
+        <!-- まん中の段：赤／黄色 -->
+        <circle cx="52.5"  cy="159" r="39" fill="#EF4E4E" stroke="#C22C2C"/>
+        <circle cx="157.5" cy="159" r="39" fill="#FFD23F" stroke="#DFA211"/>
+        <!-- 下の段：黄色／赤 -->
+        <circle cx="52.5"  cy="265" r="39" fill="#FFD23F" stroke="#DFA211"/>
+        <circle cx="157.5" cy="265" r="39" fill="#EF4E4E" stroke="#C22C2C"/>
+      </g>
+      <!-- つや（コマが まるいと わかる ひかり）。空の あなには 付けない -->
+      <g fill="#fff" opacity=".3">
+        <ellipse cx="146" cy="41"  rx="10" ry="7" transform="rotate(-35 146 41)"/>
+        <ellipse cx="41"  cy="147" rx="10" ry="7" transform="rotate(-35 41 147)"/>
+        <ellipse cx="146" cy="147" rx="10" ry="7" transform="rotate(-35 146 147)"/>
+        <ellipse cx="41"  cy="253" rx="10" ry="7" transform="rotate(-35 41 253)"/>
+        <ellipse cx="146" cy="253" rx="10" ry="7" transform="rotate(-35 146 253)"/>
+      </g>
+    </symbol>
+
+    <!-- ▼ 五目並べ ―― 碁ばんを 切り取った 絵。線は はしまで のびていて、
+         「大きい 盤の 一部を 見ている」ことが わかる。
+         石は かならず 線の 交わる 所に 置く（マスの 中では ない）。
+         白1つの 下に 黒2つ（社長の 写真の ならび）。3つの まん中が 絵の まん中。 -->
+    <symbol id="art-goban" viewBox="0 0 210 318">
+      <rect width="210" height="318" fill="#EDC489"/>
+      <g stroke="#A9743C" stroke-width="3.8" stroke-linecap="square">
+        <path d="M0 0V318M70 0V318M140 0V318M210 0V318"/>
+        <path d="M0 54H210M0 124H210M0 194H210M0 264H210"/>
+      </g>
+      <!-- 白い石（1つ）。まわりの ふちが ないと 木の 地に 溶ける -->
+      <circle cx="70" cy="124" r="30" fill="#FFFFFF" stroke="#7B5C33" stroke-width="3.2"/>
+      <!-- 黒い石（2つ）。つやは 付けない ―― 小さくすると 目のように 見えてしまう -->
+      <g fill="#2F2B29">
+        <circle cx="70"  cy="194" r="30"/>
+        <circle cx="140" cy="194" r="30"/>
+      </g>
     </symbol>
   </defs>
 </svg>
@@ -354,9 +407,12 @@ const GAMES = [
     path:  'reversi6/'
   },
   {
-    title: '四目並べ',
+    /* ⚠️ path は 'yonmoku/' のまま。もう 世に 出ている リンクなので 変えない。
+       名前だけ 社長のお決め（2026-09-10）で「四目並べ → コネクトフォー」。 */
+    title: 'コネクトフォー',
     emoji: '4️⃣',
     card:  '',
+    art:   'art-connect4',
     desc:  '赤と 黄色の コマを 上から 落とす。下から つみ上がって、4つ 並べたら 勝ち。',
     time:  '1試合 1分ほど',
     tags:  ['ボードゲーム', 'ロボットと対戦', 'つよさを選べる'],
@@ -366,6 +422,7 @@ const GAMES = [
     title: '五目並べ',
     emoji: '5️⃣',
     card:  '',
+    art:   'art-goban',
     desc:  '碁ばんの 線の 交わる 所に、黒と 白の 石を 置く。5つ 並べたら 勝ち。',
     time:  '1試合 1分ほど',
     tags:  ['ボードゲーム', 'ロボットと対戦', 'つよさを選べる'],
@@ -421,7 +478,7 @@ const GAMES = [
 /* 近日公開の枠（作るものが決まったら title を書き換える） */
 const COMING = [
   { emoji: '🃏', title: 'つぎの1本', desc: '★20本 そろいました！ つぎは 社長の ひらめき待ち。' },
-  { emoji: '🎲', title: 'ボードゲーム', desc: '四目並べの つぎは 何にしよう？ ばんと コマの 遊び。' },
+  { emoji: '🎲', title: 'ボードゲーム', desc: 'コネクトフォーの つぎは 何にしよう？ ばんと コマの 遊び。' },
   { emoji: '✨', title: 'お楽しみ',   desc: '社長のひらめき待ち。ここに並ぶよ！' }
 ];
 
@@ -468,13 +525,20 @@ GAMES.forEach(function (g) {
     img.loading = 'lazy';
     img.decoding = 'async';
     art.appendChild(img);
+  } else if (g.art) {
+    /* トランプを 使わない ゲームの 絵（上の <defs> に かいてある）。
+       viewBox が わくと 同じ 比率なので slice でも 切れない（0.1%未満）。 */
+    art.innerHTML =
+      '<svg viewBox="0 0 210 318" width="100%" height="100%" style="display:block"' +
+      ' preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">' +
+      '<use href="#' + g.art + '"/></svg>';
   } else {
     art.textContent = g.emoji || '🎮';
   }
 
   const body = el('span', 'game-body');
-  /* 絵札を出しているときは、タイトル横の絵文字は付けない（要素を減らして締める） */
-  body.appendChild(el('span', 'game-title', (!g.card && g.emoji ? g.emoji + ' ' : '') + g.title));
+  /* 絵を出しているときは、タイトル横の絵文字は付けない（要素を減らして締める） */
+  body.appendChild(el('span', 'game-title', (!g.card && !g.art && g.emoji ? g.emoji + ' ' : '') + g.title));
   body.appendChild(el('span', 'game-desc', g.desc));
 
   const meta = el('span', 'game-meta');

@@ -32,7 +32,7 @@
   'use strict';
 
   var C = root.YONMOKU_CORE;
-  if (!C) { console.error('[四目並べ] yonmoku-core.js が 読めていません'); return; }
+  if (!C) { console.error('[コネクトフォー] yonmoku-core.js が 読めていません'); return; }
 
   /* ★★★ 盤の 大きさは index.html の 2行 だけ ★★★ */
   var COLS = root.YONMOKU_COLS | 0;
@@ -90,7 +90,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var titleScreen, playScreen, stageEl, holdEl, nextRow, frameEl, boardEl,
       backEl, piecesEl, gridEl, flierEl, landEl, resultWrap, resultBox,
-      brandEl, padEl;
+      brandEl, padEl, grabEl;
 
   var pieceEl = [];                 // 場所 → コマの span（無ければ null）
   var b = null, h = null;           // 盤（0＝空 1＝人 2＝ロボット）／ 積み上がり
@@ -216,6 +216,45 @@
          ★★盤の 中を ななめに 横切ります（0.12秒 だけ 盤の 上に コマが 出る）。
        ★ 同じ 高さに そろえて おけば、動きは いつも 盤の 外の 横1本の 線の 上だけ。 */
     if (f.side) geo.restY = overLine();
+    /* ★★★ 横向きの 待ち場所は「盤の まん中の 上」（T253-2・2026-09-10）★★★
+       ------------------------------------------------------------
+       ★ 前は 盤の 右よこ（next-row の まん中）で 待って いました。
+         ★ でも T129 から 待ち場所の たては 上の帯と 同じ 高さ（↑ overLine）。
+           ★★ ＝ 右よこの 待ち場所は、★上の帯の 右はしへ どかした「ネコの 顔 ＋ 名前」の すぐ 左 でした。
+       ★★ T253 で 名前が 4字 → 7字（36px 長く）に なり、★ネコの 顔も 36px 左へ 出てきて、
+          ★★★568×320 で 待っている コマが ハッピーの 顔に 10px 重なりました（🧪トライ T254 🟡-1）。
+          ★ 私（コーダ）は 名前の 字との すきま（26px）だけ 測って いて、★★顔を 測って いませんでした。
+       ★ 直し方：★★待ち場所を **盤の まん中の 上** に 移す（★たて向き・パソコンと 同じ 見え方）。
+         ・★たては 変えない（overLine の まま ＝ 列の 上と 同じ 1本の 横線 ―― T129 の ななめ よけは そのまま）
+         ・★盤・帯・字・ハッピーは 1pxも 動かさない（★消さない・小さく しない）
+         ・★next-row（右よこの 場所とり）は 残す ―― ★消すと 盤の はばが 変わる（★盤は 1pxも 動かさない）
+       ★ これで いちばん 近づくのは「7列目を 持った とき」に なります（★待ち場所では なく）。
+         ★ 数は ⑬ が 毎回 測ります（★顔・名前・◀ ぜんぶ）。 */
+    if (f.side) geo.restX = geo.inX + (inRect.width - f.bar) / 2;
+
+    /* ★★★ 横向きの「コマの 下」も 指を 受ける（T253-3・2026-09-11）★★★
+       ------------------------------------------------------------
+       ★ 🧪トライ T255 🟡：横向き（と 320×454）で、★待っている コマを さわっても 何も 起きなかった。
+         ★ コマ（.flier）は 見た目だけの 丸（pointer-events:none）で、★指は コマの 下の ものに 届く。
+         ★ たては 下が .hold の 中（next-row）なので 受ける。★★横向きは T129 から コマを 上の帯の 高さ
+           （↑ overLine）に 出して いるので、★下が 上の帯・stage ＝ .hold の 外 ＝ 受けなかった。
+       ★ 直し方：★たての next-row と 同じ「★盤の 上の 帯（盤わくの はば × コマの 上はし〜盤わくの 上ふち）」を
+         ★★横向きの ときだけ、.hold の 中に 見えない 板（.grab-pad）で 置く。
+         ・★たて・パソコン（side で ない）では ★display:none（CSS）＝ ★1pxも 何も 変わらない
+         ・★盤・帯・字・ハッピー・コマの 位置は ★1pxも 動かさない（★絶対配置・場所を 取らない）
+         ・★板は 色も 字も 無い（★見た目は 0）。★⑭が「コマの まん中が 盤の 操作に 届くか」と
+           「★板が ◀ などを 横取り していないか」の 両方を 毎回 測る */
+    if (grabEl) {
+      if (f.side) {
+        var fmr = frameEl.getBoundingClientRect();
+        grabEl.style.left   = (fmr.left - hr.left) + 'px';
+        grabEl.style.width  = fmr.width + 'px';
+        grabEl.style.top    = geo.restY + 'px';
+        grabEl.style.height = Math.max(0, geo.frameY - geo.restY) + 'px';
+      } else {
+        grabEl.style.left = grabEl.style.width = grabEl.style.top = grabEl.style.height = '';
+      }
+    }
 
     for (var p = 0; p < G.N; p++) if (pieceEl[p]) placeAt(pieceEl[p], p);
     setFlier(held, true);
@@ -292,8 +331,16 @@
   function setFlier(col, instant) {
     if (!flierEl) return;
     if (instant) flierEl.classList.add('no-anim');
-    flierEl.classList.toggle('me',  turn === ME);
-    flierEl.classList.toggle('bot', turn === BOT);
+    /* ★★ 赤い コマ ＝ 押せる（T253-3・🧪トライ T255 🟢-2）★★
+       ★ 前は `turn === ME` だけで 赤に して いた。★ロボットの コマが 落ちている 約0.2秒は
+         ★ turn は もう ME・でも busy（★落ちている 間の おしは ためない ―― T62・ルル §7-5 の 4番）。
+         ★★ ＝「赤いのに 押しても 効かない」時間が あった。
+       ★ 直し方：★赤に するのは「★押せる とき」だけ（★onDown が 受ける 条件と 同じ ―― ⑮が 本物の onDown で 見張る）。
+         ★ 押せる ように なる 時間は ★1msも 変えて いない（★busy と turn の 流れは そのまま）。
+         ★ 変わるのは ★色が 変わる 時間 だけ（★ロボットの コマが 着いた 瞬間に 赤）。 */
+    var mine = (turn === ME && !busy);
+    flierEl.classList.toggle('me',  mine);
+    flierEl.classList.toggle('bot', !mine);
     flierEl.classList.toggle('is-off', over);
     var x, y;
     if (col == null) { x = geo.restX; y = geo.restY; }
@@ -602,13 +649,13 @@
     n = n || 100; opt = opt || {};
     var hn = opt.human || '＋ 止める';
     var hf = humans.list[hn];
-    if (!hf) { console.error('[四目並べ] 人の 打ち方が ちがいます：' + hn + '（' + Object.keys(humans.list).join(' / ') + '）'); return null; }
+    if (!hf) { console.error('[コネクトフォー] 人の 打ち方が ちがいます：' + hn + '（' + Object.keys(humans.list).join(' / ') + '）'); return null; }
     var li = opt.level == null ? state.level : Math.max(0, Math.min(C.LEVELS.length - 1, opt.level | 0));
     var lv = C.LEVELS[li];
     var t0 = Date.now();
     var err = 0, r = null;
     try { r = C.runMany(G, robot, hf, lv, n, opt.seed == null ? 31337 : (opt.seed >>> 0)); }
-    catch (ex) { err++; console.error('[四目並べ] autoPlay で エラー', ex); }
+    catch (ex) { err++; console.error('[コネクトフォー] autoPlay で エラー', ex); }
     if (!r) return { '★エラー': err };
     var out = {
       '盤': COLS + '列 × ' + ROWS + '段',
@@ -628,7 +675,7 @@
       '★人の 番に 相手の リーチが ある／試合': r.reachPerGame.toFixed(1) + '回（うち 2つ同時 ' + r.doublePerGame.toFixed(2) + '回）',
       'かかった時間': ((Date.now() - t0) / 1000).toFixed(1) + '秒'
     };
-    console.log('[四目並べ] autoPlay', out);
+    console.log('[コネクトフォー] autoPlay', out);
     return out;
   }
 
@@ -644,7 +691,7 @@
       }
       out[HN[i]] = row;
     }
-    console.log('[四目並べ] rates（' + games + '試合ずつ）', out);
+    console.log('[コネクトフォー] rates（' + games + '試合ずつ）', out);
     return out;
   }
 
@@ -671,7 +718,7 @@
       }
       out[lv.label] = '平均 ' + (tot / moves).toFixed(2) + 'ms ／ ★最大 ' + worst.toFixed(1) + 'ms（' + moves + '手）';
     }
-    console.log('[四目並べ] speed（★実測・' + games + '試合ずつ）', out);
+    console.log('[コネクトフォー] speed（★実測・' + games + '試合ずつ）', out);
     return out;
   }
 
@@ -764,7 +811,7 @@
       '横スクロールが 出た場面': sx, '縦スクロールが 出た場面': sy
     };
     if (offTotal) out['画面外に 出た もの'] = Object.keys(names);
-    console.log('[四目並べ] fitTest', out);
+    console.log('[コネクトフォー] fitTest', out);
     return out;
   }
 
@@ -787,15 +834,29 @@
        ③ ★指を はなす 前に「4つ 並ぶか」を 出す 経路が 1本も 無い（社長裁定 判断3）
        ④ ★★盤の 上で 光るのは「落ちる 穴 1つ」だけ（T131 で 書き直し・中身は 6つ）
        ⑤ ★画面に 手数・%・秒 の 数字が 1つも 無い
-       ⑥ ★言っては いけない 言葉が 1つも 無い（商品名・リーチ・まん中・角）
+       ⑥ ★言っては いけない 言葉が 1つも 無い（リーチ・三連・まん中・中央・定石・角）
+          ★ T253 で「商品名（コネクトフォー ほか 3語）」を 外しました ―― ★社長の ご指示で ゲームの 名前に なった ため
        ⑦ ★盤の 大きさは 定数 2つ から しか 出ていない
        ⑧ ★寸法が ルルの 表と 合っている
        ⑨ ★盤に さわる 手は pointer で 作られている（click では ない）
        ⑩ ★4つの 並びは 全部 数えている（1つ 見つけて 止めていない）
-       ⑪ ★★持っている コマが 盤の 中に 1pxも 入っていない（T129・横向きの 故障よけ） */
+       ⑪ ★★持っている コマが 盤の 中に 1pxも 入っていない（T129・横向きの 故障よけ）
+       ⑫ ★★画面に 古い 名前「四目並べ」が 1つも 残っていない（T253・字と 題と OGP だけ）
+       ⑬ ★★持っている コマが、上の帯と 下の 1行の 部品（★ハッピーの 顔・名前・ボタン）から
+          ★ 8px 以上 はなれている（T253-2・🧪トライ T254 🟡-1 の 故障よけ）
+       ⑭ ★★待っている コマ（と 持っている コマ）を 押したら、★盤の 操作に 届く（T253-3・🧪トライ T255 🟡）
+          ★ 下の線：★届かせる ための 板が ◀・？遊び方・顔・名前・ふきだしを 横取り していない
+       ⑮ ★★赤い コマ ＝ 押せる（T253-3・🧪トライ T255 🟢-2）―― ★本物の onDown で たしかめる */
   function verify(n) {
     n = n || 200;
     var ng = [], t0 = Date.now();
+
+    /* ⑮ の 1つ目（★いま この 瞬間）―― ★ほかの 見張りが コマを 動かす 前に 読む。
+       ★ 遊んでいる 最中（★ロボットの コマが 落ちている 間 など）に 呼ばれた ときの 本物の 姿。 */
+    var red15now = null;
+    if (flierEl && b && playScreen && !playScreen.classList.contains('hidden') && !flierEl.classList.contains('is-off')) {
+      red15now = { red: flierEl.classList.contains('me'), can: !over && !busy && turn === ME };
+    }
 
     // ① ルールの 通り
     var r1 = C.runMany(G, robot, humans.list['＋ 止める'], C.LEVELS[state.level], n, 777);
@@ -909,9 +970,21 @@
     var badNum = words.match(/\d+\s*手|\d+\s*%|\d+\s*秒|\d+\s*ms/g);
     if (badNum) ng.push('★画面に 数字が 出ている：' + badNum.join('・'));
 
-    // ⑥ ★言っては いけない 言葉（ルル §9-2）
-    var badWord = words.match(/コネクトフォー|コネクト4|connect4|リーチ|三連|まん中|中央|定石|角/gi);
+    /* ⑥ ★言っては いけない 言葉（ルル §9-2）
+       ⚠️★★ T253（2026-09-10）：★「コネクトフォー」「コネクト4」「connect4」を
+          ★★この 一覧から **外しました**。★★★社長の ご指示で、この ゲームの 名前 そのものに なった ため。
+          ★ 外したのは この 3語 だけ です。★リーチ・三連・まん中・中央・定石・角 は
+            ★★そのまま 見張って います（★どの 列が 良いかを 教えない ―― 設計図 追記②）。 */
+    var badWord = words.match(/リーチ|三連|まん中|中央|定石|角/gi);
     if (badWord) ng.push('★画面の 言葉に「' + badWord.join('・') + '」が ある');
+
+    /* ⑫ ★★ 古い 名前「四目並べ」が 画面に 1つも 残って いないか（T253）★★
+       ★ 見る ところ ＝ allWords()：★body の 字・<title>・meta 全部（＝ OGP も 入る）。
+       ★★ フォルダ名（yonmoku）・URL・id・class は **わざと 変えて いません**
+          （→ index.html の 頭の 書き置き）。★だから ここは **字だけ** を 見ます。
+       ★ 「四目ならべ」「四目」だけ の 書き方も 拾います。 */
+    var oldName = words.match(/四目\s*(並|なら)?べ?/g);
+    if (oldName) ng.push('★画面に 古い 名前が 残って いる：' + oldName.join('・'));
 
     // ⑦ 盤の 大きさ
     if (G.cols !== COLS || G.rows !== ROWS) ng.push('盤の 大きさが 定数と ちがう');
@@ -940,11 +1013,73 @@
        ★ 🧪トライ T128 の 🔴-1 が、二度と 戻らない ように ここで 見張ります。
        ★ 7列 ぜんぶ ＋ 待ち場所の 8か所を、★本物の setFlier() を 通して 測ります
          （★式を ここに 書き写すと、setFlier が 変わった ときに 気づけない）。 */
+    /* ⑬ ★★ 持っている コマが、上の帯・下の 1行の 部品に 近すぎないか（T253-2）★★
+       ------------------------------------------------------------
+       ★ 🧪トライ T254 🟡-1：568×320 で 待っている コマが ハッピーの 顔に 10px 重なった。
+         ★★ ⑪は 盤しか 見て いなかった。★私（コーダ）も 名前の 字しか 測って いなかった
+            ＝「見張っているふり」の 8つ目（★数えているつもりで、数える先に 入っていない）。
+       ★ だから ここは **相手を 名前で 書き出して**、★★1つずつ 測ります：
+           ◀（もどる）／★上の ハッピーの 顔／名前の 字／★下の ハッピーの 顔／ふきだし／？ 遊び方
+       ★★ さらに、★上の帯の 中に「★ここに 書いて いない 部品」が 出て いたら ★NG に します
+          （★あとで 帯に 何かを 足した 人が、★測る 相手に 入れ忘れたら ここで 鳴る）。
+       ★ 見本（線）は **決め打ち** ―― ★8px（★CSS からも core からも 読まない）。
+         ★ 8px の わけ：トライが「ぎりぎり」と 書いた 667×375 の 4.5px を ★必ず 鳴らす 線。
+       ★★ 下の線（★どかしすぎ）は ⑪の「画面の 外に 出ている」が 受け持ちます。
+       ★ すきまは 四角と 四角の いちばん 近い 所（★重なって いれば マイナス）。 */
+    var CLEAR_MIN = 8;
+    var clearNG = [], clearMin = null, clearWho = '', unlisted = [], clearCount = 0, clearOff = [], clearBlind = false;
+    function clearRect(el, textOnly) {
+      if (!el) return null;
+      var rr;
+      if (textOnly) { var rg = document.createRange(); rg.selectNodeContents(el); rr = rg.getBoundingClientRect(); }
+      else rr = el.getBoundingClientRect();
+      return (rr.width > 0 && rr.height > 0) ? rr : null;
+    }
+    function clearGap(a, c) {
+      var dx = Math.max(c.left - a.right, a.left - c.right);
+      var dy = Math.max(c.top - a.bottom, a.top - c.bottom);
+      if (dx < 0 && dy < 0) return Math.max(dx, dy);          // ★重なり（マイナス）
+      if (dx >= 0 && dy >= 0) return Math.sqrt(dx * dx + dy * dy);
+      return Math.max(dx, dy);
+    }
+    var brandSpan = document.querySelector('.brand span');
+    var clearList = [
+      ['◀',                 document.querySelector('.topbar .back'), false],
+      ['上の ハッピーの 顔', document.querySelector('.brand-cat'),       false],
+      ['名前の 字',          brandSpan,                                true],
+      ['下の ハッピーの 顔', $('happyCat'),                            false],
+      ['ふきだし',           $('happyBubble'),                         true],
+      ['？ 遊び方',          $('btnHowto'),                            false]
+    ];
+
     var inside = [], offscr = [];
     if (playScreen && !playScreen.classList.contains('hidden') && flierEl) {
       var bdR = boardEl.getBoundingClientRect();
       var keep = held;
       var VW = document.documentElement.clientWidth, VH = document.documentElement.clientHeight;
+
+      /* ★ 相手の 四角（★コマを 動かす 前に 1回）。★出ていない もの（display:none）は 名前だけ 残す */
+      var clearR = [];
+      for (var ci = 0; ci < clearList.length; ci++) {
+        var cr0 = clearRect(clearList[ci][1], clearList[ci][2]);
+        if (cr0) { clearR.push([clearList[ci][0], cr0]); clearCount++; }
+        else clearOff.push(clearList[ci][0]);
+      }
+      /* ★ 上の帯の 中の「書いて いない 部品」さがし
+         ★ 相手の 中の もの（◀ の 中の 字 など）・相手を 包む 箱（.brand）・空きの 場所とり（.topbar-pad）は 数えない */
+      var tops = document.querySelectorAll('.topbar *');
+      for (var ti = 0; ti < tops.length; ti++) {
+        var te = tops[ti], known = false;
+        if (te.classList && te.classList.contains('topbar-pad')) continue;
+        for (var tj = 0; tj < clearList.length; tj++) {
+          var ke = clearList[tj][1];
+          if (ke && (ke === te || ke.contains(te) || te.contains(ke))) { known = true; break; }
+        }
+        if (known) continue;
+        var tr = te.getBoundingClientRect();
+        if (tr.width > 0 && tr.height > 0) unlisted.push((te.className && te.className.baseVal != null ? te.className.baseVal : te.className) || te.tagName);
+      }
+
       for (var fc = -1; fc < COLS; fc++) {
         setFlier(fc < 0 ? null : fc, true);
         var fR = flierEl.getBoundingClientRect();
@@ -952,11 +1087,125 @@
         if (fR.right > bdR.left + 0.5 && fR.left < bdR.right - 0.5 &&
             fR.bottom > bdR.top + 0.5 && fR.top < bdR.bottom - 0.5) inside.push(name);
         if (fR.top < 0 || fR.left < 0 || fR.right > VW || fR.bottom > VH) offscr.push(name);
+        for (var ck = 0; ck < clearR.length; ck++) {
+          var gp = clearGap(fR, clearR[ck][1]);
+          if (clearMin === null || gp < clearMin) { clearMin = gp; clearWho = name + ' と ' + clearR[ck][0]; }
+          if (gp < CLEAR_MIN) clearNG.push(name + ' と ' + clearR[ck][0] + '（' + gp.toFixed(1) + 'px）');
+        }
       }
       setFlier(keep, true);
       if (inside.length) ng.push('★持っている コマが 盤の 中に 出ている：' + inside.join('・'));
       if (offscr.length) ng.push('★持っている コマが 画面の 外に 出ている：' + offscr.join('・'));
+      if (clearNG.length) ng.push('★持っている コマが 帯の 部品に 近すぎる（' + CLEAR_MIN + 'px 未満）：' + clearNG.join('・'));
+      if (unlisted.length) ng.push('★上の帯に、⑬の 測る 相手に 入っていない 部品が ある：' + unlisted.join('・'));
+      /* ★ 名前の 字と ◀ は どの 画面でも 出ている ―― ★測れて いなければ 見張りが 空回り している
+         ⚠️★ T253-2：★わざと 名前を 消して 回したら、★NG は 数えたのに ★⑬の 行は「OK」と 出ました。
+            ★ 行の 判定に この 1つを 入れ忘れて いた ―― ★だから clearBlind を 行の 判定にも 入れます。 */
+      if (!clearRect(brandSpan, true) || !clearRect(document.querySelector('.topbar .back'), false)) {
+        clearBlind = true;
+        ng.push('★⑬が 名前の 字か ◀ を 測れて いない（★見張りの 空回り）');
+      }
     }
+
+    /* ============================================================
+       ⑭ ★★★ 待っている コマ（と 持っている コマ）を 押したら、盤の 操作に 届くか（T253-3）★★★
+       ------------------------------------------------------------
+       ★ 🧪トライ T255 🟡：横向き（と 320×454）で、★待っている コマを さわっても 何も 起きなかった。
+         ★ コマは 見た目だけの 丸（pointer-events:none）―― ★指は コマの 下の ものに 届く。
+       ★ 測り方 ＝ ★トライと 同じ：★elementFromPoint で コマを さして、★届く先が .hold の 中か。
+         ★ 8か所（待ち場所 ＋ 7列）×（まん中・下はし・コマと 盤の 間）。★本物の setFlier() を 通す（⑪と 同じ）。
+       ★ 上の線を 引いたら 下の線も 引く ――
+         ★ 届かせる ための 板（.grab-pad）が ★⑬の 相手 6つを 横取り していないか：
+           ・★相手の まん中を さして、★届く先が .hold の 中 なら NG（★◀・？遊び方 は ★自分が 受けて いなければ NG）
+           ・★板と 相手の すきまが 決め打ち 8px 未満 なら NG（★⑬と 同じ 線）
+       ★ 結果の 箱・遊び方の 窓が 出ている ときは ★測れない ―― ★「OK」とは 書かず「―」に する。
+       ★ 1点も 測れなかったら ★NG（★見張りの 空回り）。
+       ============================================================ */
+    var GRAB_MIN = 8;
+    var grabNG = [], grabPts = 0, grabHit = 0, grabGuard = 0, grabMin = null, grabMinWho = '', grabSkip = '', grabPad = false;
+    var who14 = function (el) {
+      if (!el) return 'なし';
+      var cn = el.className && el.className.baseVal != null ? el.className.baseVal : el.className;
+      return el.id || cn || el.tagName;
+    };
+    if (playScreen && !playScreen.classList.contains('hidden') && flierEl && holdEl) {
+      if (resultWrap && !resultWrap.classList.contains('hidden')) grabSkip = '結果の 箱が 出ている';
+      else if (document.querySelector('dialog[open]')) grabSkip = '遊び方の 窓が 出ている';
+      if (!grabSkip) {
+        var keep14 = held;
+        var fTop14 = frameEl.getBoundingClientRect().top;
+        for (var gc = -1; gc < COLS; gc++) {
+          setFlier(gc < 0 ? null : gc, true);
+          var gR = flierEl.getBoundingClientRect();
+          var gName = gc < 0 ? '待ち場所' : (gc + 1) + '列目';
+          var gx = gR.left + gR.width / 2;
+          var pts14 = [['まん中', gR.top + gR.height / 2], ['下はし', gR.bottom - 2]];
+          if (fTop14 - gR.bottom > 2) pts14.push(['コマと 盤の 間', (gR.bottom + fTop14) / 2]);
+          for (var gq = 0; gq < pts14.length; gq++) {
+            grabPts++;
+            var hit14 = document.elementFromPoint(gx, pts14[gq][1]);
+            if (hit14 && holdEl.contains(hit14)) grabHit++;
+            else grabNG.push(gName + 'の ' + pts14[gq][0] + ' → ' + who14(hit14));
+          }
+        }
+        setFlier(keep14, true);
+
+        /* ★ 下の線：★板が 相手を 横取り していないか */
+        var padR = grabEl ? grabEl.getBoundingClientRect() : null;
+        grabPad = !!(padR && padR.width > 0 && padR.height > 0);
+        for (var gk = 0; gk < clearList.length; gk++) {
+          var gEl = clearList[gk][1];
+          var gRr = clearRect(gEl, clearList[gk][2]);
+          if (!gRr) continue;
+          grabGuard++;
+          var gHit = document.elementFromPoint(gRr.left + gRr.width / 2, gRr.top + gRr.height / 2);
+          if (gHit && holdEl.contains(gHit)) grabNG.push('★' + clearList[gk][0] + 'の まん中が 盤の 操作に 取られている');
+          else if ((gEl.tagName === 'A' || gEl.tagName === 'BUTTON') && !(gHit && gEl.contains(gHit)))
+            grabNG.push('★' + clearList[gk][0] + 'の まん中を 押しても ' + clearList[gk][0] + 'に 届かない（→ ' + who14(gHit) + '）');
+          if (grabPad) {
+            var gGap = clearGap(padR, gRr);
+            if (grabMin === null || gGap < grabMin) { grabMin = gGap; grabMinWho = clearList[gk][0]; }
+            if (gGap < GRAB_MIN) grabNG.push('★見えない 板が ' + clearList[gk][0] + 'に 近すぎる（' + gGap.toFixed(1) + 'px）');
+          }
+        }
+        if (!grabPts || !grabGuard) grabNG.push('★⑭が 1点も 測れて いない（★見張りの 空回り）');
+      }
+      if (grabNG.length) ng.push('★待っている コマを 押しても 盤に 届かない／板が 横取り：' + grabNG.join('・'));
+    }
+
+    /* ============================================================
+       ⑮ ★★★ 赤い コマ ＝ 押せる（T253-3・🧪トライ T255 🟢-2）★★★
+       ------------------------------------------------------------
+       ★ 前は ロボットの コマが 落ちている 約0.2秒、★コマは もう 赤いのに 押しても 効かなかった。
+       ★ 見方 ①（★いま この 瞬間）：★赤く 見えて いるのに 押せない ＝ NG（★verify の 頭で 読んだ もの）
+       ★ 見方 ②（★4通り）：手番（自分／ロボット）× 落ちている（はい／いいえ）を 作って、
+           ★本物の setFlier() で 色を 出し、★本物の onDown() に 指を 1本 渡して ★受けたかを 見る。
+           ★★「赤」と「受けた」が 1つでも 食いちがったら NG（★赤いのに 押せない／押せるのに 黄色い）。
+         ★ 式を ここに 書き写さない ―― ★onDown の 条件が 変わっても、★setFlier の 色が 変わっても 気づける。
+       ★ 最後に ぜんぶ 元に 戻す（★手番・落ちている・持っている 列・光り）。
+       ============================================================ */
+    var redNG = [], redN = 0;
+    if (red15now && red15now.red !== red15now.can)
+      redNG.push('★いま：' + (red15now.red ? '赤いのに 押せない' : '押せるのに 赤く ない'));
+    if (flierEl && b && playScreen && !playScreen.classList.contains('hidden')) {
+      var k15 = { held: held, busy: busy, turn: turn, over: over, press: press };
+      var combos = [[ME, false, '自分の 番'], [ME, true, '★ロボットの コマが 落ちている'], [BOT, true, 'ロボットの 番'], [BOT, false, 'ロボットの 番（落ちて いない）']];
+      for (var rc = 0; rc < combos.length; rc++) {
+        turn = combos[rc][0]; busy = combos[rc][1]; over = false; press = null; held = null;
+        setFlier(null, true);
+        var red15 = flierEl.classList.contains('me');
+        onDown({ pointerType: 'touch', isPrimary: true, pointerId: 15150 + rc, button: 0,
+                 clientX: inRect ? inRect.left + 1 : 0, clientY: 0, preventDefault: function () {} });
+        var took15 = !!press;
+        press = null;
+        redN++;
+        if (red15 !== took15) redNG.push(combos[rc][2] + '：' + (red15 ? '赤いのに 押せない' : '押せるのに 赤く ない'));
+      }
+      held = k15.held; busy = k15.busy; turn = k15.turn; over = k15.over; press = k15.press;
+      setFlier(held, true);
+      setLanding(held);
+    }
+    if (redNG.length) ng.push('★赤い コマと 押せるかが 食いちがう：' + redNG.join('・'));
 
     var out = {
       '盤': COLS + '列 × ' + ROWS + '段',
@@ -971,6 +1220,8 @@
         (lit || lit4.length || litCSS.length) ? 'NG' : 'OK（穴 1つ・重力どおり・満杯は 0個）',
       '⑤画面に 手数・%・秒 が 無い': badNum ? 'NG' : 'OK',
       '⑥★言っては いけない 言葉が 無い': badWord ? 'NG' : 'OK',
+      /* ★ T253：★名前を「コネクトフォー」に した ときに 足しました。 */
+      '⑫★画面に 古い 名前「四目並べ」が 無い': oldName ? 'NG' : 'OK（字・題・OGP）',
       '⑦盤の 大きさは 定数 2つ': (G.cols === COLS && G.rows === ROWS) ? 'OK' : 'NG',
       /* ★ T130：パソコンだけ 119 → 101px（社長「盤が デカすぎる」）。スマホ 3つは そのまま。 */
       '⑧★寸法が 表どおり': dimNG.length ? 'NG' : 'OK（101 / 50 / 43 / 37px）',
@@ -980,11 +1231,35 @@
         (playScreen && !playScreen.classList.contains('hidden'))
           ? ((inside.length || offscr.length) ? 'NG' : 'OK（7列 ＋ 待ち場所）')
           : '―（遊ぶ 画面で 見てください）',
+      /* ★ T253-2：★顔も 測る 相手に 入れた。★いちばん 近い 所と、★測った 相手の 数を 出す
+         （★「0個 測って OK」を 見分ける ため）。 */
+      '⑬★持っている コマが 顔・名前・ボタンから 8px 以上':
+        (playScreen && !playScreen.classList.contains('hidden'))
+          ? ((clearNG.length || unlisted.length || clearBlind || !clearCount) ? 'NG' : 'OK') +
+            '（いちばん 近い ' + (clearMin === null ? '―' : clearMin.toFixed(1) + 'px ＝ ' + clearWho) +
+            '／相手 ' + clearCount + '個 × ' + (COLS + 1) + 'か所' +
+            (clearOff.length ? '／出ていない：' + clearOff.join('・') : '') + '）'
+          : '―（遊ぶ 画面で 見てください）',
+      /* ★ T253-3：★「測った 点の 数」と「守った 相手の 数」を 出す（★0点 測って OK、を 見分ける）。 */
+      '⑭★待っている コマを 押したら 盤に 届く':
+        (playScreen && !playScreen.classList.contains('hidden'))
+          ? (grabSkip ? '―（' + grabSkip + ' ―― 遊ぶ 画面で 見てください）'
+             : ((grabNG.length || !grabPts || !grabGuard) ? 'NG' : 'OK') +
+               '（届いた ' + grabHit + '／' + grabPts + '点' +
+               '／横取り なし ' + grabGuard + '個' +
+               (grabPad ? '／見えない 板と いちばん 近い ' + (grabMin === null ? '―' : grabMin.toFixed(1) + 'px ＝ ' + grabMinWho)
+                        : (geo.side ? '／★見えない 板：横向きなのに 出ていない' : '／見えない 板：出ていない（たて・PC）')) + '）')
+          : '―（遊ぶ 画面で 見てください）',
+      '⑮★赤い コマ ＝ 押せる':
+        (flierEl && b && playScreen && !playScreen.classList.contains('hidden'))
+          ? (redNG.length ? 'NG' : 'OK') + '（本物の onDown で ' + redN + '通り' +
+            (red15now ? '／いま：' + (red15now.red ? '赤・' : '黄色・') + (red15now.can ? '押せる' : '押せない') : '／いま：コマは 消えている') + '）'
+          : '―（遊ぶ 画面で 見てください）',
       '★4つの 並びが 2つ以上 できた 試合': (r1.twoLines / n * 100).toFixed(1) + '%（最大 ' + r1.maxLines + '本）',
       'かかった時間': ((Date.now() - t0) / 1000).toFixed(1) + '秒'
     };
     if (ng.length) out['NGの中身'] = ng;
-    console.log('[四目並べ] verify', out);
+    console.log('[コネクトフォー] verify', out);
     return out;
   }
 
@@ -1069,6 +1344,14 @@
     resultWrap = $('resultWrap'); resultBox = $('resultBox');
     brandEl = document.querySelector('.brand');
     padEl   = document.querySelector('.topbar-pad');
+    /* ★ T253-3：横向きの「コマの 下」を 受ける 見えない 板（★中身は layout() の 書き置き）。
+       ★ index.html は さわらない（★?v=2 の 行ごと 触らない ため）ので、ここで 1つ 作る。
+       ★ .hold の 中 ＝ ★指は onDown に そのまま 届く。★字は 0文字（⑤⑥⑫の 言葉には 入らない）。 */
+    grabEl = document.createElement('span');
+    grabEl.className = 'grab-pad';
+    grabEl.id = 'grabPad';
+    grabEl.setAttribute('aria-hidden', 'true');
+    holdEl.insertBefore(grabEl, flierEl);
 
     loadLevel();
     fillLevelSelect($('levelTitle'));
@@ -1121,8 +1404,10 @@
   /* ============================================================
      ★ たしかめの 窓口（既存13本と 同じ 作法。★画面には 1つも 出ない）
      ------------------------------------------------------------
-     ★ 名前は YONMOKU。★よその 会社の 商品名は 1文字も 使いません
-       （ルル §9-2：画面・紹介文・タグ・フォルダ名 すべて）。
+     ★ 名前は YONMOKU の まま（★フォルダ名・URL と そろえる。★1文字も 変えない）。
+       ★ 画面の 名前は「コネクトフォー」（T253・2026-09-10 社長の ご指示）。
+       ★★ 前の 書き置き「よその 会社の 商品名は 1文字も 使いません（ルル §9-2）」は
+          ★この 1本だけ 社長の お決めで 上書き（★理由は index.html の 頭に 残して あります）。
      ============================================================ */
   root.YONMOKU = {
     now: now,
