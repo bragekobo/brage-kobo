@@ -1314,13 +1314,25 @@ body:has(.showdown:not(.hidden)) .mine { display:none !important; }
 .mine-heading { display:none; }
 .me-coin      { display:none; }
 
-/* ── ⑨ 勝負（決着）の 画面 ―― 実況の 帯も 消す ─────────────
+/* ── ⑨ 勝負（決着）の 画面 ―― 実況の 文だけ 消す（★T246-5 で 直した）───
    決着の わくの 中に「勝負！」と「◯◯が △△で 勝った」が 大きく 出ている。
-   その すぐ 下で 実況が 同じ ことを もう一度 言っていた。
-   ⚠️ ハッピーは 上の 帯（ポーカーの 名前の となり）に いつも いる ので
-      画面から いなく ならない（設計図 §9.5）。
-   ⚠️ 消えるのは 決着の あいだ だけ。「つぎの ハンドへ」で もどる。 */
-body:has(.showdown:not(.hidden)) .log-row { display:none !important; }
+   その すぐ 下で 実況が 同じ ことを もう一度 言っていた。★消すのは そこ だけ。
+
+   ★★ T246-5（2026-09-10・🎨アト）―― ★ここは まちがって いました。
+     ★ 元は `.log-row { display:none !important }` ＝ ★★ハッピーごと 消して いました。
+     ★ 上の 行に「ハッピーは 上の帯に いる ので 画面から いなく ならない」と 書いて ありますが、
+       ★★上の帯の かおは **看板の 印**で、★ふきだしで 話す 相棒では ありません。
+     ★ そして game.js は 決着の しゅんかん、★ちゃんと ことばを 書いて いました ――
+       ★「やったー！ コイン ◯枚！」「つぎ がんばろ！」「見せないで勝った！ かっこいい」
+       ★「引き分け。コインを 分けたよ」「また あそぼうね」。
+       ★★設計図 §9.5 が 例に あげている まさに その ことばが、★1度も 画面に 出て いませんでした。
+     ★ 【実測・t246_neko2.cjs】★決着（2人）13/13画面・★決着（4人）13/13画面・
+       ★ゲームオーバー 13/13画面 ―― ★★あわせて **39／91マス**で まるごと 消えて いた。
+       ★（★全員 降りた 決着＝ わくが 出ない ときだけ、★前から 出て いました）
+   ⚠️ 消えるのは 決着の あいだ の **実況の 文** だけ。「つぎの ハンドへ」で もどる。
+   ⚠️ たけの 低い たて（320×480・320×454）では、★下の T246-5 の かたまりで
+      ★この 行を **小さい 形**に して 場所を 借りて います。 */
+body:has(.showdown:not(.hidden)) .table-log { display:none !important; }
 
 /* ── ⑩ 実況は 3行 → 2行 ────────────────────────────
    一番 上の 行は「2つ前の できごと」。もう 読みおわっている。
@@ -1500,3 +1512,796 @@ body:has(#overBox:not(.hidden)) .act-coins { display:none; }
    ⚠️ 「つぎの ハンドへ」を おした しゅんかん、いつもの 場所に もどる。
    ⚠️ 遊んでいる 最中の「コイン ◯枚」も、コインの 絵と その となりの 数字も そのまま。 */
 body:has(.showdown:not(.hidden)) .act-coins { display:none; }
+
+/* ============================================================
+   ★ T246 ―― 緑の場を「卓」にする（社長裁定・案B）＋ 横向きの 並べ方（案C）― 🎨アト
+   ------------------------------------------------------------
+   社長の ご指摘：「緑色の場が 小さすぎる。実際の ポーカーは 場に いろいろ 乗っている。
+                  リアルと 同じように 場に 置くものは 置くように」
+   ルルの 実測（T245）：ラシャの 内がわは たけ 26〜30px。伏せ札 1枚も 立てられない 細さ。
+   やったこと：
+     ① 席（ロボット3人）・出したチップ・親の印・自分の手札を ぜんぶ ラシャの上に 乗せた
+        （index.html で .seats と .mine を .board-wrap の 中へ。白い箱は 消した）
+     ② まん中に 山札の置き場（左）・ポット（まん中）・捨て札の置き場（右）
+        ―― 束は うら向き。数字は 出さない（ルル §D）。捨て札の 中身は 💻コーダ
+     ③ 親の印🔘 を 白い円盤「親」に（ことばは 足していない ―― 「親」は もともと 画面に ある）
+     ④ あまった たけは 卓が もらう（ページを 伸ばさず、場だけ 大きく）
+     ⑤ 横向き（はば 561 以上 かつ たけ 480 以下）は 3列：左＝もどる・題・実況、
+        まん中＝卓、右＝かけの ボタン。たてに 積まない ―― はみ出し 0 が ねらい
+   線：字は 1つも 小さく していない／44px の 指の的は 守る／game.js は 1バイトも さわらない
+   ★ たけで 分ける 線は「480px」1本。追記⑥の 11画面＋底で またぐ ものは ない
+     （横向き 272・320・375・390・414・428 は 480 以下、たて 454・480・568・812・844 は はば 320〜390。
+      たて 480 は たけ の 線に 乗るが「はば 561 以上」の 条件で 外れる。式は はばと たけの 両方を 見る）。
+   ============================================================ */
+
+:root { --spot-h:46px; }   /* 山札・捨て札の 置き場（伏せ札と 同じ 大きさ）*/
+
+/* ── ④ ページ：たてに 積んで、あまった たけは 卓が もらう ───────── */
+.app-shell {
+  display:flex; flex-direction:column;
+  min-height:100vh; min-height:100dvh;
+}
+.app-shell > * { flex:0 0 auto; }
+.board-wrap { flex:1 0 auto; }
+
+/* ── ① 卓：木わく＋ラシャの 中に、上辺＝席／まん中／下辺＝自分 ───── */
+.board-wrap {
+  display:flex; flex-direction:column; flex-wrap:nowrap;
+  justify-content:space-between; align-items:stretch;
+  gap:4px;
+  padding:16px 14px 12px;      /* ラシャの わく（inset 9 ＋ 3）の 内がわに 4px */
+}
+
+/* 席 ―― 白い箱を やめて、ラシャの上に 名ふだ・伏せ札・コインふだ・チップ */
+.seats { padding:0; gap:6px; justify-content:space-evenly; align-items:flex-start; }
+.seat {
+  position:relative; flex:1 1 0; max-width:230px; min-width:0;
+  padding:3px 2px 4px; border-radius:16px; border:3px solid transparent;
+  background:transparent; box-shadow:none;
+}
+.seat.is-turn { background:rgba(255,255,255,.28); border-color:var(--pink); }
+.seat-name {
+  display:inline-block; max-width:100%; margin:0 0 2px; padding:1px 9px; border-radius:999px;
+  background:rgba(255,255,255,.94); color:#3f5a70;
+  box-shadow:0 2px 0 rgba(63,90,112,.15); overflow:hidden; text-overflow:ellipsis;
+}
+.seat-coin {
+  display:inline-block; margin:2px 0 0; padding:0 8px; border-radius:999px; line-height:1.3;
+  background:#fff5d8; border:2px solid #f3d98a; color:#7d6321;
+}
+/* 「合わせた」「小がけ」など ―― 緑の上でも 読めるよう こい字＋白の ふち */
+.seat-last { color:#3b3146; text-shadow:0 0 3px #fff, 0 0 2px #fff, 0 1px 0 rgba(255,255,255,.85); }
+.seats .chips { margin-top:3px; }
+
+/* 取りかえバッジ：取りかえの 前は 中身が 空（&nbsp;）なので、ラシャの上に 空の ふだを 見せない。
+   「取りかえの 前か 後か」は 隠してある 進み具合バー（#steps）の 3つめの 印で 読む
+   （子の 5番目 ＝ 3つめの .step。now ＝ 取りかえ中／passed ＝ 取りかえ後）。
+   降りた席は 取りかえないので 出さない。 ⚠️ game.js は さわっていない。 */
+body:not(:has(#steps > .step:nth-child(5).now)):not(:has(#steps > .step:nth-child(5).passed)) .seat-swap,
+.seat.is-folded .seat-swap { display:none; }
+
+/* ── ③ 親の印 ―― 🔘 を 白い円盤「親」に ────────────────────
+   ロボット：伏せ札の 右どなり（ラシャの上）。自分：出したチップの 行の 先頭。
+   🔘 の 文字は font-size:0 で 見せない（消していない ―― 読み上げには 残る）。 */
+.seat-name .btn-mark, .me-tag.btn-mark {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:22px; height:22px; padding:0; margin:0; border-radius:50%;
+  font-size:0; line-height:0;
+  background:#fff; border:2px solid var(--gold);
+  box-shadow:0 2px 0 rgba(122,82,5,.32), 0 0 0 2px rgba(255,255,255,.35);
+}
+.seat-name .btn-mark::before, .me-tag.btn-mark::before {
+  content:'親'; font-size:11px; font-weight:900; color:#7a5205; line-height:1;
+}
+.seat-name .btn-mark {
+  --cards-half:41px;                 /* 伏せ札5枚の はば の 半分（46px → 30.4 + 13×4 ＝ 82.4）*/
+  position:absolute; z-index:2;
+  top:34px; left:calc(50% + var(--cards-half) + 2px);
+}
+.me-tag.btn-mark { flex:0 0 auto; }
+
+/* ── ② まん中：山札 ｜ ポット ｜ 捨て札 ─────────────────── */
+.table-mid {
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  min-height:var(--spot-h);
+}
+.pot-wrap {
+  flex:1 1 auto; min-width:0; max-width:320px;
+  display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
+}
+.pot-wrap .pot { margin:0; flex:0 0 auto; }
+.pot-wrap .chips-slot { margin:0; flex:0 1 auto; min-width:0; }
+.spot {
+  --spot-w:calc(var(--spot-h) * 419 / 635);
+  position:relative; flex:0 0 auto; width:var(--spot-w); height:var(--spot-h);
+  border-radius:4px;
+}
+/* 置き場の 線（ラシャに かいてある 印。ことばでは ない） */
+.spot::before {
+  content:''; position:absolute; inset:-4px; border-radius:7px;
+  border:2px dashed rgba(255,255,255,.42);
+}
+.spot-deck    { transform:rotate(-5deg); }
+.spot-deck::before { display:none; }   /* 山札は 束そのものが 置き場を 言っている。線は 空の 捨て札だけ */
+.spot-discard { transform:rotate(4deg); }
+/* 束の 1枚。枚数ぶん 重ねると 厚みに なる（最大 8枚ぶんの ずれ） */
+.pile-card {
+  position:absolute; left:0; top:0; width:100%; height:100%; border-radius:4px;
+  background:#fff url('../cards/%E3%83%88%E3%83%A9%E3%83%B3%E3%83%97%E8%A3%8F%E8%B5%A4.png') center/cover no-repeat;
+  box-shadow:0 1px 0 rgba(49,41,42,.4), 0 0 0 1px rgba(255,255,255,.3);
+}
+.pile-card:nth-child(2) { transform:translate(1px,-1px); }
+.pile-card:nth-child(3) { transform:translate(2px,-2px); }
+.pile-card:nth-child(4) { transform:translate(3px,-3px); }
+.pile-card:nth-child(5) { transform:translate(4px,-4px); }
+.pile-card:nth-child(6) { transform:translate(5px,-5px); }
+.pile-card:nth-child(7) { transform:translate(6px,-6px); }
+.pile-card:nth-child(n+8) { transform:translate(7px,-7px); }
+
+/* ── 下辺：自分の席 ―― 白い箱を やめる。出したチップ・印は 手札の すぐ上（＝ポット側） ── */
+.mine { margin:0; padding:0; background:none; border:0; border-radius:0; box-shadow:none; }
+.mine-head { justify-content:center; }
+.me-info { justify-content:center; }
+.hand { padding:10px 0 0; }
+
+/* 取りかえの 番：かけの ボタンが 1つも 出ていない ので、「ボタンの すぐ上の コイン」は
+   つく相手が ない（T106 ⓜ と 同じ 理由）。その あいだだけ、自分の コインは
+   ロボットと 同じく ラシャの上の 自分の席（手札の すぐ上）に 出す（.me-coin ―― T105 ⑧ で
+   隠していた ふだ。中身は game.js が ずっと 書いている）。かけの 番に もどれば 元の 場所。
+   ★ これで 320×568 の 取りかえ場面の はみ出し（T106 §7 で 残っていた −36）が 0 に なる。 */
+body:has(#swapPanel:not(.hidden)) .act-coins { display:none; }
+body:has(#swapPanel:not(.hidden)) .me-coin  { display:inline-block; }
+
+/* ── せまい画面（スマホ・たて）────────────────────────── */
+@media (max-width:560px) {
+  :root { --spot-h:34px; }
+  .board-wrap { padding:10px 10px 7px; gap:3px; }
+  .me-tag { line-height:1.2; }
+  .seat-coin { line-height:1.2; }
+  .seats { gap:4px; }
+  .seat { padding:2px 1px 3px; border-width:2px; border-radius:12px; }
+  .seat-name { padding:0 6px; }
+  .seat-name .btn-mark { --cards-half:31px; width:18px; height:18px; top:26px; }
+  .seat-name .btn-mark::before { font-size:9.5px; }
+  .me-tag.btn-mark { width:20px; height:20px; }
+  .seat-coin { padding:0 6px; }
+  .table-mid { gap:8px; }
+  .pot-wrap { gap:8px; }
+  .hand { padding-top:8px; }
+}
+@media (max-width:380px) {
+  .seats { gap:3px; }
+  .seat { padding:2px 0 3px; }
+  .seat-name { padding:0 3px; max-width:none; overflow:visible; }
+  .seat-name .btn-mark { left:calc(50% + var(--cards-half) - 3px); }
+  .seat-swap { padding:1px 4px; max-width:none; overflow:visible; }
+  .seat-swap.is-zero { position:relative; z-index:2; padding:1px 1px; letter-spacing:-.05em; }
+  .hand { padding-top:4px; }
+}
+
+/* ============================================================
+   ⑤ 案C ―― 横向き（はば 561 以上 かつ たけ 480 以下）は 3列に ならべる
+   ------------------------------------------------------------
+   たてに 積むと 620px で、窓 272〜428px に 入らない（ルル実測 −182〜−338）。
+     左  ＝ もどる ／ 題 ／ 今どこ ／ ハッピー＋実況 ／ 役の強さ
+     中  ＝ 卓（上から 下まで ぜんぶ）
+     右  ＝ コイン ＋ かけの ボタン（たてに 4つ）／取りかえ／つぎのハンドへ
+   上の帯（.topbar）は display:contents で ほどいて、3つの 子を 別の マスに 置く。
+   レイズの パネルは 右の列から 左へ 浮かせる（卓の 上に かぶさる）。
+   役の一覧は 左下の ボタンから 上へ 浮かせる（2列）。
+   ============================================================ */
+@media (min-width:561px) and (max-height:480px) {
+  :root { --card-w:46px; --spot-h:34px; --side-l:126px; --side-r:128px; }
+  .seat-back { --back-h:34px; --back-step:10px; }
+
+  .app-shell {
+    display:grid; max-width:none;
+    grid-template-columns:var(--side-l) minmax(0,1fr) var(--side-r);
+    grid-template-rows:auto auto auto minmax(0,1fr) auto;
+    grid-template-areas:
+      "back  table act"
+      "brand table act"
+      "chip  table act"
+      "log   table act"
+      "ranks table act";
+    gap:6px 8px; padding:6px 8px;
+    min-height:100vh; min-height:100dvh; align-items:stretch;
+  }
+  .topbar { display:contents; }
+  .back  { grid-area:back;  justify-self:start; align-self:start; padding:0 8px; }
+  .brand { grid-area:brand; justify-content:flex-start; }
+  .stage-chip { grid-area:chip; justify-self:start; align-self:start; }
+  .log-row {
+    grid-area:log; align-self:start; margin:0;
+    flex-direction:column; align-items:stretch; text-align:center; gap:4px; padding:5px 8px 6px;
+  }
+  .log-row .happy-wrap { margin:0 auto; }
+  .log-row .happy-bubble, .log-row .table-log { text-align:center; }
+  .ranks { grid-area:ranks; align-self:end; margin:0; position:relative; }
+  .ranks-toggle { padding:8px 6px; }
+  /* 役の一覧は ボタンから 上へ 浮かせる（ページを のばさない・2列） */
+  .ranks-box {
+    /* 窓に 貼りつける（左の列の 右どなり・下そろえ）。ボタンは 左下に 見えたまま ―― 閉じる道を ふさがない。
+       たけ 272 でも 上に はみ出さない（max-height は 窓から 数える） */
+    position:fixed; z-index:60; left:calc(var(--side-l) + 16px); right:8px; bottom:8px;
+    width:auto; max-width:560px; max-height:calc(100vh - 16px); overflow:auto;
+    margin:0; box-shadow:0 6px 0 rgba(196,155,110,.16), 0 14px 28px rgba(122,82,5,.18);
+  }
+  .ranks-list { display:grid; grid-template-columns:1fr 1fr; gap:3px 8px; }
+
+  /* 卓：上から 下まで */
+  .board-wrap {
+    grid-area:table; min-height:0; margin:0;
+    border-width:4px; border-radius:20px;
+    padding:11px 10px 9px; gap:3px;
+  }
+  .board-wrap::before { inset:7px; border-width:2px; border-radius:12px; }
+  .seats { gap:3px; }
+  .seat { padding:2px 0 3px; border-width:2px; border-radius:12px; }
+  .seat-name { padding:0 4px; max-width:none; overflow:visible; }
+  /* 取りかえバッジ「4枚 取りかえた」が 席（内がわ 80px）に ぎりぎり。切らずに 出す。
+     「取りかえなかった！」（9字）は 席より 広いので、字間を 少し つめて 上に 重ねる（字は 同じ 大きさ） */
+  .seat-swap { padding:1px 4px; max-width:none; overflow:visible; }
+  .seat-swap.is-zero { position:relative; z-index:2; padding:1px 1px; letter-spacing:-.05em; }
+  .seat-name .btn-mark { --cards-half:31px; width:18px; height:18px; top:26px; }
+  .seat-name .btn-mark::before { font-size:9.5px; }
+  .me-tag.btn-mark { width:20px; height:20px; }
+  .seat-coin { padding:0 6px; }
+  .table-mid { gap:8px; }
+  .pot-wrap { gap:8px; }
+  .hand { gap:3px; padding-top:8px; }
+  .card.is-pick { transform:translateY(-8px); }
+
+  /* 決着の わくは 卓と 同じ マス（同時には 出ない）。長い ときは 中で 送る */
+  .showdown { grid-area:table; min-height:0; max-height:calc(100vh - 10px); max-height:calc(100dvh - 10px); overflow:auto; margin:0; }
+  /* ↑ max-height が 無いと、決着の わくの 中身の たけが そのまま マスの たけに なり、底で 8px はみ出た【実測・案2】 */
+
+  /* 右：コイン ＋ かけの ボタン（たてに）*/
+  .act {
+    grid-area:act; align-self:end; margin:0; min-width:0;
+    display:flex; flex-direction:column; align-items:stretch;
+  }
+  .act-coins { margin:0 0 5px; align-self:flex-start; max-width:100%; }
+  .act-row { flex-direction:column; gap:5px; }
+  .act-btn { flex:0 0 auto; width:100%; min-height:48px; padding:4px 5px; }
+  .act-btn b { font-size:15px; }
+  .act-btn small { font-size:10px; }
+  .swap-panel { padding:8px 8px 9px; }
+  .swap-btn { min-height:48px; font-size:15px; }
+  .next-hand { min-height:52px; font-size:15.5px; }
+  .over-box { padding:10px 8px; }
+  /* レイズの パネル：右の列から 左（卓の上）へ 浮かせる */
+  .raise-panel {
+    left:auto; right:calc(100% + 8px); bottom:0; width:min(400px, calc(100vw - var(--side-r) - 40px));
+    padding:8px 10px 9px; gap:5px 9px;
+    grid-template-columns:minmax(0,1fr) minmax(112px,150px);
+    grid-template-areas:"title note" "step ok";
+  }
+  .raise-panel .raise-title { text-align:left; white-space:normal; }
+}
+/* 横向きで はばに 余裕が ある ときは、左右の 列を 広く・札を 大きく */
+@media (min-width:700px) and (max-height:480px) {
+  :root { --card-w:52px; --side-l:160px; --side-r:170px; }
+  .seats { gap:6px; }
+  .seat-name { padding:0 8px; }
+  .hand { gap:4px; }
+}
+@media (min-width:880px) and (max-height:480px) {
+  :root { --side-l:190px; --side-r:200px; }
+  .act-btn b { font-size:16px; }
+}
+/* たけ 320 以下（SE初代の横向き・底）：すきまだけ つめる。字も 札も 小さく しない。
+   今どこ（かけ①…）の ふだは 出さない ―― はば 380 以下で すでに 同じ 扱い（ボタンと
+   パネルが 今どこかを 言っている）。 */
+@media (min-width:561px) and (max-height:320px) {
+  .app-shell { gap:4px 8px; padding:5px 8px; }
+  .stage-chip { display:none; }
+  .ranks-toggle { padding:6px 4px; }
+  .seat-name .btn-mark { left:calc(50% + var(--cards-half) - 3px); }
+  .board-wrap { padding:7px 8px 5px; gap:1px; }
+  .seat { padding:0 0 1px; }
+  .me-tag { line-height:1.2; }
+  .seat-coin { line-height:1.2; }
+  .chips { --chip-step:calc(var(--chip-w) * .16); }
+  .seat-name { margin-bottom:1px; }
+  .seat-cards { padding-top:1px; }
+  .seat-swap, .seat-coin { margin-top:1px; }
+  .seats .chips { margin-top:1px; }
+  .hand { padding-top:3px; }
+  .card.is-pick { transform:translateY(-6px); }
+  .act-row { gap:4px; }
+  .act-btn { min-height:46px; }
+  .act-coins { margin-bottom:4px; }
+  .log-row { padding:3px 6px 4px; gap:2px; }
+}
+/* 底（568×272）だけ：実況の 1行を しまう。
+   左の列は はば 126px で、「ロボット2が 小がけ 5 ／ ロボット3が 大がけ 10」が 4行に 折り返して
+   150px に なり、卓を 27px 押し出していた【実測】。この 1行の 中身は 席に 出ている
+   （「小がけ」「大がけ」の 字と 出したチップ ―― T106 ⓖ と 同じ 理由）。
+   ハッピーの ふきだしは 残す（§9.5）。★ 線は 280px：底 272 と SE横 320 の あいだで、11画面＋底の
+   どれにも 乗らない。 */
+@media (min-width:561px) and (max-height:280px) {
+  #tableLog { display:none; }
+  /* 卓の中の 1px の すきまも 返す。ロボットの 伏せ札と 置き場は 34 → 30px（かざりの 側。
+     自分の 手札（押す札）は 46px の まま） */
+  .seat-back { --back-h:30px; --back-step:9px; }
+  :root { --spot-h:30px; }
+  .seat-name { margin-bottom:0; }
+  .seat-cards { padding-top:0; }
+  .seat-swap, .seat-coin, .seat-bet, .seat-last { margin-top:0; }
+  .seats .chips { margin-top:0; }
+  .seat-name .btn-mark { --cards-half:28px; top:22px; }
+}
+
+/* ============================================================
+   ★ T246-2 ―― 💻コーダの 見張り（verify.js）が 見つけた 4件を 直す ― 🎨アト
+   ------------------------------------------------------------
+   見つけたのは 私では ありません。コーダが 新しく 作った verify.js が
+   13画面 ぜんぶで 鳴らしました【実測・verify13_mae.json】：
+     ① a.back        119×38 …… 13画面 ぜんぶ
+     ② #btnRanks     ○○×42 …… 10画面（横向きの せまい 列では 2行に 折れて 55〜59px。そこは 鳴らない）
+     ③ .step-btn     40・43px（はば）… 4画面（320×568・320×480・320×454・375×812）
+     ④ ★★「＋10」の まん中を さすと「決定」に 当たる … 横向き 7画面 ★これは 故障
+
+   ★ ④が なぜ 起きていたか（実測・812×375）
+     レイズ窓は 横向きで 2列の grid：「見出し｜文」「数の増減｜決定」。
+     数の増減の マスは grid-template-columns の minmax(0,1fr) で **215px**。
+     ところが 中身（−10 −1 [数] ＋1 ＋10 ＋ すきま4つ）は **286.6px**。
+     minmax(0,…) は 中身より 小さく なれる ので、はみ出した ぶんが
+     左右に 35.8px ずつ こぼれ、右の こぼれの 上に「決定」が 乗っていた。
+     ＝ 「＋10」は 見えているのに、まん中を 押すと「決定」が 押される。
+     ★ 数字は 静かでした（はみ出し 0・44px 割れ 0）。**重なりは 大きさでは 出ません。**
+
+   ★ 直し方の 選び方（④）
+     窓を 広げて 1行の まま 直すには **434px** 要る【計算：26＋287＋9＋112】。
+     でも 窓の はばは min(400px, 100vw − 右の列 − 40px) で、568px の 画面では
+     398px しか 取れない。**広げる道は 無い。** そこで 行を 分けた。
+   ============================================================ */
+
+/* ── ①② 押す ところの 大きさを 44px に（見た目の 箱そのものを）──────
+   T106 ⓘ は「::after で さわれる 場所だけ 44px に のばす」やり方でした。
+   さわれる 場所は たしかに 44px です【実測：±21.5px の 5点 すべて ボタンに 当たる】。
+   ★ でも 見張りは 箱を 測ります。そして 遊ぶ人の 指も、**見えている 箱**を ねらいます。
+   ★ 箱を 44px に して、::after は やめる ―― 見えている 大きさと さわれる 大きさを
+     同じに する。こうすると、あとで 誰かが 小さく したとき、見張りが ちゃんと 鳴る。
+   ★ 代金は 0 に する：ふえた ぶん（◀ は 6px・役の強さは 2px）を
+     ちょうど 同じだけ 負の margin で 返す。**ページの たけは 1px も 変わらない**
+     （T106 ⓘ が 気にしていた「下が おされる」を、そのまま 引きつぐ）。 */
+.back {
+  min-height:44px;
+  margin-block:-3px;   /* 44 − 38 ＝ 6 を 上下に 返す */
+}
+.ranks-toggle {
+  display:flex; align-items:center; justify-content:center;
+  min-height:44px;
+  margin-block:-1px;   /* 44 − 42 ＝ 2 を 上下に 返す */
+}
+/* もう 要らない ―― 箱そのものが 44px に なった。
+   残して おくと、箱が 小さく なっても 見張りが 鳴らない（穴が 隠れる）。 */
+.back::after, .ranks-toggle::after { content:none; }
+
+/* ── ③ レイズ窓の 数の増減：せまい 画面でも はば 44px ───────────
+   380px 以下では min-width:40px でした（−1・＋1 が 40px、−10 が 43px）。
+   320px の 画面で 入るか 数える：44＋44＋66（数の わく）＋44＋45.1 ＋ すきま4つ×6
+   ＝ **267.1px**。マスは **276px**【実測】。8.9px あまる ―― 字も すきまも
+   小さく せずに 入る。 */
+@media (max-width:380px) {
+  .step-btn { min-width:44px; }
+}
+
+/* ── ④ 横向き：「数の増減」と「決定」を 別の 行に ────────────────
+   1行に 並べると マス 215px に 中身 286.6px で、35.8px はみ出して
+   「決定」の 下に もぐって いた【実測】。行を 分けると 数の増減は
+   窓の はば いっぱい（374px）を もらう ―― もう こぼれない。
+   ★ 字も ボタンの 大きさも 変えて いない。並べ方だけ。
+   ★ 「決定」は 横いっぱいに なるので、押す ところは 逆に 大きく なる。 */
+@media (min-width:561px) and (max-height:480px) {
+  .raise-panel {
+    grid-template-columns:minmax(0,1fr) minmax(112px,150px);
+    grid-template-areas:
+      "title note"
+      "step  step"
+      "ok    ok";
+    gap:4px 9px;
+  }
+  .raise-panel .raise-stepper { justify-content:center; }
+}
+
+/* ── ③の 続き ―― 「ぽん」と 出る 動きが、160ms のあいだ ボタンを 44px より
+   小さく していた ─────────────────────────────────────────
+   ★ 見張りを 疑う前に、自分の 壊し方を 疑いました。
+     min-width:44px に した あとも、見張りは **43.3px** と 鳴りつづけました。
+     私の 道具は「動きが 終わってから」測るので 44.0px。見張りは 出た しゅんかんに 測る。
+     計算すると 44 × 0.985 ＝ 43.34 ―― raise-pop の scale(.985) と ぴったり 合いました。
+   ★ ＝ 見張りが 早すぎたのでは なく、**出て すぐの 160ms は 本当に 43.3px** でした。
+     その 160ms に 指が 着いたら、44px を 割った ボタンを 押す ことに なります。
+   ★ だから 動きの ほうを 直す：ちぢめる のを やめ、下から 上がる ＋ 消え入る だけに する。
+     「ぽん」と 出る 感じは 残る（translateY 9px ＋ opacity）。字も 大きさも 変えて いない。 */
+@keyframes raise-pop {
+  from { opacity:0; transform:translateY(9px); }
+  to   { opacity:1; transform:none; }
+}
+
+/* ============================================================
+   ★ T246-3 ―― 決着の わくに「ふた」を する（社長のお決め「1 ＝ 直す」）― 🎨アト
+   ------------------------------------------------------------
+   ★ T246-2 の 私は「4人 ぜんぶが 札を 見せると **約168px はみ出す**【計算】」と 書きました。
+   ★ 社長に「測っていない」と 見ぬかれ、★★本当に その 場面を 出して 測りました。
+
+   ★ どうやって 出したか（道具 t246_yonin.cjs）
+     POKER.seed(S) を 種 1〜40・1種 60ハンド ＝ **2400ハンド** 回し、
+     「降りて いない 行」が 4つに なる ところを さがしました。
+     人の 手は いつも コール／チェック（T246-2 と 同じ 遊び方）。押すのは 本物の ボタン。
+       降りて 決着 516（21.5%）／2人 1810（75.4%）／3人 71（3.0%）／★**4人 3（0.125%）**
+     ★ ＝ **800ハンドに 1回**（ルルの 見立て「500に1回」と 同じ けた）。
+     ★ いちばん 早いのは **種16 の 1ハンドめ**。ここで 13画面 ぜんぶ 測りました。
+
+   ★ 測った 数（直す前・yonin_mae.json）―― ★★私の【計算】は まちがって いました
+     | 画面        | わく  | ページ | はみ | 「つぎの ハンドへ」 |
+     | 320×568     | 406.9 |  592  | ★ 24 | 窓の中（−35.1）      |
+     | 320×480     | 406.9 |  592  | ★112 | ★★**窓の外 ＋52.9** |
+     | 320×454     | 406.9 |  592  | ★138 | ★★**窓の外 ＋78.9** |
+     | 横向き 5画面 |  −    |   −   | ★  2 | 窓の中（−4）         |
+     | 568×320・568×272・390×844・375×812・PC | − | − | 0 | 窓の中 |
+     ★ 168px では なく **24／112／138px**。★★2画面で ボタンが 本当に 窓の外に 出ました
+       ―― 追記③「触る所が 画面の 外に 出たら、それは 見切れでは なく **故障**」。
+
+   ★ そして ★★T246-2 で 私が 書いた「1行で 直る」も まちがいでした。
+     `.showdown { max-height:calc(100dvh - 20px) }` は 320×454 で 434px。
+     でも わくに 使える たけは **268.9px** しか ありません（上の帯・かけボタン・
+     役の強さで 185.1px 使う）。★★あの 1行では **1pxも 直りません**。
+
+   ★ 正しい 直し方 ―― 「あまった たけを わくに 渡す」を、逆に する
+     T246 ④ で ページは たての flex（`.app-shell`・`min-height:100dvh`）に して あり、
+     子は ぜんぶ `flex:0 0 auto`（ちぢまない）。だから 中身が 増えると ページが のびる。
+     ★ 決着の あいだ だけ、
+        ・ページの たけを **100dvh に 固定**（min-height → height）
+        ・**決着の わく だけ** ちぢんで よい（`flex:0 1 auto` ＋ `min-height:0`）
+        ・あふれた ぶんは **わくの 中で 送る**（`overflow:auto`）
+     ★ ＝ 横向きに もう ある つくりと 同じ 形を、たてにも 置いただけです。
+     ⚠️ ふだんの 画面は 1px も 小さく なりません（ちぢむのは 入りきらない ときだけ）。
+     ⚠️ 決着の あいだ だけ。「つぎの ハンドへ」を おせば 全部 もどります。
+     ⚠️ 字は 1px も 小さく していません。消した 情報も ありません。
+
+   ★ 線は 新しく 引いて いません（追記⑥ の 決まり2）
+     使ったのは すでに ある 横向きの 線「はば≧561 かつ たけ≦480」の **裏返し**
+     ―― `(max-width:560px), (min-height:481px)`。★11画面＋底＋PC の どれも またぎません。
+   ============================================================ */
+
+/* ── たて（＝ 横向きの 3列 では ない とき）に、ふたを する ───────── */
+@media (max-width:560px), (min-height:481px) {
+  body:has(.showdown:not(.hidden)) .app-shell {
+    height:100vh; height:100dvh; min-height:0;
+  }
+  body:has(.showdown:not(.hidden)) .showdown {
+    flex:0 1 auto; min-height:0; overflow:auto;
+  }
+}
+
+/* ── 横向きの ふたが 2px 足りなかった ───────────────────────
+   `max-height:calc(100dvh - 10px)`（T246・style.css 約1744行）は、
+   `.app-shell` の 上下の 余白が **5px＋5px＝10px** の ところ（たけ≦320）に
+   合わせた 数でした。★たけ 321〜480 では 余白が **6px＋6px＝12px** なので、
+   ★★2px ぶん はみ出して いました【実測：812×375 で ページ 377／窓 375】。
+   ★ 余白と 同じ 数に そろえます。★ふだんの 画面は 変わりません。 */
+@media (min-width:561px) and (max-height:480px) {
+  .showdown { max-height:calc(100vh - 12px); max-height:calc(100dvh - 12px); }
+}
+@media (min-width:561px) and (max-height:320px) {
+  .showdown { max-height:calc(100vh - 10px); max-height:calc(100dvh - 10px); }
+}
+
+/* ============================================================
+   ★ T246-4 ―― レイズを 決める しゅんかん、「ポット」を 見えるように する
+                （社長のお決め・T246-3 §8-7 の 案）― 🎨アト
+   ------------------------------------------------------------
+   ★ 何が 起きて いたか（★私が 作った 穴です）
+     T246-2 の ④ で レイズ窓を 98 → 147px に 広げました。
+     その ぶん 窓が 上に のび、★たけ≦320 の 横向きで **卓の まん中「ポット ◯」を
+     ふさいで** いました。★直す前は 0% でした ―― ★★私が 82%・100% に しました。
+
+   ★ なぜ まずいか（数）【実測・道具 t246_pot.cjs／t246_pot2.cjs】
+     ・568×320（iPhone SE 初代の 横向き ＝ 本物の 端末）… ポットの 字が **81.9% かくれる**
+     ・568×272（底）……………………………………………… **100% かくれる**
+     ・★★かけ②（取りかえの あと）では、席の かけ金が 4人とも 0 に もどる ので、
+       ★「いくら 賭かって いるか」は **ポットの 1か所 だけ** にしか 出て いません。
+       ★ それが「レイズを 決める まさに その 瞬間」に 消えて いました。
+       ★ 設計図 §5.5-③「画面が 教える（強さを 計算させない）」の 逆。
+
+   ★ どう 直すか ―― 「下の すきま」を、窓が 開いて いる あいだ だけ 上に 詰める
+     卓は `justify-content:space-between` で 席・まん中・手札を 上下に 散らして います。
+     ★ レイズ窓が 開いて いる あいだ、**手札は もともと 100% かくれて 使えない**
+       （＝ 卓の 下 3分の1は 死んで いる）。
+     ★ そこで `flex-start` に して、あまった すきまを ぜんぶ 下に 集める。
+       ★ 席は 動かず、まん中（ポット）だけが 窓の 上に 出て きます。
+     ⚠️ 窓を とじれば ぜんぶ もどります。字は 1px も 小さく していません。
+     ⚠️ 消した 情報は ありません。待ち時間も 1ms も 足して いません
+        （★`justify-content` は 動きの つかない 決まりなので、**うつり変わりは 0ms**）。
+
+   ★ 線は 新しく 引いて いません（追記⑥ の 決まり2）
+     `(min-width:561px) and (max-height:320px)` は **すでに この ファイルに 2か所 ある** 線
+     （.raise-panel の 並べ方・.showdown の ふた）。★13画面の どれも またぎません
+     （★たけ：272・320 が 中／375 以上は 外）。
+
+   ★ 直した あと（★実測・種7 の かけ①・レイズ窓を 開いた 状態）
+     | 画面            | ポット かくれ | コインの山 | はみ | よこ送り |
+     | 568×320 SE初代よこ | 81.9% → ★0%  | 85.4% → 0% |  0  | なし |
+     | 568×272 底        | 100% → 82.6% | 100% → 85.8% | 0 | なし |
+     | ほかの 5つの 横向き | 0% → 0%（★1数字も 変わらない）| 0% → 0% | 0 | なし |
+
+   ★★ 正直に 言う こと（★社長は これを 読んだ うえで お決めに なりました）
+     ① ★**底（568×272）は これでも 直りません**（100% → 82.6%）。
+        窓 272px の うち レイズ窓が 147px（54%）。上に 残るのは 120px。
+        そこに 席（97.6px）＋ ポットの 行（31px）＋ すきま ＝ 130px 以上は 入りません。
+        ★ ＝ ここは「**できません**」（追記⑤-①）。追記③ の「静かに 見切れる」に なります。
+     ② ★**レイズを 押した しゅんかん、卓の 中身が 少し 上に 動きます**（★動く量は 作業メモに 数字）。
+   ============================================================ */
+
+@media (min-width:561px) and (max-height:320px) {
+  body:has(#raisePanel:not(.hidden)) .board-wrap { justify-content:flex-start; }
+}
+
+/* ============================================================
+   ★ T246-5 ―― ①決着でも ハッピーを 消さない ②捨て札の 点線わく
+                ③320×480・320×454 の はみ出し（社長のお決め「直す」）― 🎨アト
+   ------------------------------------------------------------
+   ★ ① は 上の ⑨（style.css 約1330行）で 直しました。ここは その 代金の 置き場です。
+
+   ★★ ② 捨て札の 束の 上に 点線わくが 残る（💻コーダが 見つけて くれました・T248 §6-③）
+     ★ 置き場の 点線は「ここに 置く」を 言う 印です。★束が 乗った あとは、
+       ★★束そのものが「ここに 置いた」を 言って いる ので、線は 役目を 終えて います。
+     ★ 山札（.spot-deck）は 前から 同じ 考えで 線を 消して あります（style.css 約1620行）。
+       ★★同じ まん中の 行に、★線の ある 置き場と 無い 置き場が ならんで いたのは ちぐはぐでした。
+     ★ 【絵で 見つけた もの】写真 `T248_写真_コーダ\e\926x428_捨て札9枚_束8.png`：
+       ★★白い 点線が うら札の 赤の まわりに 光の わのように 出て、★★★刷りまちがいに 見えます。
+     ⚠️ **0枚の ときは 線を 残します** ―― そこが「これから たまる 場所」だと 分かる ため。
+
+   ★★ ③ たけの 低い たて 2画面（320×480・320×454）の はみ出し
+     ★ 直す前【実測・t246_hakaru.cjs・種7】
+       | 画面     | かけ① | 取りかえ5枚 | かけ② | 決着 | 押すもの外 |
+       | 320×480 |  39  |    78    |  75  |  0  |   15.8   |
+       | 320×454 |  65  |   104    | 101  |  0  |   41.8   |
+     ★ **できない こと**（★先に 書きます）
+       ・字を 小さく する … 会社の 床は 11px（§9.6）。★9.5px は もう 床すれすれ
+       ・情報を 消す ……… 役の強さ・コイン・かけの ボタンは どれも 遊びに 要る
+       ・★★**緑の場を 小さく する** … 46.9%（320×480）は T246 の 成果そのもの。
+         ★★★ここを 削ったら「場を 大きく」の お求めを 自分で こわします
+     ★ **だから 使えるのは 余白と すきま と「実況の行の 作り」だけ**です。
+       ★ 実況の行（.log-row）は たけ **61px**。★その うち かおが 42px（36＋名ふだの ぶん 6）。
+         ★★この 2画面 だけ、かおを 26px に して 名ふだを しまい、実況の 文も しまいます。
+         ★ **ハッピーは 消しません**（★§9.5・★①で 決着にも 出す ように した ばかりです）。
+         ★ 実況の 文を しまう のは、★底（568×272）で 前から やって いる のと 同じ 手です
+           （style.css §3-5・T246）。★中身は 席の ふだ（「降りた」「小がけ 5」）が 言って います。
+
+   ★ 線（追記⑥ の 決まり2 ―― 13画面の どれかを またがないか 数えました）
+     `(max-width:380px) and (max-height:480px)`
+     ★ 当たる：320×480 ／ 320×454　★の 2つだけ
+     ★ 外れる：320×568(たけ568)・390×844(はば390)・375×812(たけ812)・
+              812×375/667×375/844×390/736×414/926×428/568×320/568×272(はば561以上)・1280×800
+     ★ **はば 380 と たけ 480 の 線は、どちらも すでに この ファイルに ある もの**です
+       （`@media (max-width:380px)` 約378行 ／ `max-height:480px` 約1690行）。新しい 線では ありません。
+   ============================================================ */
+
+/* ── ② 捨て札：束が 乗ったら 点線わくは しまう（0枚の ときは 出す）───── */
+.spot-discard:has(.pile-card)::before { display:none; }
+
+/* ── ③ たけの 低い たて 2画面 だけ：余白と 実況の行を つめる ───────── */
+@media (max-width:380px) and (max-height:480px) {
+  /* ページの 下の 余白（22 → 3）。★上は さわらない */
+  .app-shell { padding-bottom:3px; }
+
+  /* かたまりと かたまりの すきま 5 → 2 */
+  .topbar   { margin-bottom:2px; }
+  .log-row  { margin-top:2px; }
+  .act      { margin-top:2px; }
+  .ranks    { margin-top:2px; }
+
+  /* ★★ 卓（.board-wrap）には 1px も さわりません ―― ★理由は 上の 見出しに 書いた とおり、
+     ★★緑の場を 小さく したら「場を 大きく」の お求めを 自分で こわす から。
+     ★ 1度 木わくの 内がわを 8/6 に つめて 測ったら、★★320×454 の 緑の場が
+       ★49.6% → 48.9% に **下がりました**【実測・sunpo_T246_5後.json】。★★戻して います。 */
+
+  /* 実況の行 ―― ★ハッピーは 残す。★小さくして、名ふだと 実況の 文を しまう */
+  .log-row { padding:3px 8px 4px; border-width:2px; gap:7px; }
+  .log-row .happy-wrap { width:34px; padding-bottom:0; }
+  .log-row .happy-cat  { height:26px; }
+  .log-row .happy-name { display:none; }
+  .log-row .table-log  { display:none; }
+  .log-row .happy-bubble { margin-bottom:0; }
+}
+
+/* ============================================================
+   ★ T246-6 ―― ①レイズを 決める しゅんかん、自分の 手札を 見えるように する
+                ②ゲームオーバーで 自分の 5枚が 消えるのを 直す
+                （社長のお決め「1 ＝ 直す」・🧪トライ T249 §F-1／§F-2）― 🎨アト
+   ------------------------------------------------------------
+   ★★ まず 数え直しました（★私の T246-2 §7-4(あ)「横向きだけ・元から」は まちがいでした）
+
+   ★ 13画面・種7・かけ①・レイズ窓を 開けた ところ・★動きが 止まってから・★人が 遊ぶ 速さ
+     （★早送りは 使って いません。★本物の 指で「レイズ ▾」を 押して います）
+     ★ 測り方は 2つ：①わくの かさなり（トライと 同じ 出し方）②★絵で 見る（札の 上に 35点）
+     ★ ★2つとも ほぼ 同じ 数に なりました（★道具 t250a_kazoe.cjs）。
+
+     | 画面      | 前(T246まえ) | T246-2 | T246-4 | いま(T246-5) |
+     |-----------|-------------|--------|--------|--------------|
+     | 320×568   | 35.9 ※     |  57.4  |  57.4  |  57.4        |
+     | 320×480   | 35.9 ※★   |  57.4  |  57.4  | ★**100**     |
+     | 320×454   | 35.9 ※★   |  57.4  |  57.4  | ★**100**     |
+     | 375×812   | 35.9 ※     |  57.4  |  57.4  |  57.4        |
+     | 390×844   | 31.7 ※     |  50.8  |  50.8  |  50.8        |
+     | 812×375   |  0 ※★     |  100   |  100   |  100         |
+     | 667×375   | 92 ※★     |  100   |  100   |  100         |
+     | 844×390   |  0 ※★     |  100   |  100   |  100         |
+     | 736×414   |  0 ※★     |  100   |  100   |  100         |
+     | 926×428   |  0 ※       |  100   |  100   |  100         |
+     | 568×320   | 19.6 ※★   |  100   |  90.8  |  90.8        |
+     | 568×272   | 67.6 ※★   |  100   |  100   |  100         |
+     | 1280×800  |  0          |    0   |    0   |    0         |
+     ※ …「前」は ページが **15〜314px はみ出して** いて、★★13画面中 8画面で
+        「レイズ ▾」が 指で 押せません でした（★印）。★★★くらべる 土台に なりません。
+        ＝「元から こうだった」とは 言えず、「★元は もっと ひどかった」が 正しい。
+
+   ★★ 正直に 書く こと（★私の 作った 穴が 1つ ありました）
+     ★ **320×480・320×454 の 100% は、★★私の T246-5 の 直しで そうなりました**
+       （57.4% → 100%）。★あの とき すきまを 40px つめたので、★ボタンが 33px 上がり、
+       ★★レイズ窓も いっしょに 33px 上がった。★手札は 3px しか 動いて いません。
+     ★ トライの「12画面中 10画面」は、★私の 数え直しでは **13画面中 9画面**（90.8%以上）。
+       ★★どちらにしても「横向きだけ」では ありません。★★★私が 見落として いました。
+
+   ------------------------------------------------------------
+   ★★ どう 直したか ―― 「窓を 動かす」ではなく「★卓を 上に 寄せる ＋ 窓を うすくする」
+
+   ★ 先に 消した 道（★数で 落として います）
+     ・★窓を 卓の 上（席の 上）へ 動かす … 手札は 0% に なるが、★★席が 100%・
+       ★ポットが 43〜100% かくれる【実測・案4／案5】。★ポットは 社長が T246-4 で
+       「レイズを 決める まさに その 瞬間に 隠れる」と 指された ところ。★入れ替えるだけ。
+     ・★窓を 1行に する … ★★「＋10」と「決定」が 1.8〜31.8px かぶる【実測・t250d】。
+       ★T247 が 見つけて T246-4 で 直した 穴を、自分で 開け直す ことに なる。
+
+   ★ 入れた もの（★4つ）
+     ① 窓が 開いて いる あいだ、卓の 中身を 上に 寄せる（justify-content:flex-start）
+        ★ T246-3 で「たけ≦320 の 横向き」だけに 入れた 手を、★13画面ぜんぶに 広げる。
+        ★ 窓が 開いて いる あいだ、卓の 下 3分の1は どうせ 窓の 下。★そこを あける。
+        ★ うつり変わりは 0ms（justify-content は 動きの つかない 決まり）。窓を とじれば 戻る。
+     ② 横向き（はば700以上）：窓を 3行 → 2行（147px → **97px**）。
+        ★ かぶりを 作らない ように「決定」の マスを 112〜132px に 決めた
+          ―― ★数：窓 460px・中みの はば 436px。「数の増減」は 288px 要る。
+             436 − 132 − 9 ＝ **295px** ≥ 288 ★→ ちぢまない ＝ かぶらない【実測 0件】。
+     ③ せまい たて（320×480・320×454）：窓を 4行 → 3行（147px → **129px**）。
+        ★ 「見出し」と「合計の 文」を 1行に。★字は 1px も 小さく していない。
+        ★ ★44px は 割って いない（46 → 44 ぴったり）。
+     ④ はば 561〜699 の 横向き（667×375・SE初代よこ・底）：窓を うすく（147px → **91px**）。
+        ★ 「決定」を 96〜104px に して「数の増減」と 同じ 行に 置いた。
+           384 − 104 − 6 ＝ 274px ≥ 262px ★→ かぶらない【実測 0件】。
+
+   ★ 直した あと（★13画面・同じ 種7・同じ 場面・★絵で 数えた 割合）
+     | 画面     | 手札 いま→あと | ポット | 席 | まん中 |
+     |----------|---------------|--------|----|--------|
+     | 320×568  | 57.1 → ★**0** |  0→0  | 0→0 | 0→0 |
+     | 320×480  |  100 → 71.4   |  0→0  | 0→0 | 0→0 |
+     | 320×454  |  100 → 71.4   |  0→0  | 0→0 | 0→0 |
+     | 375×812  | 57.1 → ★**0** |  0→0  | 0→0 | 0→0 |
+     | 390×844  | 57.1 → ★**0** |  0→0  | 0→0 | 0→0 |
+     | 812×375  |  100 → ★**0** |  0→0  | 0→0 | 0→0 |
+     | 667×375  |  100 → ★**0** | ★14.3→**0** | 0→0 | ★14.3→**0** |
+     | 844×390  |  100 → ★**0** |  0→0  | 0→0 | 0→0 |
+     | 736×414  |  100 → ★**0** |  0→0  | 0→0 | 0→0 |
+     | 926×428  |  100 → ★**0** |  0→0  | 0→0 | 0→0 |
+     | 568×320  | 85.7 → 14.3   |  0→0  | 0→0 | 0→0 |
+     | 568×272  |  100 → 57.1   | ★85.7→**0** | 0→0 | ★85.7→**0** |
+     | 1280×800 |    0 → 0      |  0→0  | 0→0 | 0→0 |
+     ★ ★9画面が **0%**（ぜんぶ 見える）。★ポットも 2画面で 直った（おまけ）。
+
+   ★★ ★できない こと（追記⑤-① ―― はっきり 書きます）
+     ★ **320×480・320×454・568×320・568×272 の 4画面は、0% に できません。**
+     ★ 理由は 数です。★はば 320px の 窓に「数の増減」（270px）と「決定」（112px）は
+       ★★同じ 行に 入りません（270＋112＋すきま ＝ 391px > 中み 282px）。
+       ★ ＝ たてに 2行 要る ＝ 44＋44＋見出し18＋すきま ＝ ★**最短でも 129px**。
+       ★ 手札を ぜんぶ 出すには **77px 以下**が 要る。★★52px 足りません。
+     ★ 568×320／568×272 は 卓そのものが 足りない
+       ―― 席97.6＋まん中31＋自分の席86 ＝ **214.6px** に 対し、窓の 上に 残るのは 165px。
+     ★ ★★でも「見えない」では なくなりました：★★★13画面 × 5枚 ＝ 65マス とも
+       **数と マークの 角（札の 左上）が 見えます**【実測・t250h_kado.cjs・角に 9点】。
+       ★ 見えて いる たて：320×454 は 17.7px／320×480 は 23.3px／568×272 は 26.4px／
+         568×320 は 62.4px（★札の たては 69.7px）。★★直す前は 9画面で 1枚も 見えず。
+       ★ ＝ 何を 持って いるかは 読めます。★★これ以上は 字を 小さく しないと できません。
+
+   ------------------------------------------------------------
+   ★★ ② ゲームオーバーで 自分の 5枚が 消える（トライ T249 §F-2）
+
+   ★ 数え直し（★種を 1〜12 まわして 33回・★絵で 見た）
+     ★ トライは「26マス中 1マス（320×454 だけ）」。★私の 数え直しは **もっと 広い**：
+       | 画面    | 自分の札が かくれた 回 | かくれた 割合 | 角が 見える |
+       | 320×454 | ★**11 / 11回**        | 85.7〜100%   | ★**0/5**  |
+       | 320×480 | ★**11 / 11回**        | 28.6%        |  5/5      |
+       | 320×568 |   0 / 11回            |   0%         |  5/5      |
+     ★ ＝ **2画面・ほぼ 毎回**（★たまたまでは ない）。★トライの 道具は 札の 9点、
+       ★私は 35点＋角の 9点で 見たので、★320×480 の 28.6% を 拾えました。
+
+   ★ なぜ：決着の わくは たてで ちぢむ（flex:0 1 auto; overflow:auto・T246-3）。
+     ★ ゲームオーバーの わくが 下に 増える ぶん わくが さらに ちぢみ、
+       ★★自分の 行が わくの 中で 送られて 消える（★320×454 で 87px 送る）。
+
+   ★ 直し（★2つ・どちらも 情報は 消して いない）
+     ⑤ ゲームオーバーの あいだ だけ「🃏 役の強さを 見る ▾」の ふだを しまう
+        ★ 44px ぶん、決着の わくに たけを 渡す。★ゲームオーバーの 画面で
+          役の一覧を 開く 人は いない（★決着の 行が 役の名前を もう 言って いる）。
+        ★ ⚠️ ふつうの 決着では しまいません。★「もういちど」を 押せば 戻ります。
+     ⑥ せまい たて 2画面だけ、決着わくの すきまを つめる（★字も 札も 1px も 変えない）
+
+   ★ 直した あと【実測・種1〜12・33回】
+     ★★ 自分の札が すこしでも かくれた回：★**22/33 → 0/33**。★角は 33回とも 5/5。
+
+   ------------------------------------------------------------
+   ★ 線は 新しく またいで いません（追記⑥ の 決まり2 ―― 13画面を 数えました）
+     ・(min-width:700px) and (max-height:480px)
+       ★当たる：736×414・812×375・844×390・926×428
+       ★外れる：667×375・568×320・568×272（★はば 699 以下）／たての 5つ／PC
+       ★ **700 は すでに この ファイルに ある 線**（約1783行 min-width:700px）。
+       ★ ★はじめ 640 に して 測ったら、★★667×375 で「役の強さを 見る ▾」の まん中が
+         ★窓に かぶられました（★窓が 400 → 460px に 広がった ため）【実測・t249e_yubi】。
+         ★ ＝ 667 は 左の 列（ハッピー・役）と かけの 列の あいだが **381px** しか なく、
+           ★2行に 要る **415px** が 入らない。★だから 667 は ④の うすい 3行に する。
+     ・(min-width:561px) and (max-width:699px) and (max-height:480px)
+       ★当たる：667×375・568×320・568×272 の 3つだけ（★上の 裏返し）
+     ・(max-width:380px) and (max-height:480px)
+       ★当たる：320×480・320×454 の 2つだけ（★T246-5 で すでに ある 線）
+   ★ さわったのは この CSS だけ。★game.js・verify.js・index.html は 1文字も 変えて いません。
+   ★ 字は 1px も 小さく していません／44px も 割って いません／待ち時間も 1ms も 足して いません。
+   ============================================================ */
+
+/* ── ① 窓が 開いて いる あいだ、卓の 中身を 上に 寄せる ──────────
+   ★ 約2041行の T246-3（たけ≦320 の 横向き だけ）を、13画面ぜんぶに 広げた もの。 */
+body:has(#raisePanel:not(.hidden)) .board-wrap { justify-content:flex-start; }
+
+/* ── ② 横向き（はば700以上）：窓を 3行 → 2行（147 → 97px）────────── */
+@media (min-width:700px) and (max-height:480px) {
+  .raise-panel {
+    width:min(460px, calc(100vw - var(--side-r) - 40px));
+    grid-template-columns:minmax(0,1fr) minmax(112px,132px);
+    grid-template-areas:"title note" "step ok";
+    gap:4px 9px;
+  }
+  .raise-panel .raise-stepper { justify-content:center; }
+}
+
+/* ── ③ せまい たて（320×480・320×454）：窓を 4行 → 3行（147 → 129px）── */
+@media (max-width:380px) and (max-height:480px) {
+  .raise-panel {
+    padding:4px 8px 5px; gap:2px 8px;
+    grid-template-columns:auto minmax(0,1fr);
+    grid-template-areas:"title note" "step step" "ok ok";
+  }
+  .raise-panel .raise-title { text-align:left; white-space:nowrap; }
+  .raise-panel .raise-note  { text-align:right; }
+  .raise-panel .step-btn,
+  .raise-panel .raise-input,
+  .raise-panel .raise-ok { min-height:44px; }
+}
+
+/* ── ④ はば561〜699 の 横向き（667×375・SE初代よこ・底）：窓を うすく（147 → 91px）── */
+@media (min-width:561px) and (max-width:699px) and (max-height:480px) {
+  .raise-panel {
+    padding:5px 8px 6px; gap:3px 6px;
+    grid-template-columns:minmax(0,1fr) minmax(96px,104px);
+    grid-template-areas:"title title" "note note" "step ok";
+  }
+  .raise-panel .raise-title { text-align:left; }
+  .raise-panel .raise-note  { text-align:left; }
+  .raise-panel .raise-stepper { gap:4px; justify-content:center; }
+  .raise-panel .step-btn,
+  .raise-panel .raise-input,
+  .raise-panel .raise-ok { min-height:44px; }
+}
+
+/* ── ⑤ ゲームオーバーの あいだ だけ、役の強さの ふだを しまう ────────
+   ★ 決着の わくに 44px 渡す ため。★ふつうの 決着では しまわない。 */
+body:has(.over-box:not(.hidden)) .ranks { display:none; }
+
+/* ── ⑥ せまい たて 2画面：決着わくの すきまだけ つめる ─────────────
+   ★ 字も 札も 1px も 変えて いない。★余白と すきまだけ。 */
+@media (max-width:380px) and (max-height:480px) {
+  .showdown { padding:6px 6px 7px; }
+  .sd-rows  { gap:4px; }
+  .sd-row   { padding:4px 5px; }
+}

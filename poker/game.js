@@ -1087,7 +1087,8 @@
 
   /* ★ 取りかえ枚数バッジ（T47 §6-5）―― ハンドが 終わるまで 消えない */
   function swapBadgeHTML(p) {
-    if (p.swapCount == null) return '<p class="seat-swap">&nbsp;</p>';
+    /* ★ T248：空の ときは 中身を 空に する（&nbsp; だと 行が 場所を 取る。アト T246 §6-2）*/
+    if (p.swapCount == null) return '<p class="seat-swap"></p>';
     if (p.swapCount === 0) return '<p class="seat-swap is-zero">取りかえなかった！</p>';
     return '<p class="seat-swap">' + p.swapCount + '枚 取りかえた</p>';
   }
@@ -1116,8 +1117,10 @@
         + '<div class="seat-cards">' + cardsHTML + '</div>'
         + swapBadgeHTML(p)
         + '<p class="seat-coin">コイン ' + p.coins + '</p>'
-        + '<p class="seat-bet">' + (p.bet > 0 ? '出した ' + p.bet : '&nbsp;') + '</p>'
-        + '<p class="seat-last">' + (capLine || p.last || '&nbsp;') + '</p>'
+        /* ★ T248：空の 行は 中身を 空に（&nbsp; だと .seat-last が 10px 取る。アト T246 §6-2）。
+           ★ .seat-bet の 箱は のこす ―― index.html の コインの 係が この 箱の 直後に 山を さしこむ。 */
+        + '<p class="seat-bet">' + (p.bet > 0 ? '出した ' + p.bet : '') + '</p>'
+        + '<p class="seat-last">' + (capLine || p.last || '') + '</p>'
         + '</div>';
     }).join('');
     $('seats').innerHTML = html;
@@ -1158,6 +1161,19 @@
       + '<span class="deck-note">山札 のこり ' + state.deck.length + '枚'
       + (state.discardKeys.length ? '　・　すてた札 ' + state.discardKeys.length + '枚' : '')
       + '</span>';
+
+    /* ★★ T248：捨て札の 束（アト T246 §6-1）。
+       ★ ラシャの 上の 置き場（#discardSpot）に うら向きの 札を すてた枚数ぶん 重ねる（★最大 8枚ぶんの 厚み）。
+       ★ ★数字は 出さない・表にも しない（ルル T245 §D-1／§D-2 ―― 見えると 相手の 手が 読めて しまう）。
+       ★ .pile-card は position:absolute なので、何枚 入れても 場所は 1枚ぶんの まま（並びを 動かさない）。
+       ★ 山札（#deckSpot）の 6枚は index.html に 置いてある（山は 尽きないので 固定）。 */
+    var spot = $('discardSpot');
+    if (spot) {
+      var want = Math.min(state.discardKeys.length, 8);
+      if (spot.childElementCount !== want) {
+        spot.innerHTML = new Array(want + 1).join('<i class="pile-card"></i>');
+      }
+    }
   }
 
   function stageIndex() {
@@ -1307,13 +1323,35 @@
       else if (!state.selected.length) msg = 'どれを のこす？ そのままでも いいよ';
       else msg = 'すてたら 同じ枚数 引くよ';
     }
-    else if (state.flashHappy)        msg = state.flashHappy;
+    /* ★★★ T250：★取りかえの 結果（めくりの 一言）と、★かけの ことばを **並べる**。
+       ★ 社長の お決め（★「1」＝ 並べる。★トライの 案「ワンペアに なった！ いくら かける？」）。
+       ★★ なぜ 要ったか：★この 一言（`flashHappy`）は 自分が 動くまで 消えない ので、
+       ★  ★★かけ②の 番が まるごと この 一言に 食われて いました
+       ★  【実測・T250：★人が 遊ぶ 速さで 60ハンド ―― ★かけ② 52回中、かけの ことばは 5回（9.6%）だけ。
+       ★   ★★直した あとは 52回中 52回（100%）】。
+       ★★ 消さない 理由：★引いた札の 手ごたえは、この ゲームで いちばん 気持ちが 動く 1行（トライ T249 §A-2）。
+       ★★ 足すのは 自分の かけの 番だけ。★ロボットの 番には 足さない（★人に 何も 求めない 場面・T248 ⑨）。
+       ★  「コインを」は 落とす ―― ★字が のびると ふきだしが 2行に なり、緑の場が ちぢむ ため。 */
+    else if (state.flashHappy) {
+      msg = state.flashHappy;
+      if (state.phase === 'bet' && state.awaitMe) msg += ' いくら かける？';
+    }
     else if (state.phase === 'swap')  msg = 'だれが 何枚 かえるかな';
     else if (me && me.folded)         msg = 'つぎ いこう！';
     else if (!r)                      msg = 'どんなカード？';
-    else if (state.street === 1)      msg = '相手の 取りかえ枚数も 見てみよう';
+    /* ★★ T248：ロボットが かけて いる あいだ。★ここは 人が 押す ものが 1つも ない 場面
+       （game.js `renderActions`：`if (!state.awaitMe) box.innerHTML = ''`）。
+       ★ それなのに 人に「いくら かける？」と 聞いていた ―― ★25ハンドで 58回【実測・T248】。
+       ★ 取りかえに もう ある「だれが 何枚 かえるかな」と 同じ 形に そろえた。 */
+    else if (!state.awaitMe)          msg = 'だれが いくら かけるかな';
+    /* ★★ T248：かけの 番の ことばを「かけ」の ことばに そろえた（社長のご指摘・T246-4 §9-7）。
+       ★ ここは 自分の かけの 番（phase==='bet' かつ awaitMe）だけが 通る 道。
+       ★ それなのに「いらない札は どれかな？」＝ 取りかえの ことばを 言っていた（かけ①の 96.8%）。
+       ★ かけ②の「相手の 取りかえ枚数も 見てみよう」は、席の ふだが もう 言っている（§5.5）。
+       ★ 追記②の 線：「どう さわるか」は 言ってよい／「何を えらぶか」は 言わない。 */
+    else if (state.street === 1)      msg = 'コインを いくら かける？';
     else if (r.rank >= 4)             msg = 'やった！ 強い手だ！';
-    else                              msg = 'いらない札は どれかな？';
+    else                              msg = 'コインを いくら かける？';
     $('happyBubble').textContent = msg;
   }
 

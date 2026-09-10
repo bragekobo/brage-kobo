@@ -85,39 +85,70 @@
           取ると ゲームが 止まる。 -->
   <p class="tape" id="tape">1ハンドめ ・ コイン 200</p>
 
-  <!-- ── ロボット3人の 席（伏せ札5枚・コイン・出した額・親マーク🔘・
-       ★ 取りかえ枚数バッジ ―― ドローの ただ1つの 公開情報。消えない・T47 §6-5）── -->
-  <section class="seats" id="seats" aria-label="ロボットの席"></section>
-
-  <!-- ── テーブル（ポット ＋ 山札の のこり）──────────────
-       ホールデムの「場のカード」に あたる 場所。ドローには 場の札が ないので、
-       まん中には ポットと 山札を おく。すてた札の 数も 見える（山に もどらない 証拠）。 -->
+  <!-- ============================================================
+       ★ T246（🎨アト・社長裁定「案B」）―― 緑の場を「卓」にした
+       ------------------------------------------------------------
+       もとは「ロボットの席（白い箱）／テーブル（緑・ポットだけ）／あなたの手札（白い箱）」の
+       3つが たてに 並んでいて、緑は たけ 26〜30px の 細い帯だった（ルル T245 実測）。
+       本物の卓では、席も 出したチップも 札も ぜんぶ ラシャの上に 乗っている。
+       だから 3つを 1枚の ラシャ（.board-wrap）の 中に 入れた。
+         上辺 ＝ ロボット3人の席（伏せ札・コイン・出したチップ・親の印）
+         まん中 ＝ 山札の置き場 ｜ ポット ｜ 捨て札の置き場
+         下辺 ＝ 自分の席（出したチップ・親の印・手札5枚）
+       ⚠️ id／class名は 1文字も 変えていない（game.js が getElementById で さがす）。
+          動かしたのは 置き場所（親要素）だけ。<script> は 1文字も さわっていない。
+       ⚠️ 山札・捨て札の「置き場」（#deckSpot／#discardSpot）は 見た目だけ。
+          山札は 32枚から 減っても 尽きないので、束の絵は 固定（ルル §D-1・数字は 出さない）。
+          捨て札は 枚数で 厚みが 変わるので、中身（.pile-card を 何枚 入れるか）は 💻コーダ：
+            #discardSpot に <i class="pile-card"></i> を min(枚数, 8) 個 入れる。0枚なら 空。
+          裏向きの 束にする（ルル §D-2・表にすると 他の人の手が 見える）。
+       ============================================================ -->
   <section class="board-wrap" aria-labelledby="boardHeading">
     <h2 class="board-ribbon" id="boardHeading">テーブル</h2>
-    <p class="pot" id="pot" aria-live="polite">ポット 0</p>
-    <div class="deck-row" id="deckRow"></div>
+
+    <!-- ── 上辺：ロボット3人の 席（伏せ札5枚・コイン・出した額・親マーク🔘・
+         ★ 取りかえ枚数バッジ ―― ドローの ただ1つの 公開情報。消えない・T47 §6-5）── -->
+    <section class="seats" id="seats" aria-label="ロボットの席"></section>
+
+    <!-- ── まん中：山札 ｜ ポット ｜ 捨て札 ──────────────
+         ホールデムの「場のカード」に あたる 場所。ドローには 場の札が ないので、
+         まん中には 山札・ポット・捨て札を おく。
+         #potChips（コインの山）は 下の 見た目せんようの 係が #pot の 直後に さしこむ。 -->
+    <div class="table-mid">
+      <div class="spot spot-deck" id="deckSpot" aria-hidden="true">
+        <i class="pile-card"></i><i class="pile-card"></i><i class="pile-card"></i>
+        <i class="pile-card"></i><i class="pile-card"></i><i class="pile-card"></i>
+      </div>
+      <div class="pot-wrap">
+        <p class="pot" id="pot" aria-live="polite">ポット 0</p>
+      </div>
+      <div class="spot spot-discard" id="discardSpot" aria-hidden="true"></div>
+      <!-- 山札の のこり枚数（T105 で 画面から 消した・要素は game.js の renderDeck が 使うので 残す）-->
+      <div class="deck-row" id="deckRow"></div>
+    </div>
+
+    <!-- ── 下辺：自分の席 ―― 手札5枚 ─────────────────
+         取りかえの 番には タップで えらべる（大富豪の 複数枚選択と 同じ型・§5-1）。
+         ※ 役の中心の 光りは T53（社長指示）で 撤去。強調は「すてる」の 選択だけ。 -->
+    <section class="mine" aria-labelledby="mineHeading">
+      <div class="mine-head">
+        <h2 class="mine-heading" id="mineHeading">あなたの手札</h2>
+        <p class="me-info" id="meInfo"></p>
+      </div>
+      <div class="hand" id="hand"></div>
+    </section>
   </section>
 
   <!-- ── 進み具合バー（くばる → かけ① → 取りかえ → かけ② → 勝負）──
        ⚠️ T57（社長指示）で 画面から 消した（style.css で display:none）。
           場の カードが ふえれば 進み具合は 分かる、が 社長の 判断。
-          ⚠️ 要素そのものは 残す ―― game.js が $('steps') を さがすため。 -->
+          ⚠️ 要素そのものは 残す ―― game.js が $('steps') を さがすため。
+          ★ T246：style.css が「取りかえの 前か 後か」を この 中の .step.now／.passed で 読む。 -->
   <nav class="steps" id="steps" aria-label="今どこまで進んだか"></nav>
 
   <!-- ※ 役の強さの一覧（.ranks）は T57（社長指示）で 画面の 一番下へ 動かした。
        「一回みたら もう見ない人が たくさん いる」が 理由。
        中身は 1文字も 変えていない。↓ かけボタンの 下に ある。 -->
-
-  <!-- ── 自分の手札5枚 ─────────────────────────────
-       取りかえの 番には タップで えらべる（大富豪の 複数枚選択と 同じ型・§5-1）。
-       ※ 役の中心の 光りは T53（社長指示）で 撤去。強調は「すてる」の 選択だけ。 -->
-  <section class="mine" aria-labelledby="mineHeading">
-    <div class="mine-head">
-      <h2 class="mine-heading" id="mineHeading">あなたの手札</h2>
-      <p class="me-info" id="meInfo"></p>
-    </div>
-    <div class="hand" id="hand"></div>
-  </section>
 
   <!-- ── ★ 勝負の 決着 ―― 残った人の 5枚を 上下に ならべる。
        勝った行は 金色わく ＋ 👑。同じ役どうしは ▲「ここで 勝った／負けた」。 -->
@@ -229,6 +260,7 @@
 
 <script src="../poker-core.js"></script>
 <script src="game.js"></script>
+<script src="verify.js"></script>
 
 <!-- ============================================================
      ★ かけたコインを 絵で 見せる 係（T56・見た目せんよう）
