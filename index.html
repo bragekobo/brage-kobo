@@ -210,15 +210,7 @@
         <span>🐱「こんにちは！ <b>ハッピー</b>だよ。</span><span>いっしょに遊ぼう！」</span>
       </p>
 
-      <div class="panel meter">
-        <div class="meter-top">
-          <span>遊べるゲーム</span>
-          <b><span class="big" id="liveCount">0</span> / <span id="goalCount">20</span> 本</b>
-        </div>
-        <div class="bar" role="img" aria-labelledby="meterText"><i id="meterBar" style="width:0%"></i></div>
-        <p class="meter-note" id="meterText">20本を目指して作ってるよ。残り<b id="restCount">20</b>本！</p>
-      </div>
-
+      <!-- 「遊べるゲーム ○/20本」の 白い 箱は 消した（2026-09-11・社長のご指摘。20本の 目標は 達成ずみ） -->
       <a class="btn-play" href="#games">ゲームを選ぶ ▶</a>
     </div>
   </div>
@@ -261,7 +253,6 @@
       <span class="count">今、作ってるよ</span>
     </div>
     <div class="grid" id="soonGrid"></div>
-    <p class="note" id="soonNote"></p>
   </section>
 
 </main>
@@ -286,8 +277,6 @@
    tags  : 追加のラベル（0〜2個くらいが読みやすい）
    path  : そのゲームのフォルダ
    ============================================================ */
-const GOAL = 20;
-
 const GAMES = [
   {
     title: 'ブラックジャック',
@@ -475,11 +464,11 @@ const GAMES = [
   }
 ];
 
-/* 近日公開の枠（作るものが決まったら title を書き換える） */
+/* 近日公開の枠（作るものが決まったら title を書き換える）。desc は 無くてもよい */
 const COMING = [
-  { emoji: '🃏', title: 'つぎの1本', desc: '★20本 そろいました！ つぎは 社長の ひらめき待ち。' },
+  { emoji: '🃏', title: 'つぎの1本' },
   { emoji: '🎲', title: 'ボードゲーム', desc: 'コネクトフォーの つぎは 何にしよう？ ばんと コマの 遊び。' },
-  { emoji: '✨', title: 'お楽しみ',   desc: '社長のひらめき待ち。ここに並ぶよ！' }
+  { emoji: '✨', title: 'お楽しみ' }
 ];
 
 /* ハッピー（看板ねこ）の ふきだし。じゅんばんに かわる。
@@ -561,24 +550,16 @@ COMING.forEach(function (c) {
 
   const body = el('div', 'soon-body');
   body.appendChild(el('p', 'soon-title', c.title));
-  body.appendChild(el('p', 'soon-desc', c.desc));
+  if (c.desc) body.appendChild(el('p', 'soon-desc', c.desc));
   body.appendChild(el('span', 'soon-badge', '準備中'));
 
   box.appendChild(body);
   soonGrid.appendChild(box);
 });
 
-/* ---- 進み具合（今どうなっているか） ---- */
-const live = GAMES.length;
-const rest = Math.max(GOAL - live, 0);
-
-document.getElementById('liveCount').textContent = live;
-document.getElementById('goalCount').textContent = GOAL;
-document.getElementById('restCount').textContent = rest;
-document.getElementById('liveBadge').textContent = live + '本';
-document.getElementById('meterBar').style.width = Math.round(live / GOAL * 100) + '%';
-document.getElementById('soonNote').textContent =
-  'あと ' + rest + '本、これから工房で作るよ！';
+/* ---- 「今、遊べるよ！」の 横の 本数 ----
+   （目標の メーター・「残り ○本」・「あと ○本」は 2026-09-11 に 消した） */
+document.getElementById('liveBadge').textContent = GAMES.length + '本';
 
 /* ---- ねこの ひとこと（動きが苦手な人には かえない） ---- */
 const bubble = document.getElementById('bubble');
