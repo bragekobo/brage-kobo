@@ -423,7 +423,11 @@
       if (isJk(cards[i])) jkN++;
       else real.push(cards[i]);
     }
-    if (jkN > 1) return null;                 /* ★ 決まり6：★1組に ジョーカーは 1枚まで */
+    /* ⚠️★★ T260-2（2026-09-12・社長のお決め②）―― ★★「1組に 1枚まで」は **決まりでは なく なりました**
+       ★ ★★本物（任天堂）に 無い しばり でした（★ルル T197 差11）。★あそびかたの 1行も 消しました。
+       ★ ★★この 行は 残して あります ―― ★★ジョーカーは 山に **1枚 だけ** なので ★ここは 1度も 通りません
+         ★ ★（★2枚に する 日が 来たら、★この 行を 消す ところから 始めて ください）。 */
+    if (jkN > 1) return null;
 
     /* ★★★ T198 ―― ★7の 特別扱い（★1枚・2枚）★★★
        ★ ★★ここも「たしかめる」だけ です ―― ★人が えらんだ 札を そのまま 見て、
@@ -666,7 +670,10 @@
             ★ ★本物の 決まり（任天堂 ④）。★★ルル T173 が 落として いた 14個目 です。
             ★ ★★あそびかたは **6行の まま**（★②の 行の おしりに 1文 足しただけ）。
        5  場の 組に 自分の 札を 足せる（★だれの ものでも）          → 1行
-       6  ジョーカーは どの 札の かわりにも（1組に 1枚まで）        → 0行（★触れば 分かる）
+       6  ジョーカーは どの 札の かわりにも なれる                  → 0行（★触れば 分かる）
+            ★ ★★T260-2（2026-09-12・社長のお決め②）：★「1つの 組に 1枚まで」を 消しました ――
+              ★ ★★本物（任天堂）に 無い しばり でした（★ルル T197 差11・T259 で 見つけた もの）。
+              ★ ★★ジョーカーは 山に **1枚 だけ** なので、★遊びは 1つも 変わりません【★下の makeMeld の 行も 同じ】。
        7  手番の さいごに 1枚 すてる                                → （8と 同じ行）
        8  手札が 0枚に なったら 上がり                              → 1行
        9  上がった 人は 0点                                         → 0行
@@ -758,6 +765,13 @@
       winner: -1, lastDiscard: -1, drawGame: false,
       /* ★★ T208 ―― ★ポンの 窓（★phase が 'pon' の あいだ だけ 中身が あります）★★ */
       ponCard: -1, ponFrom: -1, ponCands: [],
+      /* ★★ T260 ―― ★すて札の 一番上を **だれが すてたか**（★チーは すぐ前の 人の 札 だけ）★★
+         ★ ★-1 ＝ ★配った ときに めくった 1枚（★だれも すてて いない）。★決め方は chiFromOk に 1か所。 */
+      topFrom: -1,
+      /* ★★ T260 ―― ★すて札を もらった あと、★★ポンか チーを **するまで** 中身が あります ★★
+         ★ ★{ card:もらった札, pon:できるか, chi:できるか, ponCards:ポンで 出す 札 }
+         ★ ★★中身が ある あいだは ―― ★すてる・足す・ほかの 組を 出す が **できません**。 */
+      must: null,
       over: false, pts: null,
       st: { turns: 0, draws: 0, tookDiscard: 0, meldTurns: 0, layoffCards: 0,
             handMax: R.handSize + 1, reshuffles: 0, dryTurns: 0,
@@ -805,36 +819,166 @@
      ⚠️★ ★★ off を 渡した ときだけ 決まりが 消えます（★見張りが わざと 壊す とき だけ）。
         ★ ★★何も 渡さなければ 決まりは 入って います ―― ★★渡し忘れで ゆるく なりません。
      ============================================================ */
-  function takeOk(g, off) {
-    if (off) return true;
-    if (!g.discard.length) return false;
-    var hand = g.hands[g.cur];
-    var c = g.discard[g.discard.length - 1];
-    var h2 = hand.concat([c]);
-    var ms = enumMelds(h2), i;
-    var last = 1 << (h2.length - 1);            /* ★ もらった 1枚 */
-    for (i = 0; i < ms.length; i++) {
-      if (ms[i].cnt < 3) continue;              /* ★★ 3枚 そろう ときだけ（★2枚の 7は だめ）*/
-      if (!(ms[i].mask & last)) continue;       /* ★ その 1枚を 使う 組で ある こと */
-      if (h2.length - ms[i].cnt < 1) continue;  /* ★ すてる 1枚が のこる こと（★決まり7）*/
-      return true;
+  /* ============================================================
+     ★★★★ T260 ―― ★★もらった 札は、★その場で **ポンか チー** に 使う ★★★★
+     ------------------------------------------------------------
+     ★ ★社長：「★もらうを 押すと 捨てられた札が 手札に 加わった 後 自由に 行動 できてしまいます。
+       ★ ★★（中略）★『ポン』なら『ポン』。★『チー』なら『チー』を して、
+       ★ ★★両方 できる 状況の 場合は 両方の 選択が 取れるように してください」
+     ★ ★本物（任天堂）：★チー ＝「★自分の すぐ前の 人が 捨てた カード」で、★3枚以上の 同じ スートの
+       ★ ★シークエンスが できる とき だけ。★ポン ＝「★同位札を 2枚以上 持っている 人」。
+       ★ ★★どちらも「★そろった 組を 公開し、★いらない カードを 捨てます」。
+       ★ ★★＝ ★もらった 札は **手札に しまって おく もの では ない**。
+
+     ★★ T205 の 私の 穴 ★★
+       ★ ★T205 の takeOk は「★もらえるか」だけ 見て、★★「★もらった あと 何を するか」を 見て いませんでした。
+       ★ ★★ルル T207 §3-5 も「★いまの チーでも 実質 同じ」と 書いて いました ―― ★★同じ 穴 です。
+       ★ ★【実測・T260 作業メモ §1】：★つよい ロボットが もらった 21,566回 の うち
+         ★ ★★1,127回（5.23%）は その 札を 組に 入れず、★★150回（0.70%）は そのまま すてて いました。
+
+     ★★ 決まりの 形（★ここ 1か所）★★
+       ★ ★ポン …… ★手札の 同じ 数字（★ジョーカー いがい）＋ もらった 札。★★そろった 同位札は **ぜんぶ** 出す
+                  （★割り込みの doPon と 同じ ―― ★ルル T207 決まり4）。
+                  ★ ★★同じ 数字が 1枚 しか ない ときは ★ジョーカーで 3枚に する（★T205 から もらえて いた 形 ―― ★消して いません）。
+       ★ ★チー …… ★★すぐ前の 人が すてた 札 だけ（★chiFromOk）。★同じ マークの 3枚以上の 並びで、★もらった 札を ふくむ。
+                  ★ ★どの 並びに するかは **人が えらぶ**（★♥5 を もらって ♥3♥4♥5 か ♥5♥6♥7 か …）。
+       ★ ★★どちらも ―― ★出した あと **すてる 1枚が のこる** ときだけ（★本物：★最後は 1枚 すてて 上がる・T259）。
+       ★ ★★2枚の 7（★7＋6・7＋8）・1枚の 7 では もらえません（★T205 の まま）。
+
+     ⚠️★ ★★ kill を 渡した ときだけ 決まりが 消えます（★見張り ㉜ が わざと 壊す とき だけ）。
+        ★ ★★何も 渡さなければ 本物の 決まり ―― ★渡し忘れで ゆるく なりません（★T198 から 同じ 作法）。
+          ★ ★kill.order … ★順番を 見ない（★ポンの 番でも チーが できる）
+          ★ ★kill.must  … ★もらった あと 自由（★T260 の 前の 形）
+          ★ ★kill.pon ／ kill.chi … ★片方を 消す（★「両方 えらべる」の 見張りを 鳴らす）
+     ============================================================ */
+  /* ★★ チーが できる 順番か ―― ★★すぐ前の 人が すてた 札 だけ ★★
+     ★ ★-1（★配った ときに めくった 1枚）は ★**すぐ前の 人の 札と 同じに 扱います**。
+       ★ ★★任天堂の ページには 書いて ありません。★T205〜T259 と 同じ 扱い（★もらえる 形を 変えない）に しました。
+       ★ ★★社長に お聞き中 ―― ★変えるなら ★この 1行 だけ です（★作業メモ §4）。 */
+  function chiFromOk(g, kill) {
+    if (kill && kill.order) return true;
+    if (!(g.topFrom >= 0)) return true;
+    return g.topFrom === (g.cur + g.nP - 1) % g.nP;
+  }
+  /* ★★ もらえる 形を ぜんぶ 並べる ★★
+     ★ hand … ★手札（★もらう 札は 入れない）／ c … ★もらう 札 ／ chiOk … ★チーが できる 順番か
+     ★ ★返り … [{ kind:'pon'|'chi', cards:[…もらう札も ふくむ], useJk }]
+     ⚠️★ ★これは「★できる／できない」を 数える だけ です（★どれが 得かは 返しません）。 */
+  /* ============================================================
+     ★★★★ T260-2 ―― ★★ポンで 出す 札は **この 1か所** で 決めます（2026-09-12・社長のお決め①）★★★★
+     ------------------------------------------------------------
+     ★ ★社長の お決め：★★「★自分の番も 割り込みも、★どちらでも ジョーカーを 使える」。
+     ★ ★★前は ―― ★自分の番（T205 の takeOptions）は 使えて、★★割り込み（T208 の ponCands/doPon）は 使えない。
+       ★ ★★同じ「ポン」で 決まりが **2つ** ありました。★T260 で 私が 気づいて お聞きした ところ です。
+     ★ ★★だから 関数を 1つに しました ―― ★★ここを 直せば 両方 変わります（★2つを 直し忘れる 形に しない）。
+       ★ ★★見張り ㉚-5 が「★2つの ポンが 同じ 答えを 出すか」を 1431通り 数えます。
+
+     ★★ 出す 札 ★★
+       ★ ★同じ 数字（★ジョーカー いがい）が **2枚 以上** … ★★そろった ぶんを ぜんぶ ＋ もらった 札
+       ★ ★同じ 数字が **1枚** ＋ ジョーカー ……… ★★その 1枚 ＋ ジョーカー ＋ もらった 札（★3枚）
+       ★ ★★どちらも 出した あと **すてる 1枚が のこる** ことが 要ります（★決まり7・本物：最後は 1枚 すてる）。
+       ★ ★ジョーカーが すてられた とき（★もらう 札が ジョーカー）は ポンに なりません（★同位札では ない）。
+     ============================================================ */
+  function ponSet(hand, c, kill) {
+    if (isJk(c)) return null;
+    var same = [], jk = -1, i;
+    for (i = 0; i < hand.length; i++) {
+      if (isJk(hand[i])) { if (jk < 0) jk = hand[i]; continue; }
+      if (rankOf(hand[i]) === rankOf(c)) same.push(hand[i]);
     }
-    return false;
+    var cs = null;
+    if (same.length >= 2) cs = same.concat([c]);                  /* ★ そろった 同位札を ぜんぶ */
+    /* ⚠️★ ★kill.noJkPon を 渡した ときだけ ジョーカーが 使えなく なります（★見張り ㉚-6 が わざと 壊す とき だけ）*/
+    else if (same.length === 1 && jk >= 0 && !(kill && kill.noJkPon)) cs = [same[0], jk, c];  /* ★ 1枚 ＋ ジョーカー */
+    if (!cs) return null;
+    if (hand.length + 1 - cs.length < 1) return null;             /* ★ すてる 1枚が のこる */
+    return cs;
+  }
+  /* ★★ もらえる 形を ぜんぶ 並べる ★★ */
+  function takeOptions(hand, c, chiOk, kill) {
+    var out = [], i, k;
+    if (!(kill && kill.pon)) {
+      var pc = ponSet(hand, c, kill);
+      if (pc) {
+        var useJk = 0;
+        for (i = 0; i < pc.length; i++) if (isJk(pc[i])) useJk = 1;
+        out.push({ kind: 'pon', cards: pc, useJk: useJk });
+      }
+    }
+    if (chiOk && !(kill && kill.chi)) {
+      var h2 = hand.concat([c]), last = 1 << (h2.length - 1);
+      var ms = enumMelds(h2);
+      for (i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (m.kind !== 'r' || m.cnt < 3) continue;       /* ★★ 3枚 以上の 並び（★7＋6 の 2枚は だめ）*/
+        if (!(m.mask & last)) continue;                  /* ★ もらった 札を ふくむ */
+        if (h2.length - m.cnt < 1) continue;             /* ★ すてる 1枚が のこる */
+        var cs = [];
+        for (k = 0; k < h2.length; k++) if (m.mask & (1 << k)) cs.push(h2[k]);
+        out.push({ kind: 'chi', cards: cs, useJk: m.useJk });
+      }
+    }
+    return out;
+  }
+  /* ★ いま（★引く 段で）すて札を もらうと、★ポン／チーの どちらが できるか */
+  function takeKinds(g, kill) {
+    var out = { pon: false, chi: false, ponCards: null, opts: [] };
+    if (!g.discard.length) return out;
+    var c = g.discard[g.discard.length - 1];
+    out.opts = takeOptions(g.hands[g.cur], c, chiFromOk(g, kill), kill);
+    for (var i = 0; i < out.opts.length; i++) {
+      if (out.opts[i].kind === 'pon') { out.pon = true; out.ponCards = out.opts[i].cards.slice(); }
+      else out.chi = true;
+    }
+    return out;
+  }
+  function takeOk(g, off, kill) {
+    if (off) return true;
+    var k = takeKinds(g, kill);
+    return k.pon || k.chi;
+  }
+  /* ★★ もらった あと ―― ★えらんだ 札で ポン／チーに なって いるか（★人も ロボットも ここ）★★ */
+  function sameCards(a, b) {
+    if (!a || !b || a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) if (b.indexOf(a[i]) < 0) return false;
+    return true;
+  }
+  function mustMeld(g, cards) {
+    var mu = g.must;
+    if (!mu) return { ok: false, why: 'いまは もらって いません' };
+    if (!cards || cards.indexOf(mu.card) < 0) return { ok: false, why: 'もらった 札が 入って いません' };
+    var hand = g.hands[g.cur];
+    if (hand.length - cards.length < 1) return { ok: false, why: 'すてる 1枚が なくなります' };
+    if (cards.length < 3) return { ok: false, why: '3枚 いります' };
+    var m = makeMeld(cards, g.cur);
+    if (!m) return { ok: false, why: '組に なって いません' };
+    if (m.t === 'r') {
+      if (!mu.chi) return { ok: false, why: 'いまは チーが できません' };
+      return { ok: true, kind: 'chi', meld: m };
+    }
+    if (!mu.pon) return { ok: false, why: 'いまは ポンが できません' };
+    if (!sameCards(cards, mu.ponCards)) return { ok: false, why: 'ポンは そろった 同じ 数字を ぜんぶ 出します' };
+    return { ok: true, kind: 'pon', meld: m };
   }
 
   /* ★ 引く ―― ★from ＝ 'stock' ／ 'discard' */
-  function doDraw(g, from, off) {
+  function doDraw(g, from, off, kill) {
     if (g.over || g.phase !== 'draw') return { ok: false };
     if (from === 'discard') {
       if (!g.discard.length) return { ok: false };
       /* ★★ T205：★ポン／チーの 条件を 満たさない ときは もらえません */
-      if (!takeOk(g, off)) return { ok: false, why: 'その 札は もらえません' };
+      if (!takeOk(g, off, kill)) return { ok: false, why: 'その 札は もらえません' };
+      var kd = takeKinds(g, kill);
       var c = g.discard.pop();
       g.hands[g.cur].push(c);
       g.st.tookDiscard++; g.st.draws++;
       if (g.hands[g.cur].length > g.st.handMax) g.st.handMax = g.hands[g.cur].length;
       g.phase = 'play';
-      return { ok: true, card: c, from: 'discard' };
+      /* ★★★ T260 ―― ★★ここで しばります（★ポンか チーを するまで ほかの ことは できません）★★★ */
+      if ((kd.pon || kd.chi) && !(kill && kill.must)) {
+        g.must = { card: c, pon: kd.pon, chi: kd.chi, ponCards: kd.ponCards };
+      }
+      return { ok: true, card: c, from: 'discard', pon: kd.pon, chi: kd.chi };
     }
     var r = refill(g);
     if (r === 'dry') { finishDeal(g, -1); return { ok: false, dry: true }; }
@@ -852,16 +996,30 @@
     var hand = g.hands[g.cur], i, k;
     if (hand.length - cards.length < 1) return { ok: false, why: 'すてる 1枚が なくなります' };
     for (i = 0; i < cards.length; i++) if (hand.indexOf(cards[i]) < 0) return { ok: false, why: '手札に ありません' };
-    var m = makeMeld(cards, g.cur);
+    /* ★★ T260 ―― ★すて札を もらった あとは ★★ポンか チーの 組 だけ 出せます ★★ */
+    var mk = null;
+    if (g.must) {
+      mk = mustMeld(g, cards);
+      if (!mk.ok) return { ok: false, why: mk.why };
+    }
+    var m = mk ? mk.meld : makeMeld(cards, g.cur);
     if (!m) return { ok: false, why: '組に なって いません' };
     for (i = 0; i < cards.length; i++) { k = hand.indexOf(cards[i]); if (k >= 0) hand.splice(k, 1); }
     g.table.push(m);
-    return { ok: true, meld: m, at: g.table.length - 1 };
+    if (mk) { g.must = null; if (mk.kind === 'chi') g.st.chi = (g.st.chi || 0) + 1; else g.st.ponSelf = (g.st.ponSelf || 0) + 1; }
+    return { ok: true, meld: m, at: g.table.length - 1, kind: mk ? mk.kind : '' };
+  }
+  /* ★★ T260 ―― ★ポン（★自分の 番で もらった とき）★★
+     ★ ★そろった 同位札を **ぜんぶ** 出します（★割り込みの doPon と 同じ ―― ★えらばせません）。 */
+  function doTakePon(g) {
+    if (g.over || g.phase !== 'play' || !g.must || !g.must.pon) return { ok: false, why: 'いま ポンできません' };
+    return doMeld(g, g.must.ponCards.slice());
   }
 
   /* ★ 付け札 ―― ★場の 組に 1枚 足す（★mi ＝ 場の 何番目の 組か）*/
   function doLayoff(g, card, mi) {
     if (g.over || g.phase !== 'play') return { ok: false, why: 'いま 足せません' };
+    if (g.must) return { ok: false, why: 'さきに ポンか チーを します' };        /* ★ T260 */
     var hand = g.hands[g.cur];
     if (hand.length < 2) return { ok: false, why: 'すてる 1枚が なくなります' };
     if (hand.indexOf(card) < 0) return { ok: false, why: '手札に ありません' };
@@ -889,25 +1047,40 @@
         ★ ★★＝ ★渡し忘れで「人だけ ポンできる 世界」に なりません（★T197 §14 失敗2 よけ）。
      ============================================================ */
   /* ★ ポンできる 人を さがす（★決まり 1・2・3・10・11）*/
-  function ponCands(g, card, discarder) {
-    var out = [], p, i, n;
+  function ponCands(g, card, discarder, kill) {
+    var out = [], k, p;
     if (isJk(card)) return out;                        /* ★ 3：ジョーカーは 同位札で ない */
     if (g.stock.length === 0 && g.discard.length <= 1) return out;  /* ★ 11：山も すて札も 尽きかけ */
-    var r = rankOf(card);
     var nextP = (discarder + 1) % g.nP;
-    for (p = 0; p < g.nP; p++) {
+    /* ★★★★ T260-3 ―― ★★同時に 2人 できる ときは **ジョーカーを 持って いる 人**（★本物の 1文）★★★★
+       ------------------------------------------------------------
+       ★ ★任天堂：★★「ジョーカーを使っているゲームで、★2人が同時に『ポン』をしたときには
+         ★ ★★ジョーカーを持っている人を優先します」（★ルルが 見つけました・2026-09-12）。
+       ★ ★★T260-2 の 私は「すてた 人から 近い 人」と 決めて いました ―― ★★行き先が ちがいました。
+         ★ ★（★ルル：★9つの 出どころに 1件も 無し。★42.1% の 場面で 別の 人を えらんで いた）
+       ★ ★★T260-2 より 前（★席の 番号順）は もっと 悪く、★★人（席0）が 同時ポンを
+         ★ ★**100%（1,068/1,068件）** 取って いました ―― ★★えこひいき でした【★ルル実測】。
+
+       ★★ 形（★ルル実測・同時ポン 1,439件 ぜんぶ）★★
+         ★ ★★「★同じ 数字 2枚の 人」対「★1枚 ＋ ジョーカーの 人」―― ★3人以上は 0件。
+         ★ ★★ジョーカーは 山に **1枚** なので、★★「2人とも ジョーカー持ち」は 起きません。
+           ★ ★★★もし 起きたら（★ジョーカーを 2枚に した 日）―― ★そのときは 近い 人が 取ります
+             ★ ★（★下の tie。★★見張り ㉚-7 が「起きて いない」ことも 数えます）。 */
+    var near = [], jkH = [];
+    for (k = 1; k < g.nP; k++) {
+      p = (discarder + k) % g.nP;
       if (p === discarder) continue;                   /* ★ 1：すてた 人は だめ */
       if (p === nextP) continue;                       /* ★ 2：すぐ次の 人は 出しません（§3-5）*/
-      n = 0;
-      for (i = 0; i < g.hands[p].length; i++) {
-        if (!isJk(g.hands[p][i]) && rankOf(g.hands[p][i]) === r) n++;
-      }
-      if (n < 2) continue;                             /* ★ 1：同位札 2枚以上 */
-      /* ★ 10：もらって 公開した あと、★すてる 1枚が のこるか
-         ★ ★手札 h ＋ もらう 1 ＝ h+1。★公開で n+1 枚 出る → ★のこり h-n。★1以上 要ります。 */
-      if (g.hands[p].length - n < 1) continue;
-      out.push(p);
+      /* ★ 1・10：★同じ 数字 2枚（★または 1枚＋ジョーカー）＋ ★すてる 1枚が のこる
+         ★ ★★決まりは ponSet の 1か所 だけ（★自分の番の ポンと 同じ 関数 です）。 */
+      if (!ponSet(g.hands[p], card, kill)) continue;
+      /* ★★ ジョーカーを **手札に 持って いるか**（★使うか どうかでは ない ―― ★本物の 文の とおり）*/
+      var hasJk = false;
+      for (var z = 0; z < g.hands[p].length; z++) if (isJk(g.hands[p][z])) hasJk = true;
+      /* ⚠️★ ★kill.noJkFirst を 渡した ときだけ この 優先が 消えます（★見張り ㉚-7 が わざと 壊す とき だけ）*/
+      if (hasJk && !(kill && kill.noJkFirst)) jkH.push(p); else near.push(p);
     }
+    out = jkH.concat(near);                            /* ★ ジョーカー持ち → ★近い 順 */
     return out;
   }
   /* ★ ロボットが ポンするか ―― ★★いつも します（★§3-3）*/
@@ -917,49 +1090,61 @@
   function doPon(g, p) {
     if (g.over || g.phase !== 'pon') return { ok: false, why: 'いま ポンできません' };
     if (g.ponCands.indexOf(p) < 0) return { ok: false, why: 'その 人は ポンできません' };
-    var card = g.ponCard, i;
+    var card = g.ponCard;
+    /* ★★ T260-2：★出す 札は ponSet が 決めます（★自分の番の ポンと **同じ 関数**）★★ */
+    var cs = ponSet(g.hands[p], card);
+    if (!cs) return { ok: false, why: 'その 人は ポンできません' };
     g.discard.pop();
     g.hands[p].push(card);
     if (g.hands[p].length > g.st.handMax) g.st.handMax = g.hands[p].length;
     g.cur = p;
     g.phase = 'play';
     g.ponCard = -1; g.ponFrom = -1; g.ponCands = [];
-    /* ★ そろった 同位札を ぜんぶ */
-    var r = rankOf(card), cs = [];
-    for (i = 0; i < g.hands[p].length; i++) {
-      if (!isJk(g.hands[p][i]) && rankOf(g.hands[p][i]) === r) cs.push(g.hands[p][i]);
-    }
     var res = doMeld(g, cs);
     if (!res.ok) return { ok: false, why: res.why };
     g.st.pon++;
     g.st.tookDiscard++;
     return { ok: true, card: card, cards: cs, meld: res.meld, at: res.at };
   }
-  /* ★ ポンしない ―― ★ふつうに 次の 人へ */
-  function ponPass(g) {
+  /* ============================================================
+     ★★★★ T260-3 ―― ★★見送ったら **次の 候補へ**（★ルルが 見つけた 2つ・2026-09-12）★★★★
+     ------------------------------------------------------------
+     ★ ★ルル：「★ponStep() は ponCands[0] しか 見ない ので、★人が 候補でも 先頭でなければ
+       ★ ★★1度も 聞かれません。★そして 人が『そのまま』を 押すと、★★もう1人の 候補も ポンできなく なります」
+     ★ ★★どちらも 0.0011回／配り（★1,000回 配って 1回）。★★★優先順位を 直すだけでは 消えません。
+     ★ ★★直し方は 1つ：★★**決まりで えらばれた 人（先頭）に 聞く。★見送ったら 先頭を 外して 次の 候補へ。**
+       ★ ★★候補が いなく なって はじめて、★すてた 人の 左へ 手番が 進みます。
+     ============================================================ */
+  function ponPass(g, kill) {
     if (g.over || g.phase !== 'pon') return { ok: false };
+    g.ponCands = g.ponCands.slice(1);                  /* ★ 先頭（★見送った 人）を 外す */
+    /* ⚠️★ ★kill.noNext を 渡した ときだけ「次の 候補へ」が 消えます（★見張り ㉚-8 が わざと 壊す とき だけ）*/
+    if (g.ponCands.length && !(kill && kill.noNext)) return { ok: true, next: g.ponCands[0] };   /* ★★ 次の 候補に 聞く */
     g.cur = (g.ponFrom + 1) % g.nP;
     g.phase = 'draw';
     g.ponCard = -1; g.ponFrom = -1; g.ponCands = [];
-    return { ok: true };
+    return { ok: true, next: -1 };
   }
 
   /* ★ すてる ―― ★ここで 手番が おわります。★手札が 0枚に なったら 上がり */
-  function doDiscard(g, card, noPon) {
+  function doDiscard(g, card, noPon, kill) {
     if (g.over || g.phase !== 'play') return { ok: false, why: 'いま すてられません' };
+    /* ★★ T260 ―― ★もらった 札を 組に するまで すてられません（★もらった 札も、ほかの 札も）★★ */
+    if (g.must) return { ok: false, why: 'さきに ポンか チーを します' };
     var hand = g.hands[g.cur];
     var k = hand.indexOf(card);
     if (k < 0) return { ok: false, why: '手札に ありません' };
     hand.splice(k, 1);
     g.discard.push(card);
     g.lastDiscard = card;
+    g.topFrom = g.cur;                         /* ★ T260：★だれが すてたか（★チーの 順番）*/
     g.turn++;
     g.st.turns = g.turn;
     if (hand.length === 0) { finishDeal(g, g.cur); return { ok: true, out: true }; }
     if (g.turn >= g.rules.maxTurns) { finishDeal(g, -1); return { ok: true, out: false, stop: true }; }
     /* ★★★ T208 ―― ★★ここが ポンの 窓 です（★ルル §5-3：★手番を 進める **直前**）★★★
        ★ ★★ noPon を 渡した ときだけ 窓が 開きません（★見張りが わざと 壊す とき だけ）。 */
-    var cands = noPon ? [] : ponCands(g, card, g.cur);
+    var cands = noPon ? [] : ponCands(g, card, g.cur, kill);
     if (cands.length) {
       if (cands.length > 1) g.st.ponBoth++;      /* ★ ⑳-3：★同時ポン（★起きない はず）*/
       g.phase = 'pon';
@@ -990,6 +1175,7 @@
       pts.push(s);
     }
     g.winner = winner;
+    g.must = null;
     g.drawGame = (winner < 0);
     g.pts = pts;
     g.phase = 'over';
@@ -1018,15 +1204,58 @@
     if (o.smartDraw && g.discard.length && takeOk(g)) {
       /* ★ 見えない 山の 札は のぞきません。★見えて いる すて札 だけで 決めます */
       var h3 = g.hands[g.cur];
-      var h2 = h3.concat([g.discard[g.discard.length - 1]]);
-      var a = planPlay(h2, g.table, o, g.cur, 1).played;
+      var top = g.discard[g.discard.length - 1];
+      var h2 = h3.concat([top]);
+      /* ★★ T260 ―― ★★もらったら その場で ポンか チー ―― ★★「もらった あと 出せる 数」も その 形で 数えます
+         ★ ★前は planPlay(h2) ＝ ★もらった 札を **使わなくても よい** 数え方 でした（★T260 の 穴の 半分）。 */
+      var a = bestTake(g, o, h3, top, takeKinds(g).opts).val;
       var aBase = planPlay(h3, g.table, o, g.cur, 1).played;
       var uBase = 0, uNew = 0, i;
       for (i = 0; i < h3.length; i++) uBase += usefulness(h3, i);
       for (i = 0; i < h2.length; i++) uNew += usefulness(h2, i);
+      /* ★★ ためる人（★見張り ② の 模型）は 組を 出せない ―― ★★もらうのは **上がれる とき だけ** */
+      if (o.holdAll && a < h2.length - 1) return 'stock';
       if (a > aBase || (uNew - uBase) >= 22) return 'discard';
     }
     return 'stock';
+  }
+  /* ============================================================
+     ★★ T260 ―― ★ロボットの ポン／チー（★もらった あと、★どの 形に するか）★★
+     ★ ★どの 形でも「★その 組を 出した あと、★のこりで どこまで 出せるか」（★planPlay）で くらべます。
+       ★ ★★ルルの 打ち手（planPlay）を そのまま 使う ―― ★★新しい 頭は 足して いません。
+     ★ ★同じ なら ★ジョーカーを 使わない 形（★jokerHold の ロボット）→ ★のこりの 使いみちが 多い 形。
+     ============================================================ */
+  function bestTake(g, o, hand, c, opts) {
+    var best = { val: -1, opt: null, tie: -1e9 }, i, j;
+    for (i = 0; i < opts.length; i++) {
+      var op = opts[i];
+      var rest = hand.concat([c]);
+      for (j = 0; j < op.cards.length; j++) { var at = rest.indexOf(op.cards[j]); if (at >= 0) rest.splice(at, 1); }
+      var mm = makeMeld(op.cards, g.cur);
+      if (!mm) continue;
+      var T = cloneTable(g.table);
+      T.push(mm);
+      var val = op.cards.length + planPlay(rest, T, o, g.cur, 1).played;
+      var tie = (o.jokerHold && op.useJk ? -1000 : 0);
+      for (j = 0; j < rest.length; j++) tie += usefulness(rest, j);
+      if (val > best.val || (val === best.val && tie > best.tie)) best = { val: val, opt: op, tie: tie };
+    }
+    if (best.val < 0) best.val = 0;
+    return best;
+  }
+  function botTake(g, o) {
+    var mu = g.must;
+    if (!mu) return null;
+    var hand = g.hands[g.cur].slice();
+    hand.splice(hand.indexOf(mu.card), 1);
+    var opts = takeOptions(hand, mu.card, mu.chi, null), ok = [];
+    for (var i = 0; i < opts.length; i++) if (opts[i].kind === 'chi' || mu.pon) ok.push(opts[i]);
+    var b = bestTake(g, o, hand, mu.card, ok);
+    if (!b.opt) return null;
+    var r = doMeld(g, b.opt.cards.slice());
+    if (!r.ok) return null;
+    g.st.meldTurns++;
+    return { kind: 'meld', cards: r.meld.cards.slice(), at: r.at, take: r.kind };
   }
   /* ★ 出す ぶんを 決める（★まだ 動かしません）*/
   function botPlan(g, o) {
@@ -1054,7 +1283,10 @@
   }
   /* ★ 決めた ぶんを 実際に 動かす。★返り … 動きの ならび（★画面が 1つずつ 見せます）*/
   function botPlay(g, o) {
-    var pp = botPlan(g, o), steps = [];
+    var steps = [];
+    /* ★★ T260 ―― ★すて札を もらった 手番は、★★まず ポンか チー（★ここを 通らないと すてられません）★★ */
+    if (g.must) { var tk = botTake(g, o); if (tk) steps.push(tk); }
+    var pp = botPlan(g, o);
     if (!pp.doPlay) return steps;
     var plan = pp.plan, i, j;
     /* ⚠️★★★ ここで 1回 つまずきました【★私の 失敗①・作業メモ §5】★★★
@@ -1181,6 +1413,8 @@
       }
       if (g.hands[g.cur].length < 1) bad++;
       if (g.hands[g.cur].length > before) bad++;
+      /* ★★ T260：★もらった 札が 組に 入らない まま 手番を 終えようと して いたら 反則 */
+      if (g.must) bad++;
       var dc = botDiscard(g, o);
       var rr = doDiscard(g, dc);
       if (!rr.ok) { bad++; break; }
@@ -1506,6 +1740,9 @@
     rng: rng, makeGame: makeGame, refill: refill,
     doDraw: doDraw, doMeld: doMeld, doLayoff: doLayoff, doDiscard: doDiscard, finishDeal: finishDeal,
     takeOk: takeOk, ponCands: ponCands, doPon: doPon, ponPass: ponPass, botPon: botPon,
+    /* ★★ T260 ―― ★もらったら その場で ポン／チー */
+    chiFromOk: chiFromOk, ponSet: ponSet, takeOptions: takeOptions, takeKinds: takeKinds, mustMeld: mustMeld,
+    doTakePon: doTakePon, botTake: botTake, bestTake: bestTake,
     botDraw: botDraw, botPlan: botPlan, botPlay: botPlay, botDiscard: botDiscard,
     newMatch: newMatch, addDeal: addDeal,
     simDeal: simDeal, simMatch: simMatch, runMany: runMany, newStat: newStat, pct: pct,
