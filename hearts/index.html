@@ -86,6 +86,10 @@
       <span>ハーツ</span>
     </div>
     <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+    <!-- ★★ T275 ―「↻ やめる」（★設計図 追記⑩・社長のお決め①②）★★
+         ★ 遊んで いる あいだ だけ 出る。★押したら **聞かずに** はじめの 画面へ 戻る。
+         ★ ★ハーツは 配りが 終わった ところまで 残る ので、★小さい字の 知らせは 付けません。 -->
+    <button class="quit-btn hidden" type="button" id="btnQuitGame"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</button>
   </header>
 
   <!-- ── はじめの 画面 ──────────────────────────────
@@ -237,7 +241,11 @@
     </label>
     <div class="result-row">
       <button class="dialog-ok" type="button" id="btnNext">つぎへ <b>▶</b></button>
-      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+      <!-- ★★ T275・追記⑩ ③ ―― ★字を「やめる」→「◀ ゲームを選ぶ」に しました。
+           ★★ **行き先（href="../"）は 1文字も 変えて いません。★字だけ です。**
+           ★ ★なぜ：★上の帯の「↻ やめる」は はじめの 画面へ、★ここは 家（ゲーム一覧）へ。
+             ★★同じ「やめる」の 字で 行き先が 2つ ある のを、★1つに 直しました。 -->
+      <a class="dialog-ok alt" href="../" id="btnQuit">◀ ゲームを選ぶ</a>
     </div>
   </div>
 </div>

@@ -84,6 +84,12 @@
       <button class="tool" type="button" id="btnUndo">もどす</button>
       <button class="tool" type="button" id="btnNew">新しく 配る</button>
     </div>
+    <!-- ★★ T275 ―「↻ やめる」（★設計図 追記⑩・社長のお決め①②）★★
+         ★ 遊んで いる あいだ だけ 出る。★押したら **聞かずに** はじめの 画面
+           ★（★むずかしさを えらぶ ところ）へ 戻る。
+         ★ ★「新しく 配る」は 同じ むずかしさで 配り直し、★こちらは むずかしさから 選び直し。
+         ★ ★点の 積み上げは 1つも 無い ので、小さい字の 知らせは 付けません。 -->
+    <button class="quit-btn hidden" type="button" id="btnQuitGame"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</button>
   </header>
 
   <!-- ── はじめの 画面 ──────────────────────────────
@@ -145,7 +151,9 @@
     <div class="result-buttons">
       <button class="dialog-ok" type="button" id="btnMain">新しく 配る <b>▶</b></button>
       <button class="dialog-ok alt hidden" type="button" id="btnSub">新しく 配る</button>
-      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+      <!-- ★★ T275・追記⑩ ③ ―― ★字を「やめる」→「◀ ゲームを選ぶ」に しました。
+           ★★ **行き先（href="../"）は 1文字も 変えて いません。★字だけ です。** -->
+      <a class="dialog-ok alt" href="../" id="btnQuit">◀ ゲームを選ぶ</a>
     </div>
   </div>
 </div>

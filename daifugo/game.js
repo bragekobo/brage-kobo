@@ -1180,6 +1180,7 @@ function startGame(keepScore) {
 
   $('startScreen').classList.add('hidden');
   $('gameScreen').classList.remove('hidden');
+  syncQuit();                /* ★T277：上の帯の「↻ やめる」を 出す */
   render();
   /* ★ カードこうかんは くばった あと・はじまる まえ（§5-2 の 2ばん） */
   runSwap(() => {
@@ -1761,6 +1762,17 @@ function onPass() {
   state.busy = true;
   pass(me);
 }
+/* ★★ T277 ―「↻ やめる」を 出す／消す（★設計図 追記⑩）★★
+   ★ 上の帯は はじめの 画面でも 出て いるので、★ボタンだけを 出し入れ します。
+   ★ あちこちに 書くと 1か所 書き忘れて ずれる ので、
+     ★「遊ぶ 画面が 出て いるか」を そのまま 見る 形に しました（★1か所だけ）。 */
+function syncQuit() {
+  const b = $('quitBtn');
+  if (!b) return;
+  const on = !$('gameScreen').classList.contains('hidden');
+  b.classList.toggle('hidden', !on);
+}
+
 function backToStart() {
   state.over = true;
   state.epoch += 1;          /* やめた 回の タイマーも 無効に する */
@@ -1768,6 +1780,7 @@ function backToStart() {
   state.after = null;
   $('gameScreen').classList.add('hidden');
   $('startScreen').classList.remove('hidden');
+  syncQuit();                /* ★T277：上の帯の「↻ やめる」を 消す */
 }
 
 /* ───────── はじめの ひもづけ ───────── */
@@ -1813,6 +1826,10 @@ $('settingBtn').addEventListener('click', () => { $('resultDialog').close(); bac
 window.DF = {
   state, RULES, RULE, ruleLive, reversed, strength, meldPower, legalPlays, meldsFor, render,
   handStates, isMyTurn, preset: applyPreset,
+  /* ★T277：見張りが「★はじめの画面では 消える・遊んで いる ときは 出る」を
+     ★ **本物の しくみ**で 確かめる ための 口（★遊びには 使いません）。 */
+  syncQuit,
+  backToStart,
   start(keepScore) { startGame(Boolean(keepScore)); return state.turn; },
   card(k) { const d = createDeck(); return d.find(c => c.key === k) || null; },
   /* てふだを 仕こむ（けんしょう用。デッキの つじつまは 見ない） */

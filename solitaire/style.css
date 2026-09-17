@@ -245,9 +245,21 @@ button { font-family:inherit; cursor:pointer; }
   word-break:keep-all;
 }
 .howto {
+  position:relative;                   /* ★T118：下の 押し代（::after）の 親 */
   flex:0 0 auto; padding:8px 12px; border-radius:999px;
   background:var(--white); border:3px solid var(--pink-soft);
   color:var(--pink-dark); font-size:12.5px; font-weight:900; white-space:nowrap;
+}
+/* ★★ T289 ― ★見えない 押し代（★T118 の 型・★フリーセルの `.howto::after` を そのまま 写した）★★
+   ★ わけ … ★T288 で 数えたら、この ボタンは 12画面 ぜんぶで **30〜35px**でした（★44px 割れ）。
+   ★ 直しかた … ★**見た目は 1pxも 太らせない。★的だけ 44px に する。**
+                ★箱も 帯も 盤も 1pxも 伸びません（★`::after` は ならびに 入らない）。
+   ⚠️★ よこには 広げない（`left:0;right:0`）―― ★広げると となりの ボタンの 的を 取ります。
+   ⚠️★ 高さは **44px と 決め打ち**して まん中ぞろえ。★±4px と 書くと ふちの 太さぶん 足りません
+        （★フリーセルの 書き置き・375px で 40px しか 出なかった【実測】）。 */
+.howto::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
 }
 .howto:hover { border-color:var(--pink); }
 @media (max-width:360px) {
@@ -297,6 +309,26 @@ button { font-family:inherit; cursor:pointer; }
   border:3px solid var(--pink-soft); box-shadow:0 4px 0 rgba(196,58,115,.10); font-size:15px;
 }
 
+/* ★★ T291 ―「指の的だけ たて44px」の 見えない 押し代（★T118／T289 の 型）★★
+   ★ わけ … ★T288 は これを「ⓑ 箱の ならびを 変えないと 直らない」に 分けました。
+            ★★ところが アトが T289 の 最後に
+              ★**「`::after` は ならびに 入らないので 箱は 伸びない」**と
+              ★★自分の 見立ての まちがいを 見つけました。★数え直したら その とおりでした。
+   ★ 数えた もの【★実測・12画面・T291】
+        ★ `#btnMain`（新しく 配る）… 見た目 **たて43px**・的 44px。★下の となりまで **9px**・箱の 下に **76px**。
+        ★ `#helpDialog .dialog-ok`（分かった！）… 見た目 **たて43px**。★上下とも **120px** 以上 空き。
+        ★★どちらも 44px に するのに 要るのは **上下 0.5px ずつ**。
+   ★ 直しかた … ★**見た目は 1pxも 変えない。★的だけ たて 44px。**★よこは 1pxも 広げません。
+   ★ 箱は 伸びません … ★`::after` は 絶対位置なので ならびに 入りません【★T118 で 実測ずみ】。
+   ⚠️★ `z-index:0` を 足して います。★T289 §3-② で アトが 見つけた
+      ★★「`position:relative` だけを 足すと 遠くの 丸かどが 色1つぶん ずれる」を 起こさない ため。 */
+#btnMain, #helpDialog .dialog-ok { position:relative; z-index:0; }
+#btnMain::after,
+#helpDialog .dialog-ok::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
+}
+
 /* ★ 箱が 出た 瞬間、指が まだ 動いている あいだは おせなく する（T62の 事故よけ）
    ------------------------------------------------------------
    ソリティアは 演出を タップで 飛ばせる ので、その 同じ 指が
@@ -322,6 +354,18 @@ dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-da
   border:3px solid var(--pink-soft); background:var(--white); color:var(--pink-dark);
   font-size:17px; font-weight:900; line-height:1;
 }
+/* ★★ T289 ― ★`×` の 見えない 押し代（★T118 の 型）★★
+   ★ わけ … ★T288 で 数えたら **34×34**。★10本 そろって 同じ 数で、★会社で いちばん 小さい ボタン。
+            ★★しかも「読み終わって 閉じる」は **遊ぶ 前の 最初の 1回**。
+              ★ここで 指を 外した子は、まだ 1回も 遊んで いません。
+   ★ 直しかた … ★**見た目 34×34 の まま。★的だけ 44×44。**★箱は 1pxも 伸びません。
+   ★ はみ出す 先 … ★34→44 で 上下左右に **5px ずつ**。★行き先は 箱の すみの 空きだけで、
+                  ★★押せる ものは 1つも いません【★12画面で 数えた・T289】。
+   ⚠️★ 親は すでに `position:absolute` なので、★`position:relative` を 足す 必要は ありません。 */
+.close-dialog::after {
+  content:''; position:absolute; left:50%; top:50%;
+  width:44px; height:44px; transform:translate(-50%,-50%);
+}
 .help-list { margin:0 0 12px; padding-left:1.3em; }
 .help-list li { margin-bottom:8px; font-size:14.5px; font-weight:700; line-height:1.65; }
 .help-list b { color:var(--pink-dark); }
@@ -331,3 +375,31 @@ dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-da
   font-size:13.5px; font-weight:700; line-height:1.7; color:#6b5522;
 }
 .help-note b { color:var(--pink-dark); }
+
+/* ============================================================
+   ★★★ T297 ② ―― ★「もどす」「新しく 配る」の 見えない 押し代（★🎨アト・2026-09-15）★★★
+   ★ ★きっかけ：★🧪トライ T296 ―「★ピラミッド・ソリティア・スパイダーには `.tool::after` が
+     ★ ★1行も なく、★灰色でない ときも **36px の まま**」。
+   ★ ★★これは ★**私自身の T288 の 数えもれ**です（★67個 と 書きましたが、正しくは もっと ありました）。
+   ------------------------------------------------------------
+   ★ ★直す前【★アト実測・T297-10・★追記⑥の 12画面・★灰色を 起こして 測った】：
+     ★ ★ ・★「もどす」　　… ★見た目 **70.2×36px**／★指の的 **71.2×36px**（★たてが **8px 足りない**）
+     ★ ★ ・★「新しく 配る」… ★見た目 **97.7×36px**／★指の的 **97.7×36px**（★たてが **8px 足りない**）
+     ★ ★★12画面 ぜんぶ ✕。★3本 × 2つ × 12画面 ＝ ★**72通り**。
+
+   ★ ★直しかた：★**フリーセルの `.tool::after`（★T118）を そのまま 写す**。
+     ★ ★★**見た目は 1pxも 太りません** ―― ★絶対位置の 箱は ならびに 入らないので、
+     ★ ★★★帯も 盤も 札も ページの たけも 1pxも 動きません（★T289 で 私が 数え直した ところ）。
+   ★ ⚠️★T118 の 書き置きの とおり、★`top/bottom` で ±4px とは 書きません。
+     ★ ★★`top/bottom` は **ふち（border）の 内がわ**が 基準なので、ふちの 太さ（2〜3px）ぶん
+     ★ ★★★足りなく なります（★T289 で 私は「読んだのに 踏みました」）。
+     ★ ★→ ★たかさを **44px と 決め打ち**して まん中ぞろえ。★ふちの 太さに 左右されません。
+   ★ ★よこには 広げません（★となりの ボタンを ふさがない ため。★`.tools{gap}` は 1文字も 触って いません）。
+   ★ ★灰色（disabled）の ときは 押し代も 消します（★フリーセルと 同じ。★押せない ものを 押せそうに 見せない）。
+   ------------------------------------------------------------ */
+.tool { position:relative; }
+.tool::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
+}
+.tool[disabled]::after { display:none; }

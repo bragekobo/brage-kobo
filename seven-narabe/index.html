@@ -78,10 +78,23 @@
 
   <main class="app-shell">
     <header class="topbar">
-      <!-- まとめサイト（ゲームを えらぶ ページ）に もどる。1本目と おなじ 見た目 -->
-      <a class="back" href="../">◀ ゲームを選ぶ</a>
+      <!-- まとめサイト（ゲームを えらぶ ページ）に もどる。1本目と おなじ 見た目
+           ★★ T277 ―「◀」と「ゲームを選ぶ」を 分けました（★アト T273 の 手当て・社長のお決め②）★★
+              ★ なぜ：★上の帯に「↻ やめる」が 増えた ぶん、★はば 520px 以下では
+                ★★4つが 入りきらず、★題（七並べ）が たてに 折れます【★T273 実測】。
+              ⚠️★ 行き先（href="../"）は 1文字も 変えて いません。 -->
+      <a class="back" href="../"><b>◀</b><span class="back-word"> ゲームを選ぶ</span></a>
       <div class="brand"><svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg><span>七並べ</span><small>ねこのカードゲーム</small></div>
       <button class="howto" id="howtoBtn" type="button">？ 遊び方</button>
+      <!-- ★★ T277 ―「↻ やめる」（★社長のお決め①・★設計図 追記⑩）★★
+           ★ もとは 遊びの面の 中に「↻ **最初から**」と ありました。
+             ★★社長の お決め①「★20本とも『↻ やめる』に そろえる」に したがい、
+             ★★★字を「やめる」に 変え、★上の帯の いちばん 右へ 引っこしました。
+           ★ ★働きは 1つも 変わって いません（★はじめの 画面に 戻る）。
+             ★★字だけ そろえました ―― ★ほかの 18本と 同じ 言葉に する ため。
+           ⚠️★ id は restartBtn の まま ―― ★game.js の 行き先（backToStart）は
+                ★1文字も 変えて いません。 -->
+      <button class="quit-btn hidden" type="button" id="restartBtn"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</button>
     </header>
 
     <section class="start-screen" id="startScreen" aria-labelledby="gameTitle">
@@ -209,7 +222,8 @@
           </div>
         </div>
 
-        <button class="restart-mini" id="restartBtn" type="button">↻ 最初から</button>
+        <!-- ★★ T277：「↻ 最初から」は ここから ★上の帯の いちばん 右へ 引っこし、
+             ★字も「↻ やめる」に そろえました（★社長のお決め①）。★★ -->
       </div>
       <div class="players" id="cpuArea" aria-label="ロボットたち"></div>
       <section class="table-wrap" aria-label="場のカード">

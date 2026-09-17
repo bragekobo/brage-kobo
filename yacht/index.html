@@ -79,6 +79,13 @@
       <span>ヨット</span>
     </div>
     <button class="howto" type="button" id="btnHowto">？ 遊び方</button>
+    <!-- ★★ T275 ―「↻ やめる」（★設計図 追記⑩・社長のお決め①②）★★
+         ★ 遊んで いる あいだ だけ 出る。★押したら **聞かずに** はじめの 画面へ 戻る。
+         ★★ この本は ★**積み上げが 本当に 消える 2本の うちの 1本**（★もう1本は ブラックジャック）。
+           ★ ★しまうのは「さいこう点」1つ だけ ―― ★12回の 途中で やめると、
+           ★ ★★その試合の 12マスの 表は 残りません。
+           ★★→ ★**聞くのでは なく**、★ボタンの 中に 小さい字を 1行 入れました（★部品は 0個 増えません）。 -->
+    <button class="quit-btn has-note hidden" type="button" id="btnQuitGame"><span class="quit-main"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</span><small class="quit-note">ここまでの点は消えるよ</small></button>
   </header>
 
   <!-- ── はじめの 画面 ──────────────────────────────
@@ -250,7 +257,9 @@
     </label>
     <div class="result-row">
       <button class="dialog-ok" type="button" id="btnAgain">もう 1回 <b>▶</b></button>
-      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+      <!-- ★★ T275・追記⑩ ③ ―― ★字を「やめる」→「◀ ゲームを選ぶ」に しました。
+           ★★ **行き先（href="../"）は 1文字も 変えて いません。★字だけ です。** -->
+      <a class="dialog-ok alt" href="../" id="btnQuit">◀ ゲームを選ぶ</a>
     </div>
   </div>
 </div>

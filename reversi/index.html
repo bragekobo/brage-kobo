@@ -93,6 +93,11 @@
       <span>リバーシ</span>
     </div>
     <div class="topbar-pad"></div>
+    <!-- ★★ T274 ―「↻ やめる」（社長のお決め・設計図 追記⑩）★★
+         ★ 押すと **はじめの 画面**へ 戻る（★つよさ／速さを 決め直せる）。★聞きません（お決め②）。
+         ★ 遊んでいる 間だけ 出す（★はじめの 画面では 消す ―― やめる ものが ない）。
+         ★ 色は うすみどり ―― ★白い「◀ ゲームを選ぶ」と 見分ける ため（T273 §5）。 -->
+    <button class="quit-btn hidden" type="button" id="btnQuitGame"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</button>
   </header>
 
   <!-- ── はじめの 画面 ──────────────────────────────
@@ -186,7 +191,10 @@
     </label>
     <div class="result-buttons">
       <button class="dialog-ok" type="button" id="btnAgain">もう1回 <b>▶</b></button>
-      <a class="dialog-ok alt" href="../" id="btnQuit">やめる</a>
+      <!-- ★★ T274：字を「やめる」→「◀ ゲームを選ぶ」に 変えました（社長のお決め③）★★
+           ★ 行き先（href="../"）は 1文字も 変えて いません。★字だけ。
+           ★ 上の帯の「↻ やめる」と 行き先が ちがう ので、★同じ 字に して おけません。 -->
+      <a class="dialog-ok alt" href="../" id="btnQuit"><b>◀</b><span> ゲームを選ぶ</span></a>
     </div>
   </div>
 </div>

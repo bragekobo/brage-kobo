@@ -104,6 +104,54 @@ body {
 }
 @media (max-width:340px) { .app-shell { padding:6px 3px; } }
 
+/* ★★★ T275 ―「↻ やめる」の 型（★アト T273 §2 の 型・★設計図 追記⑩）★★★
+   ------------------------------------------------------------
+   ★ 置き場所 … 上の帯の いちばん 右（★12マスの 表にも サイコロにも かぶらない 足場）
+   ★ 返す margin … ★この本の 上の帯の たけは **44px**【T275 実測】。
+                ★44 − 44 = **0** ―― ★返しは 要りません（★帯も 器も 1pxも 動かない）。
+   ★ 色      … うすみどり（★20本の 帯で 唯一 空いていた 色・★T273 §2 実測）
+   ★ z-index … ★飾りでは ない（★T273 §4-1）。
+
+   ★★★ この本だけ ―― ★★ボタンの 中に 小さい字を 1行 ★★★
+     ★ ★社長の お決め②は「★**聞かない**」。★確認の 箱は 作りません（★部品は 0個 増えません）。
+     ★ ★★ただし ―― ★★本当に 積み上げが 消えるのは **ヨットと ブラックジャックの 2本だけ**
+       ★ ★（★この本は しまうのが「さいこう点」1つ だけ。★12回の 途中で やめると、
+       ★ ★  その試合の 12マスの 表は 残りません）【★ルル T272 実測】。
+     ★ ★★→ ★**押す 前に 分かる** ように、★ボタンの 中に 小さい字を 1行 入れました。
+     ★ ★★字の 大きさは **11px ＝ 会社の 床**（★§9.6・T123/T139）。★下げて いません。
+     ★ ★★たけ：11.5 ＋ すきま2 ＋ 11 ＝ 24.5px ＋ わく6px = 30.5px < 44px
+       ★ ★  → ★**44px の 型は 1pxも 崩れません**【T275 実測】。
+   ------------------------------------------------------------ */
+.quit-btn{
+  position:relative; z-index:2;
+  order:99; flex:0 0 auto;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 8px;
+  font-family:inherit; font-size:11.5px; font-weight:900; line-height:1;
+  color:#22633F; background:#B7EDC9;
+  border:3px solid #2F7D4C; border-radius:999px;
+  white-space:nowrap; cursor:pointer;
+}
+.quit-btn .quit-icon{ margin-right:4px; }
+/* ★★ T281 ― ★↻ を 字では なく **絵（インラインSVG）**で 描く（★アトの 型・T279）★★
+   ★ わけ：★`↻` の 形を 決めて いるのは ★その端末の フォントで、★私たちには 直せません。
+     ★★実測：★字の ときは **9.77×11.5px**で、★★やじりが **1画素も 出て いません**でした。
+   ★ ★外部フォント 0・画像ファイル 0・通信 0（★SVG は HTML の 中）。
+   ★ ★`display:none` の 決まりは そのまま 効きます（★下の @media は 1行も 触って いません）。 */
+.quit-btn svg.quit-icon { width:16px; height:16px; flex:0 0 auto; pointer-events:none; }
+.quit-btn .qi-arc { fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; }
+.quit-btn .qi-tip { fill:currentColor; stroke:none; }
+/* ★ 小さい字の ある 形（★この本と ブラックジャックだけ）*/
+.quit-btn.has-note{ flex-direction:column; gap:2px; }
+.quit-btn .quit-main{ display:inline-flex; align-items:center; }
+.quit-btn .quit-note{ font-size:11px; font-weight:800; line-height:1; }
+/* ★ せまい 画面（はば 374px 以下）は 字を 1段 下げ、★↻ を 落とす（★T273 §2）
+   ★ ★小さい字は **11px の まま**（★会社の 床。★ここを 下げない）*/
+@media (max-width:374px){
+  .quit-btn{ font-size:10.5px; padding:0 5px; }
+  .quit-btn .quit-icon{ display:none; }
+}
+
 /* ── はじめの 画面 ───────────────────────── */
 /* ⚠️★★ T160 の 決まり ―― ★はみ出したら **スクロールで 届く** ように する */
 .title-screen {

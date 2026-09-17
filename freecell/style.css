@@ -385,6 +385,24 @@ button { font-family:inherit; cursor:pointer; }
   border:3px solid var(--pink-soft); box-shadow:0 4px 0 rgba(196,58,115,.10); font-size:15px;
 }
 
+/* ★★ T291 ― ★結果の箱と あそびかたの箱の ボタンの 見えない 押し代（★T118／T289 の 型）★★
+   ★ わけ … ★T288 は この 2つを「ⓑ 箱の ならびを 変えないと 直らない」に 分けました。
+            ★★でも アトが T289 の 最後に ★**「`::after` は ならびに 入らないので 箱は 伸びない」**と
+              ★自分の 見立ての まちがいを 見つけました。★数え直したら その とおりでした。
+   ★ 数えた もの【★実測・12画面・T291】
+        ★ `#btnMain`（新しく 配る）… 見た目 **たて43px**。★下の となりまで **9px**・箱の 下に **76px**。
+        ★ `#helpDialog .dialog-ok`（分かった！）… 見た目 **たて43px**。★上下とも **130px** 以上 空き。
+        ★★どちらも 44px に するのに 要るのは **上下 0.5px ずつ**。
+   ★ 直しかた … ★**見た目 43px の まま。★的だけ たて 44px。**★よこは 1pxも 広げません。
+   ★ 箱は 伸びません … ★`::after` は 絶対位置なので ならびに 入りません【★T118 で 実測ずみ】。
+   ⚠️★ `z-index:0` を 足して います。★T289 §3-② で アトが 見つけた
+      ★★「`position:relative` だけを 足すと 遠くの 丸かどが 色1つぶん ずれる」を 起こさない ため。 */
+#btnMain, #helpDialog .dialog-ok { position:relative; z-index:0; }
+#btnMain::after, #helpDialog .dialog-ok::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
+}
+
 /* ★ 箱が 出た 瞬間、指が まだ 動いている あいだは おせなく する（T62の 事故よけ）*/
 .result-buttons { transition:opacity .16s ease-out; }
 .result-box.is-locked .result-buttons { pointer-events:none; opacity:.4; }
@@ -403,6 +421,18 @@ dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-da
   position:absolute; top:10px; right:12px; width:34px; height:34px; border-radius:50%;
   border:3px solid var(--pink-soft); background:var(--white); color:var(--pink-dark);
   font-size:17px; font-weight:900; line-height:1;
+}
+/* ★★ T289 ― ★`×` の 見えない 押し代（★T118 の 型）★★
+   ★ わけ … ★T288 で 数えたら **34×34**。★10本 そろって 同じ 数で、★会社で いちばん 小さい ボタン。
+            ★★しかも「読み終わって 閉じる」は **遊ぶ 前の 最初の 1回**。
+              ★ここで 指を 外した子は、まだ 1回も 遊んで いません。
+   ★ 直しかた … ★**見た目 34×34 の まま。★的だけ 44×44。**★箱は 1pxも 伸びません。
+   ★ はみ出す 先 … ★34→44 で 上下左右に **5px ずつ**。★行き先は 箱の すみの 空きだけで、
+                  ★★押せる ものは 1つも いません【★12画面で 数えた・T289】。
+   ⚠️★ 親は すでに `position:absolute` なので、★`position:relative` を 足す 必要は ありません。 */
+.close-dialog::after {
+  content:''; position:absolute; left:50%; top:50%;
+  width:44px; height:44px; transform:translate(-50%,-50%);
 }
 .help-list { margin:0 0 12px; padding-left:1.3em; }
 .help-list li { margin-bottom:8px; font-size:14.5px; font-weight:700; line-height:1.65; }

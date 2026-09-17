@@ -2305,3 +2305,166 @@ body:has(.over-box:not(.hidden)) .ranks { display:none; }
   .sd-rows  { gap:4px; }
   .sd-row   { padding:4px 5px; }
 }
+
+/* ============================================================
+   ★★★ T277 ―「↻ さいしょから」（★アトの 型・T273 §2 ／ 設計図 追記⑩）★★★
+   ------------------------------------------------------------
+   ★ 置き場所 … ★上の帯の いちばん 右。★はじめの 画面が 無い 本なので、
+                ★★出し入れ しません（★いつも 出たまま）。
+   ★ はみ出し … ★たて向きの 帯は `.back` の 38px【実測】。★44 − 38 ＝ ★6px。
+                ★★**上に** 返します（margin-top:-6px）。★上には 空が 8〜10px あります。
+                ★★★下に 返すと ★ラシャ（.board-wrap）の 右上の 丸い かどに かかります
+                   【★ホールデムで 写真の 画素が 鳴きました：96/880画素】。
+   ⚠️★ position:relative; z-index:2 が 無いと 指の的が 36〜42px に 減ります。
+   ============================================================ */
+.quit-btn {
+  position:relative; z-index:2;
+  order:99; flex:0 0 auto; align-self:flex-start; margin-top:-6px;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 10px;
+  background:#B7EDC9; border:3px solid #2F7D4C; border-radius:999px;
+  color:#22633F; font-family:inherit; font-size:11.5px; font-weight:900; line-height:1;
+  white-space:nowrap; cursor:pointer;
+  box-shadow:0 3px 0 rgba(47,125,76,.22);
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.quit-btn .quit-icon { margin-right:4px; }
+/* ★★ T281 ― ★↻ を 字では なく **絵（インラインSVG）**で 描く（★アトの 型・T279）★★
+   ★ わけ：★`↻` の 形を 決めて いるのは ★その端末の フォントで、★私たちには 直せません。
+     ★★実測：★字の ときは **9.77×11.5px**で、★★やじりが **1画素も 出て いません**でした。
+   ★ ★外部フォント 0・画像ファイル 0・通信 0（★SVG は HTML の 中）。
+   ★ ★`display:none` の 決まりは そのまま 効きます（★下の @media は 1行も 触って いません）。 */
+.quit-btn svg.quit-icon { width:16px; height:16px; flex:0 0 auto; pointer-events:none; }
+.quit-btn .qi-arc { fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; }
+.quit-btn .qi-tip { fill:currentColor; stroke:none; }
+.quit-btn:hover  { transform:translateY(-2px); box-shadow:0 5px 0 rgba(47,125,76,.24); }
+.quit-btn:active { transform:translateY(2px); box-shadow:0 1px 0 rgba(47,125,76,.22); }
+.quit-btn:focus-visible { outline:4px solid var(--pink-deep); outline-offset:3px; }
+
+/* ★ はば 374px 以下は 字を 1段 下げます（★型の とおり）。
+   ★★ T286（2026-09-13）― ★ここには もう 1行、★`.quit-btn .quit-icon` を **落とす** 決まりが ありました。
+      ★ ★★外しました。★★★わけ：★兄弟の ホールデムは T284 で 12画面ぜんぶ 出る ように なり、
+        ★ ★この本だけ 320px の 3画面で しるしが 消えて いました（★T282 の「兄弟が 割れて いる」）。
+      ★ ★数えた 代金【★実測・320×568／480／454】：
+        ★ ・★ボタン ★**77.33 → 97.33px**（★＋20px ＝ しるし16 ＋ あき4）
+        ★ ・★題の 器 ★162.67 → **142.67px**。★題の 中身は **54px** ―― ★★余り **88.67px**。★点々も 折れも 出ません
+        ★ ・★帯の たかさ・★卓・席・札・チップ・かけの ボタンは ★**1pxも 動きません**（★§2 の 表）
+   ⚠️★ 落とす 決まりは もう 1本も 置きません。★★`t286KesuKimari()` が CSS を 読んで 数え、1本でも あれば 鳴きます。 */
+@media (max-width:374px) {
+  .quit-btn { font-size:10.5px; padding:0 6px; }
+}
+/* ★★ はば 520px 以下は「◀ ゲームを選ぶ」を「◀」だけに します（★社長のお決め②）★★ */
+@media (max-width:520px) {
+  .back .back-word { display:none; }
+  .back { min-width:44px; justify-content:center; padding:0 10px; }
+}
+
+/* ============================================================
+   ⚠️★★★ T277 ― ★よこ向き だけは 型が **そのまま 入りません**（★T273 で 私が 書いた 所）★★★
+   ------------------------------------------------------------
+   ★ この本の よこ向きは `.topbar{display:contents}` ―― ★**帯が ほどけて**、
+     ★中の 3つ（もどる／題／いま どこ）が それぞれ 別の マスに 入ります。
+   ★ ★だから `order` も `margin-left:auto` も `align-self` も **効きません**。
+     ★★grid-area を 書かないと、★ボタンが 勝手な マスに 置かれ、
+        ★★★手札が −50px、★かけの ボタンが −199px 動きました【★T277 実測】。
+   ★ どう 入れたか ―― ★**「もどる」と 同じ マスの 右はし**に 置きました。
+     ★ ①「◀ ゲームを選ぶ」を「◀」1字に する（★コネクトフォー T274 と 同じ 手当て）
+     ★ ②ボタンの 字を 1段 下げ、★↻ を 落とす
+     ★ ★左の 列は 126／160／190px【実測】。★44 ＋ 79 ＝ **123px** ―― ★いちばん せまい
+       ★★568px の 画面でも 3px あまります。★行も 列も 1つも 増えません。
+   ★ ★代金：★よこ向きでは「ゲームを選ぶ」の 字が 見えなく なります（★社長のお決め②）。
+   ============================================================ */
+@media (min-width:561px) and (max-height:480px) {
+  .back .back-word { display:none; }
+  .back { min-width:44px; justify-content:center; padding:0 8px; }
+  .quit-btn {
+    grid-area:back; justify-self:end; align-self:start;
+    margin-top:0; font-size:10.5px; padding:0 6px;
+  }
+}
+
+/* ============================================================
+   ★★★ T286 ― ★よこ向きでも しるしを 出す（🎨アト・2026-09-13・★社長のお決め「1. いま ポーカーも 直す」）★★★
+   ------------------------------------------------------------
+   ★ ★★ここに あった `.quit-btn .quit-icon{display:none}` を 外しました。
+   ★ ★外すと ボタンが **＋20px** 太ります（★しるし16 ＋ あき4）。★★入るか どうかは 画面で 分かれます
+     ★ 【★実測・T286・左の 列を 1pxまで 数えた】：
+
+     | ★画面 | ★左の列 | ★もどる | ★いまの ↻ | ★あいだ | ★＋20px |
+     |---|---|---|---|---|---|
+     | ★812×375・844×390・736×414 | ★160px | ★8→52 | ★91→168（77.3） | ★**39px** | ★★入る（★あと 19px） |
+     | ★926×428（★最優先） | ★190px | ★8→52 | ★121→198（77.3） | ★**69px** | ★★入る（★あと 49px） |
+     | ★**667×375・568×320・568×272** | ★**126px** | ★8→52 | ★57→134（77.3） | ★**4.67px** | ★★★**入らない ―― 15.33px たりない** |
+
+   ★ ★★左の 列を 広げれば 入りますが、★★★それは 卓を 15.33px 小さく する ことです（★社長が T215 で
+     ★ 9.6倍に された もの・★追記③）。★★だから 広げません。
+   ★ ★もどる（◀）も 縮められません ―― ★44px は 指の 床。
+   ★ ★★→ ★しるしを **字の となり**では なく **字の 上**に 置きました。
+     ★ ★★ボタンの はばを 決めて いるのは **字**（59.3px）なので、
+       ★ ★★★はばは **77.33px の まま ―― ★1pxも 太りません**。★たかさも min-height:44px の まま 44px。
+     ★ ★中身：★しるし16 ＋ あき2 ＋ 字12 ＝ 30px。★44px の 中に おさまります。
+   ★ ★代金：★この 3画面だけ、★しるしが 字の **上**に 出ます（★となりでは ない）。
+     ★ ★★「◀ ゲームを選ぶ」が よこ向きで「◀」だけに なる のと 同じ 形の 手当てです（★社長のお決め②）。
+   ⚠️★ `gap` は 使いますが `flex` の 中の gap なので、★★行も 列も 1つも 増えません。
+   ============================================================ */
+@media (min-width:561px) and (max-width:699px) and (max-height:480px) {
+  /* ★ あきは ★**4px** ―― ★よこ ならびの ときと 同じ 数（★`.quit-icon{margin-right:4px}`）。
+     ★ ★はじめ 2px で 書いて、★★見張りの 床（3px）に **1px 足りず** 鳴きました【★T286 実測】。
+     ★ ★中身は 16 ＋ 4 ＋ 11.55 ＝ **31.55px**。★min-height:44px の 中に おさまります。 */
+  .quit-btn { flex-direction:column; gap:4px; line-height:1.1; }
+  .quit-btn .quit-icon { margin-right:0; }
+}
+
+/* ============================================================
+   ★★★ T297 ―― ★上の帯を 画面に くっつける（★🎨アト・2026-09-15）★★★
+   ★ ★社長裁定「★1. 直して、そのまま 公開」。★お手本は ★ブラックジャック（★T279）と 七並べ（★T285）。
+   ★★ この かたまりは **ポーカー 1本だけ**。
+   ------------------------------------------------------------
+   ★ ★直す前【★アト実測・T297-01・★12画面・★本物の 指で 下へ すべらせた】：
+     ★ ★★**320×454**（★上 −25／−28px）と ★**320×480**（★「↻ さいしょから」の 上が −2px・
+       ★ ★すべれるのは たった 4px）の **2画面**。
+     ★ ★★⚠️トライの T296 は「★ポーカー 1画面」でした。★私の 実測は **2画面**です
+       ★ ★（★ちがいは 320×480 の 4px。★★遊びの どこで 測るかで ページの たけが 変わる ため）。
+       ★ ★★**少ない ほうに 合わせません。★2画面 として 直します。**
+
+   ★★★ よこ向きは 帯が **ほどけて** います（★T273・T277・T286 で 私が 何度も 当たった所）★★★
+     ★ ★`@media (min-width:561px) and (max-height:480px)` では `.topbar{display:contents}` ―― 
+       ★ ★★帯の **箱が そもそも 無い**ので、★`position` も `::before` も 1つも 効きません
+       ★ ★★（★実測：★よこ向き 7画面の 帯は **0×0px**）。
+     ★ ★**でも、この 7画面は 直す 相手では ありません。**★実測で ★**すべる ところが 0px**
+       ★ ★（★器が `min-height:100dvh` の grid で 画面ちょうど）＝ ★★★帯が 消える ことが 起きません。
+     ★ ★→ ★だから この かたまりは ★**よこ向きの grid を 外した ところだけ**に かけます
+       ★ ★（★`@media (max-width:560px), (min-height:481px)` ―― ★★1972行に すでに ある 式と
+       ★ ★★**1文字も 同じ**。★新しい 線を 1本も 引いて いません＝追記⑥ 決まり2）。
+     ★ ★★**入らない ところは「入らない」と 書きます。**★よこ向き 7画面は くっつけて いません。
+
+   ★ ★止める 位置は ★**6px**（★「↻ さいしょから」の `margin-top:-6px`）。★器の 上の よはく 8px の 中。
+   ★ ★`z-index` は **20**。★中身の いちばん 上は 3、★かけの パネルは 40、★役の一覧は 60 ―― 
+     ★ ★★かぶせ窓は どちらも 帯の 上のまま。
+   ------------------------------------------------------------ */
+@media (max-width:560px), (min-height:481px) {
+  /* ★ `.app-shell{padding-top}` の 写し（★1093行 10px）。★ずれたら `POKER.verify()` が 鳴きます。 */
+  :root { --bar-pad-top:10px; --bar-over:6px; --bar-h:38px; }
+
+  .topbar { position:sticky; top:var(--bar-over); z-index:20; }
+
+  /* ★ 空と **まったく 同じ** ふた（★body 425〜430行の 写し）。 */
+  .topbar::before {
+    content:''; position:absolute; z-index:-1; pointer-events:none;
+    top:calc(-1 * var(--bar-pad-top)); bottom:0;
+    left:calc(50% - 50vw); right:calc(50% - 50vw);
+    background-color:#fff7e8;
+    background-image:linear-gradient(180deg,#BCEBF0 0%,#D9F2F6 100%);
+    background-repeat:no-repeat;
+    background-size:100% 172px;
+  }
+
+  html { scroll-padding-top:calc(var(--bar-over) + var(--bar-h) + 4px); }
+}
+/* ★ ★1113行と そろえる（★せまい画面は 器の 上が 8px・空が 118px）。
+   ★ ★`max-width:560px` は よこ向きの grid（`min-width:561px`）と 重ならないので、
+     ★ ★ほどけた 帯に かかる ことは ありません。 */
+@media (max-width:560px) {
+  :root { --bar-pad-top:8px; }
+  .topbar::before { background-size:100% 118px; }
+}

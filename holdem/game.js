@@ -1761,7 +1761,325 @@
     return out;
   }
 
+
+  /* ============================================================
+     ★★★ T281 ―「↻」が **記号に 見えて いるか** の 見張り（★アトの 型・T279）★★★
+     ------------------------------------------------------------
+     ★ なぜ 要るか【実測】：★まえは `↻` を **字**で 出して いた ので、
+       ★ ★Windows の Chrome で **9.77 × 11.5px**・★★やじりが **1画素も 出ず**、
+       ★ ★★小さい「ʊ」に しか 見えません でした（★トライ T278／アト T279・16倍の 写真）。
+       ★ ★形を 決めて いるのは **その端末の フォント**で、★私たちには 直せません。
+       ★ ★→ ★**絵（インラインSVG）**に して、★端末に 任せない ことに しました。
+     ★ ★見る 目は 6つ：
+       ★ ①しるしが **SVG**（★字では ない）　②弧(.qi-arc)と やじり(.qi-tip)の **2パス**が ある
+       ★ ③出る 画面では **16×16px**　　　　 ④字との あきが **3px 以上**
+       ★ ⑤**どの はばでも 出る**（★T284 で 変わりました）　⑥太らせた せいで 44px の 的を 割って いない
+     ★ ★★この本の 決まり（★T284・2026-09-13 社長のお決め「1. 直す」）：
+       ★ ★★**たての 線は ありません。★どの はばでも 出します。**
+       ★ ★まえは「★この本だけ 560px 以下で 落とす」でした（★T273）が、★測ったら ★**その手当ては 要らなかった**
+         ★★（★器 142.67px ＞ 中身 129px・★T282／T284 実測）。★★兄弟の ポーカーと 見た目が 割れる もとでした。
+     ⚠️★★ ⑤は **せまい 画面（≦560px）で 走らせない と 鳴きません。**
+       ★ ★アトは T279 で「★すべらない 画面で すべる 見張りを 試して 鳴らず」を やって います。
+       ★ ★★同じ 穴です ―― ★**320px・390px の 画面でも かならず 走らせて ください。**
+     ★ ★さわった もの（hidden）は 1つ 残らず 戻します（★T144 §7-5）。
+     ★ ★名前の ぶつかり：`t281IconCheck` は この ファイルに 1つも ありません（★先に 数えました）。
+     ============================================================ */
+  /* ★★★ T284 ― ★CSS の 中の「しるしを 落とす 決まり」を **数える**★★★
+     ------------------------------------------------------------
+     ★ なぜ 要るか：★追記⑥ 決まり2／T264 ―― ★**たての 線は CSS と JS の 2か所に ある**。
+       ★ ★セブンブリッジは CSS だけ 直して JS が 残り、★ふきだしが 札に **1680px²** かぶりました。
+       ★ ★→ ★人の目で「そろっているか」を 見るのを やめ、★**JS が CSS を 読んで 数えます**。
+     ★ ★見るもの：★`.quit-icon` を `display:none` に する 決まりが 1本でも あるか
+       （★@media の 中も たどります）。★いまは **0本**が 正しい 姿です。
+     ★ ★名前の ぶつかり：`t284KesuKimari` は この ファイルに 1つも ありません【★先に 数えました・T277 の しくじり】。 */
+  function t284KesuKimari(doc) {
+    var hits = [];
+    function walk(list, media) {
+      if (!list) return;
+      for (var i = 0; i < list.length; i++) {
+        var r = list[i];
+        if (r.cssRules && r.media) { walk(r.cssRules, String(r.media.mediaText || '')); continue; }
+        if (r.cssRules && !r.selectorText) { walk(r.cssRules, media); continue; }
+        if (r.selectorText && r.style && r.selectorText.indexOf('quit-icon') >= 0
+            && String(r.style.display).toLowerCase() === 'none') {
+          hits.push((media ? '@media ' + media + ' ' : '') + r.selectorText);
+        }
+      }
+    }
+    var ss = doc.styleSheets;
+    for (var s = 0; s < ss.length; s++) {
+      try { walk(ss[s].cssRules, ''); } catch (e) { /* ★よその もとの 紙は 読めません（★この本には ありません）*/ }
+    }
+    return hits;
+  }
+
+  /* ★★★ T284 ― ★題が 切れて いないか・★**折れて いないか**を 数える★★★
+     ★ なぜ 要るか：★追記⑩ ①【★実測】―― ★「あふれ0・画面外0」は「折れて いない」の 証しでは ない。
+       ★ ★五目並べは 320px で となりの ボタンが **3行**に 折れ、★数字の 見張り 2本が そろって 見のがしました。
+     ★ ★しるしを 戻すと ボタンが **＋20px** 太り、★その ぶん 題の 器が 縮みます。
+       ★ ★★だから「足した せいで 題が 切れる／折れる」を ★この目で 見ます。 */
+  function t284DaiCheck(doc) {
+    var bad = [];
+    var br = doc.querySelector('.brand');
+    var sp = br ? br.querySelector('span') : null;
+    if (!sp) return ['★★題（.brand span）が ありません'];
+    var utsuwa = br.getBoundingClientRect().width;
+    if (sp.scrollWidth > sp.clientWidth + 1) {
+      bad.push('★★★題が 点々で 切れて います（★中身 ' + sp.scrollWidth + 'px ＞ 見え ' + sp.clientWidth + 'px・★器 '
+        + utsuwa.toFixed(2) + 'px）');
+    }
+    /* ⚠️★★ 行の 数えかた ―― ★**部品の 四角を 数えては いけません**【★T284・アトの しくじり】
+       ★ ★はじめ `sp.getClientRects().length` で 数えました。★★わざと 2行に 折っても ★**鳴きません** でした。
+       ★ ★★わけ：★`.brand span` は 中身が 2行に なっても ★**部品の 四角は 1つの まま**（★背の 高い 1個に なるだけ）。
+       ★ ★★★＝ ★**「見張っている ふり」**でした（★追記⑩ ②）。
+       ★ ★→ ★**字そのもの（Range）の 四角**を 数えます。★★これは 1行に 1つ 出ます。 */
+    var gyo = 1;
+    try { var rg = doc.createRange(); rg.selectNodeContents(sp); gyo = rg.getClientRects().length || 1; } catch (e) {}
+    if (gyo > 1) bad.push('★★★題が ' + gyo + '行に 折れて います（★1行の はず）');
+    return bad;
+  }
+
+  function t281IconCheck(doc, win) {
+    var bad = [];
+    var q = doc.querySelector('.quit-btn');
+    if (!q) return ['★★★「↻」の ボタン（.quit-btn）が ありません'];
+    var ico = q.querySelector('.quit-icon');
+    if (!ico) return ['★★★しるし（.quit-icon）が ありません'];
+
+    /* ① 字では なく 絵か（★はばに かかわらず 見る）*/
+    if (String(ico.tagName).toLowerCase() !== 'svg') {
+      bad.push('★★★しるしが 絵（SVG）では なく <' + ico.tagName + '> です'
+        + ' ―― ★字だと 形を 端末の フォントに 任せる ことに なります（★実測 9.77×11.5px・やじり 0画素）');
+    }
+    /* ② 弧と やじりの 2パス */
+    var arc = ico.querySelector ? ico.querySelector('.qi-arc') : null;
+    var tip = ico.querySelector ? ico.querySelector('.qi-tip') : null;
+    if (!arc) bad.push('★★弧（.qi-arc）が ありません');
+    if (!tip) bad.push('★★やじり（.qi-tip）が ありません ―― ★やじりが 無いと「○」に しか 見えません');
+
+    /* ★ いま かくれて いても 測れる ように、いちど 出して すぐ 戻す */
+    var wasHidden = q.classList.contains('hidden');
+    if (wasHidden) q.classList.remove('hidden');
+
+    var W = win.innerWidth, H = win.innerHeight;
+    /* ★★★ T284 ― ★この本の 決まりは ★**どの はばでも 出す**（★たての 線は 1本も ありません）★★★
+       ★ ★まえは ここに `W >= 561` と 書いて あり、★CSS の @media(max-width:560px) と ★**2か所**に
+         ★★同じ 線が ありました。★セブンブリッジは その 2か所が ずれて、★ふきだしが 札に 1680px² かぶりました。
+       ★ ★→ ★線そのものを 消しました。★★下の `t284KesuKimari` が ★**CSS を 読んで 数え**、
+         ★★★1本でも 残って いたら 鳴きます（★「2か所が そろっているか」を 人の目に 任せない）。 */
+    var deru = true;
+    var kesu = t284KesuKimari(doc);
+    if (kesu.length) {
+      bad.push('★★★CSS に しるしを 落とす 決まりが ' + kesu.length + '本 残って います：' + kesu.join(' ／ ')
+        + ' ―― ★JS 側は「どの はばでも 出す」です。★★2か所が ずれて います（★T284）');
+    }
+    var cs = win.getComputedStyle(ico);
+    var r = ico.getBoundingClientRect();
+    var mieru = (cs.display !== 'none' && r.width > 0 && r.height > 0);
+
+    if (deru && !mieru) {
+      bad.push('★★★はば ' + W + 'px では しるしが 出る はずなのに 出て いません（display:' + cs.display + '）');
+    } else if (!deru && mieru) {
+      bad.push('★★★はば ' + W + 'px では しるしを 落とす 決まりなのに '
+        + r.width.toFixed(1) + '×' + r.height.toFixed(1) + 'px で 出て います');
+    }
+
+    if (deru && mieru) {
+      /* ③ 16×16px */
+      if (r.width < 15.5 || r.width > 16.5 || r.height < 15.5 || r.height > 16.5) {
+        bad.push('★★しるしが ' + r.width.toFixed(2) + '×' + r.height.toFixed(2) + 'px です（★16×16px の はず）');
+      }
+      /* ④ 字との あき 3px 以上（★T276 の しくじり ―― ★足して となりを 詰まらせない）*/
+      var host = q.querySelector('.quit-main') || q;
+      var tn = null, i;
+      for (i = 0; i < host.childNodes.length; i++) {
+        var nd = host.childNodes[i];
+        if (nd.nodeType === 3 && nd.nodeValue.replace(/\s/g, '').length) { tn = nd; break; }
+      }
+      if (tn) {
+        var rg = doc.createRange(); rg.selectNodeContents(tn);
+        var aki = rg.getBoundingClientRect().left - r.right;
+        if (aki < 3) bad.push('★★しるしと 字の あきが ' + aki.toFixed(2) + 'px しか ありません（★3px 以上 ほしい）');
+      }
+      /* ⑥ 44px の 的 と 帯からの あふれ */
+      var qr = q.getBoundingClientRect();
+      if (qr.height < 43.99 || qr.width < 43.99) {
+        bad.push('★★しるしを 絵に した せいで ボタンが ' + qr.width.toFixed(1) + '×' + qr.height.toFixed(1)
+          + 'px に なりました（★44×44 の 床）');
+      }
+      var bar = q.parentElement;
+      if (bar) {
+        var pr = bar.getBoundingClientRect();
+        if (pr.width > 0 && qr.right > pr.right + 0.5) {
+          bad.push('★★しるしを 足した せいで ボタンが 帯から ' + (qr.right - pr.right).toFixed(1) + 'px あふれました');
+        }
+      }
+    }
+    if (wasHidden) q.classList.add('hidden');
+    return bad;
+  }
+
+  /* ★ 見張りの「この目 1つだけ」を 安く 呼べる 窓口（★ヨットの `_quitCheck` と 同じ 作法）。
+     ★ ★verify() ぜんぶを 回さなくても `__t281IconCheck()` で この目 だけ 試せます。
+     ★ ★中身は verify から 呼ばれる ものと **同じ 関数**です（★二重帳簿に しない）。 */
+  try { window.__t281IconCheck = function () { return t281IconCheck(document, window); }; } catch (e) {}
+
+  /* ★★★ T281 ― この本 はじめての 見張り（★正直に：★ホールデムには 見張りが 1つも ありません でした）★★★
+     ★ ★いまは「↻ の しるし」1つ ぶんだけ です。★使い方：`HOLDEM.verify()` */
+
+  /* ============================================================
+     ★T293 ― 見えない 押し代（44px）の 見張り
+     ------------------------------------------------------------
+     ★ お手本：T291 の `oshishiro()`（フリーセルほか 8本）。
+     ★ ★ちがう ところ：★T293 の `#btnStart` の 押し代は **まん中ぞろえでは ありません**
+       ★（★上へ 12px だけ のばす）。★★だから 「`top:50%` か どうか」は 数えません。
+       ★★数えるのは いつも 「**本物の 指で 44px 届くか**」です。
+     ★ ★★`<select>` は ここに 1つも 入って いません ―― ★`::after` が 効かないからです【T293 実測】。
+     ============================================================ */
+  function t293oshishiro() {
+    /* ★ [えらび方, 見た目の たて(px)【★T293 実測】, となり（取っては いけない）] */
+    var LIST = [['.ranks-toggle', 42, ['.act-btn']]];
+    var bad = [], mita = 0, i, j;
+    var vw = window.innerWidth, vh = window.innerHeight;
+
+    function atta(el, x, y) { var e = document.elementFromPoint(x, y); return !!e && (e === el || el.contains(e)); }
+    function deteru(el) { return !!(el && el.getClientRects().length); }
+    function kiru(el) {
+      var p = el.parentElement;
+      while (p && p !== document.documentElement) {
+        var cs = getComputedStyle(p);
+        if (cs.overflowY !== 'visible' || cs.overflowX !== 'visible') {
+          var pr = p.getBoundingClientRect();
+          return { t: pr.top + (parseFloat(cs.borderTopWidth) || 0), b: pr.bottom - (parseFloat(cs.borderBottomWidth) || 0) };
+        }
+        p = p.parentElement;
+      }
+      return null;
+    }
+
+    for (i = 0; i < LIST.length; i++) {
+      var sel = LIST[i][0], mitame = LIST[i][1], tonari = LIST[i][2];
+      var el = document.querySelector(sel);
+      if (!el) { bad.push('★T293：' + sel + ' が 居ない'); continue; }
+      if (!deteru(el)) continue;                        /* ★ 出て いない ときは 数えない */
+      var r = el.getBoundingClientRect();
+      var cs2 = getComputedStyle(el), af = getComputedStyle(el, '::after');
+      if (af.content === 'none') bad.push('★T293：押し代が 消えた（' + sel + '）');
+      if (parseFloat(af.height) < 44) bad.push('★T293：押し代が ' + af.height + ' しか ない（' + sel + '）');
+      if (cs2.position === 'static') bad.push('★T293：位置づけ（position）が 外れた（' + sel + '）');
+      if (r.height > mitame + 0.6) bad.push('★T293：見た目が ' + r.height.toFixed(1) + 'px に 太った（' + sel + '・T293 では ' + mitame + 'px）');
+
+      var k = kiru(el);
+      var mieru = (r.top >= 0 && r.bottom <= vh && (!k || (r.top >= k.t - 0.5 && r.bottom <= k.b + 0.5)));
+      if (!mieru) continue;                             /* ★ 切れて いる ―― ｅ は 数えない */
+      var cx = Math.round((r.left + r.right) / 2), cy = Math.round((r.top + r.bottom) / 2);
+      if (cx < 0 || cx >= vw || cy < 0 || cy >= vh || !atta(el, cx, cy)) continue;
+      var T = cy, B = cy;
+      for (j = 1; j <= 60; j++) { if (cy - j >= 0 && atta(el, cx, cy - j)) T = cy - j; else break; }
+      for (j = 1; j <= 60; j++) { if (cy + j < vh && atta(el, cx, cy + j)) B = cy + j; else break; }
+      mita++;
+      if (B - T + 1 < 44) bad.push('★T293：指の的が たて ' + (B - T + 1) + 'px しか ない（' + sel + '）');
+
+      for (j = 0; j < tonari.length; j++) {
+        var o = document.querySelector(tonari[j]);
+        if (!o || !deteru(o)) continue;
+        var q = o.getBoundingClientRect();
+        var ox = Math.round((q.left + q.right) / 2);
+        var ys = [Math.round(q.top) + 1, Math.round(q.bottom) - 2];
+        for (var m = 0; m < ys.length; m++) {
+          if (ys[m] < 0 || ys[m] >= vh || ox < 0 || ox >= vw) continue;
+          if (!atta(o, ox, ys[m])) bad.push('★T293：となりの ' + tonari[j] + ' の 見た目を 取った（y=' + ys[m] + '）');
+        }
+      }
+    }
+    return { '★NG': bad.length, '中身': bad.length ? bad : 'OK', '数えた ところ': mita };
+  }
+
+  /* ============================================================
+     ★★★ T297 ―― ★上の帯が 画面に くっついて いるかの 見張り（🎨アト・2026-09-15）★★★
+     ------------------------------------------------------------
+     ★ ★T288 ②の 決まり：★**見つけた あと 鳴らす まで 作って はじめて 見張り**。
+       ★ ★この 目は `verify()` の ★NG に 足されます（★記録するだけに しません）。
+     ★ ★見るもの 4つ：
+       ★ ①帯が `position:sticky` か
+       ★ ②`--bar-pad-top` が ★**器（.app-shell）の 本当の padding-top と そろって いるか**
+         ★ ★（★T279 `--bar-h`・★T264 `FLAT_H` と 同じ 形。★★数字を 2か所に 書いた ので、
+         ★ ★★ずれたら ここが 鳴きます ―― ★★★ふたが 中身を 隠すか、すきまが 空く）
+       ★ ③ふた(`.topbar::before`)が いて、★**空（body）と まったく 同じ 色**か
+       ★ ④★**くっついた とき、帯の ボタンが 画面の 外へ 出ないか**（★押し代 ::after も 入れて 数える）
+     ★ ★★すべらせずに 数だけで 出します（★T295 の「見張りが 遊びを 試す」を ふやさない ため）。
+     ★ ⚠️★ポーカーの よこ向きは `.topbar{display:contents}` ＝ ★**帯の 箱が ありません**。
+       ★ ★その ときは ①〜④を 見ず、★★かわりに「★ほどけて いるのに すべれたら 鳴く」に します
+       ★ ★（★★出ない画面で 鳴る 赤ランプを 作らない ―― ★T292）。
+     ============================================================ */
+  function t297ObiCheck(doc, win) {
+    var bad = [];
+    var sh = doc.querySelector('.app-shell'), tb = doc.querySelector('.topbar');
+    if (!sh || !tb) { bad.push('★T297：器（.app-shell）か 帯（.topbar）が ありません'); return bad; }
+    var ts = win.getComputedStyle(tb);
+    var d = doc.documentElement;
+    var suberu = Math.max(0, d.scrollHeight - win.innerHeight);
+    if (ts.display === 'contents') {
+      if (suberu > 0) bad.push('★T297：帯が ほどけて いる（display:contents）のに ページが ' + suberu + 'px すべれます');
+      return bad;
+    }
+    if (ts.position !== 'sticky') bad.push('★T297：帯が くっついて いません（position:' + ts.position + '）');
+    var pad = parseFloat(win.getComputedStyle(sh).paddingTop) || 0;
+    var v = parseFloat(ts.getPropertyValue('--bar-pad-top'));
+    if (isNaN(v)) bad.push('★T297：--bar-pad-top が ありません');
+    else if (Math.abs(v - pad) > 0.51) bad.push('★T297：--bar-pad-top ' + v + 'px と 器の 上の よはく ' + pad + 'px が ちがいます（ふたが ずれます）');
+    var b = win.getComputedStyle(tb, '::before'), bo = win.getComputedStyle(doc.body);
+    if (!b.content || b.content === 'none') bad.push('★T297：ふた（.topbar::before）が ありません');
+    else {
+      if (b.position !== 'absolute') bad.push('★T297：ふたが absolute で ありません（' + b.position + '）');
+      if (b.pointerEvents !== 'none') bad.push('★T297：ふたが 指を 取ります（pointer-events:' + b.pointerEvents + '）');
+      if (b.zIndex !== '-1') bad.push('★T297：ふたが 帯の 中身より 前に います（z-index:' + b.zIndex + '）');
+      if (b.backgroundImage !== bo.backgroundImage) bad.push('★T297：ふたの 空が body と ちがいます');
+      if (b.backgroundSize !== bo.backgroundSize) bad.push('★T297：ふたの 空の 大きさが body と ちがいます（' + b.backgroundSize + ' ／ body ' + bo.backgroundSize + '）');
+    }
+    var over = parseFloat(ts.top) || 0, tr = tb.getBoundingClientRect();
+    var es = tb.querySelectorAll('a,button'), i;
+    for (i = 0; i < es.length; i++) {
+      var e = es[i], s2 = win.getComputedStyle(e), r = e.getBoundingClientRect();
+      if (r.width < 0.5 || r.height < 0.5 || s2.display === 'none' || s2.visibility === 'hidden') continue;
+      var top = r.top, a = win.getComputedStyle(e, '::after');
+      if (a.content && a.content !== 'none' && a.position === 'absolute') {
+        var ah = parseFloat(a.height) || 0;
+        if (ah > r.height) top -= (ah - r.height) / 2;
+      }
+      var ue = (top - tr.top) + over;
+      if (ue < -0.51) bad.push('★T297：くっつくと「' + String(e.innerText || e.id || '').replace(/\s+/g, ' ').slice(0, 12) + '」の 上が ' + ue.toFixed(1) + 'px ―― 画面の 外です');
+    }
+    return bad;
+  }
+
+  function t281Verify() {
+    var bad = t281IconCheck(document, window).map(function (s) { return '★T281 しるし：' + s; });
+    /* ★★ T284 ― ★題の 目を 足しました（★しるしを 戻すと ボタンが ＋20px 太る ため）*/
+    bad = bad.concat(t284DaiCheck(document).map(function (s) { return '★T284 題：' + s; }));
+    var out = {
+      はば: window.innerWidth + '×' + window.innerHeight,
+      見た目: bad.length ? '★NG ' + bad.length + '件' : 'OK',
+      NG: bad,
+      見た目の目: 'しるしが SVG／弧と やじりの 2パス／16×16px／字と 3px 以上／'
+        + '★どの はばでも 出る（★CSS に 落とす 決まりが 0本）／44pxの 的／★題が 切れない・折れない'
+    };
+    /* ★ T293 ―「見えない 押し代（44px）」の 見張り */
+    var t293 = t293oshishiro();
+    out['★T293 見えない 押し代（44px）'] = t293['★NG'] ? t293['中身'] : ('OK（数えた ' + t293['数えた ところ'] + 'か所）');
+    if (t293['★NG']) out['★NG'] = (out['★NG'] || 0) + t293['★NG'];
+    /* ★ T297 ― 上の帯が 画面に くっついて いるか */
+    var t297 = t297ObiCheck(document, window);
+    out['★T297 帯が くっついて いるか'] = t297.length ? t297 : 'OK';
+    if (t297.length) out['★NG'] = (out['★NG'] || 0) + t297.length;
+    console.log('[ホールデム] verify', out);
+    return out;
+  }
+
   window.HOLDEM = {
+    /* ★ T297 ― 上の帯の 目だけを 呼ぶ 口（★verify から 呼ばれる ものと 同じ 関数。★二重帳簿に しない）*/
+    t297: function () { return t297ObiCheck(document, window); },
+    verify: t281Verify,          /* ★T281 ―「↻」が 記号に 見えて いるか */
     setup: function (holeSpec, boardSpec, robotSpecs) { dealFixed(holeSpec, boardSpec, robotSpecs); return window.HOLDEM.now(); },
     demo: demo,
     demos: function () { return Object.keys(DEMOS); },
@@ -1809,6 +2127,24 @@
   /* ============================================================
      たしかめ用ボタン（作る人むけ）
      ============================================================ */
+  /* ★★★ T277 ―「↻ さいしょから」（★設計図 追記⑩・社長のお決め⑤）★★★
+     ★ この本には はじめの 画面が 無い ので、★戻る先が ありません。
+       ★★だから「その場で **さいしょから 配り直す**」に します。
+     ★ 中身は ★**すでに ある 手順の 組みあわせ だけ**です ―― ★bench() が
+       ★試合を 数える 前に やって いる 4行と まったく 同じ 並びに しました
+       ★★（★makePlayers → injected を そろえる → 親と ハンド数を 戻す → startHand）。
+       ★★★＝ ★新しい 決まりは 1つも 足して いません。
+     ★ ★さいこう記録（state.best）には さわりません ―― ★localStorage に のこります。
+     ★ 社長のお決め②「聞かない」―― ★たしかめの 箱は 出しません。 */
+  function quitToStart() {
+    clearTimers();
+    makePlayers();                          // 4人とも 200枚から
+    state.injected = SEATS * START_COINS;   // 世の中に 出した コインの 合計を そろえ直す
+    state.dealer = -1; state.handNo = 0; state.pot = 0;
+    startHand();
+  }
+  $('btnQuitGame').addEventListener('click', quitToStart);
+
   $('btnPlay').addEventListener('click', startHand);
   document.querySelectorAll('[data-demo]').forEach(function (b) {
     b.addEventListener('click', function () { demo(b.dataset.demo); });

@@ -73,13 +73,26 @@
 
 <main class="app-shell">
   <header class="topbar">
-    <!-- まとめサイト（ゲームを えらぶ ページ）に もどる。1本目・2本目と おなじ 見た目 -->
-    <a class="back" href="../">◀ ゲームを選ぶ</a>
+    <!-- まとめサイト（ゲームを えらぶ ページ）に もどる。1本目・2本目と おなじ 見た目
+         ★★ T277 ―「◀」と「ゲームを選ぶ」を 分けました（★アト T273 の 手当て・社長のお決め②）★★
+            ★ なぜ：★上の帯に「↻ やめる」が 増えた ぶん、★はば 520px 以下では
+              ★★4つが 入りきらず、★題（大富豪）が たてに 折れます【★T273 実測】。
+            ★ ババ抜き・リバーシが すでに やっている 形に そろえました。
+            ⚠️★ 行き先（href="../"）は 1文字も 変えて いません。 -->
+    <a class="back" href="../"><b>◀</b><span class="back-word"> ゲームを選ぶ</span></a>
     <div class="brand">
       <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
       <span>大富豪</span><small>だいふごう</small>
     </div>
     <button class="howto" id="howtoBtn" type="button">？ 遊び方</button>
+    <!-- ★★ T277 ―「↻ やめる」（★社長のお決め①・★設計図 追記⑩）★★
+         ★ もとは 遊びの面の 中（.status-line）に ありました。★そこでは
+           ★★66×31px／76×34px ―― ★44px に 1回も 届いて いません でした【★T273 実測】。
+           ★さらに「◀ ゲームを選ぶ」と ★同じ白・同じ字色・同じ丸み・同じ左端で、
+           ★★見分けが つきません でした。
+         ★ → ★上の帯の いちばん 右・44px・うすみどり（★アトの 型）に そろえました。
+         ⚠️★ id は quitBtn の まま ―― ★game.js の 行き先（backToStart）は 1文字も 変えて いません。 -->
+    <button class="quit-btn hidden" type="button" id="quitBtn"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</button>
   </header>
 
   <!-- ============ スタート画面 ============ -->
@@ -167,7 +180,8 @@
            どちらも HTMLには のこす（下の script が 中身を 読んで ハッピーの かおを きめる ため）。 -->
       <div class="turn-badge" id="turnBadge">あなたの番！</div>
       <button class="mini-btn" id="rulesBtn" type="button">ルール ▾</button>
-      <button class="mini-btn" id="quitBtn" type="button">↻ やめる</button>
+      <!-- ★★ T277：「↻ やめる」は ここから ★上の帯の いちばん 右へ 引っこしました。★★
+           ★ 中身も 行き先も 同じ ボタンです（id も quitBtn の まま）。 -->
 
       <!-- おしらせは ハッピーの ふきだしの中に 出す（ほかの ゲームと おなじ 見せ方）。 -->
       <div class="talk" id="talk" data-mood="play">

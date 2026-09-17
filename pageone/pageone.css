@@ -122,6 +122,45 @@ body {
 }
 @media (max-width:340px) { .app-shell { padding:6px 3px; } }
 
+/* ★★★ T275 ―「↻ やめる」の 型（★アト T273 §2 の 型・★設計図 追記⑩）★★★
+   ------------------------------------------------------------
+   ★ 置き場所 … 上の帯の いちばん 右（★盤にも 札にも かぶらない 足場）
+   ★ 大きさ  … ★指の的 44×44 を 本当に 取る。
+                ★「見た目 32px ＋ 見えない 的 44px」は 下の 箱に 上書きされて
+                ★効きません（★T273 §6 実測 36〜42px）。★箱そのものを 44px に する。
+   ★ 返す margin … ★この本の 上の帯の たけは **44px**【T275 実測】。
+                ★44 − 44 = **0** ―― ★返しは 要りません（★帯も 器も 1pxも 動かない）。
+   ★ 色      … うすみどり（★20本の 帯で 唯一 空いていた 色・★T273 §2 実測）
+   ★ z-index … ★飾りでは ない。★これが 無いと あとから 来る 兄弟に
+                ★下ばりを 上書きされ、指の的が 36〜42px に 減ります（★T273 §4-1）。
+   ------------------------------------------------------------ */
+.quit-btn{
+  position:relative; z-index:2;
+  order:99; flex:0 0 auto;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 10px;
+  margin-bottom:0;
+  font-family:inherit; font-size:11.5px; font-weight:900; line-height:1;
+  color:#22633F; background:#B7EDC9;
+  border:3px solid #2F7D4C; border-radius:999px;
+  white-space:nowrap; cursor:pointer;
+}
+.quit-btn .quit-icon{ margin-right:4px; }
+/* ★★ T281 ― ★↻ を 字では なく **絵（インラインSVG）**で 描く（★アトの 型・T279）★★
+   ★ わけ：★`↻` の 形を 決めて いるのは ★その端末の フォントで、★私たちには 直せません。
+     ★★実測：★字の ときは **9.77×11.5px**で、★★やじりが **1画素も 出て いません**でした。
+   ★ ★外部フォント 0・画像ファイル 0・通信 0（★SVG は HTML の 中）。
+   ★ ★`display:none` の 決まりは そのまま 効きます（★下の @media は 1行も 触って いません）。 */
+.quit-btn svg.quit-icon { width:16px; height:16px; flex:0 0 auto; pointer-events:none; }
+.quit-btn .qi-arc { fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; }
+.quit-btn .qi-tip { fill:currentColor; stroke:none; }
+/* ★ せまい 画面（はば 374px 以下）は 字を 1段 下げ、★↻ を 落とす（★T273 §2）*/
+@media (max-width:374px){
+  .quit-btn{ font-size:10.5px; padding:0 5px; }
+  .quit-btn .quit-icon{ display:none; }
+}
+
+
 
 /* ── はじめの 画面 ───────────────────────── */
 /* ⚠️★★★ T160 ―― ★★はみ出したら **スクロールで 届く** ように する ★★★
@@ -713,6 +752,62 @@ body {
 .dialog-ok:active { transform:translateY(2px); box-shadow:0 1px 0 var(--pink-dark); }
 .dialog-ok.alt { background:#eaf3f1; color:#5a7a8c; box-shadow:0 3px 0 #cfe4ea; }
 .dialog-ok.alt:active { box-shadow:0 1px 0 #cfe4ea; }
+
+/* ★★★ T276 ―― ★結果の 箱の「◀ ゲームを選ぶ」（★社長のお決め・2026-09-13）★★★
+   ------------------------------------------------------------
+   ★ ★行き先は `href="../"`（★ほかの 18本と 同じ ―― ★まとめサイトへ）。
+   ★ ★★色は **白ぬき（わく線）**。★となりの 2つと 見分けが つく ように 3つとも ちがう 顔に します：
+     ★ ★・「もう1回 ▶」  … ★ピンクで うめる
+     ★ ★・「決まりを 変える」… ★うすみどりで うめる（#eaf3f1）
+     ★ ★・★**「◀ ゲームを選ぶ」… 白ぬき ＋ わく線 2px**
+   ★ ★★この 白ぬきは、★この本の 上の帯の「◀」と **同じ 顔**です（★同じ 行き先 だから）。
+     ★ ★T273 §5 の 失敗（★大富豪で「やめる」と「◀」が 同じ 白・同じ 字色・同じ 丸みで
+       ★ ★アトの目でも 見分けが つかなかった）を くり返さない ため、★わく線で 分けます。 */
+.dialog-ok.home {
+  background:var(--white); color:#5a7a8c;
+  border:2px solid #cfe4ea; box-shadow:0 3px 0 #cfe4ea;
+  white-space:nowrap;
+}
+.dialog-ok.home:active { box-shadow:0 1px 0 #cfe4ea; }
+.dialog-ok.home b { font-weight:900; }
+
+/* ★★ せまい 画面の 手当て ―― ★★足す前に 数えました【実測・T276】★★
+   ★ 結果の 箱の 中の あき と、★3つが 要る はば：
+   ┌─────────┬────────┬──────────────┬───────────────┐
+   │ 画面        │ あき   │ 3つ 全部 字あり │ 3つめが「◀」だけ │
+   ├─────────┼────────┼──────────────┼───────────────┤
+   │ 320（3画面）│ 276px  │ 349.7 ★−73.7  │ 263  ★+13.0   │
+   │ 375×812     │ 329px  │ 349.7 ★−20.7  │ 263  ★+66.0   │
+   │ 390×844     │ 343px  │ 349.7 ★−6.7   │ 263  ★+80.0   │
+   │ 568〜926    │ 396px  │ 349.7 ★+46.3  │ 263  ★+133.0  │
+   └─────────┴────────┴──────────────┴───────────────┘
+   ★ →★①はば520px 以下は 内よはくを 14px → 8px（★3つで 36px 返る）
+        ★ ★375 で 15.3px、★390 で 29.3px 残って **字が 全部 出ます**。
+   ★ →★②はば374px 以下（★320の 3画面）だけ、★字を「◀」に たたむ。
+        ★ ★★36px 返しても なお **37.7px 足りない** ので、★ここは たたむ しか ありません。
+        ★ ★★これは この本の 上の帯が すでに やって いる こと（★`.topbar .back span` は 520px 以下で 消える）。
+        ★ ★★★代金：★はば374px 以下では「ゲームを選ぶ」の 字が 消え、★「◀」だけ に なります
+          ★ ★（★設計図 追記⑩ の「手当て」欄 そのもの ―― ★コネクトフォー ⑬⑭ と 同じ 形）。
+   ⚠️★ 520 と 374 の 線は、★★追記⑥ の 11画面の どれも またぎません
+      ★（★はばは 320／375／390／568／667／736／812／844／926 ―― ★374 は 320と375の 間、
+        ★ ★520 は 390と568の 間）。 */
+@media (max-width:520px) {
+  .result-row .dialog-ok { padding:0 8px; }
+}
+/* ★★ ③ ―― ★★あきが いちばん 細いのは 375×812 でした【★実測】★★
+   ★ ★内よはくを 8px に した だけだと、★★3つ とも 残りが **5.0〜5.6px** しか ありません。
+   ★ ★★字の 3.6% です ―― ★★★字の かたちが ちがう 端末（★ヒラギノ丸ゴ が 入って いる iPhone など）
+     ★ ★では 折れる かも しれません。★★私の PC 1台の 数字を「大丈夫」と 読んでは いけない。
+   ★ →★はば440px 以下だけ 字を 14px → **13px**（★会社の 床 11px より 上）。
+     ★ ★★これで 375 の 残りが **12.5px（★字の 9.0%）**に なります【★実測】。
+   ⚠️★ 440 の 線も 11画面を またぎません（★390 と 568 の 間）。 */
+@media (max-width:440px) {
+  .result-row .dialog-ok { font-size:13px; }
+}
+@media (max-width:374px) {
+  .result-row .dialog-ok.home span { display:none; }
+  .result-row .dialog-ok.home { padding:0 10px; }
+}
 .result-box.is-locked .result-row { pointer-events:none; opacity:.4; }
 .result-box.is-locked .dialog-ok { box-shadow:none; transform:translateY(3px); }
 

@@ -1968,6 +1968,22 @@
   /* ============================================================
      たしかめ用ボタン（作る人むけ）
      ============================================================ */
+  /* ★★★ T277 ―「↻ さいしょから」（★設計図 追記⑩・社長のお決め⑤）★★★
+     ★ この本には はじめの 画面が 無い ので、★戻る先が ありません。
+       ★★だから「その場で **さいしょから 配り直す**」に します。
+     ★ 中身は ★**すでに ある 手順の 組みあわせ だけ**です ―― ★bench() が
+       ★試合を 数える 前に やって いる 並びと 同じ。★新しい 決まりは 1つも 足して いません。
+     ★ ★さいこう記録（state.best）には さわりません ―― ★localStorage に のこります。
+     ★ 社長のお決め②「聞かない」―― ★たしかめの 箱は 出しません。 */
+  function quitToStart() {
+    clearTimers();
+    makePlayers();                          // 4人とも 200枚から
+    state.injected = SEATS * START_COINS;   // 世の中に 出した コインの 合計を そろえ直す
+    state.dealer = -1; state.handNo = 0; state.pot = 0;
+    startHand();
+  }
+  $('btnQuitGame').addEventListener('click', quitToStart);
+
   $('btnPlay').addEventListener('click', startHand);
   document.querySelectorAll('[data-demo]').forEach(function (b) {
     b.addEventListener('click', function () { console.log('[POKER] demo', demo(b.dataset.demo)); });

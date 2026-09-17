@@ -88,11 +88,68 @@ button { font-family:inherit; cursor:pointer; }
   color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
 }
 .back:hover { border-color:var(--pink); }
+
+/* ★★ T289 ― ★上の帯の「◀ ゲームを選ぶ」の 見えない 押し代（★T118 の 型）★★
+   ★ わけ … ★この ボタンは **12画面ずっと 出ている ただ1つの ボタン**。
+            ★★T288 で 数えたら 高さ **38px**で、★44px に **6px** 足りて いません。
+   ★ 直しかた … ★**見た目 38px の まま。★的だけ 44px。**★帯は 1pxも 伸びません
+                （★となりの `.quit-btn` が 44px なので、★帯の 高さは もともと 44px 分 あります）。
+   ★ はみ出す 先 … ★上下に **3px ずつ**。★12画面 ぜんぶで 押せる ものは いません【★T289 で 数えた】。
+   ⚠️★ よこには 広げない（`left:0;right:0`）―― ★右どなりは `.brand`（★ハッピーと 題）です。
+   ⚠️★ `.topbar` で しぼって います（★ふせた 札が あとから 増えても 巻きこまない ため）。 */
+/* ⚠️★★ z-index:0 は 飾りでは ありません（★T289 で 写真の 画素が 教えて くれた）★★
+   ★ `position:relative` だけを 足すと、★この ボタンは **あとから 塗られる 側**に 移ります。
+     ★★すると 下の 卓（`.board-wrap`）の **丸かどの ふちの 色が ±1 だけ ずれ**、
+        ★★★写真の 画素が **27画素** 鳴きました【★実測・ホールデム 812×375 ほか 5画面】。
+   ★ ★目では 見えない ずれ（255段階の 1）ですが、★**0で ない ものを 0とは 書きません**。
+     ★★`z-index:0` を 足すと **0画素**に 戻り、★的は 44px の まま でした【★実測】。
+   ⚠️★ `z-index:2` では **直りません**（★27画素の まま）。★0 で ある ことに 意味が あります。 */
+.topbar .back { position:relative; z-index:0; }
+.topbar .back::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
+}
 .brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:7px; min-width:0; }
 .brand-cat { width:34px; height:26px; flex:0 0 auto; }
 .brand span { font-weight:900; font-size:16px; color:#3f5a70; white-space:nowrap; }
 .topbar-pad { flex:0 0 auto; width:96px; }
 @media (max-width:520px) { .topbar-pad { display:none; } }
+
+/* ★★ T274 ―「↻ やめる」（★アトの 型・T273 §2／設計図 追記⑩）★★
+   ------------------------------------------------------------
+   ★ 遊んでいる 間だけ 出る。★押すと はじめの 画面へ 戻る（★速さを 決め直せる）。
+   ★ 出ている あいだは 右の 空き枠（.topbar-pad）を 消す ―― ★入れかわり。
+     ★ 520px 以下では 空き枠は もともと 消えて います。
+   ⚠️★ position:relative; z-index:2 は 飾りでは ない（T273 §4-1）。
+        ★ これが 無いと、44px の 箱の はみ出しを あとから 来る 兄弟が 上書きし、
+          ★指の的が 36〜42px に 減る【アト実測】。
+   ⚠️★ 44px の はみ出しは **下だけ** に margin で 返す（T273 §4-2）。
+        ★ ここは .back が 38px なので、★44 − 38 ＝ **6px** を 下へ 返す。
+          ★ こうすると 上の帯は **1pxも 伸びません**。
+   ★ 色は うすみどり ―― ★20本の 上の帯で 空いて いた 唯一の 色（T273 §2）。 */
+.quit-btn {
+  position:relative; z-index:2;
+  flex:0 0 auto; margin-left:auto; margin-bottom:-6px;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 10px;
+  background:#B7EDC9; border:3px solid #2F7D4C; border-radius:999px;
+  color:#22633F; font-family:inherit; font-size:11.5px; font-weight:900; line-height:1;
+  white-space:nowrap; cursor:pointer;
+}
+.quit-btn .quit-icon { margin-right:4px; }
+/* ★★ T281 ― ★↻ を 字では なく **絵（インラインSVG）**で 描く（★アトの 型・T279）★★
+   ★ わけ：★`↻` の 形を 決めて いるのは ★その端末の フォントで、★私たちには 直せません。
+     ★★実測：★字の ときは **9.77×11.5px**で、★★やじりが **1画素も 出て いません**でした。
+   ★ ★外部フォント 0・画像ファイル 0・通信 0（★SVG は HTML の 中）。
+   ★ ★`display:none` の 決まりは そのまま 効きます（★下の @media は 1行も 触って いません）。 */
+.quit-btn svg.quit-icon { width:16px; height:16px; flex:0 0 auto; pointer-events:none; }
+.quit-btn .qi-arc { fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; }
+.quit-btn .qi-tip { fill:currentColor; stroke:none; }
+/* ★ はば 374px 以下（★320の 端末）は 字を 1段 下げ、★↻ を 落とす（★45〜47px に 収める）*/
+@media (max-width:374px) {
+  .quit-btn { font-size:10.5px; padding:0 5px; }
+  .quit-btn .quit-icon { display:none; }
+}
 
 /* ── はじめの 画面 ──────────────────────────────── */
 .title-screen {
@@ -223,9 +280,21 @@ button { font-family:inherit; cursor:pointer; }
 
 /* ── 遊び方（画面の 一番下）───────────────────────── */
 .howto {
+  position:relative;                   /* ★T118：下の 押し代（::after）の 親 */
   display:block; width:100%; padding:10px 12px; border-radius:999px;
   background:var(--white); border:3px solid var(--pink-soft);
   color:var(--pink-dark); font-size:13.5px; font-weight:900;
+}
+/* ★★ T289 ― ★見えない 押し代（★T118 の 型・★フリーセルの `.howto::after` を 写した）★★
+   ★ わけ … ★T288 で 数えたら 高さ **40px**（★44px に 4px 足りない）。
+   ★ ★T288 で「16px」「31px」と 出た のは **足りない のでは なく、
+       ★★画面の 下で 切れて いた** だけ でした【★T289 で 数え直し・はし=true・すべらせれば 届く】。
+       ★★★足りない のは どの 画面でも **4px** ちょうどです。
+   ★ 直しかた … ★**見た目 40px の まま。★的だけ 44px。**★上下に 2px ずつ はみ出すだけ。
+   ⚠️★ よこには 広げない（`left:0;right:0`）。★この ボタンは もう 画面いっぱいの はばです。 */
+.howto::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
 }
 .howto:hover { border-color:var(--pink); }
 
@@ -279,6 +348,26 @@ button { font-family:inherit; cursor:pointer; }
   border:3px solid var(--pink-soft); box-shadow:0 4px 0 rgba(196,58,115,.10); font-size:15px;
 }
 
+/* ★★ T291 ―「指の的だけ たて44px」の 見えない 押し代（★T118／T289 の 型）★★
+   ★ わけ … ★T288 は これを「ⓑ 箱の ならびを 変えないと 直らない」に 分けました。
+            ★★ところが アトが T289 の 最後に
+              ★**「`::after` は ならびに 入らないので 箱は 伸びない」**と
+              ★★自分の 見立ての まちがいを 見つけました。★数え直したら その とおりでした。
+   ★ 数えた もの【★実測・12画面・T291】
+        ★ `#btnAgain`（もう1回）… 見た目 **たて43px**・的 44px。★上の となりまで **24px**・下に **9px**。
+        ★ `#helpDialog .dialog-ok`（分かった！）… 見た目 **たて43px**。★上に **65px**・箱の 下に **20px**。
+        ★★どちらも 44px に するのに 要るのは **上下 0.5px ずつ**。
+   ★ 直しかた … ★**見た目は 1pxも 変えない。★的だけ たて 44px。**★よこは 1pxも 広げません。
+   ★ 箱は 伸びません … ★`::after` は 絶対位置なので ならびに 入りません【★T118 で 実測ずみ】。
+   ⚠️★ `z-index:0` を 足して います。★T289 §3-② で アトが 見つけた
+      ★★「`position:relative` だけを 足すと 遠くの 丸かどが 色1つぶん ずれる」を 起こさない ため。 */
+#btnAgain, #helpDialog .dialog-ok { position:relative; z-index:0; }
+#btnAgain::after,
+#helpDialog .dialog-ok::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
+}
+
 /* ★ 決着した 瞬間、指が まだ 動いている あいだは おせなく する
    ------------------------------------------------------------
    T62 トライの 実測：この 2つの ボタンは 手札カードの 真上に かさなる。
@@ -320,6 +409,18 @@ dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-da
   border:3px solid var(--pink-soft); background:var(--white); color:var(--pink-dark);
   font-size:17px; font-weight:900; line-height:1;
 }
+/* ★★ T289 ― ★`×` の 見えない 押し代（★T118 の 型）★★
+   ★ わけ … ★T288 で 数えたら **34×34**。★10本 そろって 同じ 数で、★会社で いちばん 小さい ボタン。
+            ★★しかも「読み終わって 閉じる」は **遊ぶ 前の 最初の 1回**。
+              ★ここで 指を 外した子は、まだ 1回も 遊んで いません。
+   ★ 直しかた … ★**見た目 34×34 の まま。★的だけ 44×44。**★箱は 1pxも 伸びません。
+   ★ はみ出す 先 … ★34→44 で 上下左右に **5px ずつ**。★行き先は 箱の すみの 空きだけで、
+                  ★★押せる ものは 1つも いません【★12画面で 数えた・T289】。
+   ⚠️★ 親は すでに `position:absolute` なので、★`position:relative` を 足す 必要は ありません。 */
+.close-dialog::after {
+  content:''; position:absolute; left:50%; top:50%;
+  width:44px; height:44px; transform:translate(-50%,-50%);
+}
 .help-list { margin:0 0 14px; padding-left:1.3em; }
 .help-list li { margin-bottom:7px; font-size:14.5px; font-weight:700; line-height:1.65; }
 .help-list b { color:var(--pink-dark); }
@@ -342,3 +443,56 @@ dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-da
 }
 .ring-note { margin:2px 0 0; font-size:15px; font-weight:900; color:#5a4a63; }
 .ring-note b { color:var(--pink-dark); font-size:18px; }
+
+/* ============================================================
+   ★★★ T297 ―― ★上の帯を 画面に くっつける（★🎨アト・2026-09-15）★★★
+   ★ ★社長裁定「★1. 直して、そのまま 公開」。★お手本は ★ブラックジャック（★T279）と 七並べ（★T285）。
+   ★★ この かたまりは **スピード 1本だけ**。
+   ------------------------------------------------------------
+   ★ ★直す前【★アト実測・T297-01・★12画面・★本物の 指で 下へ すべらせた】：
+     ★ ★★**12画面中 9画面**で「◀ ゲームを選ぶ」も「↻ やめる」も 画面の 上へ 消え、
+       ★ ★★まん中も 押せません でした（★いちばん ひどいのは 568×272 の 上 **−400px**）。
+     ★ ★鳴かなかった 3画面（★320×568・375×812・390×844）は **すべる ところが 少ない** 画面です。
+
+   ★★★ この本で 気を つけた ところ ★★★
+   ★ ①★`.app-shell` に overflow は 1つも ありません【★実測 `visible/visible`】
+     ★ ★→ ★七並べの わな（★`overflow:hidden` の 中では `sticky` が 1pxも 効かない）は 出ません。
+   ★ ②★止める 位置は ★**3px**。★「◀」の 見えない 押し代（★`.topbar .back::after` ＝ 44px）が
+     ★ ★帯（38px）から 上に **3px** はみ出して います【★実測・12画面とも】。
+       ★ ★★`top:0` で 止めると 指の的が 41px に 減ります。★★3px 下げて 44px を 守ります。
+     ★ ★代金の 3px は ★**器の 上の よはく 12px の 中**。★盤も 札も 山も 1pxも 動きません。
+   ★ ③★「↻ やめる」は 44px の 的の ため 帯から **下に 6px** 出て います。
+     ★ ★ふたの すそは **0**（★七並べ T285 の 「すそ 8px で 中身を 隠した」を くり返さない）。
+       ★ ★★＝ ★この 6px は **足す前と まったく 同じ 見え方**の まま 中身の 上に 出ます。
+   ★ ④★`z-index` は **20**。★中身の いちばん 上は 2（`.quit-btn`）。
+     ★ ★結果の 箱（`.result-wrap` ＝ **80**）は 帯の 上のまま ―― ★かぶせ窓は 隠れません。
+   ★ ⑤⚠️★`body` に ★**`overflow-x:clip`** を 足しました。
+     ★ ★わけ：★この本の 器は max-width **560px**。★★812×375 など 7画面では 器より 画面が 広く、
+       ★ ★ふたを 器の はばに すると **左右が クリーム色**に なります。
+       ★ ★★だから ふたは 画面の はしから はし（`50% - 50vw`）。
+     ★ ★★`100vw` は パソコンの すべりバーの ぶんだけ 中身より 広い ことが あるので、
+       ★ ★★★そのままだと **よこに すべる ものが 出ます**（★ほかの 3本は body に
+       ★ ★★`overflow-x:hidden` が もとから あって 出ません）。
+     ★ ★★★`hidden` では なく `clip` に したのは、★`hidden` は **すべる 入れ物**を 作るから
+       ★ ★（★七並べ T285 の わな）。★`clip` は 同じように 切って、入れ物を 作りません。
+     ★ ★足す前の よこの はみ出しは **17画面とも 0px**【★実測・T297-05】。★＝ ★切る ものは ありません。
+   ------------------------------------------------------------ */
+
+/* ★ `.app-shell{padding-top:12px}`（★81行）の 写し。★★ずれたら 見張り（`SPEED.verify()`）が 鳴きます。 */
+:root { --bar-pad-top:12px; --bar-over:3px; --bar-h:38px; }
+
+body { overflow-x:clip; }
+
+.topbar { position:sticky; top:var(--bar-over); z-index:20; }
+
+/* ★ 空と **まったく 同じ** ふた（★body 71〜74行の 写し）。★指は 取らない・★帯の 中身より うしろ。
+   ★ ★ふたの 上はしは すべって いない とき ちょうど 文書の 0px に 来ます
+     ★ ★（★＝ ★同じ グラデーションを 同じ 起点で 敷くので 1画素も 変わりません）。 */
+.topbar::before {
+  content:''; position:absolute; z-index:-1; pointer-events:none;
+  top:calc(-1 * var(--bar-pad-top)); bottom:0;
+  left:calc(50% - 50vw); right:calc(50% - 50vw);
+  background:linear-gradient(180deg,#bcebf0 0 190px,#fff7e8 190px);
+}
+
+html { scroll-padding-top:calc(var(--bar-over) + var(--bar-h) + 4px); }

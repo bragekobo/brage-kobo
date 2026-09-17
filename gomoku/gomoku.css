@@ -134,6 +134,41 @@ button { font-family:inherit; cursor:pointer; }
 .brand span { font-weight:900; font-size:16px; color:#3f5a70; white-space:nowrap; }
 .topbar-pad { flex:0 0 auto; width:96px; }
 
+/* ★★ T274 ―「↻ やめる」（★アトの 型・T273 §2／設計図 追記⑩）★★
+   ------------------------------------------------------------
+   ★ 遊んでいる 間だけ 出る。★押すと はじめの 画面へ 戻る。
+   ★ 出ている あいだは 右の 空き枠（.topbar-pad）を 消す ―― ★入れかわり。
+   ⚠️★ position:relative; z-index:2 は 飾りでは ない（T273 §4-1）。
+        ★ これが 無いと、44px の 箱の はみ出した ぶんを あとから 来る 兄弟
+          （#playScreen など）が 上書きし、★指の的が 36〜42px に 減る【アト実測】。
+   ⚠️★ 44px の はみ出しは **下だけ** に margin で 返す（T273 §4-2）。
+        ★ 上下に 半分ずつ 返すと、画面の 上ばしで 2px 外に 出て 42px に なる。
+        ★ 五目並べは .back が すでに 44px なので、★返す ぶんは 0（margin なし）。
+   ★ 色は うすみどり ―― ★20本の 上の帯で 空いて いた 唯一の 色（T273 §2）。 */
+.quit-btn {
+  position:relative; z-index:2;
+  flex:0 0 auto; margin-left:auto;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 10px;
+  background:#B7EDC9; border:3px solid #2F7D4C; border-radius:999px;
+  color:#22633F; font-family:inherit; font-size:11.5px; font-weight:900; line-height:1;
+  white-space:nowrap; cursor:pointer;
+}
+.quit-btn .quit-icon { margin-right:4px; }
+/* ★★ T281 ― ★↻ を 字では なく **絵（インラインSVG）**で 描く（★アトの 型・T279）★★
+   ★ わけ：★`↻` の 形を 決めて いるのは ★その端末の フォントで、★私たちには 直せません。
+     ★★実測：★字の ときは **9.77×11.5px**で、★★やじりが **1画素も 出て いません**でした。
+   ★ ★外部フォント 0・画像ファイル 0・通信 0（★SVG は HTML の 中）。
+   ★ ★`display:none` の 決まりは そのまま 効きます（★下の @media は 1行も 触って いません）。 */
+.quit-btn svg.quit-icon { width:16px; height:16px; flex:0 0 auto; pointer-events:none; }
+.quit-btn .qi-arc { fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; }
+.quit-btn .qi-tip { fill:currentColor; stroke:none; }
+/* ★ はば 374px 以下（★320の 端末）は 字を 1段 下げ、★↻ を 落とす（★45〜47px に 収める）*/
+@media (max-width:374px) {
+  .quit-btn { font-size:10.5px; padding:0 5px; }
+  .quit-btn .quit-icon { display:none; }
+}
+
 /* ★★ 指で さわる 画面（520px以下）では、押す ところを 44px 以上に する ★★
    ★ 会社の 基準は 44px（T62以来）。
    ⚠️★ この1本だけ、**1目 20px** という 承知のうえの 例外が あります（★44pxの 45%）。
@@ -469,6 +504,37 @@ button { font-family:inherit; cursor:pointer; }
 }
 /* ★ 結果の 箱の 中の つよさは、帯を 外して プルダウンだけ（★たけを 44px に 収める）*/
 .result-row .level-select { flex:0 0 auto; min-height:44px; font-size:13px; padding:4px 6px; border-width:3px; }
+
+/* ★★ T274 ―★はば 374px 以下の 結果の 箱だけ、「◀ ゲームを選ぶ」を たて2行に する ★★
+   ------------------------------------------------------------
+   ★ 字を「やめる」(3字) →「◀ ゲームを選ぶ」(8字) に 変えた 代金です（社長のお決め③）。
+   ★ この 箱は 1行に 3つ 並びます（もう1回 ▶ ／ ◀ ゲームを選ぶ ／ つよさ）。
+     ★★ はば320px では 3つ 合わせて **329px** 要るのに、★入るのは **276px**【★T274 計測】。
+        ★ 足りない ぶんを「もう1回 ▶」が 食べられて、
+          ★★★写真で 見たら **「もう／1／回」の 3行に 折れて いました**。
+        ⚠️★ 数字の 見張りは ★**あふれ 0・画面外 0 で 通して しまいました**
+           ―― ★T273 §8-4（★題の 折れを 数字が 2本 見のがした）と ★★まったく 同じ 落とし穴。
+           ★ だから 下の verify に ★「もう1回 が 1行か」を 数える 見張りを 足しました。
+   ★ 直し方：★★言葉は 1文字も 減らさず、★「◀」と「ゲームを選ぶ」を たてに 2行に 置く。
+     ★ 「◀」だけに する 手（★上の帯が 520px以下で やって いる）も ありますが、
+       ★★結果の 箱で「◀」だけ だと ★となりの「もう1回 ▶」と 見分けが つきません。
+     ★ 字は 11px ―― ★会社の 床（§9.6・T123/T139）ちょうど。★これ以上は 下げません。
+   ★★ 測って 分かった こと（★写真だけでは 足りなかった）：
+      ★ 1行に 入るのは **276px**。★もとは もう1回 93 ＋ やめる 70 ＋ つよさ 107 ＝ 270 で ぴったり。
+      ★ 字を 変えると やめるが 140px に なり、★もう1回が 82px に やせて 3行に 折れました。
+      ★★ やめるを 2行に して 80px まで 縮めても、★★まだ 82px で 足りません
+         ―― ★★★本当の 大食いは **つよさの プルダウン 107px** でした
+           （★中の いちばん 長い「とても 強い」で 幅が 決まる）。
+      ★ → ★つよさも 11px に 下げて 92px に する。★これで もう1回が **97.5px・1行**に 戻りました【実測】。
+      ★ 箱の 下ふち 95.8px ／ 盤の 上ふち 112px ―― ★盤には かぶりません【実測 320×568】。 */
+@media (max-width:374px) {
+  .result-row .dialog-ok.alt {
+    flex-direction:column; justify-content:center;
+    font-size:11px; line-height:1.15; min-width:0; padding:2px 5px;
+  }
+  /* ★ つよさの プルダウンも 11px（★会社の 床ちょうど。★これ以上は 下げません）*/
+  .result-row .level-select { font-size:11px; padding:2px 4px; }
+}
 /* ★ 遊び方の 箱の 中の「分かった！」は 前と 同じ 見え方に 戻す */
 #helpDialog .dialog-ok { display:block; width:100%; }
 
@@ -515,3 +581,28 @@ dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-da
   font-size:13.5px; font-weight:700; line-height:1.7; color:#6b5522;
 }
 .help-note b { color:var(--pink-dark); }
+
+/* ============================================================
+   ★T293 ― 見えない 押し代（指の的だけ 44px に する）
+   ------------------------------------------------------------
+   ★ お手本：T118（フリーセルの `.tool::after`）／T289（アト・19個）／T291（コーダ・15個）
+   ★ `::after` は **ならびに 入りません**。だから
+     ★★見た目の 箱は 1pxも 伸びません（★実測で 確かめて います）。
+   ★ `z-index:0` は T289 §3-② の わな（★`position:relative` だけを 足すと
+     ★遠くの 丸かどが 色1つぶん ずれる）を 起こさない ため。
+   ★★ `<select>` には この 手は **効きません**（★T293 §2・実測）。
+      ★Chrome は select の `::after` を **1画素も 描きません**。だから
+      ★つよさ・速さの プルダウン 10個は、ここでは 直して いません。
+   ============================================================ */
+
+/* ★ ボタン 自体は 64px で 足りて います。★足りないのは **568×272 の 1画面だけ**で、
+   ★ わけは「小さい」では なく ★★**ハッピーの 行（#logRow）が 下に かぶって いる**こと。
+   ★ 押せる のは ボタンの 上から y=222 まで ＝ **34px**【実測】。
+   ★ → ★**上へ 12px** のばして 44px を 作る。★上の ラベル（.level-pick）までは
+   ★    **17.19〜17.8px**（★12画面 ぜんぶ）なので、★のこり 5.06px 以上 空きます。
+   ★ ★見た目の ボタンは 1pxも 動きません。 */
+#btnStart { position:relative; z-index:0; }
+#btnStart::after {
+  content:''; position:absolute; left:0; right:0;
+  top:-12px; height:44px;
+}
