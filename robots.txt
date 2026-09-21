@@ -1,0 +1,8 @@
+# ブラゲ工房 ― https://bragekobo.com/
+# ★ぜんぶの ページを 見て もらって かまいません。かくす ものは ありません。
+
+User-agent: *
+Allow: /
+
+# ★ページの 一覧は ここに あります（★21ページ）
+Sitemap: https://bragekobo.com/sitemap.xml

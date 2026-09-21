@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ブラゲ工房 ― ブラウザを開けば、そこが遊び場！</title>
-<meta name="description" content="インストールいらず。ブラウザを開くだけで遊べるゲームを作っています。― ブラゲ工房">
+<meta name="description" content="ソリティア・大富豪・神経衰弱・七並べ・ババ抜き・リバーシなど 20本以上。インストールも会員登録もいりません。開いたら すぐ遊べます。スマホでもパソコンでも。― ブラゲ工房">
 <meta name="theme-color" content="#9EE0FA">
 
 <!-- ============================================================
@@ -26,7 +26,7 @@
 <meta property="og:site_name" content="ブラゲ工房">
 <meta property="og:locale" content="ja_JP">
 <meta property="og:title" content="ブラゲ工房 ― ブラウザを開けば、そこが遊び場！">
-<meta property="og:description" content="インストールも会員登録もいりません。リンクを開いたらすぐ遊べる、子ども向けのブラウザゲームを作っています。スマホでもパソコンでも遊べます。">
+<meta property="og:description" content="インストールも会員登録もいりません。リンクを開いたらすぐ遊べるブラウザゲームを 20本以上。トランプ・ボードゲーム・サイコロを、子どもから大人まで だれでも 楽しめます。スマホでもパソコンでも遊べます。">
 <meta property="og:url" content="https://bragekobo.com/"><!-- ✅ 公開先URLに設定ずみ -->
 <meta property="og:image" content="https://bragekobo.com/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png"><!-- ✅ 公開先URLに設定ずみ -->
 <meta property="og:image:type" content="image/png">
@@ -35,7 +35,7 @@
 <meta property="og:image:alt" content="トランプのハートのエース">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ブラゲ工房 ― ブラウザを開けば、そこが遊び場！">
-<meta name="twitter:description" content="インストールも会員登録もいりません。リンクを開いたらすぐ遊べる、子ども向けのブラウザゲームを作っています。">
+<meta name="twitter:description" content="インストールも会員登録もいりません。リンクを開いたらすぐ遊べるブラウザゲームを 20本以上。子どもから大人まで だれでも 楽しめます。">
 <meta name="twitter:image" content="https://bragekobo.com/cards/%E3%83%8F%E3%83%BC%E3%83%88A.png"><!-- ✅ 公開先URLに設定ずみ -->
 
 <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。
@@ -222,24 +222,204 @@
   <section class="section" id="games">
     <div class="section-head">
       <h2>🎮 今、遊べるよ！</h2>
-      <span class="count" id="liveBadge">0本</span>
+      <span class="count" id="liveBadge">20本</span>
     </div>
     <div class="grid" id="gameGrid"></div>
+    <!-- ============================================================
+         ★JS を 動かさない 人・見つけ係（クローラー）への 20本ぶんの リンク
+         ------------------------------------------------------------
+         ★T300（2026-09-17）まで、ここには **2本しか ありません** でした。
+         ★20本 作ったのに、★HTMLの 生の 字から たどれるのは 2本だけ ―― 
+         ★★のこり 18本は 上の const GAMES から JS が 作るので、
+         ★★★JS を 動かさない 見つけ係には **1本も 見えません** でした【★実測・T299／T300】。
+
+         ★★ここの 字は **手で 書かない**。★const GAMES（＝20本の 正）から
+         ★★★`t300_04_noscript.cjs` で 作り直す。★写しまちがいが 起きない。
+         ★GAMES に 1本 足したら、この どうぐを もう一度 走らせる。
+
+         ★見た目は 1px も 変わらない：★<noscript> の 中は、
+         ★★JS が 動く ふつうの ブラウザでは **描かれない**（★HTMLの 決まり）。
+         ★★★T300 で 12画面・169枚の 写真を くらべて 0枚 ちがい【★実測】。
+         ============================================================ -->
     <noscript>
       <div class="grid">
-        <a class="game" href="blackjack/">
+        <a class="game" href="blackjack/" aria-label="ブラックジャックで遊ぶ">
           <span class="game-art">🃏</span>
           <span class="game-body">
             <span class="game-title">ブラックジャック</span>
             <span class="game-desc">21を こえないように カードを集めよう！</span>
+            <span class="game-meta"><span class="tag time">⏱ 1ラウンド 30秒</span><span class="tag">トランプ</span><span class="tag">一人で遊べる</span></span>
           </span>
           <span class="game-go">遊ぶ ▶</span>
         </a>
-        <a class="game" href="seven-narabe/">
+        <a class="game" href="seven-narabe/" aria-label="七並べで遊ぶ">
           <span class="game-art">🃏</span>
           <span class="game-body">
             <span class="game-title">七並べ</span>
             <span class="game-desc">7から順番に並べて、手札を先になくそう！</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 1〜2分</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="daifugo/" aria-label="大富豪で遊ぶ">
+          <span class="game-art">🃏</span>
+          <span class="game-body">
+            <span class="game-title">大富豪</span>
+            <span class="game-desc">強いカードで勝ち残れ！ ルールは15個から選べるよ。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 2〜3分</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">ルールを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="holdem/" aria-label="テキサス・ホールデムで遊ぶ">
+          <span class="game-art">🃏</span>
+          <span class="game-body">
+            <span class="game-title">テキサス・ホールデム</span>
+            <span class="game-desc">手札2枚と場の5枚で役を作るポーカー。今の役が いつも見えるよ。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1ハンド 2〜3分</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">コインをかける</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="poker/" aria-label="ポーカーで遊ぶ">
+          <span class="game-art">🃏</span>
+          <span class="game-body">
+            <span class="game-title">ポーカー</span>
+            <span class="game-desc">5枚配られて、いらない札を取りかえて役を作るポーカーだよ。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1ハンド 1〜2分</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">コインをかける</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="speed/" aria-label="スピードで遊ぶ">
+          <span class="game-art">⚡</span>
+          <span class="game-body">
+            <span class="game-title">スピード</span>
+            <span class="game-desc">1つちがいの数字を どんどん出す！ 番を待たない 早い者勝ちのゲーム。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 30秒〜1分</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">速さを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="solitaire/" aria-label="ソリティアで遊ぶ">
+          <span class="game-art">🕰️</span>
+          <span class="game-body">
+            <span class="game-title">ソリティア</span>
+            <span class="game-desc">1人で じっくり。A から K まで、4つの 山を そろえよう。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 5分ほど</span><span class="tag">トランプ</span><span class="tag">1人で遊ぶ</span><span class="tag">必ずクリアできる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="spider/" aria-label="スパイダーで遊ぶ">
+          <span class="game-art">🕷️</span>
+          <span class="game-body">
+            <span class="game-title">スパイダー</span>
+            <span class="game-desc">10列を くずして、A から K の 10枚を そろえよう。むずかしいは パソコンで。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 10〜20分</span><span class="tag">トランプ</span><span class="tag">1人で遊ぶ</span><span class="tag">むずかしさを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="pyramid/" aria-label="ピラミッドで遊ぶ">
+          <span class="game-art">🔺</span>
+          <span class="game-body">
+            <span class="game-title">ピラミッド</span>
+            <span class="game-desc">合わせて 13 に なる 2枚を おして 消そう。かならず クリアできる 配りだけ。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 2〜3分</span><span class="tag">トランプ</span><span class="tag">1人で遊ぶ</span><span class="tag">かならずクリアできる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="memory/" aria-label="神経衰弱で遊ぶ">
+          <span class="game-art">🧠</span>
+          <span class="game-body">
+            <span class="game-title">神経衰弱</span>
+            <span class="game-desc">2枚 めくって、同じ 数字を さがそう。ロボットの もの覚えを えらべるよ。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 3〜5分</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">むずかしさを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="freecell/" aria-label="フリーセルで遊ぶ">
+          <span class="game-art">🗄️</span>
+          <span class="game-body">
+            <span class="game-title">フリーセル</span>
+            <span class="game-desc">52枚 ぜんぶ 見えている。空き場を つかって、4つの 山を そろえよう。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 5〜10分</span><span class="tag">トランプ</span><span class="tag">1人で遊ぶ</span><span class="tag">かならずクリアできる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="reversi/" aria-label="リバーシで遊ぶ">
+          <span class="game-art">⚫</span>
+          <span class="game-body">
+            <span class="game-title">リバーシ</span>
+            <span class="game-desc">はさんで ひっくり返そう。多く とった方の 勝ち。つよさは 5つから えらべるよ。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 3分ほど</span><span class="tag">ボードゲーム</span><span class="tag">ロボットと対戦</span><span class="tag">つよさを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="reversi6/" aria-label="6×6リバーシで遊ぶ">
+          <span class="game-art">⚪</span>
+          <span class="game-body">
+            <span class="game-title">6×6リバーシ</span>
+            <span class="game-desc">小さい 盤の リバーシ。1分で 終わるから、すぐ もう1回 できるよ。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 1分ほど</span><span class="tag">ボードゲーム</span><span class="tag">ロボットと対戦</span><span class="tag">つよさを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="yonmoku/" aria-label="コネクトフォーで遊ぶ">
+          <span class="game-art">4️⃣</span>
+          <span class="game-body">
+            <span class="game-title">コネクトフォー</span>
+            <span class="game-desc">赤と 黄色の コマを 上から 落とす。下から つみ上がって、4つ 並べたら 勝ち。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 1分ほど</span><span class="tag">ボードゲーム</span><span class="tag">ロボットと対戦</span><span class="tag">つよさを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="gomoku/" aria-label="五目並べで遊ぶ">
+          <span class="game-art">5️⃣</span>
+          <span class="game-body">
+            <span class="game-title">五目並べ</span>
+            <span class="game-desc">碁ばんの 線の 交わる 所に、黒と 白の 石を 置く。5つ 並べたら 勝ち。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 1分ほど</span><span class="tag">ボードゲーム</span><span class="tag">ロボットと対戦</span><span class="tag">つよさを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="babanuki/" aria-label="ババ抜きで遊ぶ">
+          <span class="game-art">🤡</span>
+          <span class="game-body">
+            <span class="game-title">ババ抜き</span>
+            <span class="game-desc">相手の 手札から 1枚 引いて、同じ数を すてる。最後に ばばが 残った方の 負け。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 20秒ほど</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">すぐ終わる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="pageone/" aria-label="ページワンで遊ぶ">
+          <span class="game-art">1️⃣</span>
+          <span class="game-body">
+            <span class="game-title">ページワン</span>
+            <span class="game-desc">場の 札と 同じ マークか 同じ 数字を 出す。8は いつでも 出せて、次の マークを 決められる。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 1分ほど</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">ルールを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="hearts/" aria-label="ハーツで遊ぶ">
+          <span class="game-art">♥️</span>
+          <span class="game-body">
+            <span class="game-title">ハーツ</span>
+            <span class="game-desc">点を 取らない ほうが 勝ち。ハートは 1枚 1点、スペードの Q は 13点。だれかが 100点に なったら おわり。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1回 80秒・ぜんぶで 15分</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">つよさを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="sevenbridge/" aria-label="セブンブリッジで遊ぶ">
+          <span class="game-art">7️⃣</span>
+          <span class="game-body">
+            <span class="game-title">セブンブリッジ</span>
+            <span class="game-desc">同じ 数字 3枚か、つづいた 数字 3枚で「組」を 作って 出す。人の 組にも 足せる。先に 手札を 0枚に しよう。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 3分ほど</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">つよさを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="yacht/" aria-label="ヨットで遊ぶ">
+          <span class="game-art">🎲</span>
+          <span class="game-body">
+            <span class="game-title">ヨット</span>
+            <span class="game-desc">サイコロ5つを ふって、12の 役に 書いていく。ふり直しは 2回まで。ロボットと 1対1で、合計が 高い人の 勝ち。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 2分ほど</span><span class="tag">サイコロ</span><span class="tag">ロボットと対戦</span><span class="tag">つよさを選べる</span></span>
           </span>
           <span class="game-go">遊ぶ ▶</span>
         </a>

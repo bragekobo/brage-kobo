@@ -20,6 +20,11 @@
   <meta property="og:title" content="フリーセル ― ブラウザですぐ遊べる｜ブラゲ工房" />
   <meta property="og:description" content="52枚 ぜんぶ 見えている。かくれた札は 1枚も なし。ダウンロードはいりません。開いたらすぐ遊べます。" />
   <meta property="og:url" content="https://bragekobo.com/freecell/" />
+  <!-- ★★ T301 ―― ★本ものの 住所（canonical）★★
+       ★ 同じ ページが いくつもの 住所で 開ける とき（★末尾の / の あり なし・?つき など）、
+         ★ ★検索の 道具に「★これが 本もの です」と 1つ 教える 行です。
+       ★ ★★上の og:url と **1文字も 同じ** に して ください（★見張り t301_03_mihari.cjs が 数えます）。 -->
+  <link rel="canonical" href="https://bragekobo.com/freecell/" />
   <meta property="og:image" content="https://bragekobo.com/cards/%E3%82%AF%E3%83%AD%E3%83%BC%E3%83%90%E3%83%BCA.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="280" />
@@ -36,6 +41,16 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- ★★ T301 ―― ★この ページの 大見出し（h1）★★
+       ★ 上の帯の「フリーセル」は CSS が **`.brand span`（タグで 選ぶ 書き方）**で 字を 決めて います。
+         ★ ★span を h1 に 変えると その 行が 当たらなく なり、★字の 大きさ・太さ・色が 変わります。
+         ★ ★今回は **index.html だけ**を 直す 仕事なので、★CSS は 1行も 触れません。
+       ★ → ★**見た目に 出ない h1** を 1つ 置きます。★字は 上の帯と 1文字も 同じ です（★かくし言葉では ない）。
+       ★ ★★`display:none`／`visibility:hidden` は **読み上げの 道具にも 出ません**。だから 使いません。
+         ★ ★1px に して はさみで 切る（clip）書き方は、★読み上げの 道具が ちゃんと 読みます。
+       ★ ★★`position:absolute` なので **場所を とりません** ―― ★12画面 ぜんぶで 写真の 差 0 でした（T301）。 -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;font:inherit;color:inherit;background:none;">フリーセル</h1>
+
 
 <!-- ハッピー（看板ねこ）の かお。既存10本から そのまま 持ちこみ（設計図 §9.5）。 -->
 <svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">

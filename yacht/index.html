@@ -14,11 +14,19 @@
          ★ ★★＝ ★盤の 4本（リバーシ・6×6・四目・五目）と まったく 同じ 形 です。
          ★ ★★外への 通信は **0件**。★足す 絵も **0枚**。
 
-       ★★ og:image（見出しの 絵）は **まだ ありません** ★★
-         ★ ★リバーシ・四目・五目・6×6 は `og/og-*.png` を 持って います（★T158・🎨アト）。
-         ★ ★★ヨットの ぶんは まだ 無い ので、★**404に なる 行を 書きません**。
-         ★ ★→ ★🎨アトが `og/og-yacht.png`（600×600）を 作ったら、ここに 4行 足す：
-             ★ og:image ／ og:image:type ／ og:image:width・height ／ og:image:alt
+       ★★ og:image（見出しの 絵）★★ ―― ★**T301（2026-09-17・🎨アト）で 足しました**
+         ★ ★ここには「まだ 無いので 404に なる 行を 書きません」と 書いて ありました。
+           ★ ★★20本 のうち **ヨットだけ** が og:image 無しでした（★19/20・トライ T299 の 実測）。
+         ★ ★絵の 置き場所：`office/games/og/og-yacht.png`（★公開だと `…/og/og-yacht.png`）
+         ★ ★★中の 盤は **本物の ヨットを 本物の Chrome で 7回目まで 遊んで 撮った 写真**です。
+           ★ ★描き直して いません（★T157 §6-4・★T158 と 同じ 決まり）。
+         ★ ★★まわり（空・雲・キラキラ・白い 台・「ブラゲ工房」の 札・ハッピー）は
+           ★ ★★T158 の 4本（五目・リバーシ・6×6・コネクトフォー）と **同じ 型**です。
+           ★ ★★★同じ 型で 五目並べと リバーシを 焼き直し、★出荷ずみの 絵と **0画素**でした【★実測・T301】。
+         ★ ★★下の width / height は **PNG の 頭から 読んだ 本当の 数**（600×600）。
+            ⚠️★ 絵を 差しかえたら、★この 2つの 数も かならず 直すこと（★見張り t301_03_mihari.cjs ⑥ が 数えます）。
+         ★ ★★`?v=` は **付けません** ―― ★はじめて 置く 絵なので、★どこにも 古い 絵が のこって いません。
+            ★ ★（★`?v=2` が 付いて いるのは コネクトフォー 1本だけ。★★あれは T252-2 で 絵を **差しかえた** から です）
        ============================================================ -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="ブラゲ工房" />
@@ -29,9 +37,20 @@
        ★ ④はじめから ふって ある のを やめる　⑤ロボットの ふり方を 見せる　⑥役の 説明 -->
   <meta property="og:description" content="サイコロ 5個を ふって、12の 役に 点を 書く。2回まで ふり直せる。12回で おわり。ロボットと 1対1。ダウンロードはいりません。開いたらすぐ遊べます。" />
   <meta property="og:url" content="https://bragekobo.com/yacht/" />
+  <!-- ★★ T301 ―― ★本ものの 住所（canonical）★★
+       ★ 同じ ページが いくつもの 住所で 開ける とき（★末尾の / の あり なし・?つき など）、
+         ★ ★検索の 道具に「★これが 本もの です」と 1つ 教える 行です。
+       ★ ★★上の og:url と **1文字も 同じ** に して ください（★見張り t301_03_mihari.cjs が 数えます）。 -->
+  <link rel="canonical" href="https://bragekobo.com/yacht/" />
+  <meta property="og:image" content="https://bragekobo.com/og/og-yacht.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="600" />
+  <meta property="og:image:height" content="600" />
+  <meta property="og:image:alt" content="ヨットの 点の 表と、サイコロ 5個。1・1・2・5・6の 目が 出て います" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="ヨット ― ブラウザですぐ遊べる｜ブラゲ工房" />
   <meta name="twitter:description" content="サイコロ 5個を ふって、12の 役に 点を 書く。2回まで ふり直せる。ロボットと 1対1。" />
+  <meta name="twitter:image" content="https://bragekobo.com/og/og-yacht.png" />
 
   <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。既存19本と おなじ。 -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
