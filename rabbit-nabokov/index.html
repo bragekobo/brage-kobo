@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- ★★ T307 ―― ★21本目（💻コーダ）★★
+       ★ 社長の お決め（★設計図 追記⑫）：
+         ★ 名前は「ラビット・ナボコフ」そのまま（★§9.6 の カタカナ 例外）。
+         ★★ 作品名は ★title・description・og:title・og:description・h1・帯の 題・ロゴ に **入れない**（★④a）。
+            ★ 非公式の 文は ★**ゲームの ページの 中だけ**（★はじめの 画面の 一番下 ＋ 遊び方の 箱の 一番上）。
+            ★ 見張り（verify ⑫）が、★ここに 作品名が 混ざって いないか 毎回 数えます。
+       ★ 公開の 準備は 別の 回（★まとめサイトの GAMES・sitemap には まだ 足して いません）。
+       ★★ og:image は ★アトが 焼いた（★T308・下の canonical の あと）。
+       ★★★ T310（★社長の お決め 2026-09-25）：★題は「オリジナルラビット・ナボコフ」（★14文字）。
+            ★ 社長の 言葉：「★自由に ルールを 変更して しまったので、タイトルは『オリジナルラビット・ナボコフ』に」。
+            ★「オリジナル」「ルール」は ★社長の 字なので §9.6 の 例外（★秘書が 設計図に 書く）。 -->
+  <title>オリジナルラビット・ナボコフ ― ブラゲ工房</title>
+  <meta name="description" content="オリジナルラビット・ナボコフ ― 親が ふせた 札と、数の 差が ちょうど 2 の 札を 出せば 勝ち。コインを 1〜100枚 かけて ロボットと 1対1で 勝負する トランプの ゲーム ― ブラゲ工房" />
+  <meta name="theme-color" content="#BDE9F7" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="オリジナルラビット・ナボコフ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="親が ふせた 札と、数の 差が ちょうど 2 の 札を 出せば 勝ち。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.com/rabbit-nabokov/" />
+  <!-- ★★ T301 の 型 ―― ★本ものの 住所（canonical）★★
+       ★ ★★上の og:url と **1文字も 同じ** に して ください（★見張り verify ⑬ が 数えます）。 -->
+  <link rel="canonical" href="https://bragekobo.com/rabbit-nabokov/" />
+  <!-- ★★ T308 アト ―― ★og:image（見出しの 絵）★★
+       ★ 置き場所：`office/games/og/og-rabbit-nabokov.png`（★公開だと `…/og/og-rabbit-nabokov.png`）。
+       ★ ★型は T301 の ヨット（★空・雲・キラキラ・白い 台・「ブラゲ工房」の 札・ハッピー）と 同じ。
+       ★ ★まん中は ★本物の この ゲームを 本物の Chrome で 遊んで 撮った「差 2！」の 瞬間（★描き直して いない）。
+       ★ ★★入れて いない もの：漫画の 絵・作品名・非公式の 文（★社長の お決め ④a）・役の 名前（③）。
+       ★ ★下の width / height は PNG の 頭から 読んだ 本当の 数（600×600）。★差しかえたら 2つとも 直す こと。
+       ★ ★`?v=` は 付けない（★はじめて 置く 絵。★ヨットと 同じ。★差しかえた ときだけ `?v=2`）。 -->
+  <meta property="og:image" content="https://bragekobo.com/og/og-rabbit-nabokov.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="600" />
+  <meta property="og:image:height" content="600" />
+  <meta property="og:image:alt" content="トランプで 遊ぶ 画面。親の スペードの 7に、子が ハートの 9を 出して「差 2！」。ねこの ハッピーが「やったね！」" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="オリジナルラビット・ナボコフ ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="親が ふせた 札と、数の 差が ちょうど 2 の 札を 出せば 勝ち。開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.com/og/og-rabbit-nabokov.png" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお ＋ スペード。20本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3Ccircle cx='50' cy='50' r='13' fill='%23fff'/%3E%3Cpath d='M50 40 C50 40 41 47.5 41 52.5 C41 56.5 46 57.6 48.8 54.8 L46.5 61 H53.5 L51.2 54.8 C54 57.6 59 56.5 59 52.5 C59 47.5 50 40 50 40 Z' fill='%232B2B36'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="rabbit.css" />
+</head>
+<body>
+  <!-- ★★ T301 の 型 ―― ★見えない h1（★字は 上の帯と 1文字も 同じ）★★ -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;font:inherit;color:inherit;background:none;">オリジナルラビット・ナボコフ</h1>
+
+<!-- ハッピー（看板ねこ）と コイン。★20本から そのまま 持ちこみ（設計図 §9.5）。★外の 画像 0 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+    <symbol id="coin" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="#EFA331"/>
+      <circle cx="20" cy="18.4" r="15.6" fill="#FFD766"/>
+      <circle cx="20" cy="18.4" r="11" fill="none" stroke="#EFA331" stroke-width="2.4"/>
+      <path d="M20 10.5 l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z" fill="#EFA331"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- 空の 飾り（★さわれない・うしろがわ） -->
+<div class="sky" aria-hidden="true">
+  <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+</div>
+
+<main class="app is-title" id="app">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       ★ 左：◀ ゲームを選ぶ ／ まん中：題 ／ 右：↻ やめる（★遊んで いる 間だけ）。
+       ★★ 帯は `position:sticky`（★20本と 同じ）。★★この 本の 親には overflow を 1つも 書いて いません
+          （★七並べ T285 の わな ―― ★overflow:hidden の 中では sticky は 1pxも 効かない。★verify ⑩ が 見張る）。 -->
+  <header class="topbar" id="topbar">
+    <a class="back" href="../" id="btnBack"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand" id="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <!-- ★ T310：★1行に 入らない 帯では ★2行（★上に 小さく「オリジナル」）。★決めるのは JS の fitBrand（★いま 描いた 実寸で）。
+           ★ 字は h1 と 1文字も 同じ（★verify ⑬）。 -->
+      <span id="brandName"><span class="bn-sub">オリジナル</span><span class="bn-main">ラビット・ナボコフ</span></span>
+    </div>
+    <!-- ★ 横置きの ときだけ「？ 遊び方」は 帯に 置く（★ハッピーの ふきだしに はばを 渡す ため）。
+         ★ たて置きでは 下の ハッピーの 行の「？」を 使う。★同じ 箱を 開く（★見える のは いつも 1つだけ）。 -->
+    <button class="howto howto-top" type="button" id="btnHowtoTop">？<span> 遊び方</span></button>
+    <div class="topbar-pad" id="topbarPad"></div>
+    <!-- ★★ 追記⑩ の 型 ―「↻ やめる」★★
+         ★ 押すと **はじめの 画面**へ 戻る（★つよさを 決め直せる）。★聞きません（お決め②）。
+         ★ ↻ は 字では なく ★インラインSVG 16px（★T279 の 形を そのまま）。 -->
+    <button class="quit-btn hidden" type="button" id="btnQuitGame"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</button>
+  </header>
+
+  <!-- ── はじめの 画面 ──────────────────────────────
+       ★ 置くもの：ひとこと ／ ロボットの つよさ（★ただ1つの 選択・追記①）／ はじめる ／ 非公式の 文。
+       ★ つよさの 初期値は「よわい」（★§5.5-②・ルル §4-3）。 -->
+  <section class="title-screen" id="titleScreen">
+    <p class="title-lead"><span class="nw">数の 差が <b>ちょうど 2</b> なら 子の 勝ち！</span><br><span class="nw">コインを かけて ロボットと 勝負</span></p>
+    <label class="level-pick" for="levelTitle">
+      <span class="level-pick-name">ロボットの つよさ</span>
+      <select class="level-select" id="levelTitle"></select>
+    </label>
+    <button class="start-button" type="button" id="btnStart">
+      <span>はじめる <b>▶</b></span><small>コイン 100枚から スタート</small>
+    </button>
+    <!-- ★★★ 非公式の 文（★社長の 文・1文字も 変えない・★④b「架空」「ギャンブル」は この 1文の 中だけ 例外）★★★ -->
+    <p class="unofficial" id="unofficialTitle">『20世紀少年』に登場する架空のギャンブルを非公式にゲーム化。原作者・出版社とは関係ありません。</p>
+  </section>
+
+  <!-- ── 遊ぶ 画面 ────────────────────────────────
+       ★ この 箱は `display:contents`（★中の 6つが そのまま .app の 格子に 並ぶ）。
+       ★ 常に 出す 部品（ルル §5-1 上限）：手札・親の 札・捨て札の 上・コイン 2つ・かける ボタン（子の 時だけ）。
+       ★★ 光らせる ものは 1種類だけ ―― ★持ち上げた 札 1枚（★差が 2 の 札は 光らせない・追記②）。 -->
+  <section class="play-screen hidden" id="playScreen" aria-label="勝負の 場">
+
+    <div class="who-row robot-row" id="robotRow">
+      <span class="who-name">ロボット</span>
+      <span class="coins"><svg class="coin-ico" aria-hidden="true" focusable="false"><use href="#coin"/></svg><b id="coinsRobot">100</b><small>枚</small></span>
+      <div class="robot-hand" id="robotHand" aria-label="ロボットの 手札"></div>
+    </div>
+
+    <div class="table-area" id="tableArea">
+      <div class="slot" id="slotRobot">
+        <span class="slot-chip" id="chipRobot">親</span>
+        <div class="slot-card" id="cardRobot"></div>
+      </div>
+      <div class="mid" id="mid">
+        <p class="mid-result" id="midResult" aria-live="polite"></p>
+        <div class="piles">
+          <div class="pile" id="deckPile"><img class="pile-img" id="deckImg" alt="" /><b class="pile-n" id="deckCount">43</b><small class="pile-name">山</small></div>
+          <div class="pile" id="discardPile"><img class="pile-img is-empty" id="discardImg" alt="" /><small class="pile-name">捨て札</small></div>
+        </div>
+      </div>
+      <div class="slot" id="slotMe">
+        <span class="slot-chip" id="chipMe">子</span>
+        <div class="slot-card" id="cardMe"></div>
+      </div>
+    </div>
+
+    <div class="who-row me-row" id="meRow">
+      <span class="who-name">あなた</span>
+      <span class="coins"><svg class="coin-ico" aria-hidden="true" focusable="false"><use href="#coin"/></svg><b id="coinsMe">100</b><small>枚</small></span>
+    </div>
+
+    <div class="hand-area" id="handArea">
+      <div class="hand" id="hand" role="group" aria-label="あなたの 手札"></div>
+    </div>
+
+    <div class="action-row" id="actionRow">
+      <div class="bet-row hidden" id="betRow"></div>
+      <button class="act-btn hidden" type="button" id="btnPlace" disabled>ふせて 出す</button>
+      <button class="act-btn hidden" type="button" id="btnPlay" disabled>この 札で 勝負</button>
+    </div>
+  </section>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方（★はじめの 画面でも 遊ぶ 画面でも 出る・§9.5）
+       ★ しっぽ・まばたき つき（★まとめサイトの ハッピーが 正）。 -->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap" id="happyWrap" data-mood="normal">
+      <svg class="happy-cat" id="happyCat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房の マスコット、ねこの ハッピー">
+        <g class="cat-tail">
+          <path d="M108 132 C142 132 140 96 120 96 C110 96 106 106 112 112"
+                fill="none" stroke="#F09A44" stroke-width="13" stroke-linecap="round"/>
+        </g>
+        <path d="M42 158 C36 122 52 104 75 104 C98 104 114 122 108 158 Z" fill="#FBAE55"/>
+        <ellipse cx="75" cy="140" rx="21" ry="18" fill="#FFE9CE"/>
+        <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+        <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+        <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+        <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+        <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+        <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+          <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+        </g>
+        <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+        <g class="face face-normal">
+          <g class="cat-eyes">
+            <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+            <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+            <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+            <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+          </g>
+          <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+                stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        </g>
+        <g class="face face-happy">
+          <g stroke="#4A3A2C" stroke-width="4.4" fill="none" stroke-linecap="round">
+            <path d="M51 67 q8 -12 16 0"/><path d="M83 67 q8 -12 16 0"/>
+          </g>
+          <path d="M62 79 Q75 97 88 79 Z" fill="#B4485F"/>
+        </g>
+        <g class="face face-sad">
+          <g stroke="#4A3A2C" stroke-width="4.4" fill="none" stroke-linecap="round">
+            <path d="M51 60 q8 8 16 0"/><path d="M83 60 q8 8 16 0"/>
+          </g>
+          <path d="M67 88 q8 -8 16 0" stroke="#4A3A2C" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+        </g>
+        <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+          <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+          <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+        </g>
+      </svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">数の 差が ちょうど 2 なら 子の 勝ち！</p>
+    <button class="howto" type="button" id="btnHowto">？<span> 遊び方</span></button>
+  </div>
+
+</main>
+
+<!-- ── 試合の おわり ──────────────────────────────
+     ★ 「やめる」の 字は 使わない（★追記⑩ ③）。★家へは「◀ ゲームを選ぶ」。
+     ★ ここにも つよさの プルダウン（★負けた その場で 下げられる ―― 14本と 同じ 作法）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="result-title" id="resultTitle">あなたの 勝ち！</p>
+    <p class="result-coins"><span>あなた <b id="resultMe">100</b>枚</span><span>ロボット <b id="resultRobot">100</b>枚</span></p>
+    <div class="result-row">
+      <button class="dialog-ok" type="button" id="btnAgain">もう1回 <b>▶</b></button>
+      <a class="dialog-ok alt" href="../" id="btnResultHome"><b>◀</b><span> ゲームを選ぶ</span></a>
+    </div>
+    <label class="result-level" for="levelResult"><span>ロボットの つよさ</span><select class="level-select" id="levelResult"></select></label>
+  </div>
+</div>
+
+<!-- ── 遊び方（★× は position:sticky ―― ★下まで 読んでも 消えない・T267 の 型）──────────
+     ★★ 一番 上に 非公式の 文（★社長の お決め ④a）。
+     ★★ どの 札が 勝てるか・どれが 安全かは ★1文字も 書かない（★追記②）。 -->
+<dialog id="helpDialog" aria-labelledby="helpTitle">
+  <button class="close-dialog" data-close="helpDialog" type="button" aria-label="とじる">×</button>
+  <h2 id="helpTitle">🐾 遊び方</h2>
+  <section class="help-sec help-about">
+    <h3>このゲームは？</h3>
+    <p class="unofficial" id="unofficialHelp">『20世紀少年』に登場する架空のギャンブルを非公式にゲーム化。原作者・出版社とは関係ありません。</p>
+  </section>
+  <ol class="help-list">
+    <li><b>親</b>は 手札から 1枚 ふせて 出す。<b>子</b>は コインを かけてから、手札の 1枚で 勝負。</li>
+    <li>数の 差が <b>ちょうど 2</b> なら 子の 勝ち（同じ マークなら <b>2倍</b>）。ちがえば 親の 勝ち。</li>
+    <li>親と 子は 1回ごとに 交代。<b>2人の 手札が なくなったら</b> おわり（全部で 14回）。コインが 多い 方の 勝ち。</li>
+  </ol>
+  <section class="help-sec">
+    <h3>特別な 札</h3>
+    <ul class="help-special">
+      <li>親が <b>A</b> なら、A でだけ 勝てる（<b>10倍</b>）</li>
+      <li>親が <b>2</b> なら、ジョーカーでだけ 勝てる（<b>50倍</b>）。2 を 出すと 10倍 はらう</li>
+      <li>親が <b>ジョーカー</b>なら、ハートの 2 でだけ 勝てる（<b>100倍</b>）</li>
+      <!-- ★★ T310：社長の オリジナルルール（★「（オリジナルルール）」の 注釈は 社長の ご指示） -->
+      <li class="help-orig">親が <b>K</b> なら、子は 絵札（J・Q・K）か A を 必ず 出す。出せば 子の 勝ち（同じ マークなら <b>2倍</b>）。1枚も 無い ときは 好きな 札を 1枚 出して、かけた 枚数の <b>10倍</b> はらう（ジョーカーも だめ）<span class="orig-tag">（オリジナルルール）</span></li>
+    </ul>
+  </section>
+  <p class="help-note">使う 札：スペードと ハートの 13枚ずつ ＋ ジョーカー 2枚（28枚）。<br>
+    手札は 5枚。1回ごとに 山から 1枚ずつ 引く（山が なくなったら 引かずに 続ける）。<br>
+    数え方：A は 1・J は 11・Q は 12・K は 13。<br>
+    コインは 100枚から。かけ金は 1〜100枚（はじめは 10枚）。<br>
+    コインが 0枚より 少なく なっても（−30 など）、最後まで 続けられる。</p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<script src="rabbit-core.js"></script>
+<script src="rabbit-game.js"></script>
+</body>
+</html>

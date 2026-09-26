@@ -222,7 +222,7 @@
   <section class="section" id="games">
     <div class="section-head">
       <h2>🎮 今、遊べるよ！</h2>
-      <span class="count" id="liveBadge">20本</span>
+      <span class="count" id="liveBadge">21本</span>
     </div>
     <div class="grid" id="gameGrid"></div>
     <!-- ============================================================
@@ -234,6 +234,30 @@
          ★★★JS を 動かさない 見つけ係には **1本も 見えません** でした【★実測・T299／T300】。
 
          ★★ここの 字は **手で 書かない**。★const GAMES（＝20本の 正）から
+         ★★★`t300_04_noscript.cjs` で 作り直す。★写しまちがいが 起きない。
+         ★GAMES に 1本 足したら、この どうぐを もう一度 走らせる。
+
+         ★見た目は 1px も 変わらない：★    <!-- ============================================================
+         ★JS を 動かさない 人・見つけ係（クローラー）への 21本ぶんの リンク
+         ------------------------------------------------------------
+         ★T300（2026-09-17）まで、ここには **2本しか ありません** でした。
+         ★20本 作ったのに、★HTMLの 生の 字から たどれるのは 2本だけ ―― 
+         ★★のこり 18本は 上の const GAMES から JS が 作るので、
+         ★★★JS を 動かさない 見つけ係には **1本も 見えません** でした【★実測・T299／T300】。
+
+         ★★ここの 字は **手で 書かない**。★const GAMES（＝21本の 正）から
+         ★★★`t300_04_noscript.cjs` で 作り直す。★写しまちがいが 起きない。
+         ★GAMES に 1本 足したら、この どうぐを もう一度 走らせる。
+
+         ★見た目は 1px も 変わらない：★    <!-- ============================================================
+         ★JS を 動かさない 人・見つけ係（クローラー）への 21本ぶんの リンク
+         ------------------------------------------------------------
+         ★T300（2026-09-17）まで、ここには **2本しか ありません** でした。
+         ★20本 作ったのに、★HTMLの 生の 字から たどれるのは 2本だけ ―― 
+         ★★のこり 18本は 上の const GAMES から JS が 作るので、
+         ★★★JS を 動かさない 見つけ係には **1本も 見えません** でした【★実測・T299／T300】。
+
+         ★★ここの 字は **手で 書かない**。★const GAMES（＝21本の 正）から
          ★★★`t300_04_noscript.cjs` で 作り直す。★写しまちがいが 起きない。
          ★GAMES に 1本 足したら、この どうぐを もう一度 走らせる。
 
@@ -420,6 +444,15 @@
             <span class="game-title">ヨット</span>
             <span class="game-desc">サイコロ5つを ふって、12の 役に 書いていく。ふり直しは 2回まで。ロボットと 1対1で、合計が 高い人の 勝ち。</span>
             <span class="game-meta"><span class="tag time">⏱ 1試合 2分ほど</span><span class="tag">サイコロ</span><span class="tag">ロボットと対戦</span><span class="tag">つよさを選べる</span></span>
+          </span>
+          <span class="game-go">遊ぶ ▶</span>
+        </a>
+        <a class="game" href="rabbit-nabokov/" aria-label="オリジナルラビット・ナボコフで遊ぶ">
+          <span class="game-art">👑</span>
+          <span class="game-body">
+            <span class="game-title">オリジナルラビット・ナボコフ</span>
+            <span class="game-desc">親が ふせた 札と、数の 差が ちょうど 2 の 札を 出せば 勝ち。コインを 1〜100枚 かけて、ロボットと 1対1。</span>
+            <span class="game-meta"><span class="tag time">⏱ 1試合 2分ほど</span><span class="tag">トランプ</span><span class="tag">ロボットと対戦</span><span class="tag">つよさを選べる</span></span>
           </span>
           <span class="game-go">遊ぶ ▶</span>
         </a>
@@ -641,6 +674,21 @@ const GAMES = [
     time:  '1試合 2分ほど',
     tags:  ['サイコロ', 'ロボットと対戦', 'つよさを選べる'],
     path:  'yacht/'
+  },
+  {
+    /* ★★ 21本目（T307〜T312・💻コーダ）★★
+       ★ 題は 社長の お決め「オリジナルラビット・ナボコフ」。★作品名は ★題にも 説明にも 入れない（★設計図 追記⑫ ④a）。
+       ★ 絵は ★社長の トランプの K（★オリジナルルールの 札・§9）。★漫画の 絵は 使わない。 */
+    title: 'オリジナルラビット・ナボコフ',
+    /* ★ T312：★1行に 入らない カードでは「ナボ／コフ」の ように 言葉の 途中で 折れた【実測・320×568・926×428 ほか 6画面】。
+       ★ 折って よいのは この 切れ目 だけ（★字は title と 1文字も 同じ・★見えない 字は 入れない ―― 検索の 字を 変えない） */
+    titleParts: ['オリジナル', 'ラビット・ナボコフ'],
+    emoji: '👑',
+    card:  'スペードK',
+    desc:  '親が ふせた 札と、数の 差が ちょうど 2 の 札を 出せば 勝ち。コインを 1〜100枚 かけて、ロボットと 1対1。',
+    time:  '1試合 2分ほど',
+    tags:  ['トランプ', 'ロボットと対戦', 'つよさを選べる'],
+    path:  'rabbit-nabokov/'
   }
 ];
 
@@ -707,7 +755,12 @@ GAMES.forEach(function (g) {
 
   const body = el('span', 'game-body');
   /* 絵を出しているときは、タイトル横の絵文字は付けない（要素を減らして締める） */
-  body.appendChild(el('span', 'game-title', (!g.card && !g.art && g.emoji ? g.emoji + ' ' : '') + g.title));
+  if (g.titleParts && g.titleParts.join('') === g.title) {
+    /* ★ 長い 題は ★決めた 切れ目でだけ 折る（★塊は 折れない）。★字は title と 同じ */
+    const tt = el('span', 'game-title', '');
+    g.titleParts.forEach(function (p) { const q = el('span', '', p); q.style.display = 'inline-block'; q.style.whiteSpace = 'nowrap'; tt.appendChild(q); });
+    body.appendChild(tt);
+  } else body.appendChild(el('span', 'game-title', (!g.card && !g.art && g.emoji ? g.emoji + ' ' : '') + g.title));
   body.appendChild(el('span', 'game-desc', g.desc));
 
   const meta = el('span', 'game-meta');

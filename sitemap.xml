@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- ブラゲ工房 ― 入口 1ページ ＋ ゲーム 20本 ＝ 21ページ
+<!-- ブラゲ工房 ― 入口 1ページ ＋ ゲーム 21本 ＝ 22ページ
      ★手で 直さない。`t300_05_sitemap.cjs` で 作り直す（もとは index.html の const GAMES）。 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://bragekobo.com/</loc>
-    <lastmod>2026-09-18</lastmod>
+    <lastmod>2026-09-26</lastmod>
   </url>
   <url>
     <loc>https://bragekobo.com/blackjack/</loc>
@@ -85,5 +85,9 @@
   <url>
     <loc>https://bragekobo.com/yacht/</loc>
     <lastmod>2026-09-17</lastmod>
+  </url>
+  <url>
+    <loc>https://bragekobo.com/rabbit-nabokov/</loc>
+    <lastmod>2026-09-26</lastmod>
   </url>
 </urlset>
