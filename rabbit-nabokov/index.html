@@ -161,6 +161,11 @@
         <span class="slot-chip" id="chipMe">子</span>
         <div class="slot-card" id="cardMe"></div>
       </div>
+      <!-- ★★ T313 アト ―― 子が かけた コインを 場に 積む（★社長の 絵：金の コインの 山 ＋ 数字）★★
+           ★ 置き場所は ★2枚の 札の あいだ（★社長：手前に 私・奥に ロボット）。★ロボットの かけ金は 山札・捨て札の 上・★あなたの かけ金は 下。
+           ★ 1山 10枚・★最大 10山（100枚）。★数字は いつも 本当の 枚数。★大きさと 場所は JS（placePot）が 実寸で 決める。
+           ★ 結果が 出たら ★もらう 人の 方へ（★下 ＝ あなた・上 ＝ ロボット）すべって 消える。★外の 絵 0（★CSS の だ円だけ）。 -->
+      <div class="bet-pot hidden" id="betPot" role="img" aria-label=""><span class="pot-pile" id="potPile"></span><b class="pot-n" id="potNum"></b></div>
     </div>
 
     <div class="who-row me-row" id="meRow">

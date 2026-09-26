@@ -19,6 +19,8 @@
 
   /* ★★ たて置き／横置きを 分ける 線は この 1本だけ（★CSS の @media と 同じ 字。★verify ⑭ が そろって いるか 数える） */
   var WIDE_MQ = '(min-aspect-ratio: 5/4)';
+  /* ★★ T313 アト：★568×272 だけ ★山札・捨て札を 上へ 寄せる 線（★rabbit.css と 同じ 字。★verify ㉔ が そろって いるか 数える） */
+  var SHORT_MQ = '(min-aspect-ratio: 5/4) and (max-height: 300px)';
 
   /* ★ 待ち時間（★選ばせない・速い 側に 固定 ―― 追記①） */
   var TUNE = {
@@ -182,9 +184,10 @@
     box.appendChild(imgEl(faceUp ? cardSrc(card) : srcOf(BACK), faceUp ? C.speak(card) : 'ふせた 札'));
     if (anim) { void box.offsetWidth; box.classList.add(anim); }
   }
+  /* ★ T313 アト：★前は「子・10枚」。★かけ金は 場の コインの 山と 数字が 言う ので ★ここは「親」「子」だけ
+     ★（★同じ 数を 2回 言わない ―― ★ポーカー T57 の 社長の 決まりと 同じ）。 */
   function chipText(who) {
-    if (st.parent === who) return '親';
-    return st.bet ? '子・' + st.bet + '枚' : '子';
+    return st.parent === who ? '親' : '子';
   }
   function bump(el) {
     var box = el.parentNode;
@@ -225,6 +228,131 @@
     else { discardImg.removeAttribute('src'); discardImg.alt = ''; discardImg.classList.add('is-empty'); }
     renderHand();
     renderActions();
+    renderPot();
+  }
+
+  /* ============================================================
+     ★★ T313 アト ―― かけ金を 場に コインで 積む（★社長：「かけ金が 分かりずらいから、子が 出した コインを 場に」）★★
+     ★ いつ 出すか：
+       ・あなたが 子 … ★かけ金を 選んで いる 間から（★[−10][−1][+1][+10] を 押す たびに 山が 増えたり 減ったり）
+       ・ロボットが 子 … ★ロボットが かけた 瞬間から（★「ロボットは 20枚 かけた！」と 同時に 山が 落ちる）
+       ・★決めた あと・★札を 選ぶ 間も そのまま ―― ★結果の 瞬間に ★もらう 人の 方へ（★下 ＝ あなた・上 ＝ ロボット）すべって 消える
+       ・★かけて いない とき（★親が ふせる 間・ロボットが 考えて いる 間）は 出さない
+     ★ どう 積むか（★社長の お決め 2026-09-26：「★絵の 枚数は 適当で よい。★数字で しっかり 分かれば OK」）：
+       ★ 絵の コイン ＝ ★かけ金 ÷ 10 の 切り上げ（★1〜10枚 → 1枚／11〜20 → 2枚／…／91〜100 → 10枚）。★数字が 本当の 枚数。
+       ★ 積み方は ★社長の 最初の 絵の ★左が 高い 階段。★10枚で [4・3・2・1]（★1山 4枚まで・★4山まで）。
+       ★ 1枚 増える ごとに ★ななめに 1枚ずつ 足す（★[1]→[2]→[2,1]→[3,1]→[3,2]→[3,2,1]→[4,2,1]→…）＝ ★+10 を 押すと ★コインが ちょうど 1枚 落ちる。
+       ★ 数字は ★山の となり（★右・下を そろえる・★山に 重ねない）。★数字の 場所は ★いちばん 太い「100」で 先に 取る。
+       ★ コイン 1枚の 大きさは ★その 画面では いつも 同じ ＝ ★多い ほど 山が 大きい。
+     ★ 置き場所：★2枚の 札の あいだ。★くわしくは 下の placePot（★奥 ＝ ロボット・手前 ＝ あなた）。★場の 札・「親」「子」の 札・山・捨て札に かからない。
+     ★ ここで 札の 値打ちは 1つも 数えない（★かけ金の 数だけ ―― verify ④）。★見張りは verify ㉔。
+     ★（★1回目は「1枚の 絵 ＝ 1枚・10枚で 1山・最大 100枚」だった。★社長：「100枚 描くと 場の 密度が すごい ことに なる」→ ★今の 形に）
+     ============================================================ */
+  var potEl = $('betPot'), potPile = $('potPile'), potNum = $('potNum');
+  /* ★ FILL ＝ ★i 枚目の コインを 置く 山（★左から 0・1・2・3）。★ななめに 足すと ★いつも 左が 高い 階段 */
+  var POT = { PER_BET: 10, MAXC: 10, WMAX: 26, WMIN: 8, K: 1.28, PF: 0.42, GAP: 3, FILL: [0, 0, 1, 0, 1, 2, 0, 1, 2, 3] };   /* ★K ＝ 4枚 積んだ 高さ ÷ コインの はば（★0.28×3 ＋ 0.44）・★PF ＝ 山の 間かく ÷ はば */
+  var potShown = 0;
+  function potCount() {
+    if (!st) return 0;
+    if (phase === 'bet') return myBet;                                          /* ★選んで いる 間（★まん中の ボタンと 同じ 数） */
+    if ((phase === 'human-play' || phase === 'robot-play') && st.bet) return st.bet;   /* ★決めた あと */
+    return 0;
+  }
+  function renderPot() {
+    if (phase === 'result') return;                 /* ★結果の 間は さわらない（★行き先は showRoundResult の potFly） */
+    var n = potCount();
+    potEl.classList.remove('is-go-me', 'is-go-robot');
+    if (!n) { potEl.classList.add('hidden'); potPile.textContent = ''; potNum.textContent = ''; potEl.setAttribute('aria-label', ''); potShown = 0; return; }
+    var shown = Math.min(POT.MAXC, Math.ceil(n / POT.PER_BET)), was = Math.min(potShown, shown);
+    potEl.classList.remove('hidden');
+    potNum.textContent = fmt(n);
+    potEl.setAttribute('aria-label', 'かけ金 ' + n + '枚');
+    potPile.textContent = '';
+    var cols = [];
+    for (var i = 0; i < shown; i++) {
+      var ci = POT.FILL[i];
+      while (cols.length <= ci) { var col = document.createElement('span'); col.className = 'pot-col'; cols.push(col); potPile.appendChild(col); }
+      var k = cols[ci].children.length, coin = document.createElement('i');
+      coin.className = 'pc';
+      coin.style.bottom = 'calc(var(--pc-step) * ' + k + ')';
+      if (i >= was) { coin.className += ' is-new'; coin.style.animationDelay = ((i - was) * 40) + 'ms'; }   /* ★ふえた 分だけ 落とす */
+      cols[ci].appendChild(coin);
+    }
+    potShown = shown;
+    placePot();
+  }
+  /* ============================================================
+     ★★ 置き場所（★社長の お決め 2026-09-26：「★手前に 私、奥に ロボットが 座って ゲームしている イメージ」）★★
+       ・ロボットが かけた ＝ ★奥（★2枚の 札の あいだ・★山札と 捨て札の 上 ―― ★まん中の 字の 箱）
+       ・あなたが かけた　 ＝ ★手前（★山札と 捨て札の 下）
+     ★ 手前に 置く たけが 足りない 画面は ★奥と 同じ 場所に 置く（★数字は 必ず 出す）。
+       ★ 13画面の 実測：★320×454（★下の 空き 7px）の ★1画面。★320×480（★18px）は ★小さく して 手前に 置く。★568×272 は ★山札を 上へ 寄せて（★CSS の SHORT_MQ）★23px に した。
+       ★ 場を のばすと ★場の 札が 小さく なる（★追記③）ので ★のばさない。★手札の 指の的にも 1pxも さわらない。
+     ★ 決めるのは ★いま 描いた 実寸（★たての 線は 引かない ―― 追記⑥ 決まり2）。
+     ============================================================ */
+  function potFs(w, min) { return Math.max(min, Math.min(22, Math.round(w * 1.05))); }   /* ★数字は コインより 少し 大きく（★「数字で しっかり 分かる」） */
+  /* ★ はば W・たけ H に「4山 ＋ すき間 ＋ 100」が 入る ★いちばん 大きい コイン。★入らなければ null */
+  function potFitIn(W, H, wMin, fsMin) {
+    var keepT = potNum.textContent, got = null;
+    potNum.textContent = String(POT.MAXC * POT.PER_BET);
+    for (var w = Math.min(POT.WMAX, Math.floor(H / POT.K)); w >= wMin; w--) {
+      var fs = potFs(w, fsMin);
+      if (fs > H) continue;
+      potNum.style.fontSize = fs + 'px';
+      if (w * (1 + 3 * POT.PF) + POT.GAP + potNum.offsetWidth <= W) { got = { w: w, fs: fs }; break; }
+    }
+    potNum.textContent = keepT;
+    return got;
+  }
+  function placePot() {
+    if (potEl.classList.contains('hidden') || !st) return;
+    var ta = tableArea.getBoundingClientRect(), ox = ta.left + tableArea.clientLeft, oy = ta.top + tableArea.clientTop;
+    var inTop = oy, inBot = oy + tableArea.clientHeight;
+    var cr = cardRobot.getBoundingClientRect(), cm = cardMe.getBoundingClientRect();
+    var hr = chipRobot.getBoundingClientRect(), hm = chipMe.getBoundingClientRect(), mr = midResult.getBoundingClientRect();
+    var pb = Math.max($('deckPile').getBoundingClientRect().bottom, $('discardPile').getBoundingClientRect().bottom);
+    var M = 4;
+    var L = Math.max(cr.right, hr.right) + M, Rt = Math.min(cm.left, hm.left) - M, W = Math.max(0, Rt - L);
+    var meChild = st.parent === ROBOT;                 /* ★子が あなた（★かける 間も・決めた あとも） */
+    var g = null, at = 'oku', top = 0;
+    if (meChild) {
+      /* ★ 手前：★山札・捨て札の 下 2px から ★場の ふちの 2px 手前まで */
+      var T1 = pb + 2, H1 = Math.max(0, inBot - 2 - T1);
+      g = potFitIn(W, H1, 12, 15) || potFitIn(W, H1, 9, 13);   /* ★せまければ 小さく（★320×480：コイン 10px・数字 13px【実測】） */
+      if (g) { at = 'temae'; top = T1; }
+    }
+    if (!g) {
+      /* ★ 奥：★まん中の 字の 箱の 下を そろえて ★その 上の 空きへ */
+      var B2 = mr.bottom, H2 = Math.max(0, B2 - (inTop + 3));
+      g = potFitIn(W, H2, POT.WMIN, 15);
+      var h2 = g ? g.w * POT.K : Math.min(H2, 24);
+      top = B2 - h2;
+      if (meChild) at = 'oku-kawari';                /* ★手前に 入らない 画面の 代わり（★verify ㉔ が「本当に 入らない」か 数える） */
+    }
+    var numOnly = !g;
+    potEl.classList.toggle('is-numonly', numOnly);
+    potEl.dataset.at = at;
+    var w = g ? g.w : POT.WMIN, h = numOnly ? 24 : w * POT.K;
+    potEl.style.left = (L - ox) + 'px';
+    potEl.style.width = W + 'px';
+    potEl.style.top = (top - oy) + 'px';
+    potEl.style.height = h + 'px';
+    potEl.style.setProperty('--pc-w', w + 'px');
+    potEl.style.setProperty('--pc-pitch', (w * POT.PF).toFixed(2) + 'px');
+    potNum.style.fontSize = (g ? g.fs : 15) + 'px';
+    potNum.style.marginLeft = numOnly ? '' : POT.GAP + 'px';
+  }
+  /* ★ 結果 ―― ★もらう 人の 方へ（★手前 ＝ あなた ＝ 場の 下の ふち・★奥 ＝ ロボット ＝ 場の 上の ふち）。★そこで 消える */
+  function potFly(gain) {
+    if (potEl.classList.contains('hidden')) return;
+    if (!gain) { potEl.classList.add('hidden'); return; }
+    var pr = potEl.getBoundingClientRect(), cy = pr.top + pr.height / 2;
+    var ta = tableArea.getBoundingClientRect(), inTop = ta.top + tableArea.clientTop, inBot = inTop + tableArea.clientHeight;
+    var to = gain > 0 ? inBot - pr.height / 2 - cy : inTop + pr.height / 2 - cy;
+    to = Math.max(-44, Math.min(44, to));             /* ★遠くまで 行かない（★向きが 分かれば よい・★山札や 字の 上を 長く 通らない） */
+    potEl.style.setProperty('--go', Math.round(to) + 'px');
+    potEl.classList.remove('is-go-me', 'is-go-robot'); void potEl.offsetWidth;
+    potEl.classList.add(gain > 0 ? 'is-go-me' : 'is-go-robot');
   }
 
   /* ★★ 手札 ―― ★ここで 札の 値打ちを 1つも 数えない（★judge を 呼ばない・verify ④）★★
@@ -388,6 +516,7 @@
     s.setProperty('--hw', Math.max(30, hw) + 'px');
     s.setProperty('--tw', Math.max(30, tw) + 'px');
     s.setProperty('--rw', Math.max(16, Math.min(22, Math.round(hw * 0.32))) + 'px');
+    if (phase !== 'result') placePot();              /* ★ T313 アト：札の 大きさが 決まった あとで コインの 山の 場所 */
   }
   var fitTimer = 0;
   function fitSoon() { cancelAnimationFrame(fitTimer); fitTimer = requestAnimationFrame(fit); }
@@ -519,6 +648,7 @@
     if (phase !== 'bet') return;
     myBet = C.clampBet(myBet + d);                         /* ★ 1 より 下・100 より 上には ならない（★端で 止める） */
     renderBet();
+    renderPot();                                           /* ★ T313 アト：押す たびに 場の 山も 増えたり 減ったり */
   }
   function onCard(i) {
     if (phase !== 'human-place' && phase !== 'human-play') return;
@@ -578,6 +708,7 @@
     var bigWin = gain > 0 && Math.abs(r.mult) >= 10;
     midResult.className = 'mid-result' + (gain > 0 ? ' is-win' : '') + (bigWin ? ' is-big' : '');
     tableArea.classList.toggle('is-big', bigWin);
+    potFly(gain);                                          /* ★ T313 アト：場の コインは もらう 人の 方へ */
     var a = document.createElement('span'); a.className = 'mr-big'; a.textContent = top;
     var b = document.createElement('span');
     b.className = gain > 0 ? 'mr-plus' : (gain < 0 ? 'mr-minus' : '');
@@ -604,6 +735,7 @@
 
   function showFinal() {
     phase = 'over';
+    renderPot();                                           /* ★ T313 アト：おわりの 箱の うしろに 山を 残さない */
     clearSave();
     btnPlace.classList.add('hidden'); btnPlay.classList.add('hidden'); betRow.classList.add('hidden');
     var w = C.winner(st);
@@ -754,6 +886,13 @@
        ⑳ 差は 出した あと … 子が 選んで いる 間、場の まん中は 空
        ㉑ K の 決まり（画面）… ★暗い 札 ＝ 決まりで 出せない 札 だけ・★暗い 札は 持ち上がらない
        ㉒ かけ金 1〜100 … 0・101・1.5 を 決まりが 止める／★ロボット 6段が 1〜100 しか 出さない
+       ㉓ まん中の 字 … ★あなたから 見た 字（★T312）
+       ㉔ かけ金の コインの 山（★T313 アト）… ★数字 ＝ 本当の かけ金（★選ぶ 間は まん中の ボタンの 数・★決めた あとは 試合の 数）／
+                  ★絵の コイン ＝ ceil(かけ金/10)枚（★最大 10）・★山の 高さ ＝ 左が 高い 階段（★表で 数える）／★かけて いない ときは 出ない／
+                  ★場の 札・親子の 札・山・捨て札・まん中の 字に かからない・★場の 中／★数字は 12px 以上で 見え ★山の となり（★重ならない）／
+                  ★結果では もらう 人の 方へ 行き（★下 ＝ あなた・上 ＝ ロボット）★止まった 姿は 見えない／
+                  ★置き場所（★社長：手前に 私・奥に ロボット）… ★ロボットの かけ金は 山札・捨て札より 上・★あなたの かけ金は 下／
+                  ★あなたの かけ金が 上に ある ときは ★下に 本当に 入らない か（★12px の コイン ＋ すき間 が 入る たけが 無い か）
      ============================================================ */
   function vis(e) {
     if (!e) return false;
@@ -1272,6 +1411,80 @@
       if (midResult.classList.contains('is-win') !== (g23 > 0)) b23.push('ぽんの 丸が あなたの 得と ちがう');
     }
     put('㉓', b23, nC + '通り');
+
+    /* ㉔ かけ金の コインの 山（★T313 アト）★本当の かけ金は ★画面では なく 試合の 数（st.bet）と ★いま 選んで いる 数（myBet）から */
+    var b24 = [], pot = $('betPot'), pn = $('potNum'), pp = $('potPile'), want24 = 0;
+    if (st && phase === 'bet') want24 = myBet;
+    else if (st && (phase === 'human-play' || phase === 'robot-play')) want24 = st.bet || 0;
+    function ov24(a, b) { return Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0.5; }
+    if (!pot || !pn || !pp) b24.push('コインの 山の 部品が 無い');
+    else if (phase === 'result' && st && st.last) {
+      var g24 = st.last.child === HUMAN ? st.last.move : -st.last.move;
+      var goMe = pot.classList.contains('is-go-me'), goRb = pot.classList.contains('is-go-robot');
+      if ((g24 > 0 && !goMe) || (g24 < 0 && !goRb)) b24.push('結果の コインが ' + (goMe ? 'あなた' : goRb ? 'ロボット' : 'どこにも 行かない') + '（正は ' + (g24 > 0 ? 'あなた' : 'ロボット') + 'の 方へ）');
+      var go24 = parseFloat(pot.style.getPropertyValue('--go')) || 0;
+      if ((goMe || goRb) && (goMe ? !(go24 > 0) : !(go24 < 0))) b24.push('すべる 向きが ' + (go24 > 0 ? '下' : go24 < 0 ? '上' : '動かない') + '（★正は ' + (goMe ? '下 ＝ 手前の あなた' : '上 ＝ 奥の ロボット') + '）');
+      var moving = pot.getAnimations ? pot.getAnimations().length : 0;
+      if (vis(pot) && !moving) b24.push('結果の とき 山が 場に 残って いる（★まん中の 字に かかる）');
+      note['㉔ コインの 山'] = '結果：' + (goMe ? 'あなた' : goRb ? 'ロボット' : '−') + 'の 方へ' + (moving ? '（動いて いる 途中）' : '');
+    } else if (!want24) {
+      if (vis(pot)) b24.push('かけて いない のに 山が 出て いる（「' + pn.textContent + '」）');
+      note['㉔ コインの 山'] = '出て いない（かけ金 なし）';
+    } else if (!vis(pot) || !vis(pn)) b24.push('かけ金 ' + want24 + '枚 なのに ' + (vis(pot) ? '数字' : '山') + 'が 見えない');
+    else {
+      if (pn.textContent !== String(want24)) b24.push('山の 数字「' + pn.textContent + '」（★本当の かけ金は ' + want24 + '）');
+      if ((pot.getAttribute('aria-label') || '') !== 'かけ金 ' + want24 + '枚') b24.push('読み上げが「' + pot.getAttribute('aria-label') + '」');
+      if (parseFloat(getComputedStyle(pn).fontSize) < 12) b24.push('数字が ' + getComputedStyle(pn).fontSize + '（★12px 以上）');
+      var go24 = $('btnBetGo');
+      if (phase === 'bet' && go24 && go24.querySelector('b') && go24.querySelector('b').textContent !== pn.textContent) b24.push('まん中の ボタン ' + go24.querySelector('b').textContent + ' と 山 ' + pn.textContent + ' が ちがう');
+      /* ★ 社長の お決め（★2026-09-26）：絵の コイン ＝ ceil(かけ金/10)（★1〜10 → 1枚・91〜100 → 10枚）。★山の 高さは ★手で 書いた 表と くらべる */
+      var only24 = pot.classList.contains('is-numonly'), n24 = Math.min(10, Math.ceil(want24 / 10)), cols24 = pp.querySelectorAll('.pot-col');
+      var STAIR24 = { 1: '1', 2: '2', 3: '2,1', 4: '3,1', 5: '3,2', 6: '3,2,1', 7: '4,2,1', 8: '4,3,1', 9: '4,3,2', 10: '4,3,2,1' };
+      if (!only24) {
+        var nc = pp.querySelectorAll('.pc').length;
+        if (nc !== n24) b24.push('絵の コインが ' + nc + '枚（★正は ' + n24 + '枚 ＝ ' + want24 + '÷10 の 切り上げ）');
+        var hs24 = [].map.call(cols24, function (c) { return c.children.length; }).join(',');
+        if (hs24 !== STAIR24[n24]) b24.push('山の 高さが [' + hs24 + ']（★正は [' + STAIR24[n24] + '] ＝ 左が 高い 階段）');
+        var pr0 = pp.getBoundingClientRect(), nr0 = pn.getBoundingClientRect();
+        if (nr0.left < pr0.right - 0.5) b24.push('数字が 山に 重なる（★となりに 置く）');
+        var cw = parseFloat(getComputedStyle(pot).getPropertyValue('--pc-w'));
+        if (!(cw >= 8)) b24.push('コインの はばが ' + cw + 'px');
+      }
+      /* ★ かからない：場の 札（★空の 点線の 枠も）・親子の 札・山・捨て札・まん中の 字 */
+      var parts24 = [['数字', pn]].concat(only24 ? [] : [['山', pp]]);
+      var avoid24 = [['ロボットの 札', cardRobot], ['あなたの 札', cardMe], ['ロボットの 親子の 札', chipRobot], ['あなたの 親子の 札', chipMe],
+        ['山札', $('deckPile')], ['捨て札', $('discardPile')]].concat([].map.call(midResult.children, function (e) { return ['まん中の 字', e]; }));
+      var ta24 = tableArea.getBoundingClientRect();
+      var in24 = { left: ta24.left + tableArea.clientLeft, top: ta24.top + tableArea.clientTop };
+      in24.right = in24.left + tableArea.clientWidth; in24.bottom = in24.top + tableArea.clientHeight;
+      parts24.forEach(function (p) {
+        var r = p[1].getBoundingClientRect();
+        avoid24.forEach(function (a) { if (vis(a[1]) && ov24(r, a[1].getBoundingClientRect())) b24.push(p[0] + 'が ' + a[0] + 'に かかる'); });
+        if (r.left < in24.left - 0.5 || r.right > in24.right + 0.5 || r.top < in24.top - 0.5 || r.bottom > in24.bottom + 0.5) b24.push(p[0] + 'が 場（フェルト）から 出る');
+      });
+      /* ★ 置き場所（★社長：手前に 私・奥に ロボット）。★山札・捨て札の 上の はし・下の はしと くらべる */
+      var dk = $('deckPile').getBoundingClientRect(), ds = $('discardPile').getBoundingClientRect();
+      var pTop = Math.min(dk.top, ds.top), pBot = Math.max(dk.bottom, ds.bottom);
+      var boxTop = Math.min.apply(null, parts24.map(function (p) { return p[1].getBoundingClientRect().top; }));
+      var boxBot = Math.max.apply(null, parts24.map(function (p) { return p[1].getBoundingClientRect().bottom; }));
+      var meKid = st.parent === ROBOT, where24;
+      /* ★ 568×272（★SHORT_MQ）：★CSS が 本当に 山札を 上へ 寄せて いるか（★JS と CSS の 線が そろって いるか）・★あなたの かけ金は 必ず 手前 */
+      var short24 = window.matchMedia(SHORT_MQ).matches, lifted24 = getComputedStyle(midEl).alignSelf === 'start';
+      if (short24 !== lifted24) b24.push('山札を 上へ 寄せる 線が JS（' + short24 + '）と CSS（' + lifted24 + '）で ちがう');
+      if (!meKid) { where24 = '奥'; if (boxBot > pTop + 0.5) b24.push('ロボットの かけ金が 山札・捨て札より 上に ない'); }
+      else if (boxTop >= pBot - 0.5) where24 = '手前';
+      else if (short24) { where24 = '奥'; b24.push('568×272（★山札を 上へ 寄せた 画面）で あなたの かけ金が 手前に ない'); }
+      else {
+        where24 = '奥（★手前に 入らない 代わり）';
+        /* ★ 本当に 入らない か：★いちばん 小さく した 形（★数字 13px ＝ たけ 13px）＋ 上下 2px が ★山札の 下に 入るなら ★「置けるのに 置いて いない」 */
+        var room24 = in24.bottom - pBot;
+        if (room24 >= 13 + 4) b24.push('あなたの かけ金が 山札の 下に 置ける（下の 空き ' + room24.toFixed(1) + 'px）のに 上に ある');
+        if (boxBot > pTop + 0.5) b24.push('代わりの 場所（上）でも 山札に かかる');
+      }
+      var pr24 = pp.getBoundingClientRect();
+      note['㉔ コインの 山'] = where24 + '・' + want24 + '枚・' + (only24 ? '数字だけ' : cols24.length + '山・コイン ' + Math.round(cw) + 'px・山 ' + Math.round(pr24.width) + '×' + Math.round(pr24.height)) + '・数字 ' + getComputedStyle(pn).fontSize;
+    }
+    put('㉔', b24);
 
     return { '★NG': ng.length, '中身': ng.length ? ng : 'OK', '場面': phase, '画面': window.innerWidth + '×' + window.innerHeight, '数えた': note };
   }

@@ -245,6 +245,7 @@ button { cursor:pointer; }
 
 /* ── 場（親の 札・子の 札・山・捨て札）──────────────── */
 .table-area {
+  position:relative;                     /* ★ T313 アト：コインの 山（.bet-pot）の 置き場の 基準 */
   min-height:0; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; justify-items:center;
   column-gap:8px; padding:6px 8px;
   background:var(--felt); border:3px solid var(--felt-edge); border-radius:20px;
@@ -302,6 +303,82 @@ button { cursor:pointer; }
   0% { border-color:#FFD766; box-shadow:0 0 0 0 rgba(246,181,50,0); }
   25% { border-color:#F6B532; box-shadow:0 0 0 8px rgba(246,181,50,.45); }
   100% { border-color:#F6B532; box-shadow:0 0 0 3px rgba(246,181,50,.30); }
+}
+/* ★★ T313 アト ―― かけ金の コインの 山（★社長の 絵：金の コインが たてに 積まれた 山 ＋ 白い 太字の 数字）★★
+   ★ ポーカーの 場の コイン（T56・.chips）と 同じ 家族：★よこから 見た 金の だ円・★山を よこに 並べる・
+     ★数字は いつも 本当の 枚数・★ふえた 分だけ 上から ぽとっと 落ちる。
+   ★ ちがう ところ（★社長の 絵と お決めを 優先）：★絵の コインは ★かけ金 ÷ 10 の 切り上げ（★最大 10枚）・★左が 高い 階段 [4・3・2・1]・
+     ★数字は 山の となりの 白い 太字（★こげ茶の ふち）。★コインは ポーカーより 少し 厚く（★1枚ずつ 見える ように）。
+   ★ 置き場所（★社長：手前に 私・奥に ロボット）：★ロボットの かけ金は ★山札・捨て札の 上（★まん中の 字の 箱）・★あなたの かけ金は ★山札・捨て札の 下。
+     ★ どちらも ★2枚の 札の あいだ ＝ ★場の 札を 1pxも 小さく しない（★追記③）。★下に 入らない 320×454 は 上に 置く（★568×272 は 山札を 上へ 寄せて 下に 置く）。
+   ★ 大きさ・場所・山の 間かくは JS（placePot）が ★いまの 実寸で 入れる（★たての 線は 引かない ―― 追記⑥ 決まり2）。
+   ★ 光らない・点滅しない（★強調は「持ち上げた 札」1種類の まま ―― §5.5）。★さわれない（pointer-events:none）。 */
+.bet-pot {
+  position:absolute; z-index:1; pointer-events:none;
+  display:flex; align-items:flex-end; justify-content:center;
+  --pc-w:16px; --pc-pitch:14px;
+  --pc-h:calc(var(--pc-w) * .44);        /* よこから 見た コイン ＝ ひらたい だ円（★ポーカーと 同じ 比） */
+  --pc-step:calc(var(--pc-w) * .28);     /* 1枚 重ねる ごとに 上へ（★ポーカーの .2 より 厚く ―― ★山が 4枚までと 低い ので） */
+}
+.pot-pile {
+  position:relative; flex:0 0 auto; display:flex; align-items:flex-end;
+  height:calc(var(--pc-step) * 3 + var(--pc-h));        /* ★いつも 4枚ぶんの 高さ（★いちばん 高い 山）＝ 数字の 場所が 動かない */
+}
+/* ★ 山の 下の うすい かげ（★フェルトに 置いた 感じ。★山の 箱の 中だけ） */
+.pot-pile::before {
+  content:''; position:absolute; z-index:-1; left:6%; right:6%; bottom:calc(var(--pc-h) * -.12); height:calc(var(--pc-h) * .8);
+  border-radius:50%; background:rgba(40,90,60,.22); filter:blur(1px);
+}
+.pot-col {
+  position:relative; flex:0 0 auto; width:var(--pc-w); height:100%;
+  margin-left:calc(var(--pc-pitch) - var(--pc-w));    /* ★せまい ときは 左の 山に 少し 重ねる（★ポーカーと 同じ 手） */
+}
+.pot-col:first-child { margin-left:0; }
+.pc {
+  position:absolute; left:0; right:0; height:var(--pc-h); border-radius:50%;
+  background:radial-gradient(ellipse at 50% 32%, #FFF3B0 0, #FFD766 34%, #F1A426 72%, #C9840F 100%);
+  /* ★ ふち：下に こい 線・左に うすい 線 ＝ ★重なっても「1枚ずつ」が 見わけられる（★ポーカーと 同じ 考え） */
+  box-shadow:0 1px 0 #A86B0A, -1px 0 0 rgba(150,98,12,.45), inset 0 0 0 1px rgba(255,255,255,.45);
+}
+/* ★ 数字（★社長の 絵：白い 太字・★山の となり）。★うすい 緑の 上でも 読める ように ★こげ茶の ふち ＋ 下に かげ */
+.pot-n {
+  position:relative; z-index:1; flex:0 0 auto;
+  font-size:15px; font-weight:900; line-height:1; color:#fff; letter-spacing:-.02em; white-space:nowrap;
+  text-shadow:
+    1.5px 0 0 #7a4a05, -1.5px 0 0 #7a4a05, 0 1.5px 0 #7a4a05, 0 -1.5px 0 #7a4a05,
+    1px 1px 0 #7a4a05, -1px 1px 0 #7a4a05, 1px -1px 0 #7a4a05, -1px -1px 0 #7a4a05,
+    0 3px 0 rgba(90,55,5,.55);
+}
+/* ★ 山が 置けない ほど せまい とき（★13画面では 出ない【実測】）は ★数字だけ（★数字は 必ず 出す） */
+.bet-pot.is-numonly .pot-pile { display:none; }
+/* ★ ふえた 分だけ 上から ぽとっ（★「ぽん！」と 同じ はねる 曲線） */
+@keyframes potDrop { 0% { opacity:0; transform:translateY(calc(var(--pc-w) * -.7)); } 100% { opacity:1; transform:none; } }
+.pc.is-new { animation:potDrop .24s cubic-bezier(.2,1.5,.45,1) both; }
+/* ★ 結果 ―― ★もらう 人の 方へ すべって 消える（★社長：手前に 私・奥に ロボット ＝ ★下 ＝ あなた・★上 ＝ ロボット）。
+   ★ 止まった 姿は ★見えない（visibility:hidden）＝ ★写真（animation:none）でも ★まん中の 字に かからない。 */
+.bet-pot.is-go-me, .bet-pot.is-go-robot { visibility:hidden; animation:potGo .46s cubic-bezier(.25,.8,.35,1); }
+@keyframes potGo {
+  0%   { visibility:visible; opacity:1; transform:none; }
+  70%  { visibility:visible; opacity:.9; transform:translateY(calc(var(--go, 0px) * .85)) scale(.8); }
+  100% { visibility:visible; opacity:0; transform:translateY(var(--go, 0px)) scale(.6); }
+}
+/* ★ まん中の 字は ★コインが 出て 行く のを 待って（★0.14秒）出る ＝ ★すべる 山が 字に 重ならない
+   ★（★1回目は 字と 同時で ★「差 1」の 上を 山が 通った【写真 390×844・0.12秒】）。★字は 1文字も 変えない（★T312 の midTop は そのまま） */
+@keyframes midIn { 0% { opacity:0; } 100% { opacity:1; } }
+.mid-result > span { animation:midIn .16s ease-out .14s both; }
+.mid-result.is-win .mr-big { animation-delay:.14s; }
+@media (prefers-reduced-motion:reduce) { .pc.is-new, .bet-pot.is-go-me, .bet-pot.is-go-robot { animation:none; } }
+
+/* ★★ T313 アト ―― ★568×272（★横・いちばん 低い 画面）だけ ★山札・捨て札を 上へ 寄せて ★その 下に「あなたの かけ金」の 置き場を 作る ★★
+   ★ 社長：「横に した とき 568×272、山札と 捨て札を もう少し 上に して、下に スペース 作って 置ける ように して ほしい」
+   ★ やる こと：★まん中の 列を 上へ 寄せる（align-self:start）・★場の 内側の 上ばり 6px の うち 2px を 使う・★まん中の 字の 箱と 山札の すき間 6 → 3px。
+     ★ 山札・捨て札が ★11.3px 上がり ★下の 空きが 12.0 → 23.3px【実測】。★場の 札・手札・かけ金ボタンは 1px も 変えない（★寄せる だけ）。
+   ★★ 新しい たての 線（★追記⑥ 決まり2）：★max-height:300px（★横置き かつ）。
+     ★ 11画面＋底の たて：568・480・454・812・844・320・375・414・375・390・428・272（＋パソコン 800）。
+     ★ ★300 より 下は ★272 だけ ＝ ★568×272 1画面だけに 効く。★いちばん 近い 320（568×320）とは 20px 離れて いる。
+     ★ ★JS にも 同じ 字（★SHORT_MQ）。★verify ㉔ が CSS と JS が そろって いるか 数える。 */
+@media (min-aspect-ratio: 5/4) and (max-height: 300px) {
+  .mid { align-self:start; margin-top:-2px; row-gap:3px; }
 }
 .piles { display:flex; gap:6px; align-items:flex-start; }
 .pile { position:relative; display:flex; flex-direction:column; align-items:center; gap:1px; }
