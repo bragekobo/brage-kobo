@@ -1214,3 +1214,480 @@ body {
 /* ★ ブラウザが 自分で 送る すべり（★focus や scrollIntoView）に「★帯の ぶん 空けろ」と 言う。
    ★ ★部品は 0個 増えません（★T279 と 同じ 手）。 */
 html { scroll-padding-top:calc(var(--bar-over) + var(--bar-h) + 4px); }
+
+/* ============================================================
+   ★★★ T314 ―― ホールデムを 良くする（💻コーダ・2026-09-26・社長のご指示）★★★
+   ------------------------------------------------------------
+   ① はじめの 画面「何ハンド 遊ぶ？」（★大富豪・セブンブリッジと 同じ 家族 ＝ 白い 角丸の 箱＋大きい ピンクの ボタン）
+   ② 結果の 箱 ―― ★卓の 上に 重ねる。★画面に くっつける（position:fixed）。
+      ★★下の 段（.rs-foot）に「つぎの ハンドへ ▶」を ★いつも 出す ―― ★スクロール 無しで 押せる。
+      ★★中身が 入りきらない 小さい 画面では ★中身（.rs-scroll）だけ 箱の 中で すべる。
+   ③ 降りた 人の 札も 開く（★game.js）。★ここは その 見せ方。
+   ★ 上の帯（z-index:20・T297）より 下に 置く（z-index:15）＝ ★「◀」「↻ やめる」は 箱が 出て いても 押せる。
+     ★ 箱の 上はしは ★帯の 下（★くっついた 帯 6＋38＝44px・★くっつく 前 10＋38＝48px）より 下の 50px。
+   ★ たての 線は ★1本だけ 足した：`(min-width:561px) and (max-height:480px)`（★横向きの 低い 画面）。
+     ★ 13画面で 数えた【★計算】―― ★横向き 7つ（812×375〜568×272・たて 272〜428）は ★ぜんぶ 入る／
+       ★たて向き 5つ（はば 320〜390）と PC（1280×800）は ★ぜんぶ 外。★線の すぐ そばに 画面は ない。
+       ★★JS には この 線を 書いて いない（★CSS 1か所きり・追記⑥ 決まり2）。
+   ★ 見た目の 仕上げは 🎨アトへ（★部品ごとに 名前を 分けて あります）。
+   ⚠️ 上の帯の `sticky`（T297）・「↻」の SVG（T281）・T284 の 直しには 1文字も さわって いません。
+   ============================================================ */
+
+/* ── ① はじめの 画面 ─────────────────────────── */
+body.is-setup .seats,
+body.is-setup .board-wrap,
+body.is-setup .mine,
+body.is-setup .log-row,
+body.is-setup .act,
+body.is-setup .stage-chip { display:none !important; }
+
+.setup { display:flex; flex-direction:column; align-items:center; gap:8px; padding:4px 0 2px; }
+.setup-card {
+  width:min(560px,100%); text-align:center;
+  background:var(--white); border:5px solid #FFD9E8; border-radius:28px;
+  padding:16px 16px 14px;
+  box-shadow:0 8px 0 rgba(196,58,115,.12), 0 14px 24px rgba(150,110,70,.12);
+}
+.setup-eyebrow { margin:0; color:#ff759d; font-weight:900; font-size:14px; }
+.setup-name {
+  margin:2px 0 0; font-size:30px; font-weight:900; line-height:1.2; letter-spacing:1px;
+  color:var(--pink-deep); text-shadow:0 3px 0 #B33068, 0 5px 0 #FFE3EF;
+  word-break:keep-all;   /* ★折れる なら「テキサス・｜ホールデム」の <wbr> だけで（★「ホー｜ルデム」に しない）*/
+}
+.setup-intro { margin:7px 0 12px; font-size:14px; font-weight:700; color:#6a5a72; word-break:auto-phrase; }
+.setup-block { background:var(--cream); border:3px solid #F6E4C0; border-radius:20px; padding:10px 9px 11px; }
+.setup-q { margin:0 0 12px; font-weight:900; font-size:15px; color:#8a6a4e; }
+.hands-row { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
+.hands-btn {
+  position:relative; min-width:44px; min-height:64px; padding:8px 2px 6px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:16px;
+  color:var(--pink-dark); font-family:inherit; cursor:pointer;
+  box-shadow:0 3px 0 rgba(233,79,138,.14);
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+.hands-btn b     { font-size:22px; font-weight:900; line-height:1; }
+.hands-btn small { font-size:10px; font-weight:900; line-height:1.3; }
+.hands-btn em    { font-style:normal; font-size:10px; font-weight:700; color:#957c86; line-height:1.2; }
+.hands-btn:hover { transform:translateY(-2px); border-color:var(--pink); }
+.hands-btn[aria-pressed="true"] {
+  background:linear-gradient(180deg,var(--pink),var(--pink-deep)); border-color:#fff; color:#fff;
+  box-shadow:0 4px 0 var(--pink-dark), 0 0 0 3px #FFD3E5;
+}
+.hands-btn[aria-pressed="true"] em { color:#FFE6F0; }
+.hands-tag {
+  position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+  padding:0 6px; border-radius:999px; line-height:1.45;
+  background:var(--gold-soft); border:2px solid var(--gold); color:#7a5205;
+  font-size:9.5px; font-weight:900; white-space:nowrap; pointer-events:none;
+}
+.start-button {
+  margin-top:14px; width:100%; min-height:56px; display:grid; gap:1px; padding:9px 18px 8px;
+  background:linear-gradient(180deg,var(--pink),var(--pink-deep)); border:4px solid #fff; border-radius:50px;
+  color:#fff; font-family:inherit; font-weight:900; font-size:20px; cursor:pointer;
+  box-shadow:0 6px 0 var(--pink-dark), 0 12px 18px rgba(196,58,115,.22);
+  transition:transform .1s ease, box-shadow .1s ease;
+}
+.start-button small { font-size:11.5px; font-weight:700; color:#FFE6F0; }
+.start-button:hover  { transform:translateY(-2px); }
+.start-button:active { transform:translateY(4px); box-shadow:0 2px 0 var(--pink-dark); }
+.setup-tip { margin:10px 0 0; font-size:12.5px; font-weight:700; color:#896c71; word-break:auto-phrase; }
+.setup-tip b { color:var(--gold-dark); }
+.hands-btn:focus-visible, .start-button:focus-visible,
+.btn-home:focus-visible { outline:4px solid var(--pink-deep); outline-offset:3px; }
+
+/* ハッピー（§9.5）―― ふきだしが 上・顔が 下（★大富豪の はじめの 画面と 同じ ならび） */
+.setup-happy { display:flex; flex-direction:column; align-items:center; }
+.setup-bubble {
+  order:-1; position:relative; margin:0 0 9px; padding:5px 14px; border-radius:999px;
+  background:var(--white); border:3px solid var(--pink); color:var(--pink-dark);
+  font-size:13px; font-weight:900; white-space:nowrap; box-shadow:0 3px 0 rgba(196,155,110,.18);
+}
+.setup-bubble::after {
+  content:''; position:absolute; left:50%; bottom:-9px; transform:translateX(-50%);
+  border-style:solid; border-width:8px 7px 0; border-color:var(--pink) transparent transparent;
+}
+.setup-cat { width:64px; height:48px; filter:drop-shadow(0 4px 4px rgba(150,110,70,.22)); animation:happyBob 3s ease-in-out infinite; }
+.setup-happy-name {
+  margin:-4px 0 0; padding:0 8px; border-radius:999px; line-height:1.7;
+  background:var(--white); border:2px solid var(--pink); color:var(--pink-dark);
+  font-size:10.5px; font-weight:900;
+}
+
+@media (max-width:380px) {
+  .setup-card { padding:14px 10px 12px; border-width:4px; }
+  .setup-name { font-size:26px; }
+  .setup-intro { font-size:13px; }
+  .hands-row { gap:4px; }
+  .hands-btn b { font-size:19px; }
+  .start-button { font-size:18px; }
+}
+/* ★ 横向きの 低い 画面：★箱を 左右 2つに 分ける（★たてを 使いきらない ため）*/
+@media (min-width:561px) and (max-height:480px) {
+  .setup { flex-direction:row; align-items:center; justify-content:center; gap:10px; padding:0; }
+  .setup-card {
+    width:min(760px,100%); padding:10px 14px 10px; border-width:4px; border-radius:22px;
+    display:grid; grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); column-gap:14px; align-items:center;
+    grid-template-areas:"eyebrow block" "name block" "intro start" "tip start";
+  }
+  .setup-eyebrow { grid-area:eyebrow; font-size:12px; }
+  .setup-name    { grid-area:name; font-size:22px; }
+  .setup-intro   { grid-area:intro; margin:4px 0 0; font-size:12px; }
+  .setup-tip     { grid-area:tip; margin:4px 0 0; font-size:11.5px; }
+  .setup-block   { grid-area:block; padding:6px 8px 8px; }
+  .setup-q       { margin:0 0 10px; font-size:13px; }
+  .hands-btn     { min-height:54px; padding:6px 2px 4px; }
+  .hands-btn b   { font-size:19px; }
+  .start-button  { grid-area:start; margin-top:8px; min-height:50px; font-size:17px; padding:6px 14px 6px; }
+  .setup-happy   { flex:0 0 auto; }
+  .setup-bubble  { font-size:11.5px; padding:4px 10px; }
+  .setup-cat     { width:52px; height:39px; }
+}
+
+/* ── ★ 何ハンドめ（★コインの ふだの 右・同じ 行）──────── */
+.act-info { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 6px; }
+.act-info .act-coins { margin:0; }
+.hand-count {
+  flex:0 0 auto; margin:0; padding:5px 13px; border-radius:999px;
+  background:var(--white); border:3px solid var(--pink-soft); color:var(--pink-dark);
+  font-size:13px; font-weight:900; white-space:nowrap;
+  box-shadow:0 3px 0 rgba(196,155,110,.14);
+}
+@media (max-width:560px) { .hand-count { font-size:12px; padding:4px 11px; } }
+
+/* ── ② 結果の 箱 ──────────────────────────────── */
+.result-layer {
+  position:fixed; inset:0; z-index:15;
+  display:flex; justify-content:center; align-items:flex-start;
+  padding:calc(var(--bar-over) + var(--bar-h) + 6px) 8px 8px;
+  background:rgba(255,247,232,.62);
+}
+.result-card {
+  width:min(100%,600px); max-height:100%;
+  display:flex; flex-direction:column; overflow:hidden;
+  background:var(--white); border:4px solid var(--gold); border-radius:22px;
+  box-shadow:0 6px 0 rgba(241,164,38,.22), 0 16px 30px rgba(122,82,5,.18);
+  animation:rsIn .28s cubic-bezier(.2,.9,.3,1.15);
+}
+@keyframes rsIn { from { opacity:0; transform:translateY(10px) scale(.97); } to { opacity:1; transform:none; } }
+.rs-scroll { flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:9px 11px 8px; }
+.rs-foot { flex:0 0 auto; padding:8px 11px 10px; background:#FFFBF0; border-top:3px dashed #F6E4C0; }
+
+/* いちばん 上：★ハッピーが しゃべる */
+.rs-top { display:flex; align-items:center; gap:8px; }
+.rs-happy { position:relative; flex:0 0 auto; width:48px; padding-bottom:6px; text-align:center; }
+.rs-cat { width:48px; height:36px; display:block; }
+.rs-happy-name {
+  position:absolute; left:50%; bottom:-2px; transform:translateX(-50%); margin:0; padding:0 5px;
+  background:var(--white); border:2px solid var(--pink); border-radius:999px;
+  color:var(--pink-dark); font-size:9px; font-weight:900; line-height:1.6; white-space:nowrap;
+}
+.rs-top-text { flex:1 1 auto; min-width:0; }
+.rs-say  { margin:0; font-size:17px; font-weight:900; color:var(--pink-dark); line-height:1.3; word-break:keep-all; overflow-wrap:anywhere; }
+.rs-lead { margin:1px 0 0; font-size:12.5px; font-weight:900; color:#7a5205; text-align:left; line-height:1.35; word-break:keep-all; overflow-wrap:anywhere; }
+
+/* 場の 5枚（★みどりの 小さい 卓） */
+.rs-board-box {
+  margin:8px 0 7px; padding:5px 8px 7px; text-align:center;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.06) 0 2px,transparent 2px 8px), var(--felt);
+  border:3px solid #3f863f; border-radius:14px;
+}
+.rs-label {
+  display:inline-block; margin:0 0 5px; padding:0 10px; border-radius:999px;
+  background:#ffe681; border:2px solid #996d40; color:#75513c; font-size:10.5px; font-weight:900; line-height:1.6;
+}
+.rs-board { display:flex; justify-content:center; gap:4px; }
+.rs-board .card.is-mini { --mini-w:34px; }
+.card.is-unopened { opacity:.5; filter:saturate(.5); }
+.rs-board-note { margin:5px 0 0; font-size:10.5px; font-weight:900; color:#fffbe9; text-shadow:0 1px 0 rgba(63,38,16,.5); word-break:auto-phrase; }
+
+/* 4人の 行 */
+.rs-rows { display:flex; flex-direction:column; gap:5px; }
+.rs-row {
+  display:flex; align-items:center; gap:8px; padding:5px 8px;
+  background:#fffdf5; border:2px solid #f0e3d0; border-radius:14px;
+}
+.rs-row.is-win { background:linear-gradient(180deg,#FFF3B0,#FFE071); border-color:var(--gold); box-shadow:0 3px 0 rgba(196,155,110,.26); }
+.rs-row.is-out { background:#f7f4fa; border-color:#e3dcea; }
+.rs-cards { flex:0 0 auto; display:flex; gap:3px; }
+.rs-cards .card.is-mini { --mini-w:34px; }
+.rs-body { flex:1 1 auto; min-width:0; }
+.rs-head { margin:0; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.rs-who  { font-size:13.5px; font-weight:900; color:#5c4a68; white-space:nowrap; }
+.rs-row.is-win .rs-who { color:#8A5A08; }
+/* ★あなたの 行（★ピンクの 名ふだ ＋ 左の ピンクの 線 ＝ ひと目で 分かる）*/
+.rs-row.is-me { border-color:var(--pink); box-shadow:inset 5px 0 0 var(--pink); }
+.rs-row.is-me .rs-who { padding:0 8px; border-radius:999px; background:var(--pink); color:#fff; }
+.rs-out-tag { padding:0 7px; border-radius:999px; background:#e9e4ee; color:#7c7186; font-size:10.5px; font-weight:900; line-height:1.6; white-space:nowrap; }
+.rs-gain { margin-left:auto; padding:0 9px; border-radius:999px; font-size:12.5px; font-weight:900; line-height:1.6; white-space:nowrap; border:2px solid transparent; }
+.rs-gain.is-plus  { background:var(--mint-soft); border-color:var(--mint); color:#1F6B32; }
+.rs-gain.is-minus { background:var(--pink-soft); border-color:#FFB3CF; color:var(--pink-dark); }
+.rs-gain.is-zero  { background:#F1EDF5; border-color:#E0D8E8; color:#8b7d95; }
+.rs-hand { margin:2px 0 0; font-size:12px; line-height:1.3; }
+.rs-hand b { font-size:13.5px; font-weight:900; color:#7a5205; margin-right:4px; }
+.rs-hand small { font-size:11px; font-weight:700; color:#93743a; }
+.rs-hand small.rs-if { margin-right:4px; color:#8b7d95; }
+.rs-row.is-out .rs-hand b { color:#8b7d95; }
+.rs-mark { margin:1px 0 0; font-size:11px; font-weight:900; color:var(--pink-deep); }
+.rs-pots { margin:6px 0 0; }
+.rs-pots:empty { display:none; }
+
+/* 下の 段：★ボタン（★いつも 見える）*/
+.rs-foot .next-hand {
+  word-break:keep-all; overflow-wrap:anywhere;
+  display:grid; place-items:center; gap:0; width:100%; min-height:52px; margin:0; padding:6px 12px;
+  font-family:inherit; font-size:17px; line-height:1.2;
+}
+.rs-foot .next-hand small { font-size:11px; font-weight:700; color:#FFE6F0; }
+.rs-foot .next-hand.is-final { background:linear-gradient(180deg,#FFD86B,#F0A21E); color:#6B4405; box-shadow:0 5px 0 var(--gold-dark), 0 9px 14px rgba(209,140,18,.22); }
+.rs-foot .next-hand.is-final small { color:#8A5A08; }
+.rs-foot .over-box { margin:0 0 7px; padding:5px 10px 6px; }
+.rs-foot .over-title { margin:0; font-size:16px; }
+.rs-foot .over-note { margin:0; font-size:12px; }
+
+/* 最後の 結果 */
+.final-coin { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px 10px; margin:9px 0 4px; font-weight:900; }
+.final-was   { font-size:13px; color:#8b7d95; }
+.final-arrow { font-size:16px; color:#c7b5a0; }
+.final-to    { font-size:14px; color:#7a5205; }
+.final-to b  { font-size:28px; }
+.final-diff  { padding:1px 11px; border-radius:999px; font-size:15px; border:2px solid transparent; }
+.final-diff.is-plus  { background:var(--mint-soft); border-color:var(--mint); color:#1F6B32; }
+.final-diff.is-minus { background:var(--pink-soft); border-color:#FFB3CF; color:var(--pink-dark); }
+.final-diff.is-zero  { background:#F1EDF5; border-color:#E0D8E8; color:#8b7d95; }
+.final-rank { list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:4px; }
+.fr-row { display:flex; align-items:center; flex-wrap:wrap; row-gap:2px; gap:8px; padding:5px 10px; border-radius:12px; background:#fffdf5; border:2px solid #f0e3d0; }
+.fr-row.is-top { background:linear-gradient(180deg,#FFF3B0,#FFE071); border-color:var(--gold); }
+.fr-rank  { flex:0 0 auto; min-width:38px; text-align:center; padding:0 6px; border-radius:999px; background:#FFF5D8; border:2px solid #F3D98A; color:#7D6321; font-size:12px; font-weight:900; line-height:1.6; }
+.fr-name  { font-size:14px; font-weight:900; color:#5c4a68; white-space:nowrap; }
+.fr-row.is-me { border-color:var(--pink); box-shadow:inset 5px 0 0 var(--pink); }
+.fr-row.is-me .fr-name { padding:0 8px; border-radius:999px; background:var(--pink); color:#fff; }
+.fr-coins { font-size:11.5px; font-weight:700; color:#8b7d95; white-space:nowrap; }
+.fr-net   { margin-left:auto; padding:0 9px; border-radius:999px; font-size:13px; font-weight:900; line-height:1.6; white-space:nowrap; border:2px solid transparent; }
+.fr-net.is-plus  { background:var(--mint-soft); border-color:var(--mint); color:#1F6B32; }
+.fr-net.is-minus { background:var(--pink-soft); border-color:#FFB3CF; color:var(--pink-dark); }
+.fr-net.is-zero  { background:#F1EDF5; border-color:#E0D8E8; color:#8b7d95; }
+.final-note { margin:7px 0 0; text-align:center; font-size:11.5px; font-weight:700; color:#8b7d95; }
+.final-actions { display:flex; gap:8px; }
+.final-actions .btn-again { flex:1.4 1 0; }
+.btn-home {
+  flex:1 1 0; display:flex; align-items:center; justify-content:center; min-height:52px; padding:0 8px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:18px;
+  color:var(--pink-dark); font-size:14px; font-weight:900; text-decoration:none; white-space:nowrap;
+  box-shadow:0 4px 0 rgba(196,155,110,.18);
+}
+
+@media (max-width:380px) {
+  .rs-scroll { padding:8px 8px 7px; }
+  .rs-foot { padding:7px 8px 8px; }
+  .rs-row { gap:6px; padding:5px 6px; }
+  .rs-cards .card.is-mini, .rs-board .card.is-mini { --mini-w:31px; }
+  .rs-say { font-size:15.5px; }
+  .rs-who { font-size:12.5px; }
+  .rs-hand b { font-size:12.5px; }
+  .fr-coins { display:none; }
+}
+
+/* ★ たて向きで 低い 画面（★320×568・320×480・320×454）：★箱の 中を ひとまわり 詰める。
+   ★ 線は「(max-width:560px) and (max-height:600px)」 ―― ★13画面で 数えた【★計算】：★入るのは たて 454〜568 の 3つだけ、
+     ★375×812・390×844（たて 812〜844）と 横向き（はば 568〜926）は 外。★600px の そばに 画面は ない（★568 と 812）。 */
+@media (max-width:560px) and (max-height:600px) {
+  .result-layer { padding-left:6px; padding-right:6px; padding-bottom:6px; }
+  .rs-scroll { padding:6px 8px 6px; }
+  .rs-happy { width:40px; }
+  .rs-cat { width:40px; height:30px; }
+  .rs-say { font-size:14.5px; }
+  .rs-lead { font-size:11.5px; }
+  .rs-board-box { margin:5px 0 5px; padding:3px 6px 5px; border-width:2px; }
+  .rs-label { margin:0 0 3px; font-size:9.5px; }
+  .rs-board-note { margin-top:3px; font-size:9.5px; }
+  .rs-board .card.is-mini, .rs-cards .card.is-mini { --mini-w:28px; }
+  .rs-rows { gap:4px; }
+  .rs-row { padding:3px 6px; }
+  .rs-hand { line-height:1.25; }
+  .rs-gain, .rs-out-tag, .rs-row.is-me .rs-who { line-height:1.45; }
+  .rs-foot { padding:6px 8px 7px; }
+  .rs-foot .next-hand { min-height:48px; }
+  .rs-foot .over-box { margin-bottom:5px; padding:3px 8px 4px; }
+}
+
+/* ★ 横向きの 低い 画面：★ボタンの 段を 右はしの 柱に（★たてを 中身に 回す）。
+   ★ 中身は ★左に ハッピー・場の 5枚／★右に 4人（★1人 1行・うすく）。 */
+@media (min-width:561px) and (max-height:480px) {
+  .result-card { width:min(100%,900px); border-width:3px; border-radius:18px; flex-direction:row; }
+  .rs-scroll {
+    display:grid; grid-template-columns:minmax(140px,.7fr) minmax(0,1.5fr); column-gap:8px; align-content:start;
+    grid-template-areas:"top rows" "board rows" "pots rows";
+    padding:6px 8px 6px;
+  }
+  .rs-top { grid-area:top; align-self:start; gap:5px; }
+  .rs-happy { width:40px; }
+  .rs-cat { width:40px; height:30px; }
+  .rs-board-box { grid-area:board; margin:5px 0 0; padding:3px 5px 5px; border-width:2px; }
+  .rs-label { margin:0 0 3px; font-size:9.5px; }
+  .rs-board { gap:2px; }
+  .rs-board-note { font-size:9.5px; margin-top:3px; }
+  .rs-pots { grid-area:pots; }
+  .rs-rows { grid-area:rows; gap:4px; align-content:start; }
+  .rs-row { padding:3px 6px; gap:6px; }
+  .rs-board .card.is-mini { --mini-w:24px; }
+  .rs-cards .card.is-mini { --mini-w:24px; }
+  .rs-who { font-size:12.5px; }
+  .rs-gain { font-size:11.5px; }
+  .rs-hand b { font-size:12.5px; }
+  .rs-hand small { font-size:10px; }
+  .rs-hand { margin-top:1px; line-height:1.25; }
+  .rs-gain, .rs-out-tag { line-height:1.45; }
+  .rs-row.is-me .rs-who { line-height:1.45; }
+  .rs-hand small.rs-if { margin-right:3px; }
+  .rs-hand b { margin-right:3px; }
+  .rs-say { font-size:14px; }
+  .rs-lead { font-size:11px; }
+  .rs-foot {
+    flex:0 0 clamp(132px,22%,190px); display:flex; flex-direction:column; justify-content:flex-end; gap:6px;
+    padding:8px 8px; border-top:0; border-left:3px dashed #F6E4C0;
+  }
+  .rs-foot .next-hand { min-height:52px; font-size:15px; padding:4px 8px; word-break:keep-all; }
+  .rs-foot .next-hand small { font-size:10.5px; }
+  .rs-foot .over-box { margin:0; padding:4px 6px; }
+  .rs-foot .over-title { font-size:14px; }
+  .rs-foot .over-note { font-size:10.5px; }
+  .final-actions { gap:6px; }
+  .final-actions .btn-again, .btn-home { flex:0 0 auto; }
+  .final-card .rs-scroll { grid-template-areas:"top rows" "coin rows" "note rows"; }
+  .final-card .final-coin { grid-area:coin; }
+  .final-card .final-note { grid-area:note; }
+  .final-card .final-rank { grid-area:rows; margin:0; }
+  /* ★ 右の 柱は せまい ―― ★コインの 数（左に 大きく 出て いる）は 行から 外して ★1行に たもつ【★T314 写真：568×272 で「＋35枚」が 右へ 切れた】*/
+  .final-card .fr-row { flex-wrap:nowrap; padding:4px 8px; }
+  .final-card .fr-coins { display:none; }
+  .btn-home { min-height:46px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .result-card, .setup-cat { animation:none !important; }
+}
+
+/* ★T314：数の まとまりを 折らない（結果の 箱の 見出し）*/
+.nb { white-space:nowrap; }
+
+/* ============================================================
+   ★★ T314-2 ―― ★コインが 0 を 割っても マイナスの まま 続く（社長のお決め）
+   ★ マイナスの 字は ★ピンク（★オリジナルラビット・ナボコフの アトの 決め：★赤は こわい ので 使わない）。
+   ★ 字の 形は「−1,234」（★「借金」の 字は 出さない）。★game.js の fmt() と is-minus が 付ける。
+   ============================================================ */
+.seat-coin.is-minus,
+.me-coin.is-minus,
+.act-coins.is-minus,
+.fr-coins.is-minus,
+.final-to.is-minus { color:var(--pink-dark); }
+.me-coin.is-minus, .act-coins.is-minus { background:var(--pink-soft); border-color:#FFB3CF; }
+/* ============================================================
+   ★★ T315 ―― 見た目の 仕上げ（🎨アト・2026-09-26）
+   ------------------------------------------------------------
+   ① 結果の 箱を ★20本の 家族に そろえる：★うすい むらさきの 幕（rgba(70,60,82,.42)）＋
+      ★白い 角丸＋★うすい ピンクの ふち（★はじめの 画面の 箱と 同じ #FFD9E8）。
+      ★金の ふちを やめた ぶん、★「勝った 人の 金の 行」が 箱の 中で いちばん 目立つ。
+   ② ハッピーが ★しゃべって いる 形に（★ゲーム中の ふきだしと 同じ ピンクの ふち＋しっぽ）。
+   ③ 開かなかった 場の 札 ＝ ★卓の「？」の わくと 同じ ★白い 点線。★5枚 ぜんぶ うすい ときも
+      ★「点線 ＝ 開かなかった」と ★1枚だけで 分かる。★説明の 行にも 同じ 点線の 小さな 札を 添える。
+   ④ はじめの 画面の 説明 2行が ★重なって いた（★line-height が normal ＝ 字の 高さ ほど）。
+   ★ たての 線・よこの 線は ★1本も 足して いない（★T314 と 同じ 線を そのまま 使う）。
+   ★ 上の帯（sticky・T297）・「↻」の SVG（T281）には さわって いない。
+   ============================================================ */
+
+/* ① 家族の 形 */
+.result-layer { background:rgba(70,60,82,.42); animation:rsVeil .2s ease-out; }
+@keyframes rsVeil { from { background:rgba(70,60,82,0); } to { background:rgba(70,60,82,.42); } }
+.result-card {
+  border-color:#FFD9E8; border-radius:24px;
+  box-shadow:0 8px 0 rgba(196,58,115,.16), 0 16px 30px rgba(70,60,82,.22);
+}
+.rs-foot { background:#FFF8FB; border-top-color:#FFD9E8; }
+
+/* ② ハッピーが しゃべる */
+.rs-cat { animation:happyBob 3s ease-in-out infinite; filter:drop-shadow(0 3px 3px rgba(150,110,70,.22)); }
+.rs-top-text { padding-left:9px; }
+.rs-say {
+  position:relative; display:inline-block; max-width:100%; box-sizing:border-box;
+  padding:3px 11px 4px; background:var(--white);
+  border:3px solid var(--pink); border-radius:14px;
+  box-shadow:0 3px 0 rgba(196,155,110,.16);
+}
+.rs-say::before {
+  content:''; position:absolute; left:-12px; top:50%; transform:translateY(-50%);
+  border-style:solid; border-width:7px 12px 7px 0;
+  border-color:transparent var(--pink) transparent transparent;
+}
+.rs-lead { margin-top:4px; padding-left:2px; }
+
+/* 勝った 人の 行は ★金の まま 少し 強く（★箱の ふちが 金で なく なった ぶん、ここだけが 金）*/
+.rs-row.is-win, .fr-row.is-top { border-width:3px; }
+
+/* ③ 開かなかった 場の 札（★卓の「？」の わくと 同じ 白い 点線）*/
+.rs-board .card.is-unopened {
+  opacity:1; filter:none;
+  background:rgba(255,255,255,.28); border:2px dashed #fff; box-shadow:none;
+}
+.rs-board .card.is-unopened .face-img,
+.rs-board .card.is-unopened .fallback { opacity:.45; }
+/* ★開いた 札と 開かなかった 札の 間を 少し あける（★ひとかたまりに 見えない ように）*/
+.rs-board .card:not(.is-unopened) + .card.is-unopened { margin-left:7px; }
+.rs-board-note {
+  display:inline-flex; align-items:center; gap:5px; max-width:100%; box-sizing:border-box;
+  margin-top:6px; padding:2px 9px 2px 5px; border-radius:10px;
+  background:rgba(38,92,40,.42); color:#fff; font-size:11px; line-height:1.35;
+  text-shadow:0 1px 0 rgba(30,60,20,.45); text-align:left;
+}
+.rs-board-note::before {
+  content:''; flex:0 0 auto; width:9px; height:13px; border-radius:2px;
+  border:1.5px dashed #fff; background:rgba(255,255,255,.28);
+}
+
+/* ④ はじめの 画面：★説明の 行が 重ならない ように */
+.setup-intro, .setup-tip { line-height:1.45; }
+
+@media (max-width:380px) {
+  .rs-say { padding:2px 9px 3px; }
+}
+@media (max-width:560px) and (max-height:600px) {
+  /* ★たての 低い 画面は ★4人の 行を 1つでも 多く 見せたい ―― ★ふきだし・説明の 行は 細く */
+  .rs-say { padding:0 7px 1px; border-width:2px; border-radius:11px; }
+  .rs-say::before { left:-10px; border-width:6px 10px 6px 0; }
+  .rs-top-text { padding-left:7px; }
+  .rs-lead { margin-top:1px; }
+  .rs-row.is-win { border-width:2px; }
+  .rs-board-note { margin-top:3px; font-size:10px; line-height:1.25; padding:1px 7px 1px 4px; }
+  .rs-board-note::before { width:7px; height:10px; }
+}
+@media (min-width:561px) and (max-height:480px) {
+  .result-card { border-radius:18px; }
+  /* ★左の 柱は 140px ―― ★ふきだしの ふち・すきまの ぶん ハッピーと 字を ひとまわり 小さく（★「！」だけが 次の 行に 落ちない ように）*/
+  .rs-top { gap:4px; }
+  .rs-happy { width:34px; }
+  .rs-cat { width:34px; height:26px; }
+  .rs-say { font-size:13px; padding:1px 5px 2px; border-width:2px; border-radius:10px; }
+  .rs-say::before { left:-8px; border-width:5px 8px 5px 0; }
+  .rs-top-text { padding-left:5px; }
+  .rs-lead { margin-top:2px; }
+  /* ★横向きは 場の 札が 左の せまい 柱に 5枚 ならぶ ―― ★すきまは 足さない（★点線だけで 分かる）*/
+  .rs-board .card:not(.is-unopened) + .card.is-unopened { margin-left:0; }
+  .rs-board-note { margin-top:3px; font-size:9.5px; padding:1px 6px 1px 4px; gap:4px; }
+  .rs-board-note::before { width:7px; height:10px; }
+  .setup-intro, .setup-tip { line-height:1.25; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .result-layer, .rs-cat { animation:none !important; }
+}
+
+/* ============================================================
+   ★★ T316-2 ①（💻コーダ・社長のお決め）―― ★2連打の 止め（1秒）の 間だけ ボタンを うすく
+   ------------------------------------------------------------
+   ★ 押しを 止めて いる 間（body.is-guard）は、★止めて いる ボタンを ★押せない 見た目に。
+     ★ 形は ★この 本の「降りた 席」（.seat.is-folded：opacity .45 ＋ grayscale .9）と 同じ ―― ★新しい 色は 作らない。
+   ★ 選ぶ 名前は game.js の GUARD_SEL と ★1文字も 同じ 並び（★ずれたら HOLDEM.verify() の ⓦ が 鳴く）。
+   ★ ★止めの 長さ（1000ms）・遊びの 決まりは 変えて いない。★アトの T315 の かたまりは そのまま（★この 下に 足した）。
+   ============================================================ */
+body.is-guard :is(.act-btn, .next-hand, .btn-home, .start-button, .hands-btn, .quit-btn, .topbar .back, .ranks-toggle, .raise-ok, .step-btn) {
+  opacity:.45; filter:grayscale(.9); cursor:default;
+}

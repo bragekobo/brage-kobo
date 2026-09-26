@@ -97,18 +97,19 @@
       <span>テキサス・ホールデム</span>
     </div>
     <span class="stage-chip" id="stageChip">手札2枚</span>
-    <!-- ★★★ T277 ―「↻ さいしょから」（★社長のお決め⑤・★設計図 追記⑩）★★★
-         ★ この本には **はじめの 画面が ありません**。★＝ ★戻る先が 無い。
-         ★ だから ほかの 18本の「↻ やめる」とは ★**字が ちがいます**：
-           ・★ほかの 18本 …「↻ やめる」＝ ★はじめの 画面へ 戻る（★決まりを 決め直せる）
-           ・★この 2本　 …「↻ さいしょから」＝ ★その場で ★**コイン 200枚・1ハンドめ から 配り直す**
-           ★★★字が ちがうのは、★働きが ちがうから。★同じ字に すると うそに なります。
-         ★ ★消える もの：★いまの コイン と 何ハンドめ か。
-           ★★のこる もの：★**さいこう記録**（★localStorage に しまって います）。
-           ★★★＝ ★積み上げた ものは 消えない ので、★小さい字の 知らせは 付けません
-              （★設計図 追記⑩ ②・★ヨットと ブラックジャックだけが その 対象）。
-         ★ ★はじめの 画面が 無いので、★この ボタンは ★**いつも 出たまま**です。 -->
-    <button class="quit-btn" type="button" id="btnQuitGame"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>さいしょから</button>
+    <!-- ★★★ T314 ―「↻ さいしょから」→「↻ やめる」（★設計図 追記⑩ ⑤の 書き置きどおり）★★★
+         ★ T277 の ときは この本に **はじめの 画面が ありません** でした（★戻る先が 無い）。
+           ★だから ほかの 18本の「↻ やめる」と ちがい、★「その場で 配り直す ＝ さいしょから」でした。
+         ★ ★T314（社長のご指示「①最初に 何ゲーム プレイするかを 決めたい」）で
+           ★★**はじめの 画面（何ハンド 遊ぶ？）が できました** ＝ ★戻る先が できた。
+         ★ ★→ ★追記⑩ の 書き置き「★あとで 最初の画面を 作ると お決めに なったら ★この 2本の 字も
+           ★↻ やめる に そろえる」の とおり、★**ホールデムだけ** そろえます（★ポーカーは さいしょからの まま）。
+         ★ ★押したら **聞かずに**（★追記⑩ ②）★はじめの 画面へ 戻ります（`enterSetup`）。
+         ★ ★消える もの：★いまの コイン と 何ハンドめ か（★前の「さいしょから」と 同じ）。
+           ★★のこる もの：★**さいこう記録**（★localStorage）。★小さい字の 知らせは 前と 同じく 付けません。
+         ★ ★出るのは ★**遊んで いる あいだ だけ**（★はじめの 画面では かくす ―― ほかの 18本と 同じ）。
+         ⚠️★ しるし（SVG の 弧＋やじり・T281）は 1文字も 変えて いません。 -->
+    <button class="quit-btn hidden" type="button" id="btnQuitGame"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</button>
   </header>
 
   <!-- ── 上の帯（何ハンドめ・自分のコイン）────────────────
@@ -117,6 +118,43 @@
           ⚠️ 要素そのものは 残す ―― game.js が $('tape') を さがすため。
           取ると ゲームが 止まる。 -->
   <p class="tape" id="tape">1ハンドめ ・ コイン 200</p>
+
+  <!-- ── ★★ T314 ① はじめの 画面「何ハンド 遊ぶ？」──────────────
+       ★ 社長のご指示：「★最初に 何ゲーム プレイするかを 決めたい」。
+       ★ 形は ★ブラックジャックと 同じ ―― ★3・5・7・10・15、★はじめは 5（★おすすめ）。
+       ★ 見た目の 家族は ★大富豪・セブンブリッジの はじめの 画面（★白い 角丸の 箱＋大きい ピンクの ボタン）。
+       ★ 遊んで いる あいだは かくれ、★「↻ やめる」で ここへ 戻ります。
+       ★ 中の 字は game.js が 書きかえません（★えらんだ 数を 下の 小さい字に 入れる だけ）。 -->
+  <section class="setup" id="setupPhase" aria-labelledby="setupTitle">
+    <div class="setup-card">
+      <p class="setup-eyebrow">みんなで 楽しく トランプ！</p>
+      <p class="setup-name" id="setupTitle">テキサス・<wbr>ホールデム</p>
+      <p class="setup-intro">手札2枚と 場の5枚で、一番 強い 役を 作ろう！</p>
+
+      <div class="setup-block">
+        <p class="setup-q" id="handsQ">何ハンド 遊ぶ？</p>
+        <div class="hands-row" id="handsRow" role="group" aria-labelledby="handsQ">
+          <button class="hands-btn" type="button" data-hands="3" aria-pressed="false"><b>3</b><small>ハンド</small><em>短い</em></button>
+          <button class="hands-btn" type="button" data-hands="5" aria-pressed="true"><span class="hands-tag" aria-hidden="true">おすすめ</span><b>5</b><small>ハンド</small><em>ふつう</em></button>
+          <button class="hands-btn" type="button" data-hands="7" aria-pressed="false"><b>7</b><small>ハンド</small><em>ふつう</em></button>
+          <button class="hands-btn" type="button" data-hands="10" aria-pressed="false"><b>10</b><small>ハンド</small><em>長い</em></button>
+          <button class="hands-btn" type="button" data-hands="15" aria-pressed="false"><b>15</b><small>ハンド</small><em>長い</em></button>
+        </div>
+      </div>
+
+      <button class="start-button" type="button" id="btnStart">
+        <span>ゲームを始める <b>▶</b></span><small id="startSmall">あなた ＋ ロボット3人 ／ 5ハンド</small>
+      </button>
+      <p class="setup-tip">コイン <b>200枚</b>から スタート！ 終わったとき 増えていたら 君の勝ち！</p>
+    </div>
+
+    <!-- ハッピー（§9.5）―― はじめの 画面でも 話しかける -->
+    <div class="setup-happy">
+      <svg class="setup-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <p class="setup-happy-name">ハッピー</p>
+      <p class="setup-bubble" id="setupBubble">何ハンド 遊ぶ？</p>
+    </div>
+  </section>
 
   <!-- ── ロボット3人の 席（伏せ札・コイン・出した額・親マーク🔘）──── -->
   <section class="seats" id="seats" aria-label="ロボットの席"></section>
@@ -147,16 +185,7 @@
     <div class="hand" id="hand"></div>
   </section>
 
-  <!-- ── ★ 勝負の 決着（T38 §6-6）────────────────────
-       残った人の 手札を ぜんぶ 開いて、つかった5枚だけを 上下に ならべる。
-       役が 同じどうしの ときだけ、決め手の カードに ▲ と「ここで 勝った／負けた」。
-       中身は game.js が つくる。 -->
-  <section class="showdown hidden" id="showdownBox" aria-live="polite">
-    <h2 class="sd-title" id="sdTitle">勝負！</h2>
-    <p class="sd-lead" id="sdLead"></p>
-    <div class="sd-rows" id="sdRows"></div>
-    <p class="sd-pots" id="sdPots"></p>
-  </section>
+  <!-- ※ 勝負の 決着（もと #showdownBox）は T314 で ★卓の 上に 重ねる「結果の 箱」へ 引っこした（★この ページの いちばん 下）。 -->
 
   <!-- ── ハッピー ＋ 実況 ＝ ひとつの メッセージ欄（T57・社長指示）────
        もとは「ふきだしの 行」と「実況の 欄」が たてに 2つ ならんでいて、
@@ -181,7 +210,11 @@
        持っている コインは ボタンの すぐ上に 出す（社長指示）。
        中身は game.js が つくる（いくら 動くかを かならず 出す）。 -->
   <section class="act" aria-label="かける">
-    <p class="act-coins" id="actCoins">コイン 200枚</p>
+    <!-- ★ T314：★コインの ふだの 右に「何ハンドめ／何ハンド中」を 1つ 足した（★同じ 行 ＝ たては 1pxも のびない） -->
+    <div class="act-info">
+      <p class="act-coins" id="actCoins">コイン 200枚</p>
+      <p class="hand-count" id="handCount">1 / 5 ハンド</p>
+    </div>
     <!-- T59：レイズの パネルを「ボタンの 上に 浮かせる」ための 器。
          ⚠️ 中の id（actButtons／raisePanel）・class名は 1文字も 変えていない。
             game.js は getElementById で さがすので、外側に 器が 増えても そのまま 動く。
@@ -193,16 +226,8 @@
       <div class="raise-panel hidden" id="raisePanel"></div>
     </div>
     <p class="turn-note hidden" id="turnNote"></p>
-    <button class="next-hand hidden" type="button" id="btnNextHand">つぎの ハンドへ ▶</button>
-
-    <!-- ── コインが 0に なったとき（T38 §4-6）────────────
-         ロボットは かってに 200枚 もらって 戻ってくる。
-         自分が 0に なったときだけ、ここが 出る。 -->
-    <div class="over-box hidden" id="overBox">
-      <p class="over-title">ゲームオーバー</p>
-      <p class="over-note" id="overNote"></p>
-      <button class="over-btn" type="button" id="btnRestart">コインを もらって もういちど ▶</button>
-    </div>
+    <!-- ※「つぎの ハンドへ ▶」と ゲームオーバーの 箱は T314 で ★結果の 箱の 下の 段へ 引っこした
+         （★社長：「★スクロールしないと クリックできない」）。 -->
   </section>
 
   <!-- ※ 設定パネル（かけ方／ロボットの強さ／手札の目安）は T54（社長指示）で
@@ -266,6 +291,77 @@
     </p>
   </details>
 
+  <!-- ============================================================
+       ★★ T314 ② 結果の 箱（★卓の 上に 重ねる）
+       ------------------------------------------------------------
+       ★ 社長のご指示：「★次の ハンドへの ボタンが 下に 表示される ため、スクロールしないと
+         クリックできない。★リザルトを 別で 表示して 一回一回 スクロールする 必要を なくしたい」。
+       ★ 形：★画面に くっついた 箱（position:fixed）。★上の帯（◀・↻ やめる）の すぐ下から 画面の 下まで。
+         ★★下の 段（.rs-foot）に「つぎの ハンドへ ▶」を **いつも 出す**。★中身が 入りきらない
+           小さい 画面では ★**中身だけ** 箱の 中で すべる（★ボタンは 動かない）。
+       ★ 中身：★場の 5枚／★4人 ぜんぶの 札 2枚・役の 名前・もらった／出した コイン。
+         ★★社長のご指示③「★何で 勝って どういう 状況か 把握したい」―― ★降りた 人の 札も 開く。
+       ★ ハッピー（§9.5）は 箱の いちばん 上で しゃべる。
+       ★ 中身は game.js が 作る。★id は もとの 決着の わくと 同じ 名前を 引きついだ
+         （showdownBox・sdTitle・sdLead・sdRows・sdPots・overBox・btnNextHand・btnRestart）。 -->
+  <div class="result-layer hidden" id="resultLayer">
+    <section class="result-card" id="showdownBox" role="dialog" aria-modal="false" aria-labelledby="sdTitle">
+      <div class="rs-scroll" id="rsScroll">
+        <div class="rs-top">
+          <div class="rs-happy">
+            <svg class="rs-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+            <p class="rs-happy-name">ハッピー</p>
+          </div>
+          <div class="rs-top-text">
+            <h2 class="rs-say" id="sdTitle">結果</h2>
+            <p class="sd-lead rs-lead" id="sdLead" aria-live="polite"></p>
+          </div>
+        </div>
+        <div class="rs-board-box">
+          <p class="rs-label">場の カード</p>
+          <div class="rs-board" id="sdBoard"></div>
+          <p class="rs-board-note hidden" id="sdBoardNote">うすい 札は 開く前に 終わった 札。役は 5枚 ぜんぶで 数えたよ</p>
+        </div>
+        <div class="rs-rows" id="sdRows"></div>
+        <p class="sd-pots rs-pots" id="sdPots"></p>
+      </div>
+      <div class="rs-foot">
+        <!-- ※ ゲームオーバーの 箱と「コインを もらって もういちど ▶」は T314-2（社長のお決め）で なくした。
+             ★コインが 0 を 割っても ★マイナスの まま 続く（★ロボットも 同じ）。 -->
+        <button class="next-hand hidden" type="button" id="btnNextHand"><span>つぎの ハンドへ ▶</span><small id="nextSmall"></small></button>
+        <button class="next-hand is-final hidden" type="button" id="btnFinal"><span>最後の 結果を 見る ▶</span><small id="finalSmall"></small></button>
+      </div>
+    </section>
+
+    <!-- ── ★★ T314 ① 決めた ハンド数が 終わったら ―― ★最後の 結果 ── -->
+    <section class="result-card final-card hidden" id="finalBox" role="dialog" aria-modal="false" aria-labelledby="finalTitle">
+      <div class="rs-scroll">
+        <div class="rs-top">
+          <div class="rs-happy">
+            <svg class="rs-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+            <p class="rs-happy-name">ハッピー</p>
+          </div>
+          <div class="rs-top-text">
+            <h2 class="rs-say" id="finalTitle">全部 終わり！</h2>
+            <p class="rs-lead" id="finalSay"></p>
+          </div>
+        </div>
+        <div class="final-coin">
+          <span class="final-was">最初 <b>200</b>枚</span>
+          <span class="final-arrow" aria-hidden="true">→</span>
+          <span class="final-to"><b id="finalTo">200</b>枚</span>
+          <span class="final-diff" id="finalDiff">±0枚</span>
+        </div>
+        <ol class="final-rank" id="finalRank" aria-label="順位"></ol>
+        <p class="final-note" id="finalNote"></p>
+      </div>
+      <div class="rs-foot final-actions">
+        <button class="next-hand btn-again" type="button" id="btnAgain"><span>もう一度遊ぶ</span><small>ハンドの 数を 選びなおす</small></button>
+        <a class="btn-home" href="../" id="btnResultHome">◀ ゲームを選ぶ</a>
+      </div>
+    </section>
+  </div>
+
 </main>
 
 <script src="../poker-core.js"></script>
@@ -317,15 +413,15 @@
   function pick(el, re) {
     if (!el) return 0;
     var m = (el.textContent || '').match(re);
-    return m ? +m[1] : 0;
+    return m ? +String(m[1]).replace(/,/g, '') : 0;   /* ★T316 ④：「1,200」の「,」を 外して 読む */
   }
 
   /* 画面の 文字から ひろう 道（ゲームの 中身が 読めない ときの 予備）*/
   function meBetFromText(info) {
     var tags = info.querySelectorAll('.me-tag'), n = 0;
     for (var i = 0; i < tags.length; i++) {
-      var m = (tags[i].textContent || '').match(/出した\s*(\d+)/);
-      if (m) n = +m[1];
+      var m = (tags[i].textContent || '').match(/出した\s*([\d,]+)/);
+      if (m) n = +String(m[1]).replace(/,/g, '');
     }
     return n;
   }
@@ -367,7 +463,7 @@
 
     var num = document.createElement('span');
     num.className = 'chips-num';
-    num.textContent = n;                           /* ★ 本当の 枚数 */
+    num.textContent = String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');   /* ★ 本当の 枚数（★T316 ④：1,000 から「,」・game.js の fmt と 同じ）*/
     box.appendChild(num);
     return box;
   }
@@ -382,8 +478,8 @@
        だれが 親の となりかは 残る。
      ⚠️ ことばは 足していない ―― 消しているだけ。
      ⚠️ game.js は 一度も 書きかえない（ここは 出来あがった 画面を 直す 係）。 */
-  var BLIND_RE = /^(小がけ|大がけ)\s*\d+$/;
-  var PUT_RE   = /^出した\s*\d+$/;
+  var BLIND_RE = /^(小がけ|大がけ)\s*[\d,]+$/;   /* ★T316 ④：「,」つきも */
+  var PUT_RE   = /^出した\s*[\d,]+$/;
 
   function trimDup() {
     var lasts = document.querySelectorAll('#seats .seat-last'), i, m;
@@ -419,7 +515,7 @@
     var bets = [], i;
     for (i = 0; i < seats.length; i++) {
       bets.push(bots[i] ? (bots[i].put || 0)
-                        : pick(seats[i].querySelector('.seat-bet'), /出した\s*(\d+)/));
+                        : pick(seats[i].querySelector('.seat-bet'), /出した\s*([\d,]+)/));
     }
     var mine = me ? (me.put || 0) : (info ? meBetFromText(info) : 0);
 
