@@ -9,10 +9,18 @@
    ★★ 並べ方は 2つだけ ★★
      ・たて置き … 上から 帯／ロボット／場／ハッピー／あなた／手札／ボタン
      ・横置き　 … 左に ロボット・場、右に あなた・手札・ボタン、下に ハッピー
-     ★ 分ける 線は **よこ÷たて ＝ 5/4** の 1本だけ。★名前は JS の `WIDE_MQ` と ここ（--wide）で、
-       ★見張り（verify ⑭）が 同じか 数える（★追記⑥ 決まり2）。
+     ★ 分ける 線は **よこ÷たて ≧ 5/4 ★かつ★ たけ ≦ 500px**。★名前は JS の `WIDE_MQ`（WIDE_H）と ここ（--wide）で、
+       ★見張り（verify ⑭・㉕）が 同じか 数える（★追記⑥ 決まり2）。
        ★ 12画面の 比：たて 0.38〜0.71 ／ 横 1.78〜2.16 ―― ★1.25 は どれも またがない【計算】。
-     ★★ たての 高さで 分ける 線（max-height）は ★1本も 引いて いません。
+     ★★ T317 アト（★社長：「★大画面でも たて並びに」）：★横置きは ★たけが 低い 画面 だけ。
+       ★ ★前は 比だけ ＝ ★パソコン（1280×800・1918×948 など）も 横置きに なり、★右の 上が 空き・★場が たてに 間延び していた。
+       ★ ★500px の 線が またぐ 画面：★横向きの スマホの たけは 272・320・375・375・390・414・428 ＝ ★全部 500 以下（★横置きの まま）。
+         ★ ★たて向き 5つ（454〜844）は ★比で もともと たて置き。★★12画面＋底は 1つも 線を またがない。
+         ★ ★またぐのは ★比 5/4 以上で たけ 501px 以上の 画面 だけ（★パソコン・タブレットの 横 ＝ ★たて置きに なる）。
+         ★ ★いちばん 近い 428（★926×428）とは 72px 離して いる。
+       ★ ★たて置きの 器は ★たけ 912px まで（★社長の 画像2 ＝ 1109×912 くらい）・★上下 まん中（.app の max-height）。
+         ★ ★912 より 高い 画面は ★12画面に 無い（★いちばん 高い 844）。
+     ★★ たての 線は ★この 2本 ＋ ★568×272 の SHORT_MQ（300px）だけ。
    ============================================================ */
 
 :root {
@@ -33,7 +41,7 @@
   --hgap:5px;
   --wide:0;
 }
-@media (min-aspect-ratio: 5/4) { :root { --wide:1; } }
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) { :root { --wide:1; } }
 
 * { box-sizing:border-box; }
 html { -webkit-text-size-adjust:100%; }
@@ -72,6 +80,11 @@ button { cursor:pointer; }
   height:100vh; height:100svh; min-height:0;
   padding:4px 6px 6px;
   grid-template-columns:minmax(0,1fr);
+  /* ★★ T317 アト ―― ★大きな 画面で 場が 間延び しない（★社長の 画像2 くらいで 止める）・★上下も まん中 ★★
+     ★ 912px より 高い 画面 だけに 効く（★12画面＋底は ★いちばん 高い 844 ＝ ★0px 変わらない）。
+     ★ 見張り verify ㉕ が「★この 高さ・★まん中・★JS の APP_HMAX と 同じ 数」を 数える。 */
+  max-height:912px;
+  margin-top:max(0px, calc((100vh - 912px) / 2)); margin-top:max(0px, calc((100svh - 912px) / 2));
 }
 .app.is-title {
   grid-template-areas:"top" "title" "happy";
@@ -81,7 +94,7 @@ button { cursor:pointer; }
   grid-template-areas:"top" "robot" "table" "happy" "me" "hand" "action";
   grid-template-rows:auto auto minmax(0,var(--tf,1fr)) auto auto minmax(0,var(--hf,1fr)) auto;
 }
-@media (min-aspect-ratio: 5/4) {
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) {
   .app { max-width:1000px; padding:4px 10px 6px; column-gap:12px; }
   .app.is-title {
     grid-template-columns:minmax(0,1fr);
@@ -209,7 +222,7 @@ button { cursor:pointer; }
 }
 .title-screen .unofficial { margin-top:auto; padding-top:4px; max-width:34em; }
 /* ★ 横置きの はじめの 画面は ★2列（★たてを 食わせない） */
-@media (min-aspect-ratio: 5/4) {
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) {
   .title-screen {
     display:grid; grid-template-columns:auto auto; align-content:center; justify-content:center;
     column-gap:26px; row-gap:6px; padding:6px 14px; border-width:3px;
@@ -487,7 +500,7 @@ button { cursor:pointer; }
      （★568×320・568×272 で 10か所・667×375 で 9か所【実測 t308_05】）。
    ★ keep-all だけだと flip2 が 568 で 3行 → ★12.5px で ★13画面とも 2行まで・★まん中 折れ 0【実測】。
    ★ 740 の 線：★736 までを 小さい 側に 入れる（★812 以上は 13.5px の まま 2行を 測った）。★たての 線では ない（追記⑥ 決まり2 の 外） */
-@media (min-aspect-ratio: 5/4) and (max-width: 740px) { .happy-bubble { font-size:12.5px; } }
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) and (max-width: 740px) { .happy-bubble { font-size:12.5px; } }
 .howto {
   flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
   min-height:44px; min-width:44px; padding:0 12px; border-radius:999px;
@@ -497,7 +510,7 @@ button { cursor:pointer; }
 .howto:hover { border-color:var(--pink); }
 /* ★ 帯の「？ 遊び方」は 横置きだけ／ハッピーの 行の「？」は たて置きだけ（★同時に 2つ 見せない） */
 .howto-top { display:none; }
-@media (min-aspect-ratio: 5/4) {
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) {
   .howto-top { display:inline-flex; }
   .log-row .howto { display:none; }
 }
@@ -583,7 +596,7 @@ dialog h2 { margin:0 0 8px; font-size:20px; font-weight:900; color:var(--pink-da
 #helpDialog .dialog-ok { width:100%; }
 
 /* ── 横置き（★よこ÷たて ≧ 5/4）の こまかい ところ ── */
-@media (min-aspect-ratio: 5/4) {
+@media (min-aspect-ratio: 5/4) and (max-height: 500px) {
   .log-row { min-height:44px; padding:0 8px; }
   .happy-wrap { width:38px; }
   .happy-cat { width:38px; height:40px; }

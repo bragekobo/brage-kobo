@@ -17,8 +17,13 @@
   var C = window.RNCore;
   var HUMAN = C.HUMAN, ROBOT = C.ROBOT;
 
-  /* ★★ たて置き／横置きを 分ける 線は この 1本だけ（★CSS の @media と 同じ 字。★verify ⑭ が そろって いるか 数える） */
-  var WIDE_MQ = '(min-aspect-ratio: 5/4)';
+  /* ★★ たて置き／横置きを 分ける 線は この 1本だけ（★CSS の @media と 同じ 字。★verify ⑭・㉕ が そろって いるか 数える）
+     ★★ T317 アト：★横置きは ★たけが 低い 画面 だけ（★社長：「★大画面でも たて並びに」）。★500px は ★12画面＋底の どれも またがない
+        （★横向きの たけは 272〜428・★たて向きは 比で もともと たて置き）。★CSS の @media 7つにも 同じ 数（★㉕ が 数える）。 */
+  var WIDE_H = 500;
+  var WIDE_MQ = '(min-aspect-ratio: 5/4) and (max-height: ' + WIDE_H + 'px)';
+  /* ★★ T317 アト：★たて置きの 器の 高さの 上限（★CSS の .app { max-height } と 同じ 数。★verify ㉕） */
+  var APP_HMAX = 912;
   /* ★★ T313 アト：★568×272 だけ ★山札・捨て札を 上へ 寄せる 線（★rabbit.css と 同じ 字。★verify ㉔ が そろって いるか 数える） */
   var SHORT_MQ = '(min-aspect-ratio: 5/4) and (max-height: 300px)';
 
@@ -887,6 +892,9 @@
        ㉑ K の 決まり（画面）… ★暗い 札 ＝ 決まりで 出せない 札 だけ・★暗い 札は 持ち上がらない
        ㉒ かけ金 1〜100 … 0・101・1.5 を 決まりが 止める／★ロボット 6段が 1〜100 しか 出さない
        ㉓ まん中の 字 … ★あなたから 見た 字（★T312）
+       ㉕ 大きな 画面でも たて並び（★T317 アト）… ★CSS の 横置きの @media は ぜんぶ ★たけ 500px 以下 だけ（★JS の WIDE_H と 同じ 数）／
+                  ★たけが 500px より 高い 画面は ★たて置き（★上から ロボット・場・ハッピー・あなた・手札・ボタン が 1列）／
+                  ★器は ★はば 560・たけ 912 まで ★左右・上下 まん中（★場が 間延び しない）
        ㉔ かけ金の コインの 山（★T313 アト）… ★数字 ＝ 本当の かけ金（★選ぶ 間は まん中の ボタンの 数・★決めた あとは 試合の 数）／
                   ★絵の コイン ＝ ceil(かけ金/10)枚（★最大 10）・★山の 高さ ＝ 左が 高い 階段（★表で 数える）／★かけて いない ときは 出ない／
                   ★場の 札・親子の 札・山・捨て札・まん中の 字に かからない・★場の 中／★数字は 12px 以上で 見え ★山の となり（★重ならない）／
@@ -1485,6 +1493,60 @@
       note['㉔ コインの 山'] = where24 + '・' + want24 + '枚・' + (only24 ? '数字だけ' : cols24.length + '山・コイン ' + Math.round(cw) + 'px・山 ' + Math.round(pr24.width) + '×' + Math.round(pr24.height)) + '・数字 ' + getComputedStyle(pn).fontSize;
     }
     put('㉔', b24);
+
+    /* ㉕ 大きな 画面でも たて並び（★T317 アト・★社長：「★大画面に しても 画像2 の 形式に」） */
+    var b25 = [], appR = app.getBoundingClientRect(), iw = window.innerWidth, ih = window.innerHeight;
+    /* ★ ㉕-1 線：★横置きの @media（★min-aspect-ratio を 含む もの）は ★どれも たけ WIDE_H 以下 だけ。★--wide の 線は ちょうど WIDE_H */
+    try {
+      var nAsp = 0, wideLine = null;
+      for (var s25 = 0; s25 < document.styleSheets.length; s25++) {
+        (function walk25(list) {
+          for (var q = 0; q < list.length; q++) {
+            var r = list[q];
+            if (r.cssRules && r.media) {
+              var mt = r.media.mediaText || '';
+              if (/min-aspect-ratio/.test(mt)) {
+                nAsp++;
+                var hs = (mt.match(/max-height:\s*(\d+(?:\.\d+)?)px/g) || []).map(function (x) { return parseFloat(x.replace(/[^\d.]/g, '')); });
+                if (!hs.length) b25.push('横置きの 線に たけの 条件が 無い（' + mt + '）＝ ★大きな 画面も 横置きに なる');
+                else if (Math.min.apply(null, hs) > WIDE_H) b25.push('横置きの 線の たけが ' + hs.join('・') + 'px（★JS の WIDE_H は ' + WIDE_H + '）');
+                if (/--wide/.test(r.cssText)) wideLine = hs;
+              }
+            }
+            if (r.cssRules) walk25(r.cssRules);
+          }
+        })(document.styleSheets[s25].cssRules || []);
+      }
+      if (!wideLine || wideLine.length !== 1 || wideLine[0] !== WIDE_H) b25.push('--wide の 線の たけが ' + (wideLine ? wideLine.join('・') : '無し') + '（★JS の WIDE_H は ' + WIDE_H + '）');
+      var cssMax = parseFloat(getComputedStyle(app).maxHeight);
+      if (cssMax !== APP_HMAX) b25.push('器の たけの 上限が CSS ' + getComputedStyle(app).maxHeight + '・JS ' + APP_HMAX);
+      note['㉕ 横置きの 線'] = nAsp + 'か所・たけ ' + WIDE_H + 'px 以下';
+    } catch (e) {
+      if (location.protocol === 'file:') note['㉕ 横置きの 線'] = '★測れていません（file:// では CSS を 読めない）';
+      else b25.push('CSS を 読めない：' + e.message);
+    }
+    /* ★ ㉕-2 たけが WIDE_H より 高い 画面は ★たて置き（★1列・上から 順番） */
+    if (ih > WIDE_H) {
+      if (isWide()) b25.push('たけ ' + ih + 'px なのに 横置き');
+      var col25 = phase === 'title' ? [['帯', topbar], ['はじめの 画面', titleScreen], ['ハッピー', $('logRow')]]
+        : [['帯', topbar], ['ロボット', $('robotRow')], ['場', tableArea], ['ハッピー', $('logRow')], ['あなた', $('meRow')], ['手札', $('handArea')], ['ボタン', $('actionRow')]];
+      var lefts = [], rights = [];
+      for (var k25 = 0; k25 < col25.length; k25++) {
+        var e25 = col25[k25][1]; if (!vis(e25)) { b25.push(col25[k25][0] + ' が 見えない'); continue; }
+        var r25 = e25.getBoundingClientRect(); lefts.push(r25.left); rights.push(r25.right);
+        if (k25 && vis(col25[k25 - 1][1]) && r25.top < col25[k25 - 1][1].getBoundingClientRect().bottom - 0.5) b25.push(col25[k25][0] + ' が ' + col25[k25 - 1][0] + ' の 下に ない（★たて並びで ない）');
+      }
+      if (lefts.length && (Math.max.apply(null, lefts) - Math.min.apply(null, lefts) > 1 || Math.max.apply(null, rights) - Math.min.apply(null, rights) > 1)) b25.push('1列に ならんで いない（★左 ' + Math.round(Math.min.apply(null, lefts)) + '〜' + Math.round(Math.max.apply(null, lefts)) + '）');
+      /* ★ ㉕-3 間延び しない：★器は はば 560・たけ APP_HMAX まで ★左右・上下 まん中 */
+      if (appR.width > 560.5) b25.push('器の はばが ' + Math.round(appR.width) + 'px（★560 まで）');
+      if (appR.height > APP_HMAX + 0.5) b25.push('器の たけが ' + Math.round(appR.height) + 'px（★' + APP_HMAX + ' まで ＝ 場が 間延び）');
+      if (Math.abs(appR.left - (iw - appR.right)) > 1) b25.push('器が 左右 まん中に ない（左 ' + Math.round(appR.left) + '・右 ' + Math.round(iw - appR.right) + '）');
+      var docTop = appR.top + window.scrollY;
+      if (ih > APP_HMAX && Math.abs(docTop - (ih - (docTop + appR.height))) > 1) b25.push('器が 上下 まん中に ない（上 ' + Math.round(docTop) + '・下 ' + Math.round(ih - docTop - appR.height) + '）');
+      if (phase !== 'title') { var tr25 = tableArea.getBoundingClientRect(); note['㉕ 場'] = Math.round(tr25.width) + '×' + Math.round(tr25.height) + '（★たけ÷はば ' + (tr25.height / tr25.width).toFixed(2) + '）'; }
+      note['㉕ 器'] = Math.round(appR.width) + '×' + Math.round(appR.height) + '・上 ' + Math.round(docTop);
+    } else note['㉕ 器'] = '（★たけ ' + ih + 'px ＝ 横置きの 画面 ―― ㉕-2・㉕-3 は 見ない）';
+    put('㉕', b25);
 
     return { '★NG': ng.length, '中身': ng.length ? ng : 'OK', '場面': phase, '画面': window.innerWidth + '×' + window.innerHeight, '数えた': note };
   }
