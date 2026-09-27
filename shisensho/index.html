@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- ★★ T320 ―― ★22本目「四川省」（💻コーダ・2026-09-27）★★
+       ★ 社長の お決め（★設計図 追記⑬）：★136枚（8×17）・★ヒント 無し・★変わり種 無し・★「牌」「麻雀」は 漢字。
+       ★★ 題は「四川省」。★説明文に「二角取り」。★★★サン電子の 登録商標の 名前（★積み上げる 方の 遊び）は 1文字も 使わない。
+          ★ 見張り（verify ⑨）が ★この ファイルの 頭も 体も 数えます。
+       ★ 公開の 準備は 別の 回（★入口の GAMES・sitemap には まだ 足して いません）。
+       ★★ og:image は ★アトが 焼いた（★T321・下の canonical の あと）。 -->
+  <title>四川省 ― ブラゲ工房</title>
+  <meta name="description" content="同じ 麻雀牌を 2つ、曲がり 2回までの 線で つなげて 消す パズル（二角取り）。136枚 ぜんぶ 消そう！ 必ず クリアできる 配りだけ。 ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="四川省 ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="同じ 麻雀牌を 2つ、曲がり 2回までの 線で つなげて 消す パズル（二角取り）。ダウンロードはいりません。開いたらすぐ遊べます。" />
+  <meta property="og:url" content="https://bragekobo.com/shisensho/" />
+  <!-- ★★ T301 の 型 ―― ★本ものの 住所（canonical）★★
+       ★ ★★上の og:url と **1文字も 同じ** に して ください（★見張り verify ⑩ が 数えます）。 -->
+  <link rel="canonical" href="https://bragekobo.com/shisensho/" />
+  <!-- ★★ T321 アト ―― ★og:image（見出しの 絵）★★
+       ★ 置き場所：`office/games/og/og-shisensho.png`（★公開だと `…/og/og-shisensho.png`）。
+       ★ ★型は T301／T308 と 同じ（★空・雲・キラキラ・白い 台・「ブラゲ工房」の 札・ハッピー）。
+       ★ ★まん中は ★本物の この ゲームを 本物の Chrome で 遊んで 撮った「西」と「西」が 曲がり 2回で つながる 瞬間（★描き直して いない）。
+       ★ ★左下の 牌 2枚は アトの 部品（mahjong-tiles.js）の 絵 そのまま。★★サン電子の 登録商標の 名前の 字は 0（★焼く 道具が 紙の 字を 数えた）。
+       ★ ★下の width / height は PNG の 頭から 読んだ 本当の 数（600×600）。★差しかえたら 2つとも 直す こと。
+       ★ ★`?v=` は 付けない（★はじめて 置く 絵。★差しかえた ときだけ `?v=2`）。 -->
+  <meta property="og:image" content="https://bragekobo.com/og/og-shisensho.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="600" />
+  <meta property="og:image:height" content="600" />
+  <meta property="og:image:alt" content="麻雀牌が ならぶ 画面。同じ「西」の 牌 2つが、曲がり 2回の ピンクの 線で つながって いる。ねこの ハッピーの かお" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="四川省 ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="同じ 麻雀牌を 2つ、曲がり 2回までの 線で つなげて 消す パズル（二角取り）。開いたらすぐ遊べます。" />
+  <meta name="twitter:image" content="https://bragekobo.com/og/og-shisensho.png" />
+
+  <!-- タブの アイコン（ファビコン）＝ ハッピーの かお。★20本と おなじ。 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ★★ T301 の 型 ―― ★見えない h1（★字は 上の帯と 1文字も 同じ・★verify ⑩）★★ -->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;font:inherit;color:inherit;background:none;">四川省</h1>
+
+<!-- ハッピー（看板ねこ）の かお。★20本から そのまま 持ちこみ（設計図 §9.5）。 -->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+    <!-- ★ T321（アト）：花（★まとめサイト index.html の #flower と 同じ 形・色）-->
+    <symbol id="t321-flower" viewBox="0 0 40 40">
+      <g fill="#FFB3D0"><circle cx="20" cy="8" r="8"/><circle cx="33" cy="17" r="8"/><circle cx="28" cy="32" r="8"/><circle cx="12" cy="32" r="8"/><circle cx="7" cy="17" r="8"/></g>
+      <circle cx="20" cy="21" r="6.5" fill="#FFD766"/>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell" id="app">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       ★ 左：◀ ゲームを選ぶ ／ まん中：題 ／ 右：もどす・新しく 配る（★遊んで いる 間だけ）。
+       ★★ 追記⑩ ④：★決める ことが 無い 本は「↻ やめる」を 付けず ★「新しく 配る」で よい（★ピラミッドと 同じ）。
+       ★ 帯は `position:sticky`（★20本と 同じ）。★この 本の 親には overflow を 1つも 書いて いません（★T285 の わな）。 -->
+  <header class="topbar" id="topbar">
+    <a class="back" href="../" id="btnBack"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand" id="brand">
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span id="brandName">四川省</span>
+    </div>
+    <div class="tools hidden" id="tools">
+      <button class="tool" type="button" id="btnUndo">もどす</button>
+      <button class="tool" type="button" id="btnNew">新しく 配る</button>
+    </div>
+  </header>
+
+  <!-- ── まん中（★はじめの 画面 と 盤 は ここを 入れかわりで 使う）──────────
+       ★ この 箱の 大きさを JS（layout）が 測って、★牌の 大きさ・盤の 向き・ハッピーの 置き場を 決める。 -->
+  <div class="stage" id="stage">
+
+    <!-- ── はじめの 画面 ──────────────────────────────
+         ★ 決める ことは 1つも 無い（★社長のお決め：選ばせない・★ピラミッドと 同じ 形）。 -->
+    <section class="title-screen" id="titleScreen">
+      <!-- ★★ T321（🎨アト）はじめの 画面の 飾り ★★
+           ★ 花と キラキラは まとめサイト（portal.css の .deco・.twinkle）と 同じ 形・同じ 色。
+           ★ 絵は「中 東 中」―― ★同じ 牌が 2つ、★じゃまな 牌を 曲がり 2回で こえる（★サブの 字と 同じ ことを 絵で）。
+           ★ 箱が 低い 画面（568×272 など）では ★絵だけが 縮む（flex）。★たての 線（@media height）は 引いて いない。 -->
+      <svg class="t-deco f1" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t321-flower"/></svg>
+      <svg class="t-deco f2" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t321-flower"/></svg>
+      <svg class="t-deco f3" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t321-flower"/></svg>
+      <span class="t-twinkle t1" aria-hidden="true">✨</span>
+      <span class="t-twinkle t2" aria-hidden="true">⭐</span>
+      <svg class="title-art" viewBox="0 0 150 76" aria-hidden="true" focusable="false">
+        <g class="ta-tiles">
+          <use href="#mj-7z" x="24" y="26" width="34" height="46.75"/>
+          <use href="#mj-1z" x="58" y="26" width="34" height="46.75"/>
+          <use href="#mj-7z" x="92" y="26" width="34" height="46.75"/>
+        </g>
+        <polyline class="ta-under" points="41,25 41,10 109,10 109,25"/>
+        <polyline class="ta-line" points="41,25 41,10 109,10 109,25"/>
+        <g class="ta-bend"><circle cx="41" cy="10" r="7.5"/><text x="41" y="13.7">1</text></g>
+        <g class="ta-bend"><circle cx="109" cy="10" r="7.5"/><text x="109" y="13.7">2</text></g>
+      </svg>
+      <p class="title-lead">同じ 牌を 2つ、<br class="sp-br">線で つなげて 消そう！</p>
+      <button class="start-button" type="button" id="btnStart">
+        <span>はじめる <b>▶</b></span><small>線が 曲がって いいのは 2回まで</small>
+      </button>
+    </section>
+
+    <!-- ── 遊ぶ 画面 ────────────────────────────────
+         ★ 牌 136枚・線・「大きく 見せる 牌」は game.js が 作る。★寸法は TUNE と layout() の 1か所から だけ。 -->
+    <section class="play-screen hidden" id="playScreen" aria-label="四川省の 盤">
+      <div class="board" id="board"></div>
+    </section>
+  </div>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方
+       ⚠️ ハッピーは 全ゲーム・全ページに 必ず 出す（設計図 §9.5）。★しっぽ・まばたき つき（★まとめサイトの ハッピーが 正）。
+       ★ 遊んで いる 最中は ほとんど しゃべらない（★考えて いる 人の じゃまを しない ―― ピラミッドと 同じ）。 -->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap" id="happyWrap">
+      <svg class="happy-cat" id="happyCat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房の マスコット、ねこの ハッピー">
+        <g class="cat-tail">
+          <path d="M108 132 C142 132 140 96 120 96 C110 96 106 106 112 112"
+                fill="none" stroke="#F09A44" stroke-width="13" stroke-linecap="round"/>
+        </g>
+        <path d="M42 158 C36 122 52 104 75 104 C98 104 114 122 108 158 Z" fill="#FBAE55"/>
+        <ellipse cx="75" cy="140" rx="21" ry="18" fill="#FFE9CE"/>
+        <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+        <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+        <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+        <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+        <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+        <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+          <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+        </g>
+        <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+        <g class="cat-eyes">
+          <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+          <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+          <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+          <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+        </g>
+        <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+              stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+          <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+          <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+        </g>
+      </svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">同じ 牌を 2つ、線で つなげて 消そう！</p>
+    <button class="howto" type="button" id="btnHowto">？<span> 遊び方</span></button>
+  </div>
+
+</main>
+
+<!-- 牌が 降る 演出（★勝った ときだけ・タップで 飛ばせる・止まる）-->
+<canvas class="fall-canvas hidden" id="fallCanvas" aria-hidden="true"></canvas>
+
+<!-- ── 勝ち／止まった ときの 箱 ──────────────────
+     ⚠️ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（game.js）。
+     ★★ 止まった ときは「もどす」が 一番 大きい（★ピラミッドと 同じ・★トライの 見立て）★★
+        配りは 必ず クリアできる ので、正しい 次の 一手は「配り直す」では なく「もどす」。
+     ★ 家へは「◀ ゲームを選ぶ」（★追記⑩ ③ ――「やめる」の 字は 使わない）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="result-title" id="resultTitle">ぜんぶ 消えた！</p>
+    <p class="result-say" id="resultSay"></p>
+    <div class="result-time hidden" id="resultTime">
+      <p>クリアの 時間 <b id="timeNow">0秒</b></p>
+      <p class="best" id="timeBestRow">いちばん 速い 記録 <b id="timeBest">0秒</b></p>
+    </div>
+    <div class="result-buttons">
+      <button class="dialog-ok" type="button" id="btnMain">もどす <b>▶</b></button>
+      <button class="dialog-ok alt hidden" type="button" id="btnSub">新しく 配る</button>
+      <a class="dialog-ok alt" href="../" id="btnQuit">◀ ゲームを選ぶ</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（★× は position:sticky ―― ★下まで 読んでも 消えない・T267 の 型）──────────
+     ★ 決まりは 3行。★どの 牌が 消せるか・どこを 見れば よいかは ★1文字も 書かない（★追記②）。 -->
+<dialog id="helpDialog" aria-labelledby="helpTitle">
+  <button class="close-dialog" data-close="helpDialog" type="button" aria-label="とじる">×</button>
+  <h2 id="helpTitle">🐾 遊び方</h2>
+  <p class="dialog-lead">同じ 牌を 2つ、線で つなげて 消そう！</p>
+  <ol class="help-list">
+    <li><b>同じ 牌</b>を 2つ おす。線で つながれば 2つとも 消える。</li>
+    <li>線が 曲がって いいのは <b>2回まで</b>（まっすぐの 線 3本まで）。</li>
+    <li>線は 牌の 上を 通れない。<b>まわりの 外がわ</b>は 通れる。</li>
+  </ol>
+  <!-- ★★ T321（🎨アト）「曲がり 2回」の 図 ★★
+       ★ 線は ★ゲームの 本物の 決まり（CORE.canTake）が 見つけた 道を そのまま 描いた（★archive T321_計測どうぐ_アト/t321_06_zu.cjs）。
+       ★ × の 図は「★CORE が つながらないと 言う」＋「★3回 曲がる 道は 空いた マスだけを 通る」を 数えて ある。
+       ★ 牌の 絵は アトの 部品（#mj-…）を そのまま 使う（★game.js の build() が 最初に 置く）。★これは 遊び方の 図 ―― 遊ぶ 画面では 何も 光らせない（追記②）。 -->
+  <div class="fig-bend" role="img" aria-label="線の 曲がりかたの 図。まっすぐ、曲がり 1回、曲がり 2回は つながる。曲がり 3回は つながらない。">
+      <figure class="fz">
+        <svg class="fz-svg" viewBox="0 0 120 102.5" aria-hidden="true" focusable="false"><rect class="fz-bg" x="1" y="1" width="118" height="100.5" rx="8"/><use href="#mj-1z" x="10" y="10" width="20" height="27.5"/><use href="#mj-3p" x="30" y="10" width="20" height="27.5"/><use href="#mj-5s" x="50" y="10" width="20" height="27.5"/><use href="#mj-2m" x="70" y="10" width="20" height="27.5"/><use href="#mj-9p" x="90" y="10" width="20" height="27.5"/><use href="#mj-7z" x="10" y="37.5" width="20" height="27.5"/><use href="#mj-7z" x="90" y="37.5" width="20" height="27.5"/><use href="#mj-4s" x="10" y="65" width="20" height="27.5"/><use href="#mj-6m" x="30" y="65" width="20" height="27.5"/><use href="#mj-1s" x="50" y="65" width="20" height="27.5"/><use href="#mj-8p" x="70" y="65" width="20" height="27.5"/><use href="#mj-2z" x="90" y="65" width="20" height="27.5"/><polyline class="fz-under" points="31,51.25 89,51.25"/><polyline class="fz-line" points="31,51.25 89,51.25"/></svg>
+        <figcaption><b>まっすぐ</b> <span class="fz-mark">○</span></figcaption>
+      </figure>
+      <figure class="fz">
+        <svg class="fz-svg" viewBox="0 0 120 102.5" aria-hidden="true" focusable="false"><rect class="fz-bg" x="1" y="1" width="118" height="100.5" rx="8"/><use href="#mj-7z" x="10" y="10" width="20" height="27.5"/><use href="#mj-1z" x="70" y="10" width="20" height="27.5"/><use href="#mj-3p" x="90" y="10" width="20" height="27.5"/><use href="#mj-5s" x="10" y="37.5" width="20" height="27.5"/><use href="#mj-2m" x="30" y="37.5" width="20" height="27.5"/><use href="#mj-9p" x="70" y="37.5" width="20" height="27.5"/><use href="#mj-4s" x="90" y="37.5" width="20" height="27.5"/><use href="#mj-6m" x="10" y="65" width="20" height="27.5"/><use href="#mj-1s" x="30" y="65" width="20" height="27.5"/><use href="#mj-7z" x="50" y="65" width="20" height="27.5"/><use href="#mj-8p" x="70" y="65" width="20" height="27.5"/><use href="#mj-2z" x="90" y="65" width="20" height="27.5"/><polyline class="fz-under" points="31,23.75 60,23.75 60,64"/><polyline class="fz-line" points="31,23.75 60,23.75 60,64"/><g class="fz-bend"><circle cx="60" cy="23.75" r="6.2"/><text x="60" y="26.85">1</text></g></svg>
+        <figcaption><b>曲がり 1回</b> <span class="fz-mark">○</span></figcaption>
+      </figure>
+      <figure class="fz">
+        <svg class="fz-svg" viewBox="0 0 120 102.5" aria-hidden="true" focusable="false"><rect class="fz-bg" x="1" y="1" width="118" height="100.5" rx="8"/><use href="#mj-7z" x="10" y="10" width="20" height="27.5"/><use href="#mj-1z" x="30" y="10" width="20" height="27.5"/><use href="#mj-3p" x="50" y="10" width="20" height="27.5"/><use href="#mj-5s" x="70" y="10" width="20" height="27.5"/><use href="#mj-7z" x="90" y="10" width="20" height="27.5"/><use href="#mj-2m" x="10" y="37.5" width="20" height="27.5"/><use href="#mj-9p" x="30" y="37.5" width="20" height="27.5"/><use href="#mj-4s" x="50" y="37.5" width="20" height="27.5"/><use href="#mj-6m" x="70" y="37.5" width="20" height="27.5"/><use href="#mj-1s" x="90" y="37.5" width="20" height="27.5"/><use href="#mj-8p" x="10" y="65" width="20" height="27.5"/><use href="#mj-2z" x="30" y="65" width="20" height="27.5"/><use href="#mj-7m" x="50" y="65" width="20" height="27.5"/><use href="#mj-3s" x="70" y="65" width="20" height="27.5"/><use href="#mj-5p" x="90" y="65" width="20" height="27.5"/><polyline class="fz-under" points="20,9 20,5 100,5 100,9"/><polyline class="fz-line" points="20,9 20,5 100,5 100,9"/><g class="fz-bend"><circle cx="20" cy="5" r="6.2"/><text x="20" y="8.1">1</text></g><g class="fz-bend"><circle cx="100" cy="5" r="6.2"/><text x="100" y="8.1">2</text></g></svg>
+        <figcaption><b>曲がり 2回</b> <span class="fz-mark">○</span><small>外を 回っても いい</small></figcaption>
+      </figure>
+      <figure class="fz is-no">
+        <svg class="fz-svg" viewBox="0 0 120 130" aria-hidden="true" focusable="false"><rect class="fz-bg" x="1" y="1" width="118" height="128" rx="8"/><use href="#mj-1z" x="10" y="10" width="20" height="27.5"/><use href="#mj-7z" x="30" y="10" width="20" height="27.5"/><use href="#mj-3p" x="70" y="10" width="20" height="27.5"/><use href="#mj-5s" x="90" y="10" width="20" height="27.5"/><use href="#mj-2m" x="10" y="37.5" width="20" height="27.5"/><use href="#mj-9p" x="30" y="37.5" width="20" height="27.5"/><use href="#mj-4s" x="70" y="37.5" width="20" height="27.5"/><use href="#mj-6m" x="90" y="37.5" width="20" height="27.5"/><use href="#mj-1s" x="10" y="65" width="20" height="27.5"/><use href="#mj-8p" x="30" y="65" width="20" height="27.5"/><use href="#mj-2z" x="90" y="65" width="20" height="27.5"/><use href="#mj-7m" x="10" y="92.5" width="20" height="27.5"/><use href="#mj-3s" x="30" y="92.5" width="20" height="27.5"/><use href="#mj-5p" x="50" y="92.5" width="20" height="27.5"/><use href="#mj-7z" x="70" y="92.5" width="20" height="27.5"/><use href="#mj-9m" x="90" y="92.5" width="20" height="27.5"/><polyline class="fz-under" points="51,23.75 60,23.75 60,78.75 80,78.75 80,91.5"/><polyline class="fz-line is-no" points="51,23.75 60,23.75 60,78.75 80,78.75 80,91.5"/><g class="fz-bend"><circle cx="60" cy="23.75" r="6.2"/><text x="60" y="26.85">1</text></g><g class="fz-bend"><circle cx="60" cy="78.75" r="6.2"/><text x="60" y="81.85">2</text></g><g class="fz-bend is-over"><circle cx="80" cy="78.75" r="6.2"/><text x="80" y="81.85">3</text></g></svg>
+        <figcaption><b>曲がり 3回</b> <span class="fz-mark">×</span></figcaption>
+      </figure>
+  </div>
+  <p class="help-note">線は 自分で 引かなくて いい。つながれば 出てくる。<br>
+    おした 牌には <b>青い わく</b>。もう一度 おすと 外れる。<br>
+    <b>もどすは 何回でも</b> おせる。<br>
+    ぜんぶ 消したら クリア。この 配りは <b>必ず クリアできる</b>。<br>
+    <span class="help-other">「二角取り」とも 呼ばれる 遊び。</span></p>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<!-- ★ 牌の 絵は ★アトの 部品（★共有の 置き場・★17歩でも 使う）→ ★ゲーム本体 の 順 -->
+<script src="../mahjong-tiles.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

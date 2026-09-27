@@ -4,5 +4,5 @@
 User-agent: *
 Allow: /
 
-# ★ページの 一覧は ここに あります（★22ページ）
+# ★ページの 一覧は ここに あります（★23ページ）
 Sitemap: https://bragekobo.com/sitemap.xml

@@ -1,0 +1,434 @@
+/* ============================================================
+   四川省 ― 見た目（T320・💻コーダ）
+   ------------------------------------------------------------
+   ・色・かたち・丸ゴシックは 20本と そろえて ある（設計図 §9.5）。★仕上げは 🎨アト（★部品ごとに 見出し）。
+   ・牌の 絵は ★アトの 部品（../mahjong-tiles.js）。★絵は 1本も 変えて いない。★影は CSS の box-shadow（.mj）。
+   ・★★ 光る ものは 1種類だけ ―― ★おした 牌の 青わく（§5.5 上限・追記②）。
+     ★消せる 組・同じ 牌は ★1枚も 光らせない。★:hover でも 光らせない（★verify ④ が 数える）。
+
+   ★★ 寸法は CSS では 決めない ★★
+     ・牌の 大きさ・盤の 向き（よこ 17×8 ／ たて 8×17）・ハッピーの 置き場（下 ／ 右）は
+       ★game.js の layout() が ★まん中の 箱（.stage）の 実寸から 数えて 決める。
+     ・★だから この ファイルには ★画面の たて・よこで 分ける 線（@media の height）が 1本も ない
+       （★追記⑥ 決まり2 ―― ★線を 引かなければ ★またぐ 心配も 無い。★アト T284 の「そろえる 必要を なくす」）。
+     ・はば だけの 線（★字を 小さく する）は 2本：520px・360px（★ピラミッドと 同じ 数）。
+   ============================================================ */
+
+:root {
+  --ink:#463c52;
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+  --white:     #ffffff;
+  --cream:     #fff9ea;
+  --gold:      #F1A426;
+  --gold-soft: #FFE690;
+  --mint:      #6FC98C;
+  --mint-soft: #DCF6E4;
+  --pick-blue: #2E8BE0;
+
+  --font-main:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","M PLUS Rounded 1c","Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;
+
+  /* ★ 牌と マスの 大きさは game.js が 入れる（★ここは 最初の 1こまの 仮の 値）*/
+  --tw: 28px;    /* 牌の はば */
+  --th: 38.5px;  /* 牌の たけ（★はば × 88/64 ―― 絵の ひりつ） */
+  --cw: 40px;    /* マス（指の 的）の はば */
+  --chh: 40px;   /* マス（指の 的）の たけ */
+  --pick: 3px;   /* 青わくの 太さ */
+}
+
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  margin:0; min-width:320px; color:var(--ink); font-family:var(--font-main);
+  background:linear-gradient(180deg,#bcebf0 0 190px,#fff7e8 190px);
+  overflow:hidden;                     /* ★ スクロールは 出さない（★盤は まん中の 箱に 必ず 入る 大きさで 描く）*/
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+  -webkit-touch-callout:none;
+}
+button { font-family:inherit; cursor:pointer; }
+.hidden { display:none !important; }
+.sprite-defs { position:absolute; width:0; height:0; overflow:hidden; }
+
+/* ============================================================
+   ★ 器（格子）。★たて 1画面ぴったり。
+   ★ ふつう：上から 帯／まん中／ハッピー（★.app-shell）
+   ★ 横長で たけが 低い とき：帯の 下を 左右に 分けて ★ハッピーを 右へ（★.app-shell.is-side）
+     ★ どちらに するかは ★JS が 両方 測って ★牌が 大きく なる ほう（★CSS の 線では 決めない）。
+   ⚠️★ ここにも 親にも overflow を 書かない こと（★七並べ T285 の わな ―― sticky が 効かなく なる）。
+   ============================================================ */
+.app-shell {
+  height:100vh; height:100svh;
+  max-width:1100px; margin:0 auto; padding:6px 8px;
+  display:grid; gap:6px;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr) auto;
+  grid-template-areas:"top" "stage" "happy";
+}
+.app-shell.is-side {
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:auto minmax(0,1fr);
+  grid-template-areas:"top top" "stage happy";
+}
+.topbar { grid-area:top; }
+.stage  { grid-area:stage; }
+.log-row { grid-area:happy; }
+
+/* ── 上の帯（もどる ／ 名前 ／ 遊んでいる間の ボタン 2つ）──────── */
+.topbar {
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:6px; min-height:44px;
+}
+.back {
+  flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 12px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
+  color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
+}
+.back:hover { border-color:var(--pink); }
+.brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
+.brand-cat { width:30px; height:23px; flex:0 0 auto; }
+.brand span { font-weight:900; font-size:17px; color:#3f5a70; white-space:nowrap; }
+
+.tools { flex:0 0 auto; display:flex; gap:6px; }
+.tool {
+  min-height:44px; padding:0 13px; border-radius:999px; white-space:nowrap;
+  background:var(--white); border:3px solid var(--gold-soft);
+  color:#7a5205; font-size:13px; font-weight:900;
+}
+.tool:hover { border-color:var(--gold); }
+.tool:active { transform:translateY(2px); }
+.tool[disabled] { opacity:.4; cursor:default; transform:none; }
+
+@media (max-width:520px) {
+  .back span { display:none; }
+  .back { padding:0 11px; }
+  .brand span { font-size:15px; }
+  .tool { padding:0 10px; font-size:12.5px; border-width:2px; }
+}
+@media (max-width:360px) {
+  .brand-cat { display:none; }
+  .brand span { font-size:14px; }
+  .tool { padding:0 8px; font-size:12px; }
+}
+
+/* ── まん中の 箱 ─────────────────────────────── */
+.stage { position:relative; min-height:0; min-width:0; display:flex; }
+
+/* ── はじめの 画面 ──────────────────────────────
+   ★ 決める ことは 1つも 無い。プルダウンは 1つも 置かない（★ピラミッドと 同じ）。 */
+.title-screen {
+  flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  padding:12px 14px; background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  text-align:center; box-shadow:0 7px 0 rgba(196,58,115,.10); min-height:0;
+}
+.title-lead { margin:0; font-size:clamp(17px,4.4vw,23px); font-weight:900; color:#5a4a63; line-height:1.55; }
+.sp-br { display:none; }
+@media (max-width:420px) { .sp-br { display:inline; } }
+.start-button {
+  display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+  min-width:240px; min-height:44px; padding:13px 24px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 6px 0 var(--pink-dark);
+  font-size:20px; font-weight:900;
+}
+.start-button small { font-size:12px; font-weight:700; opacity:.92; }
+.start-button:active { transform:translateY(3px); box-shadow:0 3px 0 var(--pink-dark); }
+
+/* ── 盤 ────────────────────────────────────
+   ★ .board の わく＋うち余白は ★JS が 測って 引く（★ここで 変えても JS は ついて くる）。 */
+.play-screen { flex:1 1 auto; min-height:0; min-width:0; display:flex; align-items:center; justify-content:center; }
+/* ★ T321（アト）：★盤は 牌に ぴったりの 大きさ（--bw／--bh は game.js の layout() が 入れる）。
+   ★ すき間を 0 に した ぶん、★緑の 盤も 牌を ぎゅっと 包む 大きさに 縮める。 */
+.board {
+  flex:0 0 auto; width:var(--bw,100%); height:var(--bh,100%); max-width:100%; max-height:100%;
+  min-height:0; min-width:0; display:flex;
+  padding:2px; border-radius:16px;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.06) 0 2px,transparent 2px 8px), #9ED8B0;
+  border:3px solid #5FAE7B; box-shadow:0 5px 0 rgba(86,53,38,.14);
+}
+.board-in { position:relative; flex:1 1 auto; min-width:0; min-height:0;
+  /* ★★ T323 の 直し（アト）：★牌の 重なり順（--z 1〜136・青わく 1000・線 2000）を ★盤の 中に とじこめる ★★
+     ★ これが 無いと ★箱の 幕（80）・大きく 見せる 牌（90）・ハッピー（75）と 同じ 土俵で くらべられ、
+       ★盤の 下の 方の 牌が ★詰みの 箱や 大きく 見せる 牌の 上に 描かれて いた（★トライ T323・13画面 ぜんぶ）。
+     ★ isolation で ★盤 まるごと 1枚の 板に なる（★外から 見た 高さは 0）。★verify ⑰ が 数える。 */
+  isolation:isolate; }
+
+/* ★★ 盤の 上では、ページを 1mmも 動かさない ★★
+   ★ touch-action:none が 無いと、指が 少し ぶれた 瞬間に ブラウザが「すべらせる 指」と 決めて ★おした のに 反応しない。 */
+.board, .board-in { touch-action:none; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+
+/* ★ 牌 1枚 ＝ マス（.tile・指の 的）の まん中に 牌の 絵（.tile-in）。
+   ★ 指の 的は ★マスまるごと（★牌と 牌の すき間も ふくむ）。★当たりは JS が ★指の 座標から マスを 数える
+     （★e.target は 使わない ―― ★すき間を 押しても となりの 牌に 行かない・★すべらせて 選び直せる）。 */
+.tile {
+  position:absolute; left:0; top:0; width:var(--cw); height:var(--chh);
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+  z-index:var(--z,1);     /* ★T321：右と 下の 牌ほど 上（★game.js の placeTiles が --z を 入れる）*/
+}
+.tile-in {
+  position:relative; width:var(--tw); height:var(--th);
+  border-radius:17.2% / 12.5%;
+  transform-origin:50% 55%;
+  transition:transform .2s cubic-bezier(.4,0,.6,1), opacity .2s ease-out;
+}
+/* ★ アトの 牌（.mj）の 影 ―― ★SVG の filter は 使わない（136枚で 重い・アト T318）*/
+.tile-in .mj {
+  display:block; width:100%; height:100%;
+  border-radius:17.2% / 12.5%;
+  box-shadow:0 1.5px 2.5px rgba(150,110,70,.30);
+}
+.board.no-anim .tile-in { transition:none; }
+
+/* ★★ T321（アト）牌の 厚み（★右と 下に 見える 側面）★★
+   ★ 牌の 絵（mahjong-tiles.js）は 1本も 変えない。★牌の うしろに 同じ 形の 板を 1枚 置いて、右下へ --side だけ ずらす。
+   ★ 色は 牌の 体と そろえる：★上 ほとんどは 表の アイボリーの かげ、★いちばん 下（★絵の 下 8/88 と 同じ 高さ）は 背中の オレンジの かげ。
+   ★ となりに 牌が ある ところは ★右・下の 牌が 上に 来て 厚みを かくす（--z）→ ★盤の 右と 下・★空いた マスの ふち にだけ 段々に 見える。
+   ★ 厚み なし（TUNE.SIDE＝0）の ときは .has-side が 付かない ので 出ない。
+   ★★ 社長の お決め（2026-09-27）は ★B「厚み なし」。★いまは この 決まりは 使って いない（★game.js の SIDE を 0.10 に 戻すと 出る）。 */
+.board.has-side .tile-in::before {
+  content:''; position:absolute; left:0; top:0; width:100%; height:100%; z-index:-1;
+  border-radius:17.2% / 12.5%;
+  transform:translate(var(--side), var(--side));
+  background:linear-gradient(180deg, #E2D3B6 0 88%, #D9803A 88% 100%);
+  box-shadow:0 1px 2.5px rgba(120,80,40,.28);
+}
+.board.has-side .tile-in .mj { box-shadow:none; }
+
+/* ★★ 消えた 牌（★小さく なって 消える。★もどすと そのまま ふくらんで 戻る）★★ */
+.tile.is-out .tile-in { transform:scale(.18); opacity:0; }
+
+/* ★★ おした 牌 ＝ 青わく ★★
+   ★ これが この 画面で ★ただ1つ の 強調（設計図 §5.5）。★ほかに 光る もの・色が 変わる ものを 足さない こと。
+   ★ 青わくが 言うのは「★えらんだ」だけ。★「これと 消せる」は 言わない（★追記②）。
+   ★ 太さは 牌の 大きさに 合わせて --pick（game.js）。★外の 白い ふちで どの 牌の 上でも 沈まない。 */
+.tile.is-pick .tile-in {
+  transform:translateY(-1px);
+  box-shadow:
+    0 0 0 var(--pick) var(--pick-blue),
+    0 0 0 calc(var(--pick) + 2px) rgba(255,255,255,.95),
+    0 3px 8px rgba(46,139,224,.35);
+  z-index:2;
+}
+.tile.is-pick { z-index:3; }   /* ★T323（アト）：厚み なし（B）は T320 と 同じ 3 */
+.board.has-side .tile.is-pick { z-index:1000; }   /* ★厚み ありの ときだけ：--z（1〜136）より 上 */
+
+/* ★★「それは つながらない」の ゆれ（★同じ 牌を おしたのに 線が 引けない とき）★★
+   ★ ゆれは 光でも 色でも ない ので、★強調は 青わく 1種類の まま。★どこなら 消せるかは 1つも 教えない。 */
+@keyframes shakeNo {
+  0%,100% { transform:translateX(0); }
+  20% { transform:translateX(-4px) rotate(-3deg); }
+  45% { transform:translateX(3px) rotate(3deg); }
+  70% { transform:translateX(-2px); }
+}
+.tile.is-no .tile-in { animation:shakeNo .16s ease-in-out; }
+
+/* ★★ 線（★機械が 引いて 見せる ―― KShisen と 同じ。★人は 2枚 選ぶ だけ）★★
+   ★ 盤の 外（まわりの 道）を 通る 線も ここに 描く ので ★overflow は visible。 */
+.path-layer {
+  position:absolute; left:0; top:0; width:100%; height:100%;
+  overflow:visible; pointer-events:none; z-index:5;   /* ★T323（アト）：厚み なし（B）は T320 と 同じ 5（青わく 3 より 上）*/
+}
+.board.has-side .path-layer { z-index:2000; }   /* ★厚み ありの ときだけ：--z・青わく 1000 より 上 */
+.path-layer polyline { fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.path-layer .pl-under { stroke:#fff; }
+.path-layer .pl-top   { stroke:#FF6FA3; }
+.path-layer.is-fade { transition:opacity .16s ease-out; opacity:0; }
+
+/* ★★ おしている 間の「大きく 見せる 牌」（★アトの 案・T318）★★
+   ★ 牌が 小さい 画面で、★指で かくれた 牌を ★指の 上に 大きく 出す。★はなすと 消える。
+   ★ 光でも 色でも ない（★見せる だけ）。★指の 的は 1pxも 変わらない。 */
+.lens {
+  position:fixed; left:0; top:0; z-index:90; pointer-events:none;
+  padding:5px; border-radius:14px; background:#fff;
+  border:3px solid var(--pick-blue);
+  box-shadow:0 6px 14px rgba(46,90,140,.28);
+}
+.lens .mj { display:block; border-radius:17.2% / 12.5%; box-shadow:0 1.5px 2.5px rgba(150,110,70,.3); }
+
+/* ── ハッピー ＋ ふきだし ＋ 遊び方 ────────────────
+   ★ ふつう：画面の 一番下・1行。★右に 置く とき（.is-side）：たてに 積む。 */
+.log-row {
+  position:relative; z-index:75;      /* ★ 牌が 降っても ハッピーは 見えたまま */
+  display:flex; align-items:center; gap:9px; min-width:0;
+  padding:5px 10px; background:var(--white); border:3px solid var(--pink-soft); border-radius:18px;
+}
+.happy-wrap { flex:0 0 auto; text-align:center; }
+.happy-cat { width:44px; height:47px; display:block; overflow:visible; }
+.happy-name { margin:0; font-size:10px; font-weight:900; color:#c9a24a; line-height:1.2; }
+.cat-eyes { transform-box:fill-box; transform-origin:center; animation:blink 5s infinite; }
+@keyframes blink { 0%, 92%, 100% { transform:scaleY(1); } 95% { transform:scaleY(.1); } }
+.cat-tail { transform-box:fill-box; transform-origin:10% 90%; animation:wag 2.4s ease-in-out infinite; }
+@keyframes wag { 0%, 100% { transform:rotate(0deg); } 50% { transform:rotate(-9deg); } }
+.happy-bubble {
+  flex:1 1 auto; margin:0; min-width:0;
+  font-size:14.5px; font-weight:900; color:#5a4a63; line-height:1.45;
+  word-break:keep-all; overflow-wrap:anywhere;
+}
+.howto {
+  position:relative; flex:0 0 auto; min-height:44px; min-width:44px; padding:0 12px; border-radius:999px;
+  background:var(--white); border:3px solid var(--pink-soft);
+  color:var(--pink-dark); font-size:12.5px; font-weight:900; white-space:nowrap;
+}
+.howto:hover { border-color:var(--pink); }
+@media (max-width:360px) {
+  .happy-cat { width:36px; height:38px; }
+  .happy-bubble { font-size:12.5px; }
+  .howto { padding:0 9px; font-size:11.5px; border-width:2px; }
+  .log-row { padding:4px 7px; gap:6px; }
+}
+/* ★ 右に 置く とき（★横長で たけが 低い 画面 ―― ★JS が 決める）*/
+.is-side .log-row {
+  flex-direction:column; justify-content:center; width:112px; padding:6px 4px; gap:6px; text-align:center;   /* ★T323（アト）：よこの うち余白 6 → 4（★「クリアできるよ！」8字を 1行に）*/
+}
+/* ★T323（アト）：★言葉の 途中で 折らない（★「ちゃん／と」を 直す）。★分かち書きの すき間・「、」で だけ 折る。★入りきらない 長い 言葉 だけ しかたなく 折る（anywhere）。★字は 12.5 → 12px */
+.is-side .happy-bubble { flex:0 1 auto; font-size:12px; line-height:1.4; word-break:keep-all; line-break:strict; overflow-wrap:anywhere; }
+.is-side .howto span { display:none; }
+
+/* ハッピーが とびはねる（勝った ときだけ）*/
+@keyframes happyJump {
+  0%,100% { transform:translateY(0) rotate(0); }
+  30% { transform:translateY(-9px) rotate(-7deg); }
+  60% { transform:translateY(0) rotate(5deg); }
+}
+.happy-cat.is-jump { animation:happyJump .5s ease-in-out 6; }
+
+/* ── 牌が 降る 演出（★勝った ときだけ）──── */
+.fall-canvas { position:fixed; inset:0; z-index:70; touch-action:manipulation; }
+
+/* ── 勝ち／止まった ときの 箱 ───────────────────── */
+.result-wrap {
+  position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+  padding:12px; background:rgba(70,60,82,.42);
+}
+.result-box {
+  width:min(360px,100%); padding:18px 18px 18px; text-align:center;
+  background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  box-shadow:0 10px 0 rgba(196,58,115,.16); max-height:100%; overflow-y:auto;
+}
+@keyframes resultIn { 0% { transform:scale(.8); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+.result-wrap:not(.hidden) .result-box { animation:resultIn .22s ease-out; }
+.result-title { margin:0 0 8px; font-size:25px; font-weight:900; color:var(--pink-dark); }
+.result-title.is-stop { color:#7f8fa0; }
+.result-say { margin:0 0 10px; font-size:15.5px; font-weight:900; color:#5a4a63; line-height:1.55; }
+/* ★ 記録（★1人で 記録を のばす ―― ルル T304 の「まだ 0本」の 穴）*/
+.result-time { margin:0 0 12px; padding:8px 10px; border-radius:16px; background:var(--cream); border:3px solid var(--gold-soft); }
+.result-time p { margin:0; font-size:14px; font-weight:900; color:#6b5522; line-height:1.6; }
+.result-time b { font-size:17px; color:var(--pink-dark); }
+.result-time .best { font-size:12.5px; }
+.result-time .best b { font-size:14px; }
+.result-buttons { display:flex; flex-direction:column; gap:8px; }
+
+/* ★★ 止まった 箱は「もどす」が 主役（★ピラミッドと 同じ）★★
+   ★ ボタンの 大きさで それを 言う ―― ★画面の 文字は 足さない。 */
+.dialog-ok {
+  display:flex; align-items:center; justify-content:center; width:100%; min-height:44px;
+  padding:11px 16px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 5px 0 var(--pink-dark);
+  font-family:inherit; font-size:19px; font-weight:900; text-decoration:none; text-align:center;
+}
+.dialog-ok b { margin-left:.3em; }
+.dialog-ok:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
+.dialog-ok.alt {
+  background:var(--white); color:var(--pink-dark);
+  border:3px solid var(--pink-soft); box-shadow:0 4px 0 rgba(196,58,115,.10);
+  font-size:14px; padding:6px 14px;
+}
+/* ★★ 箱が 画面の たけに 入らない ときだけ（★JS の fitResult が 出して みて 付ける ―― ★たての 線は 引かない）★★ */
+.result-box.is-tight { padding:10px 12px 12px; }
+.result-box.is-tight .result-title { margin:0 0 4px; font-size:20px; }
+.result-box.is-tight .result-say { margin:0 0 6px; font-size:13.5px; line-height:1.45; }
+.result-box.is-tight .result-time { margin:0 0 8px; padding:3px 8px; }
+.result-box.is-tight .result-time p { line-height:1.45; }
+.result-box.is-tight .result-buttons { flex-direction:row; gap:6px; }
+.result-box.is-tight .result-buttons .dialog-ok { flex:1 1 0; min-width:0; padding:6px 8px; font-size:15px; white-space:nowrap; }
+.result-box.is-tight .result-buttons .dialog-ok.alt { font-size:13px; }
+.result-box.is-tighter .result-say { display:none; }
+
+/* ★ 箱が 出た 瞬間、指が まだ 動いている あいだは おせなく する（T62の 事故よけ）*/
+.result-buttons { transition:opacity .16s ease-out; }
+.result-box.is-locked .result-buttons { pointer-events:none; opacity:.4; }
+.result-box.is-locked .dialog-ok { box-shadow:none; transform:translateY(3px); }
+
+/* ── 遊び方の 中身 ────────────────────────────── */
+dialog {
+  width:min(420px,94vw); max-height:92vh; max-height:92svh; overflow:auto;
+  padding:16px 18px 18px; border:none; border-radius:24px;
+  background:var(--white); color:var(--ink); font-family:var(--font-main);
+  box-shadow:0 12px 0 rgba(196,58,115,.16);
+}
+dialog::backdrop { background:rgba(70,60,82,.42); }
+/* ★ × は sticky（★下まで 読んでも 消えない ―― T267 の 型・ラビット・ナボコフと 同じ）*/
+.close-dialog {
+  position:sticky; top:0; z-index:2;
+  display:block; width:44px; height:44px; margin:0 0 -44px auto;
+  transform:translate(8px,-8px);
+  border:0; border-radius:50%;
+  background:#f1f5f4; color:#7d8c99; font-size:18px; font-weight:900; cursor:pointer;
+}
+dialog h2 { margin:0 0 6px; font-size:21px; font-weight:900; color:var(--pink-dark); text-align:center; }
+.dialog-lead { margin:0 0 12px; font-size:15px; font-weight:900; text-align:center; color:#5a4a63; }
+.help-list { margin:0 0 10px; padding-left:1.3em; }
+.help-list li { margin-bottom:6px; font-size:14.5px; font-weight:700; line-height:1.6; }
+.help-list b { color:var(--pink-dark); }
+.help-note {
+  margin:0 0 14px; padding:9px 12px; border-radius:16px;
+  background:var(--cream); border:3px solid var(--gold-soft);
+  font-size:13px; font-weight:700; line-height:1.7; color:#6b5522;
+}
+.help-note b { color:var(--pink-dark); }
+.help-other { font-size:12px; color:#8a7443; }
+/* ★T323（アト）：遊び方・はじめの 画面の 字を ★言葉の 途中で 折らない（★「2つと／も」「出てく／る」「外れ／る」を 直す）。★分かち書きの すき間で 折る */
+.help-list li, .help-note, .dialog-lead, .title-lead, .fz figcaption { word-break:keep-all; overflow-wrap:anywhere; }
+
+/* ── ★ T321（アト）「曲がり 2回」の 図 ─────────────────
+   ★ 2×2 に 並べる（★320 の はばでも 1つ 125px ほど）。★線の 色は 遊ぶ 画面と 同じ（ピンク＋白の ふち）。
+   ★ × の 図だけ 線を 灰色の 点線に、★3つめの 曲がりを 赤い 丸に。 */
+.fig-bend {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px 10px; align-items:start;
+  margin:0 0 12px; padding:10px 10px 8px; border-radius:16px;
+  background:var(--mint-soft); border:3px solid #BFE9CC;
+}
+.fz { margin:0; text-align:center; }
+.fz-svg { display:block; width:100%; height:auto; }
+.fz-bg { fill:#9ED8B0; stroke:#5FAE7B; stroke-width:2; }
+.fz-under { fill:none; stroke:#fff; stroke-width:6; stroke-linecap:round; stroke-linejoin:round; }
+.fz-line  { fill:none; stroke:#FF6FA3; stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+.fz-line.is-no { stroke:#8C99A6; stroke-dasharray:4 3.5; }
+.fz-bend circle { fill:#FF6FA3; stroke:#fff; stroke-width:1.6; }
+.fz-bend text { fill:#fff; font:900 9px/1 var(--font-main); text-anchor:middle; }
+.fz.is-no .fz-bend circle { fill:#8C99A6; }
+.fz.is-no .fz-bend.is-over circle { fill:#E0413B; }
+.fz figcaption { margin-top:4px; font-size:13px; font-weight:900; color:#3f5a70; line-height:1.35; }
+.fz figcaption b { color:inherit; }
+.fz-mark { display:inline-block; margin-left:2px; font-size:16px; color:var(--pink-deep); }
+.fz.is-no .fz-mark { color:#E0413B; }
+.fz figcaption small { display:block; font-size:11px; font-weight:700; color:#5c7a66; }
+
+/* ── ★ T321（アト）はじめの 画面の 飾り ───────────────
+   ★ 花・キラキラは まとめサイト（portal.css）と 同じ 形・色・動き。★押せない（pointer-events:none）。
+   ★ 絵（.title-art）は ★箱が 低いと 縮む（flex の 縮み）―― ★たての 線は 引かない（追記⑥ 決まり2）。 */
+.title-screen { position:relative; min-width:0; }
+.start-button { min-width:min(240px,100%); max-width:100%; }   /* ★T321：せまい 箱でも はみ出さない（★ほけん。★本命は game.js の TITLE_MIN_W）*/
+.title-art { display:block; flex:0 1 118px; min-height:0; width:auto; max-width:78%; height:118px; }
+.ta-under { fill:none; stroke:#fff; stroke-width:7; stroke-linecap:round; stroke-linejoin:round; }
+.ta-line  { fill:none; stroke:#FF6FA3; stroke-width:3.6; stroke-linecap:round; stroke-linejoin:round; }
+.ta-bend circle { fill:#FF6FA3; stroke:#fff; stroke-width:2; }
+.ta-bend text { fill:#fff; font:900 10.5px/1 var(--font-main); text-anchor:middle; }
+.t-deco { position:absolute; pointer-events:none; z-index:0; }
+.t-deco.f1 { width:26px; height:26px; top:14px; right:7%; animation:tSpin 14s linear infinite; }
+.t-deco.f2 { width:20px; height:20px; top:22%; left:6%; animation:tSpin 18s linear infinite reverse; }
+.t-deco.f3 { width:28px; height:28px; bottom:14px; left:9%; animation:tSpin 16s linear infinite; }
+@keyframes tSpin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+.t-twinkle { position:absolute; font-size:18px; pointer-events:none; animation:tTwinkle 2.6s ease-in-out infinite; }
+.t-twinkle.t1 { bottom:18%; right:8%; }
+.t-twinkle.t2 { top:12px; left:14%; animation-delay:.9s; }
+@keyframes tTwinkle { 0%,100% { transform:scale(1); opacity:.95; } 50% { transform:scale(1.3); opacity:.5; } }
+.title-lead, .start-button { position:relative; z-index:1; }
+
+/* ★ 写真を 撮る あいだだけ 動きを 止める（★T300：paused では 止まらなかった ―― none）*/
+body.measuring *, body.measuring *::before, body.measuring *::after {
+  transition:none !important; animation:none !important;
+}
