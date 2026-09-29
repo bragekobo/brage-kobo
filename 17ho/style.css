@@ -1,0 +1,570 @@
+/* ============================================================
+   17歩 ― 見た目（T330・💻コーダ → ★T332：アトの 画面案 T331 に 合わせて 作り直した）
+   ------------------------------------------------------------
+   ・色・かたち・丸ゴシックは 20本と そろえて ある（設計図 §9.5）。★板・名札・並べ方は アトの 見本（mihon.html）の 型。
+   ・牌の 絵は アトの 部品（../mahjong-tiles.js）。★絵は 1本も 変えて いない。
+   ・★ 強調は 1種類だけ：手作りと 切る ときは「選んだ 牌が 上がる＋下に ピンクの 線」、★ロンできる ときは「ロン」の ボタン。
+     ★待ち牌・通る 牌・危ない 牌は 1枚も 光らせない（追記②）。★:hover でも 光らせない（見張り ④）。
+
+   ★★ 寸法は CSS では 決めない ★★
+     ・牌の 大きさ・何列に 並べるか・たて／よこ・低い／せまい は ★game.js の layout() が 画面の 実寸から 決め、
+       ★app に data-mode／data-low／data-tight／data-roomy／data-narrow を 付ける（★CSS は その 印を 読む だけ）。
+     ・★だから この ファイルには 画面の たてで 分ける 線（@media の height）が 1本も ない（追記⑥ 決まり2）。
+     ・はば だけの 線（★字を 小さく する）は 3本：520px・374px・360px（★四川省と 同じ 数）。
+   ・★字は 11px 以上（★会社の 床。★ハッピーの 名札も ―― アトの 気づき・見張り ⑲）。
+   ============================================================ */
+
+:root {
+  --ink:#463c52;
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+  --white:     #ffffff;
+  --cream:     #fff9ea;
+  --gold:      #F1A426;
+  --gold-soft: #FFE690;
+  --mint:      #6FC98C;
+  --mint-soft: #DCF6E4;
+  --sky:       #bcebf0;
+  --felt:      #E3F5E8;
+  --felt-edge: #B9E3C6;
+  --side:      190px;
+
+  --font-main:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","M PLUS Rounded 1c","Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;
+}
+
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  margin:0; min-width:320px; color:var(--ink); font-family:var(--font-main);
+  background:linear-gradient(180deg,var(--sky) 0 190px,#fff7e8 190px);
+  overflow:hidden;
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+  -webkit-touch-callout:none;
+}
+/* ★★ 幅 320 の たてで 17巡の 間 だけ ―― 上下に 動かせる（★社長の 決め②・JS の SCROLL_W が html に 付ける）★★ */
+html.is-scroll body { overflow-x:hidden; overflow-y:auto; }
+button { font-family:inherit; cursor:pointer; }
+.hidden { display:none !important; }
+.sprite-defs { position:absolute; width:0; height:0; overflow:hidden; }
+.nw { display:inline-block; }
+
+/* ============================================================
+   ★ 器（格子）
+   ★ はじめの 画面：上から 帯／まん中／ハッピー（★.is-side：ハッピーを 右へ）
+   ★ 試合の 間（.in-scene）：★たて＝帯の 下に 場面。★よこ＝帯と ハッピーは 右の 柱へ（★JS が DOM を 移す）
+   ⚠️★ ここにも 親にも overflow を 書かない こと（★七並べ T285 の わな）。
+   ============================================================ */
+.app-shell {
+  height:100vh; height:100svh;
+  max-width:1100px; margin:0 auto; padding:6px 8px;
+  display:grid; gap:6px;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto auto minmax(0,1fr);
+  grid-template-areas:"top" "happy" "stage";   /* ★T338：ハッピーは いちばん 上（★帯の すぐ 下）*/
+}
+.app-shell.is-side {
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:auto minmax(0,1fr);
+  grid-template-areas:"top top" "stage happy";
+}
+.app-shell.in-scene { grid-template-rows:auto minmax(0,1fr); grid-template-areas:"top" "stage"; }
+.app-shell.in-scene[data-mode="yoko"] { grid-template-rows:minmax(0,1fr); grid-template-areas:"stage"; }
+.app-shell.in-scene[data-wide="1"] { max-width:var(--colw,1100px); }   /* ★T338：PC の たて並び（★はばは JS の TATE_H・colw）*/
+.app-shell.is-scroll { height:auto; min-height:100vh; min-height:100svh; }
+.app-shell > .topbar { grid-area:top; }
+.stage  { grid-area:stage; }
+.app-shell > .log-row { grid-area:happy; }
+
+/* ── 上の帯 ─────────────────────────────── */
+.topbar {
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:6px; min-height:44px;
+}
+/* ★上下に 動かせる ときは 帯の うしろに 空の 色（★下の 牌が すけない）*/
+.app-shell.is-scroll .topbar { background:var(--sky); margin:-6px -8px 0; padding:6px 8px 4px; }
+.back {
+  flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 12px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
+  color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
+}
+.back:hover { border-color:var(--pink); }
+.brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:5px; min-width:0; }
+.brand-cat { width:30px; height:23px; flex:0 0 auto; }
+.brand span { font-weight:900; font-size:18px; color:#3f5a70; white-space:nowrap; letter-spacing:.04em; }
+.brand .deco { width:18px; height:18px; flex:0 0 auto; pointer-events:none; opacity:.9; }
+.brand .deco.d2 { width:13px; height:13px; margin-top:-12px; }
+
+/* ★★ 追記⑩ の 型 ―「↻ やめる」（★うすみどり・44×44・SVG 16px・position:relative＋z-index:2）★★ */
+.quit-btn {
+  position:relative; z-index:2;
+  flex:0 0 auto;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 10px;
+  background:#B7EDC9; border:3px solid #2F7D4C; border-radius:999px;
+  color:#22633F; font-size:11.5px; font-weight:900; line-height:1;
+  white-space:nowrap;
+}
+.quit-btn .quit-icon { margin-right:4px; }
+.quit-btn svg.quit-icon { width:16px; height:16px; flex:0 0 auto; pointer-events:none; }
+.quit-btn .qi-arc { fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; }
+.quit-btn .qi-tip { fill:currentColor; stroke:none; }
+@media (max-width:374px) {
+  .quit-btn { font-size:11px; padding:0 6px; }
+  .quit-btn .quit-icon { display:none; }
+}
+@media (max-width:520px) {
+  .back span { display:none; }
+  .back { padding:0 11px; }
+  .brand span { font-size:16px; }
+}
+@media (max-width:360px) {
+  .brand span { font-size:15px; }
+}
+/* ★よこ：上の帯は 右の 柱の いちばん 上（★盤が 画面の たけ いっぱいを 使える）*/
+[data-mode="yoko"] .side .topbar { gap:4px; }
+[data-mode="yoko"] .side .back span { display:none; }
+[data-mode="yoko"] .side .back { padding:0 11px; }
+[data-mode="yoko"] .side .quit-btn { padding:0 8px; }
+[data-mode="yoko"] .side .brand span { font-size:15px; }
+[data-mode="yoko"] .side .brand .deco { display:none; }
+[data-narrow="1"] .side .brand span { display:none; }
+.brand.is-cut .deco { display:none; }                 /* ★T335：題が 入らない ときだけ（fitBrand）*/
+.brand.is-cut span { font-size:13px; letter-spacing:0; }
+.brand.is-cut2 span { display:none; }
+[data-narrow="2"] .side .brand { visibility:hidden; }
+[data-narrow="2"] .side .quit-btn .quit-icon { display:none; }
+/* ★「？ 遊び方」：よこの 場面では 帯へ（★ハッピーの ふきだしを 広く）／それ 以外は ハッピーの 行 */
+.tb-howto { display:none; }
+.app-shell.in-scene[data-mode="yoko"] .tb-howto { display:inline-flex; align-items:center; justify-content:center; padding:0; width:44px; }
+.app-shell.in-scene[data-mode="yoko"] .log-row .howto { display:none; }
+
+/* ── まん中の 箱 ─────────────────────────────── */
+.stage { position:relative; min-height:0; min-width:0; display:flex; }
+
+/* ── はじめの 画面 ──────────────────────────────
+   ★ 選ぶのは 局数 だけ（★追記①）。 */
+.title-screen {
+  position:relative; min-width:0;
+  flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  padding:12px 14px; background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  text-align:center; box-shadow:0 7px 0 rgba(196,58,115,.10); min-height:0;
+}
+.title-art { display:block; flex:0 1 84px; min-height:0; width:auto; max-width:70%; height:84px; }
+.title-lead { position:relative; z-index:1; margin:0; font-size:clamp(16px,4.2vw,22px); font-weight:900; color:#5a4a63; line-height:1.5; }
+.len-pick { position:relative; z-index:1; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.len-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  min-width:128px; min-height:52px; padding:6px 14px; border-radius:18px;
+  background:var(--white); border:3px solid var(--gold-soft); color:#7a5205;
+}
+.len-btn b { font-size:17px; font-weight:900; }
+.len-btn small { font-size:11.5px; font-weight:700; }
+.len-btn.is-on { background:var(--gold-soft); border-color:var(--gold); }
+.len-btn:active { transform:translateY(2px); }
+.start-button {
+  position:relative; z-index:1;
+  display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+  min-width:min(240px,100%); max-width:100%; min-height:44px; padding:12px 24px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 6px 0 var(--pink-dark);
+  font-size:20px; font-weight:900;
+}
+.start-button small { font-size:12px; font-weight:700; opacity:.92; }
+.start-button:active { transform:translateY(3px); box-shadow:0 3px 0 var(--pink-dark); }
+.title-links { position:relative; z-index:1; display:flex; gap:8px; }
+.sub-btn {
+  min-height:44px; min-width:44px; padding:0 16px; border-radius:999px;
+  background:var(--white); border:3px solid var(--pink-soft); color:var(--pink-dark);
+  font-size:13.5px; font-weight:900;
+}
+.sub-btn:hover { border-color:var(--pink); }
+/* ★ 箱に 入らない ときだけ（★JS の fitTitle が 出して みて 付ける ―― たての 線は 引かない）*/
+.title-screen.is-tight { gap:7px; padding:8px 10px; }
+.title-screen.is-tight .title-art, .title-screen.is-tight .t-deco, .title-screen.is-tight .t-twinkle { display:none; }
+.title-screen.is-tight .len-btn { min-height:44px; padding:3px 12px; }
+.title-screen.is-tight .start-button { padding:7px 22px; font-size:18px; }
+.title-screen.is-tighter { flex-flow:row wrap; align-content:center; column-gap:8px; row-gap:6px; }
+.title-screen.is-tighter .title-lead { flex:0 0 100%; font-size:15px; }
+.title-screen.is-tighter .len-btn { min-width:96px; flex-direction:row; gap:5px; }
+.title-screen.is-tighter .len-btn b { font-size:15px; }
+.title-screen.is-tighter .start-button { min-width:0; padding:6px 20px; }
+.title-screen.is-tighter .start-button small { display:none; }
+.t-deco { position:absolute; pointer-events:none; z-index:0; }
+.t-deco.f1 { width:26px; height:26px; top:14px; right:7%; animation:tSpin 14s linear infinite; }
+.t-deco.f2 { width:20px; height:20px; bottom:16px; left:8%; animation:tSpin 18s linear infinite reverse; }
+@keyframes tSpin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+.t-twinkle { position:absolute; font-size:18px; pointer-events:none; animation:tTwinkle 2.6s ease-in-out infinite; bottom:18%; right:8%; }
+@keyframes tTwinkle { 0%,100% { transform:scale(1); opacity:.95; } 50% { transform:scale(1.3); opacity:.5; } }
+
+/* ============================================================
+   ★ 場面（手作り .make ／ 17巡 .play）―― ★アトの 見本の 格子
+   ★ たて：場面の 格子に 部品を 名前で 置く（★.side と .wd は display:contents）
+   ★ よこ：左に 盤・右に 柱（--side）。★柱は 上から 帯 → 局の 帯 → 待ち → ハッピー
+   ============================================================ */
+.scene { flex:1 1 auto; position:relative; min-height:0; min-width:0; display:grid; gap:10px 6px;
+  touch-action:manipulation; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+.side { display:contents; }
+[data-mode="yoko"] .side { display:flex; flex-direction:column; gap:6px; min-height:0; min-width:0; grid-area:side; }
+[data-mode="yoko"] .side > * { flex-shrink:0; }
+.wd { display:contents; }
+[data-mode="yoko"] .wd { display:flex; gap:6px; align-items:stretch; }
+[data-mode="yoko"] .wd .waits { flex:1 1 auto; }
+[data-mode="yoko"] .tate-only { display:none !important; }
+[data-mode="tate"] .yoko-only { display:none !important; }
+
+/* 手作り：たて（★押す ものを 下半分 ―― 親指の 側に）*/
+[data-mode="tate"] .make { grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:auto auto minmax(0,1fr) auto auto;
+  grid-template-areas:"info info" "happy happy" "pile pile" "hand hand" "waits decide"; }   /* ★手作り：前から 帯の すぐ 下 */
+/* 手作り：よこ（右に 柱）*/
+[data-mode="yoko"] .make { grid-template-columns:minmax(0,1fr) var(--side);
+  grid-template-rows:minmax(0,1fr) auto; grid-template-areas:"pile side" "hand side"; }
+/* ★低い よこ・せまい たて（★JS の LOW_H・TIGHT_H）・ドラを めくる 間：手作りの「手の 列」を 省く（★山で 上がっている 13枚が 手）*/
+[data-low="1"] .make .a-hand, [data-tight="1"] .make .a-hand, .make.is-dora .a-hand { display:none; }
+[data-mode="yoko"][data-low="1"] .make, [data-mode="yoko"] .make.is-dora { grid-template-rows:minmax(0,1fr); grid-template-areas:"pile side"; }
+[data-mode="tate"][data-tight="1"] .make, [data-mode="tate"] .make.is-dora { grid-template-rows:auto auto minmax(0,1fr) auto;
+  grid-template-areas:"info info" "happy happy" "pile pile" "waits decide"; }
+/* 17巡：たて */
+[data-mode="tate"] .play { grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto auto auto auto auto auto minmax(0,1fr);
+  grid-template-areas:"info" "happy" "opp" "table" "hand" "me" "pool"; }   /* ★T338：ハッピーは 局の 帯の すぐ 下 */
+/* ★幅 320 の たて：★たけは 中身の ぶん（★上下に 動かす）*/
+.app-shell.is-scroll .play { grid-template-rows:auto auto auto auto auto auto auto; }
+/* 17巡：よこ（右に 柱）*/
+[data-mode="yoko"] .play { grid-template-columns:minmax(0,1fr) var(--side);
+  grid-template-rows:auto auto minmax(0,1fr); grid-template-areas:"table side" "hand side" "pool side"; }
+
+.a-info { grid-area:info; } .a-pile { grid-area:pile; } .a-hand { grid-area:hand; } .a-waits { grid-area:waits; } .a-decide { grid-area:decide; }
+.a-opp { grid-area:opp; } .a-table { grid-area:table; } .a-me { grid-area:me; } .a-pool { grid-area:pool; }
+.scene .log-row { grid-area:happy; }
+[data-mode="yoko"] .side > *, [data-mode="yoko"] .wd > * { grid-area:auto; }
+
+/* ── 白い 角丸の 板 ＋ 板の 名札（★ふちの 上に のせる ―― ★たけを 使わない）── */
+.card { position:relative; background:#fff; border:3px solid var(--pink-soft); border-radius:16px; min-width:0; min-height:0; }
+.tag { position:absolute; top:-9px; left:12px; z-index:2; padding:0 6px; border-radius:7px; background:#fff;
+  font-size:11px; font-weight:900; color:#9a7f94; line-height:14px; white-space:nowrap; max-width:calc(100% - 20px); overflow:hidden; text-overflow:ellipsis; }
+.tag b { color:var(--pink-dark); font-size:11.5px; }
+.tag .t-short, .tag.is-short .t-full { display:none; }   /* ★T334：入らない ときだけ 短い 字 */
+.tag.is-short .t-short { display:inline; }
+.lbl { margin:0; font-size:11px; font-weight:900; color:#9a7f94; line-height:1.3; white-space:nowrap; }
+
+/* ── 局の 帯 ── */
+.info { display:flex; align-items:center; gap:10px; padding:4px 10px; }
+.kyoku { display:flex; flex-direction:column; line-height:1.15; white-space:nowrap; }
+.kyoku b { font-size:17px; color:#3f5a70; }
+.kyoku small { font-size:11px; font-weight:900; color:#9a7f94; }
+.dora { display:flex; align-items:center; gap:4px; }
+.dora-tile { display:block; width:24px; height:33px; }
+.dora-tile svg.mj { display:block; width:100%; height:100%; border-radius:17.2%/12.5%; box-shadow:0 1px 2px rgba(150,110,70,.3); }
+.scores { margin-left:auto; display:flex; flex-direction:column; gap:1px; text-align:right; }
+.sc { font-size:12px; font-weight:900; white-space:nowrap; color:#5a4a63; line-height:1.35; }
+.sc b { font-size:14px; color:#3f5a70; font-variant-numeric:tabular-nums; }
+.oya { display:inline-block; padding:0 5px; margin:0 3px; border-radius:6px; background:var(--pink-deep); color:#fff; font-size:11px; line-height:16px; vertical-align:1px; }
+.oya.ko { background:#8FA7BA; }
+.jun { display:flex; flex-direction:column; align-items:center; line-height:1.1; }
+.jun b { font-size:17px; color:var(--pink-dark); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.jun b small { font-size:11px; color:#9a7f94; }
+/* 点棒（立直棒 ＝ 白い 棒に 赤い 点）*/
+.sticks { display:flex; flex-direction:column; gap:3px; }
+.stick { display:block; width:30px; height:7px; border-radius:4px; background:#fff; border:1.5px solid #d9cbb5; position:relative; }
+.stick::after { content:''; position:absolute; left:50%; top:50%; width:4px; height:4px; margin:-2px 0 0 -2px; border-radius:50%; background:#D8343A; }
+.kyotaku { display:flex; align-items:center; gap:5px; }
+.kyotaku .lbl { line-height:1.2; }
+.info > .row { display:contents; }
+[data-mode="yoko"] .play .info { flex-direction:column; align-items:stretch; gap:4px; padding:5px 8px; }
+[data-mode="yoko"] .make .info { gap:6px; padding:4px 7px; }
+[data-mode="yoko"] .make .info > .row { display:contents; }
+[data-mode="yoko"] .make .scores { margin-left:auto; text-align:right; }
+/* ★T334：★手作りの 帯にも 供託（★仕様書 §1-2・トライ T333 ⑤）。★棒は 出さず 字だけ（★はばを 取らない）*/
+.make .info .sticks { display:none; }
+[data-mode="tate"] .make .info { gap:6px; }
+/* ★よこ（★柱が せまい）：★1行目 局・ドラ・供託 ／ 2行目 持ち点（★よこ 1列）*/
+[data-mode="yoko"] .make .info { flex-wrap:wrap; row-gap:2px; }
+[data-mode="yoko"] .make .scores { flex:1 0 100%; flex-direction:row; flex-wrap:wrap; justify-content:flex-end; column-gap:8px; }
+[data-mode="yoko"] .play .kyoku { flex-direction:row; align-items:baseline; gap:6px; }
+[data-mode="yoko"] .play .jun { display:none; }
+[data-mode="yoko"] .play .info > .row { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+[data-mode="yoko"] .play .scores { margin-left:0; text-align:left; }
+[data-mode="yoko"] .info .sc { font-size:11px; } [data-mode="yoko"] .info .sc b { font-size:13px; }
+[data-low="1"] .dora-tile { width:20px; height:27.5px; }
+[data-low="1"] .stick { width:24px; height:6px; }
+
+/* ── 牌の 並び（★大きさは JS が --tw・--lift・--cw に 入れる。★.tl ＝ 指の 的の セル）── */
+.tiles { display:grid; justify-content:center; align-content:center; --tw:30px; --lift:0px; }
+.tl { position:relative; display:flex; align-items:flex-end; justify-content:center;
+  width:var(--cw,calc(var(--tw) + 4px)); height:calc(var(--tw) * 1.375 + var(--lift) + 4px); padding:2px; }
+.tl svg.mj { display:block; flex:0 0 auto; width:var(--tw); height:calc(var(--tw) * 1.375); border-radius:17.2%/12.5%;
+  box-shadow:0 1.5px 2.5px rgba(150,110,70,.30); transition:transform .15s; pointer-events:none; }
+/* ★★ 選んだ 牌が 上がる＋下に ピンクの 線 ―― ★この 画面の ただ 1つの 強調 ★★ */
+.tl.is-up svg.mj { transform:translateY(calc(var(--lift) * -1)); }
+.tl.is-up::after { content:''; position:absolute; left:22%; right:22%; bottom:1px; height:4px; border-radius:3px; background:var(--pink-deep); }
+/* ★低い よこの 切れる 牌：上がる たけが 無いので ★ピンクの わく＋線 */
+[data-low="1"] .play .tl.is-up svg.mj { box-shadow:0 0 0 2px #fff,0 0 0 4px var(--pink-deep); }
+.tl.gone svg.mj { visibility:hidden; }
+.tl.gone::before, .tl.empty::before { content:''; position:absolute; left:50%; bottom:2px; width:var(--tw); margin-left:calc(var(--tw) / -2);
+  height:calc(var(--tw) * 1.375); border:2px dashed #e6d9c4; border-radius:17.2%/12.5%; box-sizing:border-box; }
+/* ★T334：★河の 空きわくは ★くぼんだ 緑の 穴（★白い 面を 持たない）―― ★白（無地）の 牌と 見分ける（トライ T333 ⑪）。★白の 牌の 絵は 変えない */
+.tl.empty::before { border:1.5px dashed rgba(47,107,71,.30); background:rgba(47,107,71,.10); box-shadow:inset 0 1.5px 2.5px rgba(47,107,71,.22); }
+.tl.brk { grid-column-start:1; }   /* ★種類の はじめは 行の 頭から（1種類 1行）*/
+.tl.new svg.mj { box-shadow:0 0 0 2px #fff,0 0 0 4px #F7A8C6; }
+.tl.new::after { content:''; position:absolute; left:50%; top:-3px; margin-left:-5px; border:5px solid transparent; border-top-color:var(--pink-deep); }
+.tiles.pick .tl { cursor:pointer; }
+.tl.is-flip svg.mj { animation:flipIn .25s ease-out; }
+@keyframes flipIn { 0% { transform:scaleX(.1); } 100% { transform:scaleX(1); } }
+
+.pile-card, .pool-card { display:flex; flex-direction:column; padding:7px 6px 5px; }
+/* ★T338：ドラを めくる 字（★板の 上に 大きく ―― 社長「気づかなかった」）*/
+.dora-call { flex:0 0 auto; margin:4px 4px 6px; padding:6px 10px; border-radius:12px; background:var(--pink-soft); color:var(--pink-dark);
+  font-size:19px; font-weight:900; line-height:1.3; text-align:center; }
+.dora-call b { font-size:22px; }
+.dora-call .nw { display:inline-block; white-space:nowrap; }   /* ★T343：かたまりの 中では 行を 変えない */
+[data-low="1"] .dora-call { margin:0 2px 3px; padding:2px 8px; font-size:16px; } [data-low="1"] .dora-call b { font-size:17px; }
+.pile-box, .pool-box { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; }
+/* ★たて：山が はばで 決まって たけが 余る ときは ★山を 下（★親指の 側）に 寄せる */
+[data-mode="tate"] .pile-card.snug { align-self:end; }
+[data-mode="tate"] .pile-card.snug .pile-box { flex:0 0 auto; }
+.hand-card { display:flex; align-items:center; justify-content:center; padding:7px 6px 4px; }
+
+/* ★卓（★2人の 河を 1枚の 緑の 板に。★上＝あいて（向かい）・下＝あなた。★17枚ぶんの わくを 最初から 取る）*/
+.table { position:relative; display:flex; flex-direction:column; align-items:center; padding:7px 6px 3px;
+  background:var(--felt); border:3px solid var(--felt-edge); border-radius:16px; min-width:0; }
+.table .tag { background:var(--felt); color:#2f6b47; }
+.table .tiles { justify-content:start; align-self:stretch; }
+.divider { position:relative; align-self:stretch; height:12px; margin:0 2px; }
+.divider::before { content:''; position:absolute; left:0; right:0; top:5px; border-top:2px dashed var(--felt-edge); }
+.divider span { position:absolute; left:10px; top:-1px; padding:0 6px; background:var(--felt); font-size:11px; font-weight:900; color:#2f6b47; line-height:14px; white-space:nowrap; }
+
+/* 待ち（◎△×）★記号と 字の 両方（★色だけに たよらない）*/
+.waits { display:flex; align-items:center; gap:8px; padding:4px 8px; }
+.waits .st { margin:0; font-size:12px; font-weight:900; color:#5a4a63; white-space:nowrap; line-height:1.3; }
+.waits .st b { color:var(--pink-dark); font-size:14px; }
+.chips { display:flex; gap:4px; flex-wrap:wrap; min-width:0; }
+.chip { display:flex; flex-direction:column; align-items:center; gap:1px; padding:2px 3px 1px; border-radius:8px; min-width:36px; }
+.chip .ts { display:flex; flex-wrap:wrap; justify-content:center; gap:1px; }
+.chip svg.mj { width:22px; height:30.25px; display:block; border-radius:17.2%/12.5%; box-shadow:0 1px 2px rgba(150,110,70,.3); }
+.chip i { font-style:normal; font-size:11px; font-weight:900; white-space:nowrap; line-height:1.2; }
+.c-ok { background:var(--mint-soft); } .c-ok i { color:#136B3C; }
+.c-mid { background:#FFF3C4; } .c-mid i { color:#7a4f00; }
+.c-no { background:#EFEAF0; } .c-no i { color:#6d6272; } .c-no svg.mj { opacity:.55; }
+/* ★T334：★フリテンの 間は 待ちの 牌を 1つの 灰色の 札に まとめて「フリテン」（★◎の 緑を 出さない ―― トライ T333 ⑧）*/
+.c-furi { background:#6f7c89; } .c-furi i { color:#fff; } .c-furi svg.mj { opacity:.5; }
+[data-mode="yoko"] .waits { gap:6px; padding:4px 7px; }
+[data-mode="yoko"] .play .waits { padding-top:8px; }
+/* ★ 待ちの 札が 入らない ときだけ（★JS の layout() が 出して みて 付ける data-ck）*/
+[data-ck="1"] .waits .st, [data-ck="2"] .waits .st { display:none; }
+[data-ck="2"] .chips { gap:2px; }
+[data-ck="2"] .chip { padding:1px 2px; min-width:0; }
+[data-ck="2"] .chip svg.mj, [data-ck="3"] .chip svg.mj { width:15px; height:20.6px; }
+[data-ck="3"] .waits .st { display:none; }
+[data-ck="3"] .chips { gap:2px; }
+[data-ck="3"] .chip { padding:1px 2px; min-width:0; }
+[data-low="1"] .play .chip { flex-direction:row; gap:3px; padding:2px 4px; }
+/* ★低い よこで 札が 2段に 折れる とき：牌を 上・字を 下（★横に 短く）*/
+[data-low="1"][data-ck="2"] .play .chip, [data-low="1"][data-ck="3"] .play .chip { flex-direction:column; gap:0; padding:1px 2px; }
+/* ★それでも 柱に 入らない とき（★十三面待ち など）：局の 帯を 2行に（★供託は 字だけ）*/
+[data-ck="3"][data-mode="yoko"] .play .info { display:grid; grid-template-columns:auto minmax(0,1fr); gap:3px 6px; align-items:center; padding:4px 5px; }
+[data-ck="3"][data-mode="yoko"] .play .info > .row { display:contents; }
+[data-ck="3"][data-mode="yoko"] .play .info .kyoku { grid-column:1; grid-row:1; }
+[data-ck="3"][data-mode="yoko"] .play .info .kyotaku { grid-column:2; grid-row:1; justify-self:end; }
+[data-ck="3"][data-mode="yoko"] .play .info .dora { grid-column:1; grid-row:2; }
+[data-ck="3"][data-mode="yoko"] .play .info .scores { grid-column:2; grid-row:2; justify-self:end; text-align:right; }
+[data-ck="3"] .play .info .sticks { display:none; }
+[data-ck="3"] .play .info .kyotaku .lbl br { display:none; }
+[data-low="1"] .play .chip svg.mj { width:18px; height:24.75px; }
+
+/* 決定 */
+.decide { min-height:52px; min-width:112px; padding:4px 14px; border:none; border-radius:999px; background:var(--pink-deep); color:#fff;
+  box-shadow:0 5px 0 var(--pink-dark); font-size:18px; font-weight:900; line-height:1.1;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; align-self:center; margin-bottom:5px; }
+.decide small { font-size:11px; font-weight:700; opacity:.92; }
+.decide:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
+.decide[disabled] { background:#cdbfc9; box-shadow:0 5px 0 #b0a1ac; cursor:default; transform:none; }
+[data-mode="yoko"] .decide { align-self:center; min-width:92px; padding:4px 10px; }
+
+/* 相手と 自分の 行（たて）*/
+.opp, .me { display:flex; align-items:center; gap:8px; padding:3px 10px; }
+.opp .backs { display:flex; gap:1px; margin-left:auto; }
+.opp .backs svg.mj { width:var(--bw,16px); height:calc(var(--bw,16px) * 1.375); display:block; border-radius:17.2%/12.5%; }
+.me .chips { margin-left:auto; }
+
+/* ★★ ロン ―― 切れる 21枚の 板の 上に 大きく（★その 瞬間は 切れない ので、押す 場所を 取り合わない）★★ */
+.ron-cover { position:absolute; inset:0; z-index:3; border-radius:13px; background:rgba(255,249,234,.84); display:flex; align-items:center; justify-content:center; }
+.ron { min-height:60px; min-width:180px; padding:4px 26px; border:none; border-radius:999px; background:var(--pink-deep); color:#fff;
+  box-shadow:0 5px 0 var(--pink-dark),0 0 0 6px rgba(255,140,184,.35); font-size:28px; font-weight:900; line-height:1.05;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; animation:ronPulse 1s ease-in-out infinite; }
+.ron small { font-size:12px; font-weight:700; opacity:.95; }
+.ron:active { transform:translateY(3px); }
+@keyframes ronPulse { 0%,100% { box-shadow:0 5px 0 var(--pink-dark),0 0 0 6px rgba(255,140,184,.35); } 50% { box-shadow:0 5px 0 var(--pink-dark),0 0 0 11px rgba(255,140,184,0); } }
+
+/* ── ハッピー ＋ ふきだし ＋ 遊び方（★まとめサイトの ハッピーが 正）── */
+.log-row {
+  position:relative; z-index:5;
+  display:flex; align-items:center; gap:8px; min-width:0;
+  padding:4px 10px; background:var(--white); border:3px solid var(--pink-soft); border-radius:18px;
+}
+.happy-wrap { flex:0 0 auto; text-align:center; }
+.happy-cat { width:40px; height:43px; display:block; overflow:visible; }
+.happy-name { margin:0; font-size:11px; font-weight:900; color:#b8903a; line-height:1.2; }
+.cat-eyes { transform-box:fill-box; transform-origin:center; animation:blink 5s infinite; }
+@keyframes blink { 0%, 92%, 100% { transform:scaleY(1); } 95% { transform:scaleY(.1); } }
+.cat-tail { transform-box:fill-box; transform-origin:10% 90%; animation:wag 2.4s ease-in-out infinite; }
+@keyframes wag { 0%, 100% { transform:rotate(0deg); } 50% { transform:rotate(-9deg); } }
+.happy-bubble {
+  flex:1 1 auto; margin:0; min-width:0;
+  font-size:13.5px; font-weight:900; color:#5a4a63; line-height:1.4;
+  word-break:keep-all; overflow-wrap:anywhere;
+}
+.howto {
+  position:relative; flex:0 0 auto; min-height:44px; min-width:44px; padding:0 10px; border-radius:999px;
+  background:var(--white); border:3px solid var(--pink-soft);
+  color:var(--pink-dark); font-size:12px; font-weight:900; white-space:nowrap;
+}
+.howto:hover { border-color:var(--pink); }
+@media (max-width:360px) {
+  .happy-bubble { font-size:12.5px; }
+  .howto { padding:0 9px; font-size:11.5px; border-width:2px; }
+  .log-row { padding:4px 7px; gap:6px; }
+}
+/* はじめの 画面で ハッピーが 右 */
+.app-shell.is-side > .log-row { align-self:start; flex-direction:column; justify-content:flex-start; width:112px; padding:6px 4px; gap:6px; text-align:center; }
+.app-shell.is-side > .log-row .happy-bubble { flex:0 1 auto; font-size:12px; line-height:1.4; line-break:strict; }
+.app-shell.is-side > .log-row .howto span { display:none; }
+/* 場面の よこ：柱の いちばん 下 */
+[data-mode="yoko"] .scene .log-row { padding:3px 5px; gap:4px; }   /* ★T338：柱の 下では なく 局の 帯の すぐ 下 */
+[data-mode="yoko"] .make .wd, [data-mode="yoko"] #playWaits { margin-top:auto; }   /* ★決定・待ちは 柱の 下（★親指の 側）の まま */
+[data-mode="yoko"] .scene .happy-cat { width:30px; height:32px; }
+[data-mode="yoko"] .scene .happy-name { display:none; }
+[data-mode="yoko"] .scene .happy-bubble { font-size:11.5px; line-height:1.35; }
+[data-roomy="1"] .scene .log-row { padding:6px 8px; gap:8px; }
+[data-roomy="1"] .scene .happy-cat { width:44px; height:47px; }
+[data-roomy="1"] .scene .happy-name { display:block; }
+[data-roomy="1"] .scene .happy-bubble { font-size:13.5px; }
+[data-low="1"] .scene .happy-bubble { font-size:11px; line-height:1.3; }
+/* ★せまい たて：ハッピーを 1行に */
+[data-tight="1"] .scene .happy-name { display:none; }
+[data-tight="1"] .scene .happy-cat { width:32px; height:34px; }
+[data-tight="1"] .scene .happy-bubble { font-size:12.5px; line-height:1.35; }
+@keyframes happyJump {
+  0%,100% { transform:translateY(0) rotate(0); }
+  30% { transform:translateY(-9px) rotate(-7deg); }
+  60% { transform:translateY(0) rotate(5deg); }
+}
+.happy-cat.is-jump { animation:happyJump .5s ease-in-out 4; }
+
+/* 飾り（まとめサイトの 花・キラキラ）★板の うしろ。★板が 無い すき間に だけ 見える */
+.bg-deco { position:absolute; pointer-events:none; z-index:0; }
+.scene > *:not(.bg-deco), .side > *:not(.topbar), .wd > * { position:relative; z-index:1; }   /* ★帯は sticky の まま（見張り ⑦）*/
+[data-mode="yoko"] .bg-deco { display:none; }
+
+/* ── 局の おわり／試合の おわり の 箱 ── */
+.result-wrap {
+  position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+  padding:10px; background:rgba(70,60,82,.42);
+}
+.result-box {
+  width:min(420px,100%); padding:14px 16px 16px; text-align:center;
+  background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  box-shadow:0 10px 0 rgba(196,58,115,.16); max-height:100%; overflow-y:auto;
+}
+@keyframes resultIn { 0% { transform:scale(.8); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+.result-wrap:not(.hidden) .result-box { animation:resultIn .22s ease-out; }
+.result-title { margin:0 0 6px; font-size:23px; font-weight:900; color:var(--pink-dark); }
+.result-title.is-lose { color:#5b7897; }
+.result-title.is-draw { color:#6f8093; }
+.result-body { margin:0 0 10px; font-size:13.5px; font-weight:700; color:#5a4a63; }
+.rs-hand { display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-end; gap:2px; margin:0 0 6px; }
+.rs-hand .rs-t { display:inline-block; width:var(--rt,22px); height:calc(var(--rt,22px) * 1.375); }
+.rs-hand .rs-t svg { display:block; width:100%; height:100%; }
+.rs-hand .rs-win { margin-left:6px; }
+.rs-label { margin:4px 0 2px; font-size:12px; font-weight:900; color:#6d7f8e; }
+.rs-w { display:inline-flex; align-items:center; gap:2px; margin-left:10px; padding:1px 6px; border-radius:8px; background:var(--pink-soft); color:var(--pink-dark); vertical-align:middle; }
+.rs-wt { display:inline-block; width:calc(var(--rt,22px) * .8); height:calc(var(--rt,22px) * 1.1); margin-left:2px; }
+.rs-wt svg { display:block; width:100%; height:100%; }
+.rs-dora { display:flex; justify-content:center; align-items:center; gap:10px; margin:0 0 6px; font-size:12px; font-weight:900; color:#6d7f8e; }
+.rs-dora span { display:inline-flex; align-items:center; gap:3px; }
+.rs-dora svg.mj { display:block; width:18px; height:24.75px; }
+.rs-yaku { list-style:none; margin:0 auto 6px; padding:0; max-width:260px; font-size:13.5px; }
+.rs-yaku li { display:flex; justify-content:space-between; gap:10px; padding:1px 4px; break-inside:avoid; }
+.rs-yaku li i { font-style:normal; color:var(--pink-dark); font-weight:900; white-space:nowrap; }
+.rs-rank { margin:0 0 4px; font-size:18px; font-weight:900; color:var(--pink-dark); }
+.rs-pay { margin:0 0 6px; font-size:13px; line-height:1.5; }
+.rs-pts { display:flex; justify-content:center; gap:14px; margin:0 0 4px; padding:5px 8px; border-radius:14px; background:var(--cream); border:3px solid var(--gold-soft); font-size:13px; font-weight:900; color:#6b5522; }
+.rs-pts b { font-size:15.5px; color:var(--pink-dark); }
+.rs-pts small { font-size:11.5px; }
+.rs-pts .dn { color:#5b7897; }
+.rs-tie { margin:0 0 6px; font-size:15px; font-weight:900; color:#6f8093; }
+.rs-log { list-style:none; margin:6px auto 0; padding:0; font-size:12px; }
+.rs-log li { padding:1px 6px; break-inside:avoid; }
+.result-buttons { display:flex; flex-direction:column; gap:8px; }
+.dialog-ok {
+  display:flex; align-items:center; justify-content:center; width:100%; min-height:44px;
+  padding:10px 16px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 5px 0 var(--pink-dark);
+  font-family:inherit; font-size:19px; font-weight:900; text-decoration:none; text-align:center;
+}
+.dialog-ok b { margin-left:.3em; }
+.dialog-ok:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
+.dialog-ok.alt {
+  background:var(--white); color:var(--pink-dark);
+  border:3px solid var(--pink-soft); box-shadow:0 4px 0 rgba(196,58,115,.10);
+  font-size:14px; padding:6px 14px;
+}
+/* ★ 箱が 画面の たけに 入らない ときだけ（★JS の fitResult が 出して みて 付ける ―― たての 線は 引かない）*/
+.result-box.is-tight { padding:8px 10px 10px; }
+.result-box.is-tight .result-title { margin:0 0 3px; font-size:19px; }
+.result-box.is-tight .result-body { margin:0 0 6px; font-size:12.5px; }
+.result-box.is-tight .rs-yaku { font-size:12px; }
+.result-box.is-tight .rs-rank { font-size:15px; margin:0 0 2px; }
+.result-box.is-tight .rs-pay { margin:0 0 3px; }
+.result-box.is-tight .result-buttons { flex-direction:row; gap:6px; }
+.result-box.is-tight .result-buttons .dialog-ok { flex:1 1 0; min-width:0; padding:6px 8px; font-size:15px; white-space:nowrap; }
+.result-box.is-tight .result-buttons .dialog-ok.alt { font-size:12.5px; }
+/* ★ よこに 広い 画面で たけが 足りない とき：★手（左）と 役・点（右）の 2列 */
+.result-box.is-cols { width:min(760px,100%); }
+.result-box.is-cols .result-body { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 14px; align-items:center; }
+.result-box.is-tighter .rs-yaku { columns:2; max-width:none; column-gap:12px; }
+.result-box.is-tighter .rs-log { columns:2; }
+.result-box.is-tighter .rs-label { margin:1px 0; }
+.result-buttons { transition:opacity .16s ease-out; }
+.result-box.is-locked .result-buttons { pointer-events:none; opacity:.4; }
+.result-box.is-locked .dialog-ok { box-shadow:none; transform:translateY(3px); }
+
+/* ── 遊び方 ── */
+dialog {
+  width:min(460px,94vw); max-height:92vh; max-height:92svh; overflow:auto;
+  padding:16px 18px 18px; border:none; border-radius:24px;
+  background:var(--white); color:var(--ink); font-family:var(--font-main);
+  box-shadow:0 12px 0 rgba(196,58,115,.16);
+}
+dialog::backdrop { background:rgba(70,60,82,.42); }
+.close-dialog {
+  position:sticky; top:0; z-index:2;
+  display:block; width:44px; height:44px; margin:0 0 -44px auto;
+  transform:translate(8px,-8px);
+  border:0; border-radius:50%;
+  background:#f1f5f4; color:#7d8c99; font-size:18px; font-weight:900; cursor:pointer;
+}
+dialog h2 { margin:0 0 6px; font-size:21px; font-weight:900; color:var(--pink-dark); text-align:center; }
+.help-sec { margin:0 0 12px; }
+.help-sec h3 { margin:0 0 6px; padding:3px 10px; border-radius:10px; background:var(--pink-soft); font-size:15px; font-weight:900; color:var(--pink-dark); }
+.help-list { margin:0; padding-left:1.3em; }
+.help-list li { margin-bottom:5px; font-size:14px; font-weight:700; line-height:1.6; }
+.help-dots { margin:0; padding-left:1.2em; }
+.help-dots li { margin-bottom:4px; font-size:13.5px; font-weight:700; line-height:1.55; }
+.help-list b, .help-dots b { color:var(--pink-dark); }
+.pt-table { width:100%; margin:0 0 8px; border-collapse:collapse; font-size:13.5px; font-weight:700; }
+.pt-table th, .pt-table td { padding:3px 6px; border-bottom:2px solid var(--cream); text-align:center; }
+.pt-table th { color:#6d7f8e; font-size:12px; }
+.yaku-list { margin:0; font-size:13px; line-height:1.5; }
+.yaku-list dt { margin:8px 0 2px; font-weight:900; color:#fff; background:var(--mint); border-radius:8px; padding:1px 8px; display:inline-block; }
+.yaku-list dd { margin:0 0 2px; font-weight:700; }
+.yaku-list dd b { display:inline-block; min-width:7.2em; margin-right:6px; color:#1f5a38; }
+.help-list li, .help-dots li, .yaku-list dd, .title-lead { word-break:keep-all; overflow-wrap:anywhere; }
+
+/* ★ 写真を 撮る あいだだけ 動きを 止める（★T300）*/
+body.measuring *, body.measuring *::before, body.measuring *::after {
+  transition:none !important; animation:none !important;
+}

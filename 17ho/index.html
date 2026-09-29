@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- ★★ T330 ―― 17歩（💻コーダ・2026-09-28）→ ★T332：アトの 画面案（T331）と 社長の 決め（追記⑭「画面と 終わり方」）を 入れた ★★
+       ★ 社長の お決め：設計図 追記⑭（★これが 正）。仕様書：logs/T326_17歩仕様書_ルル.md。
+       ★ T342：入口の GAMES（23本目）・sitemap に 足した。★og:image は アトの og/og-17ho.png（600×600・T341）。
+       ★ 題は 麻雀17歩。作品名など ほかの 作品の 字は 入れない（社長決め）。 -->
+  <!-- ★T335：題は「麻雀17歩」（社長の 決め・追記⑭）。★title・og:title・twitter:title・h1・帯・description を そろえる（★見張り ⑩）-->
+  <title>麻雀17歩 ― ブラウザですぐ遊べる｜ブラゲ工房</title>
+  <meta name="description" content="麻雀17歩：34枚から 13枚を えらんで 満貫の 聴牌を 作り、2人で 1枚ずつ 切りあう 麻雀の 遊び。満貫 以上で ロン！ 東風戦・半荘戦を 点棒で 打つ。 ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="麻雀17歩 ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="麻雀17歩：34枚から 13枚を えらんで 満貫の 聴牌を 作り、2人で 1枚ずつ 切りあう 麻雀の 遊び。ダウンロードは いりません。" />
+  <meta property="og:url" content="https://bragekobo.com/17ho/" />
+  <!-- ★ T301 の 型 ―― ★上の og:url と 1文字も 同じ（★見張り ⑩ が 数えます）。 -->
+  <link rel="canonical" href="https://bragekobo.com/17ho/" />
+  <!-- ★ T342：SNS の 絵（★四川省と 同じ 書き方）。★ブラウザは 取りに 行かない 名ふだ -->
+  <meta property="og:image" content="https://bragekobo.com/og/og-17ho.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="600" />
+  <meta property="og:image:height" content="600" />
+  <meta property="og:image:alt" content="麻雀牌が ならぶ 17巡の 画面と 大きな ロンの ボタン。題「麻雀17歩」と ねこの ハッピーの かお" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="麻雀17歩 ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="麻雀17歩：34枚から 13枚を えらんで 満貫の 聴牌を 作り、2人で 1枚ずつ 切りあう 麻雀の 遊び。" />
+  <meta name="twitter:image" content="https://bragekobo.com/og/og-17ho.png" />
+
+  <!-- タブの アイコン ＝ ハッピーの かお（★四川省と 同じ）-->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ★ 見えない h1（★字は 上の帯と 1文字も 同じ・見張り ⑩）-->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;font:inherit;color:inherit;background:none;">麻雀17歩</h1>
+
+<!-- ハッピー（看板ねこ）の かお。★20本から そのまま（設計図 §9.5）-->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+    <symbol id="t330-flower" viewBox="0 0 40 40">
+      <g fill="#FFB3D0"><circle cx="20" cy="8" r="8"/><circle cx="33" cy="17" r="8"/><circle cx="28" cy="32" r="8"/><circle cx="12" cy="32" r="8"/><circle cx="7" cy="17" r="8"/></g>
+      <circle cx="20" cy="21" r="6.5" fill="#FFD766"/>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app-shell" id="app">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       ★ 左：◀ ゲームを選ぶ ／ まん中：題 ／ 右：？（★よこの 場面 だけ）・↻ やめる（★試合の 間だけ・追記⑩ の 型）。
+       ★ よこの 場面では ★JS が この 帯を 右の 柱の いちばん 上へ 移す（★T331 アトの 案）。
+       ★ 帯は position:sticky。★この 帯の 親には overflow を 1つも 書かない（★T285 の わな・見張り ⑦）。 -->
+  <header class="topbar" id="topbar">
+    <a class="back" href="../" id="btnBack"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand" id="brand">
+      <svg class="deco" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t330-flower"/></svg>
+      <svg class="brand-cat" aria-hidden="true" focusable="false"><use href="#happy-head"/></svg>
+      <span id="brandName">麻雀17歩</span>
+      <svg class="deco d2" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t330-flower"/></svg>
+    </div>
+    <button class="howto tb-howto" type="button" id="btnHowtoTop" aria-label="遊び方">？</button>
+    <!-- ★ 押すと はじめの 画面へ（★局数を 決め直せる）。★聞かない（追記⑩ ②）。 -->
+    <button class="quit-btn hidden" type="button" id="btnQuitGame"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</button>
+  </header>
+
+  <div class="stage" id="stage">
+
+    <!-- ── はじめの 画面 ──────────────────────────────
+         ★ 選ぶのは 局数 だけ（★追記① 1つまで・CPU は「弱い」に 固定 ―― T339 社長）。★ルールと 役の 一覧は 箱で 開く。 -->
+    <section class="title-screen" id="titleScreen">
+      <svg class="t-deco f1" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t330-flower"/></svg>
+      <svg class="t-deco f2" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t330-flower"/></svg>
+      <span class="t-twinkle t1" aria-hidden="true">✨</span>
+      <svg class="title-art" viewBox="0 0 150 60" aria-hidden="true" focusable="false">
+        <use href="#mj-1s" x="14" y="6" width="36" height="49.5"/>
+        <use href="#mj-7z" x="57" y="6" width="36" height="49.5"/>
+        <use href="#mj-1z" x="100" y="6" width="36" height="49.5"/>
+      </svg>
+      <p class="title-lead"><span class="nw">34枚から 13枚を えらんで、</span><span class="nw">満貫で ロン！</span></p>
+      <div class="len-pick" id="lenPick" role="radiogroup" aria-label="局の 数">
+        <button class="len-btn is-on" type="button" role="radio" aria-checked="true" data-len="tonpu" id="btnTonpu"><b>東風戦</b><small>東1局・東2局</small></button>
+        <button class="len-btn" type="button" role="radio" aria-checked="false" data-len="hanchan" id="btnHanchan"><b>半荘戦</b><small>東1局〜南2局</small></button>
+      </div>
+      <button class="start-button" type="button" id="btnStart">
+        <span>はじめる <b>▶</b></span><small>持ち点 35,000点・あいては 1人</small>
+      </button>
+      <div class="title-links">
+        <button class="sub-btn" type="button" id="btnRules">ルール</button>
+        <button class="sub-btn" type="button" id="btnYaku">役の 一覧</button>
+      </div>
+    </section>
+
+    <!-- ── 手作り（★ドラを めくる 間も ここ）──────────────────────
+         ★ 山 34枚は「1種類 1行」。★選んだ 牌は 上がる＋下に ピンクの 線（★牌は 動かない＝押し間違えない）。
+         ★ 牌の 大きさ・並べ方は game.js の layout() が ★箱の 実寸から 数えて 決める（★たての 線は JS の 名前つき 数 だけ）。 -->
+    <section class="scene make hidden" id="make" aria-label="手作り">
+      <svg class="bg-deco" style="left:6%;top:30%;width:26px;height:26px" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><use href="#t330-flower"/></svg>
+      <svg class="bg-deco" style="right:9%;top:24%;width:20px;height:20px" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><use href="#t330-flower"/></svg>
+      <svg class="bg-deco" style="left:44%;top:33%;width:16px;height:16px" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 0 L12.4 7.6 L20 10 L12.4 12.4 L10 20 L7.6 12.4 L0 10 L7.6 7.6 Z" fill="#FFD766"/></svg>
+      <svg class="bg-deco" style="right:30%;top:40%;width:12px;height:12px" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 0 L12.4 7.6 L20 10 L12.4 12.4 L10 20 L7.6 12.4 L0 10 L7.6 7.6 Z" fill="#9FDDF0"/></svg>
+      <div class="card pile-card a-pile" id="pileCard">
+        <span class="tag" id="pileTag">あなたの 34枚 ― タップで 13枚 選ぶ</span>
+        <!-- ★T338：ドラを めくる 字（★親が あなたの ときだけ。★大きく）-->
+        <!-- ★T343：折って よいのは「おして、」の あと だけ（★ことばの 途中で 行を 変えない ―― トライ T340。★見張り ㉘）-->
+        <p class="dora-call hidden" id="doraCall"><span class="nw">山から <b>1枚</b> おして、</span><span class="nw">ドラ表示牌を めくってね</span></p>
+        <div class="pile-box" id="pileBox"><div class="tiles hidden" id="wall"></div><div class="tiles" id="pool"></div></div>
+      </div>
+      <div class="card hand-card a-hand" id="pickCard"><span class="tag">あなたの 手 <b id="pickN">0</b>／13</span><div class="tiles" id="pickRow"></div></div>
+      <div class="side" id="makeSide">
+        <div class="card info a-info" id="makeInfo"></div>
+        <div class="wd">
+          <!-- ★ 確かめ表示（★いま 選んでいる 13枚 だけで 決まる ―― 追記⑭ ②）-->
+          <div class="card waits a-waits" id="check" aria-live="polite"></div>
+          <button class="decide a-decide" type="button" id="btnDecide" disabled>決定<small>13枚で 立直</small></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 17巡の 打ち合い ────────────────────────────
+         ★ 河は 緑の 板 1枚（★上＝あいて・下＝あなた。★17枚ぶんの わくを 最初から 取る）。
+         ★ 切れる 21枚は いちばん 大きく いちばん 下。★切った 牌の 場所は 点線の わくで 残す（★ほかの 牌が ずれない）。
+         ★ ロンは 21枚の 板の 上に 大きく。 -->
+    <section class="scene play hidden" id="play" aria-label="打ち合い">
+      <div class="table a-table" id="riverCard"><span class="tag">あいての 河</span><div class="tiles river" id="riverOpp"></div><div class="divider"><span>あなたの 河</span></div><div class="tiles river" id="riverMe"></div></div>
+      <div class="card hand-card a-hand" id="handCard"><span class="tag">あなたの 手（立直）</span><div class="tiles" id="hand13"></div></div>
+      <div class="card pool-card a-pool" id="restCard">
+        <span class="tag" id="restTag">切れる 牌</span>
+        <div class="pool-box" id="restBox"><div class="tiles" id="rest"></div></div>
+        <div class="ron-cover hidden" id="ronCover"><button class="ron" type="button" id="btnRon">ロン<small id="ronSub"></small></button></div>
+      </div>
+      <div class="side" id="playSide">
+        <div class="card info a-info" id="playInfo"></div>
+        <div class="card opp a-opp tate-only" id="oppRow"></div>
+        <div class="card me a-me tate-only" id="meRow"></div>
+        <div class="card waits yoko-only" id="playWaits"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方（★全ゲーム・全ページに 必ず 出す・§9.5）
+       ★ 場面の 間は ★JS が 場面の 柱（.side）へ 移す（★たて＝場面の 格子の happy、よこ＝柱の いちばん 下）。 -->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap" id="happyWrap">
+      <svg class="happy-cat" id="happyCat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房の マスコット、ねこの ハッピー">
+        <g class="cat-tail">
+          <path d="M108 132 C142 132 140 96 120 96 C110 96 106 106 112 112"
+                fill="none" stroke="#F09A44" stroke-width="13" stroke-linecap="round"/>
+        </g>
+        <path d="M42 158 C36 122 52 104 75 104 C98 104 114 122 108 158 Z" fill="#FBAE55"/>
+        <ellipse cx="75" cy="140" rx="21" ry="18" fill="#FFE9CE"/>
+        <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+        <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+        <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+        <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+        <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+        <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+          <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+        </g>
+        <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+        <g class="cat-eyes">
+          <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+          <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+          <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+          <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+        </g>
+        <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+              stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+          <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+          <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+        </g>
+      </svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">34枚から 13枚、満貫の 手を 作ろう！</p>
+    <button class="howto" type="button" id="btnHowto">？<span> 遊び方</span></button>
+  </div>
+
+</main>
+
+<!-- ── 局の おわり／試合の おわり の 箱 ──────────────────
+     ★ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（T62）。
+     ★ 家へは「◀ ゲームを選ぶ」（★追記⑩ ③ ――「やめる」の 字は 使わない）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="result-title" id="resultTitle">ロン！</p>
+    <div class="result-body" id="resultBody"></div>
+    <div class="result-buttons">
+      <button class="dialog-ok" type="button" id="btnNext">つぎの 局へ <b>▶</b></button>
+      <button class="dialog-ok alt hidden" type="button" id="btnToTitle">最初の 画面へ</button>
+      <a class="dialog-ok alt hidden" href="../" id="btnQuit">◀ ゲームを選ぶ</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（★× は position:sticky ―― 下まで 読んでも 消えない・T267 の 型）──────────
+     ★ ①3行の ルール ②17歩ならではの 決まり ③点の 表 ④役の 一覧（仕様書 §6）。
+     ★ どの 牌が 通るか・どう 組めば よいかは 1文字も 書かない（追記②）。 -->
+<dialog id="helpDialog" aria-labelledby="helpTitle">
+  <button class="close-dialog" data-close="helpDialog" type="button" aria-label="とじる">×</button>
+  <h2 id="helpTitle">🐾 遊び方</h2>
+  <section class="help-sec" id="helpRules">
+    <h3>ルール（3行で）</h3>
+    <ol class="help-list">
+      <li>自分の <b>34枚</b>から <b>13枚</b>を えらんで、<b>満貫（4飜）以上</b>の 聴牌を 作る。</li>
+      <li>残りの 21枚から、2人で 順番に 1枚ずつ <b>17回</b> 切る。相手の 捨て牌で ロンできたら 点を もらう。</li>
+      <li>東風戦・半荘戦の 局の 数だけ くり返して、<b>点の 多い 方</b>の 勝ち。</li>
+    </ol>
+  </section>
+  <section class="help-sec">
+    <h3>17歩ならではの 決まり</h3>
+    <ul class="help-dots">
+      <li>ツモ・ポン・チー・カンは 無い。<b>ロンだけ</b>。満貫に とどかない 牌では ロンできない。</li>
+      <li>13枚を 決めると 2人とも <b>立直</b>（1飜）。一発は 親が 子の 1打目、子が 親の 1打目と 2打目。</li>
+      <li><b>河底撈魚</b>は 最後の 1枚（子の 17打目）で 親が ロンした とき。</li>
+      <li>ドラ表示牌は 親が 山から 1枚 めくる。<b>裏ドラ</b>は ロンの あとで めくり、点にだけ 足す（満貫の 判定には 入れない）。</li>
+      <li><b>フリテン</b>：自分の 待ち牌を 切った とき、または 待ち牌を 見のがした とき、その 局は もう ロンできない。</li>
+      <li>13枚は 満貫に とどかなくても 決定できる。そのときは <b>守りの 局</b>。</li>
+      <li>親は 東・子は 西。東場は 東、南場は 南が 場風。</li>
+    </ul>
+  </section>
+  <!-- ★T334：待ちの 札（◎△×）の 意味（トライ T333 ⑨）。★どの 牌が 通るか・どう 組めば よいかは 書かない（追記②）-->
+  <section class="help-sec" id="helpMarks">
+    <h3>待ちの 札（◎△×）</h3>
+    <ul class="help-dots">
+      <li><b>◎満貫</b>：その 牌で ロンすれば 満貫 以上。</li>
+      <li><b>△一発</b>・<b>△河底</b>：一発か 河底が 付けば 満貫（あと 1飜）。その 打目を 過ぎると × に 変わる。</li>
+      <li><b>×</b>：満貫に とどかない。その 牌が 出ても ロンできず、見のがすと フリテン。</li>
+      <li><b>フリテン</b>の 間は 札が 灰色の「フリテン」に なる（その 局は もう ロンできない）。</li>
+      <li>札は いま 選んで いる 13枚 だけで 決まる。山や あいての 手は 見て いない。</li>
+    </ul>
+  </section>
+  <section class="help-sec">
+    <h3>点の 表（符は 数えない）</h3>
+    <table class="pt-table">
+      <thead><tr><th>飜</th><th></th><th>子</th><th>親</th></tr></thead>
+      <tbody>
+        <tr><td>4〜5</td><td>満貫</td><td>8,000</td><td>12,000</td></tr>
+        <tr><td>6〜7</td><td>跳満</td><td>12,000</td><td>18,000</td></tr>
+        <tr><td>8〜10</td><td>倍満</td><td>16,000</td><td>24,000</td></tr>
+        <tr><td>11〜12</td><td>三倍満</td><td>24,000</td><td>36,000</td></tr>
+        <tr><td>13〜</td><td>役満</td><td>32,000</td><td>48,000</td></tr>
+      </tbody>
+    </table>
+    <ul class="help-dots">
+      <li>役満は 重なった 数だけ 倍。<b>純正九蓮宝燈・大四喜は 2倍</b>。四暗刻単騎・国士無双十三面は 1倍。</li>
+      <li>持ち点は <b>35,000点</b>。毎局 2人とも 立直棒 1,000点を 出す（供託）。1本場ごとに 300点。</li>
+      <li>流局したら 親が 続く。供託は 次の 局へ。0点より 少なく なったら <b>トビ</b>で 終わり。</li>
+      <li><b>最後の 局</b>（東風戦は 東2局・半荘戦は 南2局）は 流局したら そこで 終わり。<b>同点なら 引き分け</b>。</li>
+      <li>最後の 局で <b>親が ロンして トップ</b>に なったら、そこで 終わり（トップで なければ 親が 続く）。</li>
+    </ul>
+  </section>
+  <section class="help-sec" id="helpYaku">
+    <h3>役の 一覧</h3>
+    <dl class="yaku-list" id="yakuList">
+      <dt>1飜</dt>
+      <dd><b>立直</b>13枚を 決めると 自動で 付く</dd>
+      <dd><b>一発</b>親は 子の 1打目、子は 親の 1打目・2打目で ロン</dd>
+      <dd><b>河底撈魚</b>子の 17打目（最後の 1枚）で 親が ロン</dd>
+      <dd><b>平和</b>順子 4つ・役牌で ない 雀頭・両面待ち</dd>
+      <dd><b>断么九</b>2〜8の 数牌 だけ</dd>
+      <dd><b>一盃口</b>同じ 順子が 2つ</dd>
+      <dd><b>役牌</b>白・發・中・場風・自風の 刻子（東場の 親の 東は 2飜）</dd>
+      <dt>2飜</dt>
+      <dd><b>七対子</b>対子が 7つ（同じ 牌 4枚は 2つに 数えない）</dd>
+      <dd><b>三色同順</b>萬子・筒子・索子で 同じ 数の 順子</dd>
+      <dd><b>一気通貫</b>同じ 色で 123・456・789</dd>
+      <dd><b>混全帯么九</b>どの 面子と 雀頭にも 1・9・字牌</dd>
+      <dd><b>対々和</b>刻子が 4つ</dd>
+      <dd><b>三暗刻</b>暗刻が 3つ（ロンで できた 刻子は 数えない）</dd>
+      <dd><b>三色同刻</b>3色で 同じ 数の 刻子</dd>
+      <dd><b>小三元</b>白・發・中の 2つが 刻子、1つが 雀頭</dd>
+      <dd><b>混老頭</b>1・9・字牌 だけ</dd>
+      <dt>3飜</dt>
+      <dd><b>純全帯么九</b>どの 面子と 雀頭にも 1・9（字牌なし）</dd>
+      <dd><b>二盃口</b>一盃口が 2つ</dd>
+      <dd><b>混一色</b>1色の 数牌と 字牌 だけ</dd>
+      <dt>6飜</dt>
+      <dd><b>清一色</b>1色の 数牌 だけ</dd>
+      <dt>役満</dt>
+      <dd><b>国士無双</b>1・9・字牌 13種類（十三面待ちも 1倍）</dd>
+      <dd><b>四暗刻</b>暗刻 4つの 単騎待ち（1倍）</dd>
+      <dd><b>大三元</b>白・發・中が ぜんぶ 刻子</dd>
+      <dd><b>小四喜</b>風牌の 3つが 刻子、1つが 雀頭</dd>
+      <dd><b>大四喜</b>風牌が ぜんぶ 刻子（2倍）</dd>
+      <dd><b>字一色</b>字牌 だけ</dd>
+      <dd><b>緑一色</b>2・3・4・6・8索と 發 だけ</dd>
+      <dd><b>清老頭</b>1・9の 数牌 だけ</dd>
+      <dd><b>九蓮宝燈</b>1色で 1112345678999＋1枚</dd>
+      <dd><b>純正九蓮宝燈</b>1112345678999 の 9面待ち（2倍）</dd>
+      <dt>そのほか</dt>
+      <dd><b>ドラ・裏ドラ</b>1枚ごとに 1飜（役では ない）</dd>
+    </dl>
+  </section>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<!-- ★ 判定（MJCore・T327）→ 牌の 絵（アトの 部品）→ ゲーム本体 の 順 -->
+<script src="../mahjong-core.js"></script>
+<script src="../mahjong-tiles.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
