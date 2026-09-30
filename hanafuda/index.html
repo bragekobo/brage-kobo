@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- ★★ T351 ―― 花札（💻コーダ・2026-09-30）★★
+       ★ 社長の お決め：設計図 追記⑮（★これが 正）。仕様書：logs/T349_花札こいこい仕様書_ルル.md。画面案：logs/T350_花札画面案_アト.md。
+       ★ 題は「花札」。★title・og:title・twitter:title・h1・帯に「こいこい」は 入れない（★お決め⑥）。★説明文には「こいこいで 遊べる」。
+       ★ T355：入口の GAMES（24本目）・sitemap に 足した。★og:image は アトの og/og-hanafuda.png（600×600・T354）。 -->
+  <title>花札 ― ブラウザですぐ遊べる｜ブラゲ工房</title>
+  <meta name="description" content="花札：同じ 月の 札を 合わせて 取り、光・短冊・猪鹿蝶などの 役を 作る 花札の 遊び。こいこいで 遊べる。役が できたら「勝負」か「こいこい」か。3・6・12か月で ロボットと 対戦。 ― ブラゲ工房" />
+  <meta name="theme-color" content="#BCEBF0" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ブラゲ工房" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:title" content="花札 ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta property="og:description" content="花札：同じ 月の 札を 合わせて 取り、役を 作る 花札の 遊び。こいこいで 遊べる。ダウンロードは いりません。" />
+  <meta property="og:url" content="https://bragekobo.com/hanafuda/" />
+  <!-- ★ T301 の 型 ―― ★上の og:url と 1文字も 同じ（★見張り ⑩ が 数えます）。 -->
+  <link rel="canonical" href="https://bragekobo.com/hanafuda/" />
+  <!-- ★ T355：SNS の 絵（★17歩と 同じ 書き方）。★ブラウザは 取りに 行かない 名ふだ。★花札の 絵を 使って いるので CC BY-SA 4.0 -->
+  <meta property="og:image" content="https://bragekobo.com/og/og-hanafuda.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="600" />
+  <meta property="og:image:height" content="600" />
+  <meta property="og:image:alt" content="花札の 場と 役が できた ときの 勝負の 箱。題「花札」と 松に鶴・松に赤短の 札と ねこの ハッピーの かお" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="花札 ― ブラウザですぐ遊べる｜ブラゲ工房" />
+  <meta name="twitter:description" content="花札：同じ 月の 札を 合わせて 取り、役を 作る 花札の 遊び。こいこいで 遊べる。" />
+  <meta name="twitter:image" content="https://bragekobo.com/og/og-hanafuda.png" />
+
+  <!-- タブの アイコン ＝ ハッピーの かお（★17歩と 同じ）-->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M12 27 L14 6 L31 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M52 27 L50 6 L33 18 Z' fill='%23FBAE55'/%3E%3Cpath d='M17 25 L18.5 13 L26 18.5 Z' fill='%23FF9EB5'/%3E%3Cpath d='M47 25 L45.5 13 L38 18.5 Z' fill='%23FF9EB5'/%3E%3Cellipse cx='32' cy='35' rx='26' ry='23' fill='%23FBAE55'/%3E%3Cg stroke='%23E8853A' stroke-width='3.4' stroke-linecap='round' fill='none'%3E%3Cpath d='M25 15 L23 22'/%3E%3Cpath d='M32 13 L32 21'/%3E%3Cpath d='M39 15 L41 22'/%3E%3C/g%3E%3Ccircle cx='14' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Ccircle cx='50' cy='41' r='6' fill='%23FF9EB5' opacity='.65'/%3E%3Cellipse cx='23' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Cellipse cx='41' cy='33' rx='4.6' ry='5.6' fill='%234A3A2C'/%3E%3Ccircle cx='24.6' cy='31' r='1.7' fill='%23fff'/%3E%3Ccircle cx='42.6' cy='31' r='1.7' fill='%23fff'/%3E%3Cpath d='M32 44 L27.6 39 L36.4 39 Z' fill='%23FF7FA0'/%3E%3C/svg%3E" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ★ 見えない h1（★字は 上の帯と 1文字も 同じ・見張り ⑩）-->
+  <h1 style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;font:inherit;color:inherit;background:none;">花札</h1>
+
+<!-- ハッピー（看板ねこ）の かお。★20本から そのまま（設計図 §9.5）-->
+<svg class="sprite-defs" aria-hidden="true" focusable="false" width="0" height="0">
+  <defs>
+    <symbol id="happy-head" viewBox="0 0 150 112">
+      <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+      <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+      <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+      <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+      <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+      <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+        <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+      </g>
+      <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+      <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+      <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+      <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+      <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+      <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+            stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+        <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+        <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+      </g>
+    </symbol>
+    <symbol id="t351-flower" viewBox="0 0 40 40">
+      <g fill="#FFB3D0"><circle cx="20" cy="8" r="8"/><circle cx="33" cy="17" r="8"/><circle cx="28" cy="32" r="8"/><circle cx="12" cy="32" r="8"/><circle cx="7" cy="17" r="8"/></g>
+      <circle cx="20" cy="21" r="6.5" fill="#FFD766"/>
+    </symbol>
+  </defs>
+</svg>
+
+<main class="app" id="app" data-mode="tate">
+
+  <!-- ── 上の帯 ───────────────────────────────────
+       ★ 左：◀ ゲームを選ぶ ／ まん中：題＋「◯か月目／◯か月」 ／ 右：？（★よこ だけ）・↻ やめる（★試合の 間だけ・追記⑩ の 型）。
+       ★ よこの 場面では JS が この 帯を 右の 柱の いちばん 上へ 移す。★320×454 では ハッピーが この 帯の 中へ 入る（アト 案1）。
+       ★ 帯は position:sticky。★この 帯の 親には overflow を 1つも 書かない（★T285 の わな・見張り ⑦）。 -->
+  <header class="topbar" id="topbar">
+    <a class="back" href="../" id="btnBack"><b>◀</b><span> ゲームを選ぶ</span></a>
+    <div class="brand" id="brand">
+      <svg class="deco" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t351-flower"/></svg>
+      <svg class="brand-cat" aria-hidden="true" focusable="false" viewBox="0 0 150 112"><use href="#happy-head"/></svg>
+      <span id="brandName">花札</span>
+    </div>
+    <span class="round hidden" id="roundTop"></span>
+    <button class="howto tb-howto" type="button" id="btnHowtoTop" aria-label="遊び方">？</button>
+    <!-- ★ 押すと はじめの 画面へ（★月数を 決め直せる）。★聞かない（追記⑩ ②）。 -->
+    <button class="quit-btn hidden" type="button" id="btnQuitGame"><svg class="quit-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="qi-arc" d="M17.60 10.90A5.8 5.8 0 1 1 8.67 7.65"/><path class="qi-tip" d="M14.41 3.63 6.03 3.88 11.31 11.42Z"/></svg>やめる</button>
+  </header>
+
+  <!-- ハッピー ＋ ふきだし ＋ 遊び方（★どの 画面でも いちばん 上 ―― 帯の すぐ 下・追記⑭）-->
+  <div class="log-row" id="logRow">
+    <div class="happy-wrap" id="happyWrap">
+      <svg class="happy-cat" id="happyCat" viewBox="0 0 150 160" role="img" aria-label="ブラゲ工房の マスコット、ねこの ハッピー">
+        <g class="cat-tail">
+          <path d="M108 132 C142 132 140 96 120 96 C110 96 106 106 112 112"
+                fill="none" stroke="#F09A44" stroke-width="13" stroke-linecap="round"/>
+        </g>
+        <path d="M42 158 C36 122 52 104 75 104 C98 104 114 122 108 158 Z" fill="#FBAE55"/>
+        <ellipse cx="75" cy="140" rx="21" ry="18" fill="#FFE9CE"/>
+        <path d="M28 52 L31 16 L60 36 Z" fill="#FBAE55"/>
+        <path d="M122 52 L119 16 L90 36 Z" fill="#FBAE55"/>
+        <path d="M37 47 L39 27 L54 38 Z" fill="#FF9EB5"/>
+        <path d="M113 47 L111 27 L96 38 Z" fill="#FF9EB5"/>
+        <ellipse cx="75" cy="66" rx="47" ry="41" fill="#FBAE55"/>
+        <g stroke="#E8853A" stroke-width="6" stroke-linecap="round" fill="none">
+          <path d="M63 32 L59 45"/><path d="M75 29 L75 43"/><path d="M87 32 L91 45"/>
+        </g>
+        <circle cx="44" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <circle cx="106" cy="76" r="10" fill="#FF9EB5" opacity=".6"/>
+        <path d="M75 79 L69.5 73 L80.5 73 Z" fill="#FF7FA0"/>
+        <g class="cat-eyes">
+          <ellipse cx="59" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+          <ellipse cx="91" cy="64" rx="7" ry="8.5" fill="#4A3A2C"/>
+          <circle cx="61.5" cy="61" r="2.6" fill="#fff"/>
+          <circle cx="93.5" cy="61" r="2.6" fill="#fff"/>
+        </g>
+        <path d="M75 80 q-6 9 -12 3 M75 80 q6 9 12 3"
+              stroke="#4A3A2C" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <g stroke="#E8853A" stroke-width="3.2" stroke-linecap="round">
+          <path d="M31 68 L14 65"/><path d="M32 77 L16 82"/>
+          <path d="M119 68 L136 65"/><path d="M118 77 L134 82"/>
+        </g>
+      </svg>
+      <p class="happy-name">ハッピー</p>
+    </div>
+    <p class="happy-bubble" id="happyBubble" aria-live="polite">同じ 月の 札を 合わせて 取ろう！</p>
+    <button class="howto" type="button" id="btnHowto">？<span> 遊び方</span></button>
+  </div>
+
+  <div class="stage" id="stage">
+
+    <!-- ── はじめの 画面 ──────────────────────────────
+         ★ 選ぶのは 月数 だけ（★お決め③）。★ルールと 役の 一覧は 箱で 開く。 -->
+    <section class="title-screen" id="titleScreen">
+      <svg class="t-deco f1" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t351-flower"/></svg>
+      <svg class="t-deco f2" aria-hidden="true" focusable="false" viewBox="0 0 40 40"><use href="#t351-flower"/></svg>
+      <span class="t-twinkle t1" aria-hidden="true">✨</span>
+      <div class="title-art" id="titleArt" aria-hidden="true"></div>
+      <p class="title-lead"><span class="nw">同じ 月の 札を 合わせて、</span><span class="nw">役を 作ろう！</span><small class="title-sub">こいこいで 遊べる 花札</small></p>
+      <div class="len-pick" id="lenPick" role="radiogroup" aria-label="月の 数">
+        <button class="len-btn is-on" type="button" role="radio" aria-checked="true" data-len="3" id="btnM3"><b>3か月</b><small>約3〜5分</small></button>
+        <button class="len-btn" type="button" role="radio" aria-checked="false" data-len="6" id="btnM6"><b>6か月</b><small>約6〜9分</small></button>
+        <button class="len-btn" type="button" role="radio" aria-checked="false" data-len="12" id="btnM12"><b>12か月</b><small>約12〜17分</small></button>
+      </div>
+      <button class="start-button" type="button" id="btnStart">
+        <span>はじめる <b>▶</b></span><small>あいては ロボット</small>
+      </button>
+      <div class="title-links">
+        <button class="sub-btn" type="button" id="btnRules">ルール</button>
+        <button class="sub-btn" type="button" id="btnYaku">役の 一覧</button>
+      </div>
+    </section>
+
+    <!-- ── 親決め（★ふせた 札 2枚から 1枚 めくる・月の 早い 方が 親）── -->
+    <section class="oya-screen hidden" id="oyaScreen" aria-label="親決め">
+      <p class="oya-title">親決め</p>
+      <p class="oya-lead" id="oyaLead">ふせた 札を 1枚 えらんで めくろう。<br>月が 早い 方が 親（先に 出す）。</p>
+      <div class="oya-cards" id="oyaCards">
+        <button class="oya-card" type="button" id="btnOya0" data-i="0" aria-label="左の 札を めくる"></button>
+        <button class="oya-card" type="button" id="btnOya1" data-i="1" aria-label="右の 札を めくる"></button>
+      </div>
+      <p class="oya-msg" id="oyaMsg" aria-live="polite"></p>
+    </section>
+
+    <!-- ── 遊ぶ 画面（★盤）─────────────────────────────
+         ★ たて：相手 → 山 → 場（12の 席）→ 自分 → 手札（★押す 場所は 親指の 側）。★相手の 取り札は どの 場面でも かくさない（アト）。
+         ★ よこ：左の 列に 相手・場（12の 席を 1列）・自分・手札、右の 柱に 帯・ハッピー・山。
+         ★ 札の 大きさ・並べ方は game.js の layout() が 画面の 実寸から 決める（★CSS に たての 線は 1本も ない）。 -->
+    <section class="board hidden" id="board" aria-label="場と 手札">
+      <div class="main" id="mainCol">
+        <section class="strip opp" id="oppStrip" aria-label="ロボット">
+          <div class="tagline" id="oppTag"></div>
+          <div class="cap" id="oppCap"></div>
+        </section>
+        <div class="deckrow" id="deckRow">
+          <div class="deck" id="deck"></div>
+          <span class="flipcap" id="flipCap">← 山から めくった 札</span>
+        </div>
+        <section class="field" id="field" aria-label="場"></section>
+        <section class="strip me" id="meStrip" aria-label="あなた">
+          <div class="tagline" id="meTag"></div>
+          <div class="cap" id="meCap"></div>
+        </section>
+        <section class="hand" id="hand" aria-label="あなたの 手札"></section>
+      </div>
+      <aside class="side" id="side"></aside>
+    </section>
+  </div>
+</main>
+
+<!-- ── ならべ窓（★T355：場の 席が ぜんぶ ふさがって 重なった 席を 押したら、重なった 札を 横に 並べて 選ぶ）── -->
+<div class="kasane-wrap hidden" id="kasaneWrap">
+  <div class="ks-box" id="kasaneBox" role="dialog" aria-modal="false" aria-label="重なった 札から 選ぶ">
+    <p class="ks-lead">どれを 取る？</p>
+    <div class="ks-cards" id="kasaneCards"></div>
+  </div>
+</div>
+
+<!-- ── 勝負か こいこいか（★場から 下に だけ まくを かける ―― 相手の 取り札は 見えた まま）── -->
+<div class="koi-wrap hidden" id="koiWrap">
+  <div class="koi-box" id="koiBox" role="dialog" aria-modal="false" aria-labelledby="koiLead">
+    <p class="kb-lead" id="koiLead">役が できた！</p>
+    <ul class="kb-yaku" id="koiYaku"></ul>
+    <div class="kb-mult" id="koiMult"></div>
+    <p class="kb-total">いま 勝負すれば <b id="koiPts">0点</b></p>
+    <div class="kb-btns">
+      <button class="kb-shobu" type="button" id="btnShobu"><b>勝負</b><small>ここで 点を もらって 終わる</small></button>
+      <button class="kb-koi" type="button" id="btnKoi"><b>こいこい</b><small><span class="nw">続ける。</span><span class="nw">相手に 先に</span> <span class="nw">役が できたら 0点</span></small></button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 月の おわり／試合の おわり の 箱 ──────────────────
+     ★ 箱が 出てから TUNE.RESULT_LOCK ミリ秒は おせなく する（T62）。
+     ★ 家へは「◀ ゲームを選ぶ」（★追記⑩ ③ ――「やめる」の 字は 使わない）。 -->
+<div class="result-wrap hidden" id="resultWrap">
+  <div class="result-box" id="resultBox" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <p class="rs-sub" id="resultSub"></p>
+    <p class="result-title" id="resultTitle">あなたの 勝ち！</p>
+    <div class="result-body" id="resultBody"></div>
+    <div class="result-buttons">
+      <button class="dialog-ok" type="button" id="btnNext">次の 月へ <b>▶</b></button>
+      <button class="dialog-ok alt hidden" type="button" id="btnToTitle">最初の 画面へ</button>
+      <a class="dialog-ok alt hidden" href="../" id="btnQuit">◀ ゲームを選ぶ</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── 遊び方（★× は position:sticky ―― 下まで 読んでも 消えない・T267 の 型）──────────
+     ★ ①3行の ルール ②こいこいの 決まり ③札の 表 ④役の 一覧 ⑤点の 決まり ⑥いちばん 下に 絵の 出どころ（仕様書 §5-2・§6-2）。
+     ★ どの 札を 取れば よいか・あと 何枚で 役かは 1文字も 書かない（追記②）。 -->
+<dialog id="helpDialog" aria-labelledby="helpTitle">
+  <button class="close-dialog" data-close="helpDialog" type="button" aria-label="とじる">×</button>
+  <h2 id="helpTitle">🐾 遊び方</h2>
+  <section class="help-sec" id="helpRules">
+    <h3>ルール（3行で）</h3>
+    <ol class="help-list">
+      <li>手札から 1枚 出し、山から 1枚 めくる。<b>同じ 月の 札</b>が 場に あれば、2枚とも 自分の もの。</li>
+      <li>取った 札で 役が できたら、「<b>勝負</b>」で 点を もらって 終わるか、「<b>こいこい</b>」で もっと 大きな 役を ねらうか。</li>
+      <li>こいこいした あとで 相手に 先に 役が できたら、自分は 0点・相手は <b>2倍</b>。これを 何か月か くり返して、<b>合計点</b>で 勝負。</li>
+    </ol>
+  </section>
+  <section class="help-sec">
+    <h3>こいこいの 決まり</h3>
+    <ul class="help-dots">
+      <li>札の 下の 数字は その 札の <b>月</b>（1〜12）。1つの 月に 4枚 ある。</li>
+      <li>手札を タップして えらび、場の <b>同じ 月の 札</b>を タップすると 取れる。同じ 月が 無い ときは <b>空いた 席</b>を タップして 置く。</li>
+      <li>場に 同じ 月が 2枚 ある ときは、取りたい 方を タップ。山から めくった 札で 2枚から 選ぶ ときも 同じ（2枚が 同じ 種類なら 自動）。</li>
+      <li>場に 同じ 月が 3枚 あれば、4枚目で <b>4枚 ぜんぶ</b> 取れる。</li>
+      <li>こいこいの あとは、<b>点が ふえた</b> ときだけ また 勝負か こいこいか 選べる。何回でも こいこいできる。</li>
+      <li>手札が 0枚で 役が できたら 自動で 勝負。</li>
+      <li>2人の 手札が 0枚に なっても だれも 勝負して いなければ <b>流れ</b>（0点・親が かわる）。</li>
+      <li>勝った 人が 次の 月の 親。はじめの 親は、ふせた 2枚から 1枚 めくって 月が 早い 方。</li>
+      <li>場に 同じ 月が 4枚 配られたら 配り直し。</li>
+    </ul>
+  </section>
+  <section class="help-sec" id="helpCards">
+    <h3>札の 表（月ごとに 4枚）</h3>
+    <div class="card-table" id="cardTable"></div>
+  </section>
+  <section class="help-sec" id="helpYaku">
+    <h3>役の 一覧</h3>
+    <dl class="yaku-list" id="yakuList">
+      <dt>光の 役（1つだけ）</dt>
+      <dd><b>五光</b><i>10点</i>光 5枚</dd>
+      <dd><b>四光</b><i>8点</i>柳に小野道風（雨）を 入れない 光 4枚</dd>
+      <dd><b>雨四光</b><i>7点</i>柳に小野道風を 入れた 光 4枚</dd>
+      <dd><b>三光</b><i>5点</i>柳に小野道風を 入れない 光 3枚（雨が 入った 3枚は 役に ならない）</dd>
+      <dt>盃の 役</dt>
+      <dd><b>花見で一杯</b><i>5点</i>桜に幕＋菊に盃</dd>
+      <dd><b>月見で一杯</b><i>5点</i>芒に月＋菊に盃</dd>
+      <dt>組の 役</dt>
+      <dd><b>猪鹿蝶</b><i>5点</i>萩に猪・紅葉に鹿・牡丹に蝶</dd>
+      <dd><b>赤短</b><i>5点</i>松・梅・桜の 字の ある 赤い 短冊</dd>
+      <dd><b>青短</b><i>5点</i>牡丹・菊・紅葉の 青い 短冊</dd>
+      <dt>枚数の 役</dt>
+      <dd><b>タネ</b><i>1点〜</i>タネ 5枚で 1点。1枚 ふえる ごとに ＋1</dd>
+      <dd><b>タン</b><i>1点〜</i>短冊 5枚で 1点。1枚 ふえる ごとに ＋1</dd>
+      <dd><b>カス</b><i>1点〜</i>カス 10枚で 1点。1枚 ふえる ごとに ＋1</dd>
+      <dt>手役（配られた 手札）</dt>
+      <dd><b>手四</b><i>6点</i>同じ 月が 4枚</dd>
+      <dd><b>くっつき</b><i>6点</i>同じ 月 2枚が 4組</dd>
+    </dl>
+  </section>
+  <section class="help-sec">
+    <h3>点の 決まり</h3>
+    <ul class="help-dots">
+      <li>できた 役の 点を 足す。役は 重ねて 足せる（赤短と 青短で 10点）。猪鹿蝶・赤短・青短は 札が ふえても 5点の まま。</li>
+      <li><b>菊に盃</b>は タネにも カスにも 数える。柳に小野道風が あっても 花見で一杯・月見で一杯は 消えない。</li>
+      <li>足した 点が <b>7点 以上</b>なら 2倍。</li>
+      <li><b>相手が こいこい中</b>に 勝負したら 2倍（7点 以上と 重なれば 4倍）。</li>
+      <li>選んだ 月数を 遊んで、<b>合計点が 多い 方</b>の 勝ち。同じ なら 引き分け。</li>
+    </ul>
+  </section>
+  <!-- ★ 絵の 出どころ（★いちばん 下・追記⑮）。★リンクは 押したら 外へ 行くだけ（★開いた だけでは 通信 0）-->
+  <section class="help-sec credit" id="helpCredit">
+    <h3>花札の 絵</h3>
+    <p class="credit-text">花札の 絵：Louie Mantia・すけじょ・Spenĉjo（<a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja" target="_blank" rel="noopener noreferrer">CC BY-SA 4.0</a>）。<a href="https://commons.wikimedia.org/wiki/Category:SVG_Hanafuda_with_traditional_colors_(black_border)" target="_blank" rel="noopener noreferrer">もとの 絵（Wikimedia Commons）</a>。ファイルを 1つに まとめ、中の 名前を 付けかえました（見た目は 変えて いません）。SNS の 絵（og-hanafuda.png）は この ゲームの 画面の 写真に 松の 2枚を 重ねた もの、入口の カードの 絵は 松の 2枚を 小さく して 重ねた もの（どちらも 札の 絵の 中身は 変えて いません）。この 2つも CC BY-SA 4.0 です。くわしくは <a href="CREDITS.txt" target="_blank" rel="noopener">CREDITS.txt</a>。</p>
+  </section>
+  <button class="dialog-ok" data-close="helpDialog" type="button">分かった！</button>
+</dialog>
+
+<!-- ★ 判定（HanaCore）→ ゲーム本体 の 順。★札の 絵は sprite.svg を <use> で 読む（★http で 開く こと）-->
+<script src="hanafuda-core.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

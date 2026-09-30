@@ -1,0 +1,81 @@
+花札の絵について
+
+このゲームの花札48枚の絵は、Wikimedia Commons にある次の作品を使っています。
+
+  作者：Louie Mantia、すけじょ、Spenĉjo
+  （5月のタネ・10月の短冊・11月のカスは Spenĉjo さんの手直しが入った絵です）
+  ライセンス：クリエイティブ・コモンズ 表示 - 継承 4.0 国際（CC BY-SA 4.0）
+  https://creativecommons.org/licenses/by-sa/4.0/deed.ja
+  もとの絵：Category:SVG Hanafuda with traditional colors (black border)
+  https://commons.wikimedia.org/wiki/Category:SVG_Hanafuda_with_traditional_colors_(black_border)
+  （1枚ずつのページ：例 https://commons.wikimedia.org/wiki/File:Hanafuda_January_Hikari_Alt.svg）
+
+変更について
+  見た目の変更はありません（ファイルを1つにまとめた）。
+  48枚のSVGを1つのファイル（sprite.svg）にまとめるため、ファイルの中の名前（id・class）を
+  付けかえ、空白と編集ソフトの情報をけずりました。線・色・形は1つも変えていません。
+  文字（あかよろし・みよしの・寿）もそのまま残しています。
+
+このファイル（sprite.svg）も CC BY-SA 4.0 で公開します。
+札の裏面は絵を使わず、1色でぬっています。
+
+SNS の絵と入口のカードの絵について
+  og-hanafuda.png：このゲームの画面の写真（場・手札・取り札の札が十数枚、うすい幕を重ねた状態と、
+    勝負の箱）に、1月 松に鶴・1月 松に赤短 の2枚を縮小・回転して重ねたもの。
+  入口の絵：1月 松に鶴・1月 松に赤短 の2枚を縮小・回転・重ねて配置したもの。
+  どちらも花札の絵そのもの（線・色・形）は変えていません（絵の中身の変更なし）。
+  この2つも CC BY-SA 4.0 で公開します。
+  （og-hanafuda.png は https://bragekobo.com/og/og-hanafuda.png 、入口の絵はまとめサイトの
+   トップページ https://bragekobo.com/ の中に焼き込んでいます）
+
+----------------------------------------------------------------------
+48枚の一覧（sprite.svg の中の名前／札／もとのファイル／作者／もとのページ）
+----------------------------------------------------------------------
+hf0	1月 松に鶴	Hanafuda_January_Hikari_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_January_Hikari_Alt.svg
+hf1	1月 松に赤短	Hanafuda_January_Tanzaku_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_January_Tanzaku_Alt.svg
+hf2	1月 松のカス	Hanafuda_January_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_January_Kasu_1_Alt.svg
+hf3	1月 松のカス	Hanafuda_January_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_January_Kasu_2_Alt.svg
+hf4	2月 梅にうぐいす	Hanafuda_February_Tane_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_February_Tane_Alt.svg
+hf5	2月 梅に赤短	Hanafuda_February_Tanzaku_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_February_Tanzaku_Alt.svg
+hf6	2月 梅のカス	Hanafuda_February_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_February_Kasu_1_Alt.svg
+hf7	2月 梅のカス	Hanafuda_February_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_February_Kasu_2_Alt.svg
+hf8	3月 桜に幕	Hanafuda_March_Hikari_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_March_Hikari_Alt.svg
+hf9	3月 桜に赤短	Hanafuda_March_Tanzaku_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_March_Tanzaku_Alt.svg
+hf10	3月 桜のカス	Hanafuda_March_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_March_Kasu_1_Alt.svg
+hf11	3月 桜のカス	Hanafuda_March_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_March_Kasu_2_Alt.svg
+hf12	4月 藤にほととぎす	Hanafuda_April_Tane_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_April_Tane_Alt.svg
+hf13	4月 藤に短冊	Hanafuda_April_Tanzaku_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_April_Tanzaku_Alt.svg
+hf14	4月 藤のカス	Hanafuda_April_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_April_Kasu_1_Alt.svg
+hf15	4月 藤のカス	Hanafuda_April_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_April_Kasu_2_Alt.svg
+hf16	5月 菖蒲に八橋	Hanafuda_May_Tane_Alt.svg	Louie Mantia, すけじょ （手直し：Spenĉjo）	https://commons.wikimedia.org/wiki/File:Hanafuda_May_Tane_Alt.svg
+hf17	5月 菖蒲に短冊	Hanafuda_May_Tanzaku_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_May_Tanzaku_Alt.svg
+hf18	5月 菖蒲のカス	Hanafuda_May_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_May_Kasu_1_Alt.svg
+hf19	5月 菖蒲のカス	Hanafuda_May_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_May_Kasu_2_Alt.svg
+hf20	6月 牡丹に蝶	Hanafuda_June_Tane_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_June_Tane_Alt.svg
+hf21	6月 牡丹に青短	Hanafuda_June_Tanzaku_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_June_Tanzaku_Alt.svg
+hf22	6月 牡丹のカス	Hanafuda_June_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_June_Kasu_1_Alt.svg
+hf23	6月 牡丹のカス	Hanafuda_June_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_June_Kasu_2_Alt.svg
+hf24	7月 萩に猪	Hanafuda_July_Tane_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_July_Tane_Alt.svg
+hf25	7月 萩に短冊	Hanafuda_July_Tanzaku_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_July_Tanzaku_Alt.svg
+hf26	7月 萩のカス	Hanafuda_July_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_July_Kasu_1_Alt.svg
+hf27	7月 萩のカス	Hanafuda_July_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_July_Kasu_2_Alt.svg
+hf28	8月 芒に月	Hanafuda_August_Hikari_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_August_Hikari_Alt.svg
+hf29	8月 芒に雁	Hanafuda_August_Tane_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_August_Tane_Alt.svg
+hf30	8月 芒のカス	Hanafuda_August_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_August_Kasu_1_Alt.svg
+hf31	8月 芒のカス	Hanafuda_August_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_August_Kasu_2_Alt.svg
+hf32	9月 菊に盃	Hanafuda_September_Tane_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_September_Tane_Alt.svg
+hf33	9月 菊に青短	Hanafuda_September_Tanzaku_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_September_Tanzaku_Alt.svg
+hf34	9月 菊のカス	Hanafuda_September_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_September_Kasu_1_Alt.svg
+hf35	9月 菊のカス	Hanafuda_September_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_September_Kasu_2_Alt.svg
+hf36	10月 紅葉に鹿	Hanafuda_October_Tane_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_October_Tane_Alt.svg
+hf37	10月 紅葉に青短	Hanafuda_October_Tanzaku_Alt.svg	Louie Mantia, すけじょ （手直し：Spenĉjo）	https://commons.wikimedia.org/wiki/File:Hanafuda_October_Tanzaku_Alt.svg
+hf38	10月 紅葉のカス	Hanafuda_October_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_October_Kasu_1_Alt.svg
+hf39	10月 紅葉のカス	Hanafuda_October_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_October_Kasu_2_Alt.svg
+hf40	11月 柳に小野道風	Hanafuda_November_Hikari_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_November_Hikari_Alt.svg
+hf41	11月 柳に燕	Hanafuda_November_Tane_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_November_Tane_Alt.svg
+hf42	11月 柳に短冊	Hanafuda_November_Tanzaku_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_November_Tanzaku_Alt.svg
+hf43	11月 柳のカス	Hanafuda_November_Kasu_Alt.svg	Louie Mantia, すけじょ （手直し：Spenĉjo）	https://commons.wikimedia.org/wiki/File:Hanafuda_November_Kasu_Alt.svg
+hf44	12月 桐に鳳凰	Hanafuda_December_Hikari_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_December_Hikari_Alt.svg
+hf45	12月 桐のカス	Hanafuda_December_Kasu_1_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_December_Kasu_1_Alt.svg
+hf46	12月 桐のカス	Hanafuda_December_Kasu_2_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_December_Kasu_2_Alt.svg
+hf47	12月 桐のカス	Hanafuda_December_Kasu_3_Alt.svg	Louie Mantia, すけじょ	https://commons.wikimedia.org/wiki/File:Hanafuda_December_Kasu_3_Alt.svg

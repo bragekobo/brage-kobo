@@ -1,0 +1,527 @@
+/* ============================================================
+   花札 ― 見た目（T351・💻コーダ）
+   ------------------------------------------------------------
+   ・色・かたち・丸ゴシックは 23本と そろえて ある（設計図 §9.5）。★板・名札・並べ方は アトの 見本（T350 mihon.html）の 型。
+   ・札の 絵は ./sprite.svg（Alt版48枚・見た目の 変更 なし）。★絵の 上には 1文字も 重ねない。裏は 朱（#C9483F）の 1色。
+   ・★ 月の 数字は 案A：札の 下に 白い 帯（★全部の 札に 同じ ように・光らせない・取った 札には 付けない）。
+   ・★ 強調：選んだ 手札が 上がる＋下に ピンクの 線。★T358（社長）：今 取れる 場の 札は 赤い 枠（is-can）。:hover は なし。
+
+   ★★ 寸法は CSS では 決めない ★★
+     ・札の 大きさ・たて／よこ・詰める／山を 7列目に は ★game.js の layout() が 画面の 実寸から 決め、
+       ★app に data-mode／data-compact／data-deck7／data-low／data-narrow を 付け、--fw など の 数を 入れる（★CSS は それを 読む だけ）。
+     ・★だから この ファイルには 画面の たてで 分ける 線（@media の height）が 1本も ない（追記⑥ 決まり2）。
+     ・はば だけの 線（★字を 小さく する）は 3本：520px・374px・360px（★17歩と 同じ 数）。
+   ・★字は 11px 以上（★会社の 床）。
+   ============================================================ */
+
+:root {
+  --ink:#463c52;
+  --pink:      #FF8CB8;
+  --pink-deep: #E94F8A;
+  --pink-dark: #C43A73;
+  --pink-soft: #FFE3EF;
+  --white:     #ffffff;
+  --cream:     #fff9ea;
+  --gold:      #F1A426;
+  --gold-soft: #FFE690;
+  --mint:      #6FC98C;
+  --mint-soft: #DCF6E4;
+  --sky:       #bcebf0;
+  --felt:      #E3F5E8;
+  --felt-edge: #B9E3C6;
+  --back:      #C9483F;           /* ★札の 裏（朱）*/
+  --nh:        14px;              /* ★月の 数字の 帯（JS の TUNE.NUM_H と 同じ）*/
+  --rt:        1.639344;          /* ★札の ひりつ 1600／976（★くずさない）*/
+
+  --font-main:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN W4","M PLUS Rounded 1c","Rounded Mplus 1c","BIZ UDPGothic","Yu Gothic UI","Hiragino Sans","Noto Sans JP",Meiryo,system-ui,sans-serif;
+}
+
+* { box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  margin:0; min-width:320px; color:var(--ink); font-family:var(--font-main);
+  background:linear-gradient(180deg,var(--sky) 0 170px,#fff7e8 170px);
+  overflow:hidden;
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+  -webkit-touch-callout:none;
+}
+button { font-family:inherit; cursor:pointer; }
+.hidden { display:none !important; }
+.sprite-defs { position:absolute; width:0; height:0; overflow:hidden; }
+.nw { display:inline-block; }
+
+/* ============================================================
+   ★ 器
+   ★ たて：上から 帯／ハッピー／まん中（★盤）。★よこ（盤の 間）：帯と ハッピーは 右の 柱へ（★JS が DOM を 移す）
+   ⚠️★ ここにも 親にも overflow を 書かない こと（★七並べ T285 の わな）。
+   ============================================================ */
+.app {
+  height:100vh; height:100svh;
+  max-width:var(--colw,560px); margin:0 auto; padding:6px var(--padx,8px);
+  display:flex; flex-direction:column; gap:var(--g,6px);
+}
+.app[data-mode="yoko"].in-board { max-width:none; }
+.app > .topbar, .app > .log-row { flex:0 0 auto; }
+.stage { position:relative; flex:1 1 auto; min-height:0; min-width:0; display:flex; flex-direction:column; }
+
+/* ── 上の帯 ─────────────────────────────── */
+.topbar {
+  position:sticky; top:0; z-index:20;
+  display:flex; align-items:center; gap:6px; min-height:44px;
+}
+.back {
+  flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 12px;
+  background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
+  color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
+}
+.brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:5px; min-width:0; }
+.brand-cat { width:30px; height:23px; flex:0 0 auto; }
+.brand span { font-weight:900; font-size:18px; color:#3f5a70; white-space:nowrap; letter-spacing:.04em; }
+.brand .deco { width:18px; height:18px; flex:0 0 auto; pointer-events:none; opacity:.9; }
+.brand.is-cut .deco, .brand.is-cut .brand-cat { display:none; }   /* ★JS の fitBrand が 入らない ときだけ 付ける */
+.brand.is-cut2 span { font-size:13px; letter-spacing:0; }
+.round {
+  flex:0 0 auto; display:inline-flex; align-items:baseline; gap:1px; padding:3px 9px; border-radius:999px;
+  background:var(--white); border:2px solid var(--gold-soft); font-size:12px; font-weight:900; color:#6b5522; white-space:nowrap;
+}
+.round b { font-size:15px; color:var(--pink-dark); }
+
+/* ★★ 追記⑩ の 型 ―「↻ やめる」（★うすみどり・44×44・SVG 16px・position:relative＋z-index:2）★★ */
+.quit-btn {
+  position:relative; z-index:2;
+  flex:0 0 auto;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; padding:0 10px;
+  background:#B7EDC9; border:3px solid #2F7D4C; border-radius:999px;
+  color:#22633F; font-size:11.5px; font-weight:900; line-height:1;
+  white-space:nowrap;
+}
+.quit-btn .quit-icon { margin-right:4px; }
+.quit-btn svg.quit-icon { width:16px; height:16px; flex:0 0 auto; pointer-events:none; }
+.quit-btn .qi-arc { fill:none; stroke:currentColor; stroke-width:3.2; stroke-linecap:round; }
+.quit-btn .qi-tip { fill:currentColor; stroke:none; }
+@media (max-width:374px) {
+  .quit-btn { font-size:11px; padding:0 6px; }
+  .quit-btn .quit-icon { display:none; }
+}
+@media (max-width:520px) {
+  .back span { display:none; }
+  .back { padding:0 11px; }
+  .brand span { font-size:16px; }
+}
+@media (max-width:360px) {
+  .brand span { font-size:15px; }
+  .brand .deco { display:none; }
+}
+/* ★「？ 遊び方」：よこの 盤では 帯へ（★ハッピーの ふきだしを 広く）／それ 以外は ハッピーの 行 */
+.tb-howto { display:none; }
+[data-mode="yoko"].in-board .tb-howto { display:inline-flex; align-items:center; justify-content:center; padding:0; width:44px; }
+[data-mode="yoko"].in-board .log-row .howto { display:none; }
+/* ★よこの 盤：帯は 右の 柱の いちばん 上 */
+[data-mode="yoko"] .side .topbar { gap:4px; }
+[data-mode="yoko"] .side .back span { display:none; }
+[data-mode="yoko"] .side .back { padding:0 11px; }
+[data-mode="yoko"] .side .quit-btn { padding:0 8px; }
+[data-mode="yoko"] .side .quit-btn .quit-icon { display:none; }
+[data-mode="yoko"] .side .brand { display:none; }
+/* ★詰める たて（320×454 など）：ハッピーは 帯の 中（★いちばん 上の まま）・題と 月の 札は 消す */
+[data-compact="1"] .topbar .brand, [data-compact="1"] .topbar .round { display:none; }
+[data-compact="1"] .topbar .log-row { flex:1 1 auto; min-height:44px; padding:1px 6px; gap:4px; border-width:2px; border-radius:14px; }
+[data-compact="1"] .topbar .log-row .happy-name { display:none; }
+[data-compact="1"] .topbar .log-row .happy-cat { width:26px; height:28px; }
+[data-compact="1"] .topbar .log-row .happy-bubble { font-size:11px; line-height:1.25; }
+[data-compact="1"] .topbar .log-row .howto { padding:0; width:44px; }
+[data-compact="1"] .topbar .log-row .howto span { display:none; }
+[data-compact="1"] .topbar { gap:4px; }
+[data-compact="1"] .topbar .quit-btn { padding:0 6px; }
+
+/* ── ハッピー ＋ ふきだし ＋ 遊び方（★まとめサイトの ハッピーが 正）── */
+.log-row {
+  position:relative; z-index:5;
+  display:flex; align-items:center; gap:8px; min-width:0;
+  padding:4px 10px; background:var(--white); border:3px solid var(--pink-soft); border-radius:18px;
+}
+.happy-wrap { flex:0 0 auto; text-align:center; }
+.happy-cat { width:40px; height:43px; display:block; overflow:visible; }
+.happy-name { margin:0; font-size:11px; font-weight:900; color:#b8903a; line-height:1.2; }
+.cat-eyes { transform-box:fill-box; transform-origin:center; animation:blink 5s infinite; }
+@keyframes blink { 0%, 92%, 100% { transform:scaleY(1); } 95% { transform:scaleY(.1); } }
+.cat-tail { transform-box:fill-box; transform-origin:10% 90%; animation:wag 2.4s ease-in-out infinite; }
+@keyframes wag { 0%, 100% { transform:rotate(0deg); } 50% { transform:rotate(-9deg); } }
+.happy-bubble {
+  flex:1 1 auto; margin:0; min-width:0;
+  font-size:13.5px; font-weight:900; color:#5a4a63; line-height:1.4;
+  word-break:keep-all; overflow-wrap:anywhere;
+}
+.howto {
+  position:relative; flex:0 0 auto; min-height:44px; min-width:44px; padding:0 10px; border-radius:999px;
+  background:var(--white); border:3px solid var(--pink-soft);
+  color:var(--pink-dark); font-size:12px; font-weight:900; white-space:nowrap;
+}
+@media (max-width:360px) {
+  .happy-bubble { font-size:12.5px; }
+  .howto { padding:0 9px; font-size:11.5px; border-width:2px; }
+  .log-row { padding:4px 7px; gap:6px; }
+}
+[data-pc="1"] .log-row .happy-cat { width:50px; height:54px; }
+[data-mode="yoko"] .side .log-row { padding:4px 6px; gap:5px; border-radius:16px; }
+[data-mode="yoko"] .side .happy-cat { width:30px; height:32px; }
+[data-mode="yoko"] .side .happy-name { display:none; }
+[data-mode="yoko"] .side .happy-bubble { font-size:12px; line-height:1.35; }
+[data-low="1"] .side .happy-bubble { font-size:11px; line-height:1.3; }
+@keyframes happyJump {
+  0%,100% { transform:translateY(0) rotate(0); }
+  30% { transform:translateY(-9px) rotate(-7deg); }
+  60% { transform:translateY(0) rotate(5deg); }
+}
+.happy-cat.is-jump { animation:happyJump .5s ease-in-out 4; }
+
+/* ── はじめの 画面 ──────────────────────────────
+   ★ 選ぶのは 月数 だけ（★お決め③）。 */
+.title-screen, .oya-screen {
+  position:relative; min-width:0;
+  flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  padding:12px 14px; background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  text-align:center; box-shadow:0 7px 0 rgba(196,58,115,.10); min-height:0;
+}
+.title-art { position:relative; z-index:1; display:flex; gap:8px; justify-content:center; align-items:flex-end; flex:0 0 auto; }
+.title-art .hc { --w:48px; }
+.title-art .hc:nth-child(2) { margin-bottom:8px; }
+.title-lead { position:relative; z-index:1; margin:0; font-size:clamp(16px,4.4vw,22px); font-weight:900; color:#5a4a63; line-height:1.5; }
+.title-sub { display:block; font-size:13px; font-weight:900; color:#b8903a; line-height:1.4; }
+.len-pick { position:relative; z-index:1; display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+.len-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  min-width:84px; min-height:52px; padding:6px 10px; border-radius:18px;
+  background:var(--white); border:3px solid var(--gold-soft); color:#7a5205;
+}
+.len-btn b { font-size:17px; font-weight:900; }
+.len-btn small { font-size:11.5px; font-weight:700; }
+.len-btn.is-on { background:var(--gold-soft); border-color:var(--gold); }
+.len-btn:active { transform:translateY(2px); }
+.start-button {
+  position:relative; z-index:1;
+  display:inline-flex; flex-direction:column; align-items:center; gap:2px;
+  min-width:min(240px,100%); max-width:100%; min-height:44px; padding:12px 24px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 6px 0 var(--pink-dark);
+  font-size:20px; font-weight:900;
+}
+.start-button small { font-size:12px; font-weight:700; opacity:.92; }
+.start-button:active { transform:translateY(3px); box-shadow:0 3px 0 var(--pink-dark); }
+.title-links { position:relative; z-index:1; display:flex; gap:8px; }
+.sub-btn {
+  min-height:44px; min-width:44px; padding:0 16px; border-radius:999px;
+  background:var(--white); border:3px solid var(--pink-soft); color:var(--pink-dark);
+  font-size:13.5px; font-weight:900;
+}
+/* ★ 箱に 入らない ときだけ（★JS の fitTitle が 出して みて 付ける ―― たての 線は 引かない）*/
+.title-screen > *, .oya-screen > * { flex-shrink:0; }   /* ★T353：縮めない（★入らない ときは JS の fitTitle／fitOya が 測って 詰める）*/
+.title-screen.is-tight { gap:7px; padding:8px 10px; }
+.title-screen.is-tight .title-art, .title-screen.is-tight .t-deco, .title-screen.is-tight .t-twinkle { display:none; }
+.title-screen.is-tight .len-btn { min-height:44px; padding:3px 10px; }
+.title-screen.is-tight .start-button { padding:7px 22px; font-size:18px; }
+.title-screen.is-tighter { flex-flow:row wrap; align-content:center; column-gap:8px; row-gap:6px; }
+.title-screen.is-tighter .title-lead { flex:0 0 100%; }
+.title-screen.is-tighter .len-btn { min-width:70px; }
+.title-screen.is-tighter .start-button { min-width:0; padding:6px 20px; }
+.title-screen.is-tighter .title-lead { font-size:15px; }
+.title-screen.is-tighter .title-sub { display:inline; margin-left:4px; font-size:11px; }
+.title-screen.is-tighter .len-btn small { display:none; }
+.title-screen.is-tighter .start-button small { display:none; }
+.t-deco { position:absolute; pointer-events:none; z-index:0; }
+.t-deco.f1 { width:26px; height:26px; top:14px; right:7%; animation:tSpin 14s linear infinite; }
+.t-deco.f2 { width:20px; height:20px; bottom:16px; left:8%; animation:tSpin 18s linear infinite reverse; }
+@keyframes tSpin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+.t-twinkle { position:absolute; font-size:18px; pointer-events:none; animation:tTwinkle 2.6s ease-in-out infinite; bottom:18%; right:8%; }
+@keyframes tTwinkle { 0%,100% { transform:scale(1); opacity:.95; } 50% { transform:scale(1.3); opacity:.5; } }
+
+/* ── 親決め ── */
+.oya-title { margin:0; font-size:22px; font-weight:900; color:var(--pink-dark); }
+.oya-lead { margin:0; font-size:14px; font-weight:900; color:#5a4a63; line-height:1.6; }
+.oya-cards { display:flex; gap:22px; justify-content:center; align-items:flex-end; }
+.oya-card {
+  position:relative; display:flex; flex-direction:column; align-items:center; gap:4px;
+  min-width:44px; min-height:44px; padding:0; border:none; background:none;
+}
+.oya-card .bk { width:var(--ow,70px); height:calc(var(--ow,70px) * var(--rt)); }
+.oya-card .hc { --w:var(--ow,70px); }
+.oya-card .who { font-size:13px; font-weight:900; color:#5a4a63; }
+.oya-card[disabled] { cursor:default; }
+.oya-msg { margin:0; min-height:1.5em; font-size:17px; font-weight:900; color:var(--pink-dark); }
+.oya-screen.is-tight { gap:6px; padding:6px 10px; }
+.oya-screen.is-tight .oya-title { display:none; }
+.oya-screen.is-tight .oya-lead { font-size:12.5px; line-height:1.4; }
+.oya-screen.is-tight .oya-lead br { display:none; }
+.oya-screen.is-tight .oya-msg { font-size:15px; min-height:1.3em; }
+.oya-screen.is-tight { flex-flow:row wrap; align-content:center; column-gap:14px; }
+.oya-screen.is-tight .oya-lead { flex:0 0 100%; }
+
+/* ============================================================
+   ★ 札（★絵は 支給の まま・大きさだけ CSS）
+   .hc ＝ 札 1枚（★絵＋月の 数字の 帯）。--w が はば（★JS が 場所ごとに 入れる）
+   ============================================================ */
+.hc { position:relative; flex:0 0 auto; width:var(--w); height:calc(var(--w) * var(--rt) + var(--nh)); }
+.hc.nonum { height:calc(var(--w) * var(--rt)); }
+.hc .face { display:block; width:var(--w); height:calc(var(--w) * var(--rt)); filter:drop-shadow(0 2px 0 rgba(70,60,82,.22)); pointer-events:none; }
+/* ★月の 数字（案A）：札と 同じ はばの 白い 帯・墨色 11px。★色は 1つ・光らせない */
+.hc .mn {
+  display:block; height:13px; margin-top:1px; font-size:11px; line-height:13px; font-weight:900; color:var(--ink); text-align:center;
+  background:#fff; border-radius:0 0 6px 6px; box-shadow:inset 0 0 0 1px #d9cfe0; pointer-events:none; font-variant-numeric:tabular-nums;
+}
+.hc.nonum .mn { display:none; }
+/* ★選んだ 手札：上がる＋下に ピンクの 線（★強調は この 1種類 だけ）*/
+.hc.is-sel { transform:translateY(calc(var(--lift,8px) * -1)); }
+.hc.is-sel::after { content:""; position:absolute; left:12%; right:12%; bottom:calc(var(--lift,8px) * -1 + 1px); height:4px; border-radius:2px; background:var(--pink-deep); }
+/* ★T358（社長）：今 取れる 場の 札 ―― ★札の 外側に 太い 赤（4px）＋ 内側に 白い 輪（★絵の 黒い 枠・赤と まぎれない）。
+     ★色だけに たよらない：★太さと 白い すき間の 2重の 輪（★角は 札に 合わせて 丸い）。★絵（sprite）は 1画素も 変えない */
+.hc.is-can { outline:4px solid #E4002B; outline-offset:2px; border-radius:4px; box-shadow:0 0 0 2px #fff; z-index:3; }
+.seat > .hc.is-can { z-index:3; }
+/* 裏：★CSS で 1色の 長方形（朱）*/
+.bk { display:block; flex:0 0 auto; background:var(--back); border-radius:3px; }
+
+/* ── 盤 ── */
+.board { position:relative; flex:1 1 auto; min-height:0; min-width:0; display:flex; flex-direction:column; }
+.main { flex:1 1 auto; display:flex; flex-direction:column; gap:var(--g,6px); min-width:0; min-height:0; }
+.side { display:none; }
+[data-mode="yoko"] .board { display:grid; grid-template-columns:minmax(0,1fr) var(--sidew,190px); column-gap:8px; align-items:stretch; }
+[data-mode="yoko"] .side { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.spacer { flex:1 1 auto; position:relative; min-height:0; }
+
+/* ── 相手・自分の 帯（名札＋取り札）── */
+.strip { flex:0 0 auto; background:var(--white); border:3px solid var(--pink-soft); border-radius:16px; padding:4px 8px 5px; min-width:0; }
+.strip.me { border-color:#cdeefa; }
+.tagline { display:flex; align-items:center; gap:6px; min-height:24px; min-width:0; }
+.tag { display:flex; align-items:center; gap:5px; min-width:0; white-space:nowrap; }
+.tag .nm { font-size:13px; font-weight:900; }
+.chip { display:inline-flex; align-items:center; padding:1px 7px; border-radius:999px; font-size:11px; font-weight:900; line-height:16px; white-space:nowrap; }
+.chip.oya { background:var(--gold-soft); color:#6b5522; }
+.chip.ko { background:#eef1f5; color:#5b6b7c; }
+.chip.koi { background:#FFD9A8; color:#8a4a0c; border:2px solid #F5A54A; line-height:14px; }
+.tot { font-size:13px; font-weight:900; color:var(--pink-dark); white-space:nowrap; }
+.tot small { font-size:11px; color:#6d7f8e; margin-right:2px; }
+.now { margin-left:auto; font-size:12px; font-weight:900; color:#5a4a63; white-space:nowrap; }
+.now b { color:var(--pink-dark); }
+.backs { display:flex; flex:0 0 auto; }
+.backs .bk { width:var(--bw,14px); height:calc(var(--bw,14px) * var(--rt)); }
+.backs .bk + .bk { margin-left:-6px; box-shadow:-1px 0 0 #fff; }
+.hcount { font-size:11px; font-weight:900; color:#6d7f8e; white-space:nowrap; }
+.cap { display:flex; gap:6px; margin-top:4px; min-width:0; }
+.grp { display:flex; align-items:flex-end; gap:3px; min-width:0; }
+.gl { flex:0 0 auto; width:26px; text-align:center; font-size:11px; font-weight:900; line-height:1.15; color:#6d7f8e; white-space:nowrap; }
+.gl b { display:block; font-size:13px; color:var(--ink); }
+.pile { position:relative; flex:1 1 auto; min-width:var(--cw); height:calc(var(--cw) * var(--rt)); }
+.pile .hc { position:absolute; top:0; --w:var(--cw); }
+.pile .empty { position:absolute; top:0; bottom:0; left:0; width:var(--cw); border:2px dashed #e6dcea; border-radius:4px; }
+[data-compact="1"] .strip { border-width:2px; padding:3px 6px; }
+[data-compact="1"] .tagline { min-height:20px; gap:4px; }
+[data-compact="1"] .tag { gap:3px; }
+[data-compact="1"] .cap { margin-top:2px; gap:4px; }
+[data-compact="1"] .gl { width:24px; }
+[data-compact="1"] .strip .round { padding:1px 6px; }
+[data-compact="1"] .strip .round b { font-size:13px; }
+[data-compact="1"] .tag .nm, [data-compact="1"] .tot { font-size:12px; }
+[data-compact="1"] .now { font-size:11px; }
+[data-compact="1"] .chip { padding:1px 5px; }
+/* ★よこ：名札を 左の 柱に（2行）*/
+.strip.inl { display:flex; gap:8px; align-items:center; padding:3px 8px; }
+.strip.inl .tagline { flex-direction:column; align-items:flex-start; gap:3px; min-height:0; flex:0 0 auto; width:var(--tagw,148px); }
+.strip.inl .tl { display:flex; align-items:center; gap:5px; white-space:nowrap; min-width:0; }
+.strip.inl .cap { flex:1 1 auto; margin-top:0; }
+.strip.inl .now { margin-left:0; }
+[data-low="1"] .strip.inl { padding:2px 8px; border-width:2px; }
+[data-low="1"] .strip.inl .tagline { gap:1px; }
+[data-low="1"] .tag .nm, [data-low="1"] .tl .nm, [data-low="1"] .tot { font-size:12px; }
+[data-low="1"] .chip { line-height:14px; }
+[data-low="1"] .chip.koi { line-height:12px; }
+
+/* ── 山（★残りの 枚数は 出さない ―― 仕様書 §1-2）── */
+.deckrow { flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:0 4px; }
+[data-mode="yoko"] .deckrow, [data-deck7="1"] .deckrow { display:none; }
+.deck { display:flex; align-items:flex-start; gap:8px; }
+.stack { position:relative; display:flex; flex-direction:column; align-items:center; }
+.stack .bk { width:var(--dw); height:calc(var(--dw) * var(--rt)); box-shadow:3px 3px 0 #fff,4px 4px 0 rgba(70,60,82,.18); }
+.stack .dn { margin-top:3px; font-size:11px; font-weight:900; color:#6d7f8e; white-space:nowrap; line-height:14px; }
+.flip { position:relative; }
+.flip .hc { --w:var(--dw); }
+.flip .slot { width:var(--dw); height:calc(var(--dw) * var(--rt)); border:2px dashed var(--felt-edge); border-radius:5px; background:rgba(255,255,255,.5); }
+.flipcap { font-size:11px; font-weight:900; color:#6d7f8e; line-height:1.3; }
+.deckbox { display:flex; flex-direction:column; align-items:center; gap:6px; padding:6px 4px; background:var(--felt); border-radius:16px; box-shadow:inset 0 0 0 3px var(--felt-edge); min-height:0; }
+.deckbox .round { align-self:center; }
+
+/* ── 場（12の 席）── */
+.field {
+  flex:0 0 auto; position:relative; display:grid; gap:var(--sg,4px); padding:var(--fp,6px);
+  grid-template-columns:repeat(var(--cols,6), var(--fw)); justify-content:center;
+  background:var(--felt); border-radius:16px; box-shadow:inset 0 0 0 3px var(--felt-edge);
+}
+.seat { position:relative; width:var(--fw); height:calc(var(--fw) * var(--rt) + var(--nh)); }
+.seat.empty::before { content:""; position:absolute; left:0; top:0; width:100%; height:calc(var(--fw) * var(--rt)); border:2px dashed rgba(111,201,140,.55); border-radius:6px; box-sizing:border-box; }
+.seat > .hc { position:absolute; left:0; top:0; --w:var(--fw); }
+/* ★出した／めくった 札が 場の 札に 重なって 見える 間（★ほんの 少し ずらす）*/
+.seat > .hc.on-top { left:18%; top:6%; z-index:2; }
+.seat > .hc.on-top2 { left:9%; top:3%; z-index:1; }
+.seat > .hc.under .mn { visibility:hidden; }
+/* ★席が ぜんぶ ふさがった ときだけ（★0.02%）：同じ月の 2〜3枚を ふつうの 札の 8割で 少し ずらして 重ねる（★T353）
+     ★下の 札は 左上、上の 札は 右下。★席の どこを 押しても 上の 札（JS）・下の 札は ずれて 見える 所を 押す */
+.seat.kasane > .hc { position:absolute; --w:calc(var(--fw) * 0.8); }
+.seat.kasane > .hc.s0 { left:0; top:0; }
+.seat.kasane.k2 > .hc.s1 { left:20%; top:calc(var(--fw) * 0.2 * var(--rt)); }
+.seat.kasane.k3 > .hc.s1 { left:10%; top:calc(var(--fw) * 0.1 * var(--rt)); }
+.seat.kasane.k3 > .hc.s2 { left:20%; top:calc(var(--fw) * 0.2 * var(--rt)); }
+.seat.kasane > .hc:not(:last-child) .mn { visibility:hidden; }
+.seat.deckcell { display:flex; flex-direction:column; align-items:center; }
+.seat.deckcell .stack .bk { width:var(--fw); height:calc(var(--fw) * var(--rt)); }
+.seat.deckcell .flip .hc { --w:var(--fw); }
+.seat.deckcell .flip .slot { width:var(--fw); height:calc(var(--fw) * var(--rt)); }
+
+/* ── 手札 ── */
+.hand { flex:0 0 auto; display:flex; justify-content:center; gap:var(--hg,3px); padding-top:var(--lift,8px); padding-bottom:4px;
+  min-height:calc(var(--hw) * var(--rt) + var(--nh) + var(--lift,8px) + 4px); }   /* ★T353（トライ T352 D）：手札が 0枚でも 段の たけを 残す（★盤が ガクッと 動かない）*/
+.hand .hc { --w:var(--hw); }
+.hand .hc.is-gone { visibility:hidden; }
+
+/* ── ならべ窓（★T355）：重なった 札を 横に 並べる。★まわりを 押すと 閉じる ── */
+.kasane-wrap { position:fixed; inset:0; z-index:58; background:rgba(255,249,234,.45); }
+.ks-box { position:absolute; left:0; top:0; padding:6px 12px 10px; background:#fff; border:4px solid var(--pink-soft); border-radius:18px; box-shadow:0 6px 0 rgba(196,58,115,.14); text-align:center; }
+.ks-lead { margin:0 0 4px; font-size:13px; font-weight:900; color:var(--pink-dark); white-space:nowrap; }
+.ks-cards { display:flex; gap:10px; justify-content:center; }
+.ks-cards .hc { --w:var(--ksw,48px); }
+
+/* ── 勝負か こいこいか ── */
+.koi-wrap { position:fixed; z-index:60; display:flex; align-items:center; justify-content:center; padding:8px; background:rgba(255,249,234,.78); border-radius:18px; }
+.koi-box { width:min(400px,100%); max-height:100%; overflow:hidden; background:#fff; border:5px solid var(--pink-soft); border-radius:24px; box-shadow:0 8px 0 rgba(196,58,115,.16);
+  padding:10px 12px 12px; text-align:center; }
+.kb-lead { margin:0 0 4px; font-size:20px; font-weight:900; color:var(--pink-dark); }
+.kb-yaku { list-style:none; margin:0 0 4px; padding:0; }
+.kb-yaku li { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:0 8px; font-size:15px; font-weight:900; line-height:1.3; }
+.sake-note { white-space:nowrap; }
+.kb-yaku i, .rs-yaku i { font-style:normal; color:var(--pink-dark); white-space:nowrap; }
+.kb-yaku small, .rs-yaku small { font-size:11px; color:#6d7f8e; }
+.mini { display:flex; gap:2px; }
+.mini .hc { --w:var(--mw,20px); }
+.kb-mult { margin:2px 0; font-size:13px; font-weight:900; color:#8a4a0c; }
+.kb-mult p { margin:0; }
+.kb-total { margin:4px 0 8px; font-size:15px; font-weight:900; }
+.kb-total b { font-size:24px; color:var(--pink-dark); }
+.kb-btns { display:flex; gap:8px; }
+.kb-btns button { flex:1 1 0; min-width:0; min-height:64px; padding:6px 8px; border-radius:22px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+.kb-btns b { font-size:22px; font-weight:900; line-height:1.1; }
+.kb-btns small { font-size:11px; font-weight:900; line-height:1.3; word-break:keep-all; overflow-wrap:anywhere; }
+.kb-shobu { background:var(--pink-deep); color:#fff; border:none; box-shadow:0 5px 0 var(--pink-dark); }
+.kb-koi { background:#FFB54D; color:#5a2e00; border:none; box-shadow:0 5px 0 #C9791C; }
+.kb-btns button:active { transform:translateY(3px); }
+.koi-wrap.is-low .koi-box { padding:6px 10px 8px; }
+.koi-wrap.is-low .kb-lead { font-size:17px; margin:0 0 2px; }
+.koi-wrap.is-low .kb-yaku li { font-size:13px; }
+.koi-wrap.is-low .kb-total { margin:2px 0 6px; }
+.koi-wrap.is-low .kb-btns button { min-height:52px; }
+.koi-wrap.is-lower .kb-btns small { display:none; }
+.koi-wrap.is-lower .kb-btns button { min-height:46px; }
+.koi-wrap.is-lower .kb-lead { display:none; }
+.koi-wrap.is-cols .koi-box { width:min(620px,100%); display:grid; grid-template-columns:1fr 1fr; gap:0 12px; align-items:center; }
+
+/* ── 月の おわり／試合の おわり の 箱 ── */
+.result-wrap {
+  position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+  padding:10px; background:rgba(70,60,82,.42);
+}
+.result-box {
+  width:min(420px,100%); padding:12px 16px 14px; text-align:center;
+  background:var(--white); border:5px solid var(--pink-soft); border-radius:26px;
+  box-shadow:0 10px 0 rgba(196,58,115,.16); max-height:100%; overflow-y:auto;
+}
+@keyframes resultIn { 0% { transform:scale(.8); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+.result-wrap:not(.hidden) .result-box { animation:resultIn .22s ease-out; }
+.rs-sub { margin:0; font-size:12px; font-weight:900; color:#6d7f8e; }
+.result-title { margin:0 0 6px; font-size:23px; font-weight:900; color:var(--pink-dark); }
+.result-title.is-lose { color:#5b7897; }
+.result-title.is-draw { color:#6f8093; }
+.result-body { margin:0 0 10px; font-size:13.5px; font-weight:700; color:#5a4a63; }
+.rs-yaku { list-style:none; margin:0 auto 4px; padding:0; max-width:320px; }
+.rs-yaku li { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:0 8px; font-size:14px; font-weight:900; padding:2px 4px; line-height:1.3; }
+.rs-line { display:flex; justify-content:space-between; max-width:300px; margin:0 auto; padding:1px 4px; font-size:13px; font-weight:900; color:#8a4a0c; }
+.rs-sum { max-width:300px; margin:4px auto 8px; padding-top:4px; border-top:2px dashed var(--pink-soft); display:flex; justify-content:space-between; align-items:baseline; font-size:15px; font-weight:900; }
+.rs-sum b { font-size:22px; color:var(--pink-dark); }
+.rs-pts { display:flex; justify-content:center; flex-wrap:wrap; gap:4px 14px; margin:0 0 4px; padding:5px 8px; border-radius:14px; background:var(--cream); border:3px solid var(--gold-soft); font-size:13px; font-weight:900; color:#6b5522; }
+.rs-pts b { font-size:16px; color:var(--pink-dark); }
+.rs-pts .up { font-size:11px; color:var(--pink-dark); }
+.rs-left { margin:2px 0 4px; font-size:12px; font-weight:900; color:#6d7f8e; }
+.rs-nagare { margin:4px 0 8px; font-size:15px; font-weight:900; color:#6f8093; }
+.rs-hand { display:flex; flex-wrap:wrap; justify-content:center; gap:3px; margin:0 0 6px; }
+.rs-hand .hc { --w:var(--mw,26px); }
+.rs-log { list-style:none; margin:6px auto 0; padding:0; font-size:12px; max-width:320px; }
+.rs-log li { display:flex; justify-content:space-between; gap:8px; padding:1px 6px; break-inside:avoid; }
+.rs-log li span:last-child { white-space:nowrap; }
+.result-buttons { display:flex; flex-direction:column; gap:8px; }
+.dialog-ok {
+  display:flex; align-items:center; justify-content:center; width:100%; min-height:44px;
+  padding:10px 16px; border:none; border-radius:999px;
+  background:var(--pink-deep); color:#fff; box-shadow:0 5px 0 var(--pink-dark);
+  font-family:inherit; font-size:19px; font-weight:900; text-decoration:none; text-align:center;
+}
+.dialog-ok b { margin-left:.3em; }
+.dialog-ok:active { transform:translateY(3px); box-shadow:0 2px 0 var(--pink-dark); }
+.dialog-ok.alt {
+  background:var(--white); color:var(--pink-dark);
+  border:3px solid var(--pink-soft); box-shadow:0 4px 0 rgba(196,58,115,.10);
+  font-size:14px; padding:6px 14px;
+}
+/* ★ 箱が 画面の たけに 入らない ときだけ（★JS の fitResult が 出して みて 付ける ―― たての 線は 引かない）*/
+.result-box.is-tight { padding:8px 10px 10px; }
+.result-box.is-tight .result-title { margin:0 0 3px; font-size:19px; }
+.result-box.is-tight .result-body { margin:0 0 6px; font-size:12.5px; }
+.result-box.is-tight .rs-yaku li { font-size:12.5px; padding:1px 4px; }
+.result-box.is-tight .rs-sum { margin:2px auto 4px; }
+.result-box.is-tight .result-buttons { flex-direction:row; gap:6px; }
+.result-box.is-tight .result-buttons .dialog-ok { flex:1 1 0; min-width:0; padding:6px 8px; font-size:15px; white-space:nowrap; }
+.result-box.is-tight .result-buttons .dialog-ok.alt { font-size:12.5px; }
+.result-box.is-cols { width:min(680px,100%); }
+.result-box.is-cols .result-body { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 14px; align-items:center; }
+.result-box.is-tighter .rs-log { columns:2; column-gap:12px; }
+.result-buttons { transition:opacity .16s ease-out; }
+.result-box.is-locked .result-buttons { pointer-events:none; opacity:.4; }
+.result-box.is-locked .dialog-ok { box-shadow:none; transform:translateY(3px); }
+
+/* ── 遊び方 ── */
+dialog {
+  width:min(480px,94vw); max-height:92vh; max-height:92svh; overflow:auto;
+  padding:16px 18px 18px; border:none; border-radius:24px;
+  background:var(--white); color:var(--ink); font-family:var(--font-main);
+  box-shadow:0 12px 0 rgba(196,58,115,.16);
+}
+dialog::backdrop { background:rgba(70,60,82,.42); }
+.close-dialog {
+  position:sticky; top:0; z-index:2;
+  display:block; width:44px; height:44px; margin:0 0 -44px auto;
+  transform:translate(8px,-8px);
+  border:0; border-radius:50%;
+  background:#f1f5f4; color:#7d8c99; font-size:18px; font-weight:900; cursor:pointer;
+}
+dialog h2 { margin:0 0 6px; font-size:21px; font-weight:900; color:var(--pink-dark); text-align:center; }
+.help-sec { margin:0 0 12px; }
+.help-sec h3 { margin:0 0 6px; padding:3px 10px; border-radius:10px; background:var(--pink-soft); font-size:15px; font-weight:900; color:var(--pink-dark); }
+.help-list { margin:0; padding-left:1.3em; }
+.help-list li { margin-bottom:5px; font-size:14px; font-weight:700; line-height:1.6; }
+.help-dots { margin:0; padding-left:1.2em; }
+.help-dots li { margin-bottom:4px; font-size:13.5px; font-weight:700; line-height:1.55; }
+.help-list b, .help-dots b { color:var(--pink-dark); }
+.card-table { display:grid; grid-template-columns:auto repeat(4, minmax(0,1fr)); gap:4px 6px; align-items:end; }
+.card-table .ct-m { font-size:12px; font-weight:900; color:#6d7f8e; white-space:nowrap; align-self:center; }
+.card-table .ct-c { display:flex; flex-direction:column; align-items:center; gap:1px; min-width:0; }
+.card-table .hc { --w:40px; }
+.card-table .ct-n { font-size:11px; font-weight:700; color:#5a4a63; line-height:1.25; text-align:center; word-break:keep-all; overflow-wrap:anywhere; }
+.yaku-list { margin:0; font-size:13px; line-height:1.5; }
+.yaku-list dt { margin:8px 0 2px; font-weight:900; color:#fff; background:var(--mint); border-radius:8px; padding:1px 8px; display:inline-block; }
+.yaku-list dd { margin:0 0 2px; font-weight:700; }
+.yaku-list dd b { display:inline-block; min-width:5.6em; margin-right:4px; color:#1f5a38; }
+.yaku-list dd i { display:inline-block; min-width:3.4em; margin-right:6px; font-style:normal; font-weight:900; color:var(--pink-dark); }
+.help-list li, .help-dots li, .yaku-list dd, .title-lead, .credit-text { word-break:keep-all; overflow-wrap:anywhere; }
+.credit-text { margin:0; font-size:12.5px; font-weight:700; line-height:1.6; color:#5a4a63; }
+.credit-text a { color:var(--pink-dark); }
+
+/* ★ 写真を 撮る あいだだけ 動きを 止める（★T300）*/
+body.measuring *, body.measuring *::before, body.measuring *::after {
+  transition:none !important; animation:none !important;
+}
