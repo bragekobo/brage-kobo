@@ -558,6 +558,14 @@ dialog h2 { margin:0 0 6px; font-size:21px; font-weight:900; color:var(--pink-da
 .pt-table { width:100%; margin:0 0 8px; border-collapse:collapse; font-size:13.5px; font-weight:700; }
 .pt-table th, .pt-table td { padding:3px 6px; border-bottom:2px solid var(--cream); text-align:center; }
 .pt-table th { color:#6d7f8e; font-size:12px; }
+/* ★T365：満貫の 行に 4飜30符〜・3飜60符〜（切り上げ）を 小さく 添える（トライ T364 F3）*/
+.pt-table .pt-sub { display:block; font-size:11px; line-height:1.3; color:#6d7f8e; white-space:nowrap; }
+.pt-table td { white-space:nowrap; }
+@media (max-width:400px) {   /* ★T365：幅 320〜390 でも 表が 箱から はみ出さない（★2倍〜5倍の 行で 数字が 長い・375 で 2px はみ出した）*/
+  .pt-table { font-size:12px; letter-spacing:-.02em; }
+  .pt-table th, .pt-table td { padding:3px 1px; }
+  .pt-table .pt-sub { font-size:11px; letter-spacing:-.02em; }
+}
 .yaku-list { margin:0; font-size:13px; line-height:1.5; }
 .yaku-list dt { margin:8px 0 2px; font-weight:900; color:#fff; background:var(--mint); border-radius:8px; padding:1px 8px; display:inline-block; }
 .yaku-list dd { margin:0 0 2px; font-weight:700; }

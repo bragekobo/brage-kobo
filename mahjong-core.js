@@ -13,15 +13,22 @@
      手は '123m456p11z' の 文字列でも ['1m','2m',…] の 配列でも 渡せる。
 
    ■ 17歩の 決まり（この ファイルが 守っているもの）
-     ・4飜で 満貫。符は 数えない（追記⑭ ①）
+     ・★T362（追記⑭ 訂正 2026-10-01・logs/T361_17歩符ルール_ルル.md）：符を 数える。
+       満貫＝5飜／4飜30符 以上／3飜60符 以上（切り上げ満貫あり）。七対子の 4飜（25符）は 届かない
+     ・符（仕様書 §3-2）：副底20・門前ロン10・七対子25（切り上げない）・平和ロン30・
+       刻子 中張 明2／暗4・么九 明4／暗8・シャンポンの ロンで できた 刻子は 明刻・
+       雀頭 三元牌／場風／自風 2（連風牌も 2・分かれ道⑥）・嵌張／辺張／単騎 2・10符で 切り上げ。
+       ツモ・鳴き・カンが 無いので その 符は 出てこない
+     ・読み方（面子の 分け方・待ちの 取り方）が 何通りも あれば、点が いちばん 高い 方（同じ 点なら 飜の 多い 方）。
+       満貫の 判定は「どれか 1つの 読み方で 届けば 満貫」
      ・満貫の 判定：表ドラ・一発・河底撈魚は 入れる／裏ドラは 入れない（点にだけ 足す）
      ・立直は いつも 付く（2人とも 立直あつかい・1飜）
-     ・点：満貫8000・跳満12000・倍満16000・三倍満24000・役満32000（子）。親は 1.5倍
-     ・役満は 重なった 数だけ 倍（役満1つに つき 1倍。例：大三元＋字一色＋四暗刻単騎＝3倍＝子96000）
-     ・四暗刻単騎・国士無双十三面は 17歩の 特別ルールで ふつうの 役満（1倍）
-     ・純正九蓮宝燈・大四喜は ダブル役満（2倍）。ほかの 役満と 重なれば さらに 足す
+     ・点：満貫8000・跳満12000・倍満16000・三倍満24000・役満32000（子）。親は 1.5倍。満貫から 上は 符に 関係ない
+     ・役満は 重なった 数だけ 倍（役満1つに つき 1倍。例：大三元＋字一色＋四暗刻単騎＝4倍＝子128000）
+     ・★T362：四暗刻単騎・国士無双十三面・純正九蓮宝燈・大四喜は ダブル役満（2倍）。ほかの 役満と 重なれば さらに 足す
+       （17歩は ロンだけ なので 四暗刻は いつも 単騎＝いつも 2倍）
      ・点は 役満の 倍の 数 × 子32000／親48000（4倍 以上も 同じ 式で 伸ばす）
-     ・13飜 以上は 数え役満
+     ・13飜 以上は 数え役満（1倍）
      ・シャンポンの ロンで できた 刻子は 明刻（三暗刻・四暗刻に 数えない）
      ・自分が 4枚 持っている 牌は 待ちに ならない／七対子に 同じ牌 4枚は 使えない
      ・子の 自風は 西（向かい合わせ）。親は 東
@@ -62,7 +69,9 @@
     honbaPoints: 300,        // 1本場
     childPay: 8000,          // 子の 満貫
     dealerPay: 12000,        // 親の 満貫（1.5倍）
-    manganHan: 4,            // 4飜で 満貫
+    manganHan: 5,            // 5飜は 符に 関係なく 満貫（T362）
+    kiriage4: 30,            // 4飜は 30符 以上で 満貫（切り上げ満貫・T362）
+    kiriage3: 60,            // 3飜は 60符 以上で 満貫（切り上げ満貫・T362）
     turns: 17,               // 1人 17回 切る
     dealerSeat: '1z',        // 親の 自風
     childSeat: '3z'          // 子の 自風（西＝向かい合わせ・仕様書 §2-2 ★）
@@ -97,7 +106,9 @@
     dora:     { name: 'ドラ',       han: 0 },   // 枚数ぶん
     ura:      { name: '裏ドラ',     han: 0 },   // 枚数ぶん（点だけ）
     kokushi:  { name: '国士無双',   yakuman: 1 },
-    suuankou: { name: '四暗刻',     yakuman: 1 },
+    kokushi13: { name: '国士無双十三面', yakuman: 2 },   // ダブル役満（T362）
+    suuankou: { name: '四暗刻',     yakuman: 1 },       // ★17歩では 出ない（ロンだけ なので いつも 単騎）
+    suuankoutanki: { name: '四暗刻単騎', yakuman: 2 },  // ダブル役満（T362）
     daisangen: { name: '大三元',    yakuman: 1 },
     shousuushii: { name: '小四喜',  yakuman: 1 },
     daisuushii: { name: '大四喜',   yakuman: 2 },   // ダブル役満
@@ -110,7 +121,7 @@
   var YAKU_ORDER = ['riichi', 'ippatsu', 'houtei', 'pinfu', 'tanyao', 'iipeikou', 'haku', 'hatsu', 'chun',
     'bakaze', 'jikaze', 'chiitoi', 'sanshoku', 'ittsu', 'chanta', 'toitoi', 'sanankou', 'sanshokudoukou',
     'shousangen', 'honroutou', 'junchan', 'ryanpeikou', 'honitsu', 'chinitsu',
-    'kokushi', 'suuankou', 'daisangen', 'shousuushii', 'daisuushii', 'tsuuiisou', 'ryuuiisou', 'chinroutou', 'chuuren', 'junseichuuren'];
+    'kokushi', 'kokushi13', 'suuankou', 'suuankoutanki', 'daisangen', 'shousuushii', 'daisuushii', 'tsuuiisou', 'ryuuiisou', 'chinroutou', 'chuuren', 'junseichuuren'];
   var WIND_NAME = { 27: '東', 28: '南', 29: '西', 30: '北' };
 
   function Y(id, han, extra) {
@@ -264,8 +275,20 @@
     };
   }
 
-  /* ───────── 飜 → 満貫・跳満…（符なし） ───────── */
-  function rankOf(han, yakuman) {
+  /* ───────── 飜・符 → 満貫・跳満…（T362：符あり・切り上げ満貫あり） ─────────
+     満貫に 届くか：5飜／4飜30符 以上／3飜60符 以上（4飜40符・3飜70符 以上は もともと 満貫。
+     4飜30符・3飜60符 は 本来 7,700点 ―― それを 満貫に 切り上げる）。
+     2飜 以下は 17歩では 届かない（基本点 2000 には 2飜125符 が 要る ―― 出てこない）が、式は 残して おく。 */
+  function basicPoints(han, fu) { return han > 0 && fu > 0 ? fu * Math.pow(2, han + 2) : 0; }
+  function isManganHF(han, fu) {
+    if (han >= RULES.manganHan) return true;
+    if (han === 4 && fu >= RULES.kiriage4) return true;
+    if (han === 3 && fu >= RULES.kiriage3) return true;
+    return basicPoints(han, fu) >= 2000;
+  }
+  // 切り上げで 満貫に なった か（4飜30符・3飜60符 ―― 結果の 画面の「（切り上げ）」用）
+  function isKiriage(han, fu) { return han < RULES.manganHan && isManganHF(han, fu) && basicPoints(han, fu) < 2000; }
+  function rankOf(han, yakuman, fu) {
     if (yakuman > 0) {
       return { id: yakuman === 1 ? 'yakuman' : 'yakuman' + yakuman,
         name: yakuman === 1 ? '役満' : yakuman === 2 ? 'ダブル役満' : yakuman === 3 ? 'トリプル役満' : yakuman + '倍役満',
@@ -275,7 +298,7 @@
     if (han >= 11) return { id: 'sanbaiman', name: '三倍満', mult: 3 };
     if (han >= 8) return { id: 'baiman', name: '倍満', mult: 2 };
     if (han >= 6) return { id: 'haneman', name: '跳満', mult: 1.5 };
-    if (han >= RULES.manganHan) return { id: 'mangan', name: '満貫', mult: 1 };
+    if (isManganHF(han, fu || 0)) return { id: 'mangan', name: '満貫', mult: 1 };   // 符を 渡さないと 5飜 から
     return null;
   }
   function basePay(isDealer, rank) {
@@ -307,16 +330,19 @@
 
     var cands = [];
 
-    // 国士無双（十三面も 1倍 ―― 17歩の 特別ルール）
-    if (isKokushi(c14)) cands.push({ form: 'kokushi', wait: 'kokushi', yaku: [], ym: [Y('kokushi')] });
+    // 国士無双：和了牌が 対子に なった 形（＝13種 1枚ずつで 待った 十三面）は ダブル役満（T362）。符は 数えない
+    if (isKokushi(c14)) {
+      var k13 = c14[win] === 2;
+      cands.push({ form: 'kokushi', wait: k13 ? 'kokushi13' : 'tanki', yaku: [], ym: [Y(k13 ? 'kokushi13' : 'kokushi')], fu: null });
+    }
 
-    // 七対子
+    // 七対子（25符ちょうど・切り上げない ―― 仕様書 §3-2 F4）
     if (isChiitoi(c14)) {
       var y7 = [Y('chiitoi')];
       if (allSimple) y7.push(Y('tanyao'));
       if (allYao && hasHonor && !allHonor) y7.push(Y('honroutou'));
       if (flush) y7.push(Y(flush));
-      cands.push({ form: 'chiitoi', wait: 'tanki', yaku: y7, ym: allHonor ? [Y('tsuuiisou')] : [] });
+      cands.push({ form: 'chiitoi', wait: 'tanki', yaku: y7, ym: allHonor ? [Y('tsuuiisou')] : [], fu: FU.chiitoi });
     }
 
     // 九蓮宝燈（清一色で 1112345678999＋1）。0 なし／1 九蓮宝燈／2 純正（和了牌を 抜くと ちょうど 1112345678999）
@@ -361,20 +387,30 @@
     for (i = 0; i < cx.dora.length; i++) dora += c14[cx.dora[i]];
     for (i = 0; i < cx.ura.length; i++) ura += c14[cx.ura[i]];
 
-    // いちばん 高い 読み方を 取る（役満の 倍の 数 → 飜）
-    var best = null;
+    /* 読み方を ぜんぶ 数えて、
+       ・満貫か：どれか 1つの 読み方が 裏ドラ 抜きで 満貫に 届けば 満貫（仕様書 §3-2 F12）
+       ・あと 1飜：満貫で ない とき、どれか 1つの 読み方が 同じ 符の まま 1飜 足すと 満貫（◎△× の △ 用）
+       ・結果に 出す 読み方：役満の 倍 → 点（裏ドラ 込み） → 飜 → 符 の 順に 高い 方（F12・F13） */
+    var best = null, mangan = false, oneHanShort = false;
     for (i = 0; i < cands.length; i++) {
-      var cd = cands[i], han = 0, list;
-      if (cd.ym.length) {
+      var cd = cands[i], han = 0, list, ymT = ymTimes(cd.ym);
+      if (ymT) {
         list = cd.ym.slice();
       } else {
         list = common.concat(cd.yaku);
         if (dora) list.push(Y('dora', dora));
         for (var j = 0; j < list.length; j++) han += list[j].han;
       }
-      var sc = { cand: cd, list: list, han: han, ym: ymTimes(cd.ym) };
-      if (!best || sc.ym > best.ym || (sc.ym === best.ym && sc.han > best.han)) best = sc;
+      var fu = ymT ? null : cd.fu;
+      if (ymT || isManganHF(han, fu)) mangan = true;                     // 裏ドラは 入れない
+      else if (isManganHF(han + 1, fu)) oneHanShort = true;
+      var rk = ymT ? rankOf(0, ymT) : rankOf(han + ura, 0, fu);            // 点は 裏ドラ 込み
+      var val = rk ? rk.mult * 2000 : basicPoints(han + ura, fu);
+      var sc = { cand: cd, list: list, han: han, fu: fu, ym: ymT, val: val };
+      if (!best || sc.ym > best.ym || (sc.ym === best.ym && (sc.val > best.val ||
+          (sc.val === best.val && (sc.han > best.han || (sc.han === best.han && (sc.fu || 0) > (best.fu || 0))))))) best = sc;
     }
+    if (mangan) oneHanShort = false;
 
     var ymN = best.ym;
     var judgedHan = ymN ? 0 : best.han;
@@ -382,19 +418,35 @@
     var totalHan = judgedHan + uraHan;
     var yakuList = best.list.slice();
     if (uraHan) yakuList.push(Y('ura', uraHan));
-    var mangan = ymN > 0 || judgedHan >= RULES.manganHan;     // 裏ドラは 入れない
-    var rank = mangan ? rankOf(totalHan, ymN) : null;          // 点は 裏ドラ込み
+    var rank = mangan ? (ymN ? rankOf(0, ymN) : rankOf(totalHan, 0, best.fu)) : null;
     return {
       win: CODES[win], form: best.cand.form, wait: best.cand.wait,
       yaku: yakuList, yakuman: ymN,
-      han: judgedHan,          // 満貫の 判定に 使う 飜（裏ドラ 抜き）
+      han: judgedHan,          // 結果に 出す 読み方の 飜（裏ドラ 抜き）
+      fu: ymN ? null : best.fu,   // 結果に 出す 読み方の 符（役満は null）
       dora: ymN ? 0 : dora, ura: uraHan,
       totalHan: totalHan,      // 点に 使う 飜（裏ドラ 込み）
-      mangan: mangan,
+      mangan: mangan,          // どれか 1つの 読み方が 裏ドラ 抜きで 満貫
+      oneHanShort: oneHanShort,   // 満貫で ないが、同じ 符の まま 1飜 足せば 満貫（△ の もと）
+      kiriage: !!(rank && rank.id === 'mangan' && isKiriage(totalHan, best.fu)),   // 4飜30符・3飜60符 の 満貫
       rank: rank,
       dealer: cx.dealer,
       pay: basePay(cx.dealer, rank)
     };
+  }
+
+  /* ───────── 符（仕様書 §3-2・T361 F1〜F11） ───────── */
+  var FU = { base: 20, menzenRon: 10, chiitoi: 25, wait: 2, yakuhaiPair: 2 };
+  function fuStd(trips, pair, place, win, cx) {
+    var f = FU.base + FU.menzenRon, i;                                   // 17歩は いつも 門前ロン
+    for (i = 0; i < trips.length; i++) {
+      var t = trips[i], v = isYao(t) ? 4 : 2;                            // 明刻：中張2・么九4
+      if (!(place === 'shanpon' && t === win)) v *= 2;                   // 暗刻は 倍（シャンポンの ロンで できた 刻子は 明刻）
+      f += v;
+    }
+    if (place === 'kanchan' || place === 'penchan' || place === 'tanki') f += FU.wait;
+    if (isDragon(pair) || pair === cx.seat || pair === cx.round) f += FU.yakuhaiPair;   // 連風牌も 2符（分かれ道⑥）
+    return Math.ceil(f / 10) * 10;                                       // 平和の ロンは ここで ちょうど 30
   }
 
   function evalStd(d, place, win, cx, f) {
@@ -408,7 +460,8 @@
     for (i = 0; i < trips.length; i++) { if (isDragon(trips[i])) dragT++; if (isWind(trips[i])) windT++; }
 
     var ym = [];
-    if (concealed === 4) ym.push(Y('suuankou'));
+    // 四暗刻：17歩は ロンだけ なので 4つ 暗刻に なるのは 単騎の とき だけ（シャンポンの ロンは 明刻）→ ダブル役満（T362）
+    if (concealed === 4) ym.push(Y(place === 'tanki' ? 'suuankoutanki' : 'suuankou'));
     if (dragT === 3) ym.push(Y('daisangen'));
     if (windT === 4) ym.push(Y('daisuushii'));
     else if (windT === 3 && isWind(pair)) ym.push(Y('shousuushii'));
@@ -457,12 +510,14 @@
     if (dragT === 2 && isDragon(pair)) yaku.push(Y('shousangen'));
     if (f.flush) yaku.push(Y(f.flush));
 
-    return { form: 'std', wait: place, yaku: yaku, ym: ym };
+    return { form: 'std', wait: place, yaku: yaku, ym: ym, fu: fuStd(trips, pair, place, win, cx) };
   }
 
   /* ───────── 待ちごとの 印（◎ 満貫／△ 一発・河底なら 満貫／× とどかない） ─────────
      chances：これから 付く かもしれない もの。省くと 局の はじめ（親：一発と 河底／子：一発）。
-     裏ドラ・一発・河底は 入れずに 数え、3飜 で あと 一発か 河底が 付く 見込みが あれば △。 */
+     裏ドラ・一発・河底は 入れずに 数え、★同じ 符の まま 1飜 足すと 満貫に 届き（T362：前は「ちょうど 3飜」）、
+     あと 一発か 河底が 付く 見込みが あれば △。
+     例：3飜30〜50符・2飜60符 以上・七対子 4飜（25符）は △／七対子 3飜（立直・七対子）は 1飜 足しても 4飜25符 なので ×。 */
   function defaultChances(dealer) { return { ippatsu: true, houtei: !!dealer }; }
 
   function marksIdx(c13, cx, chances) {
@@ -477,12 +532,12 @@
       c13[t]++; var r = judgeIdx(c13, t, base); c13[t]--;
       var mark = '×', via = [];
       if (r.mangan) mark = '◎';
-      else if (!r.yakuman && r.han === RULES.manganHan - 1 && (chances.ippatsu || chances.houtei)) {
+      else if (r.oneHanShort && (chances.ippatsu || chances.houtei)) {
         mark = '△';
         if (chances.ippatsu) via.push('ippatsu');
         if (chances.houtei) via.push('houtei');
       }
-      out.waits.push({ tile: CODES[t], mark: mark, via: via, han: r.han, yakuman: r.yakuman });
+      out.waits.push({ tile: CODES[t], mark: mark, via: via, han: r.han, fu: r.fu, yakuman: r.yakuman });
     }
     out.tenpai = w.length > 0;
     return out;
@@ -662,6 +717,7 @@
     isAgari: isAgari, waits: waits, judge: judge, ronCheck: ronCheck, waitMarks: waitMarks,
     isFuriten: isFuriten, ronBonus: ronBonus, remainingChances: remainingChances,
     rankOf: rankOf, basePay: basePay, ronPayment: ronPayment,
+    isManganHF: isManganHF, isKiriage: isKiriage, basicPoints: basicPoints,
     createMatch: createMatch, dealerOf: dealerOf, handInfo: handInfo, ctxFor: ctxFor,
     startHand: startHand, settleHand: settleHand, closeMatch: closeMatch,
     rng: rng, makeWall: makeWall, deal: deal,

@@ -11,7 +11,7 @@
      ★ Node でも 同じ 1本を 読んで CPU どうしの 試合を 回せる（★見張り ② と 計測どうぐ が 使う）。
 
    ★ 社長の お決め（追記⑭・厳守）
-     ① 4飜で 満貫（符なし）                         → MJCore
+     ① 満貫＝5飜／4飜30符 以上／3飜60符 以上（符を 数える・切り上げ満貫あり ―― ★T362 追記⑭ 訂正 2026-10-01）→ MJCore
      ② 手助けは「満貫に 届くか 確かめる 表示」だけ   → checkLine()（★いま 選んでいる 13枚 だけ で 決まる）
      ③ 点棒（35,000点・トビ・親1.5倍・流局は 親が 続く・本場・供託）→ MJCore の 試合の 関数
      ④ 役の 名前は 漢字                              → MJCore.YAKU
@@ -265,7 +265,7 @@
   }
 
   /* ============================================================
-     ★★ CPU「ふつう」／★T339 から ゲームは「弱い」（weakValue・cpuDiscard の weak）★★（トライ T325 の 試作を もとに、4飜で 満貫 に 直した）
+     ★★ CPU「ふつう」／★T339 から ゲームは「弱い」（weakValue・cpuDiscard の weak）★★（トライ T325 の 試作を もとに。★満貫の 線は MJCore の ◎△× の まま ―― ★T362 で 符・切り上げ満貫に なっても ここは 1文字も 数え直さない）
      ------------------------------------------------------------
      ★ 13枚の 組み（Builder）
        ・34枚＋「山に 無い 牌を 1枚だけ 借りて よい」完成形（14枚）を ぜんぶ 出し、借りた 牌を 抜いた 13枚を 聴牌の 形に する
@@ -565,7 +565,7 @@
         if (ws[q].indexOf(code) >= 0 && !tf[q]) {
           var bo = C.ronBonus(q === h.lab.dealer, h.cnt[me]);
           var jr = C.judge(h.h13[q], code, C.ctxFor(S.match, q, { doraIndicators: [h.dora], uraIndicators: [h.ura], ippatsu: bo.ippatsu, houtei: bo.houtei }));
-          ok = !!(jr && jr.mangan && (jr.yakuman || jr.han >= C.RULES.manganHan));
+          ok = !!(jr && jr.mangan && jr.rank && (jr.yakuman || C.isManganHF(jr.han, jr.fu)));   // ★T362：符つきの 満貫の 線（裏ドラ 抜き）
         }
         if (res.ron != null) {
           if (res.ron !== q) bad.push('ロンの 人が ちがう');
@@ -606,15 +606,18 @@
        A 満貫に とどかない 待ち（1索 ×）を 見のがす → フリテン → あとで ◎（4索）が 出ても ロンできない
        B ◎ の 4索が 子の 1打目で 出る → ロンできる。立直・一発・平和・断么九・三色同順＝6飜 跳満 18,000＋供託 2,000
        C 自分の 待ち（1索）を 切る → フリテン → ◎ が 出ても ロンできない
-       D 3飜の 七対子（3筒 △）：子の 1打目で 出る → 一発で 4飜 満貫 12,000
+       D ★T362：3飜40符（立直・断么九・一盃口・嵌張 7索 △）：子の 1打目で 出る → 一発で 4飜40符 満貫 12,000
+         （★前は 3飜の 七対子 ―― 符を 数える ように なって 七対子 3飜は ×）
        D2 同じ 手で 子の 2打目 → 一発なし → ロンできない・フリテン
+       I1 ★T362：3飜の 七対子（立直・七対子 25符・3筒）は × ―― 一発が 付いても 4飜25符 → ロンの 出番なし・フリテン
+       I2 ★T362：4飜の 七対子（立直・七対子・断么九 25符・3筒）は △ ―― 一発で 5飜 満貫 12,000
        E 子（CPU）の 七対子・混老頭（7z）：親の 1打目で 出る → CPU の ロン（一発つき）
      ============================================================ */
   function selfTest() {
     var X = ENGINE, bad = [];
     var FILL = ['9m', '9m', '9m', '1s', '1z', '1z', '1z', '2z', '2z', '2z', '5z', '5z', '5z', '6z', '6z', '6z', '7z', '7z', '7z', '9p', '9p'];
     var CPU13 = '1199m1199p1199s7z';
-    var CREST = ['1s', '4s', '4s', '3p', '3p', '2m', '2m', '2m', '6m', '6m', '6m', '7p', '7p', '7p', '5s', '5s', '5s', '8s', '8s', '8s', '3m'];
+    var CREST = ['1s', '4s', '4s', '3p', '7s', '2m', '2m', '2m', '6m', '6m', '6m', '7p', '7p', '7p', '5s', '5s', '5s', '8s', '8s', '8s', '3m'];
     function mk(h13) {
       var S = X.newMatch('tonpu', 12345, 0), h = S.h;
       h.hands[0] = sortCodes(C.toList(h13).concat(FILL));
@@ -624,7 +627,7 @@
       return S;
     }
     function run(name, fn) { try { fn(); } catch (e) { bad.push(name + '：★止まった（' + e.message + '）'); } }
-    var H13 = '234m234p23456s88p', T13 = '5588m113p4477s33z';
+    var H13 = '234m234p23456s88p', T13 = '223344m456p55s68s', C7A = '5588m113p4477s33z', C7B = '5588m223p446677s';
     run('A', function () {
       var S = mk(H13), r;
       X.discard(S, 0, '9m'); r = X.discard(S, 1, '1s');
@@ -651,19 +654,36 @@
     run('D', function () {
       var S = mk(T13), r, o;
       var ck = X.checkLine(C.toList(T13), X.ctxOf(S, 0)).text;
-      if (ck !== '待ち：3p △一発か 河底なら 満貫') bad.push('D：確かめ表示が「' + ck + '」');
-      X.discard(S, 0, '9m'); r = X.discard(S, 1, '3p');
+      if (ck !== '待ち：7s △一発か 河底なら 満貫') bad.push('D：確かめ表示が「' + ck + '」');
+      X.discard(S, 0, '9m'); r = X.discard(S, 1, '7s');
       if (r.ron !== 0) { bad.push('D：★一発の △ で ロンの 出番が 無い'); return; }
       o = X.ron(S, 0);
-      if (o.result.han !== 4 || o.pay.base !== 12000) bad.push('D：' + o.result.han + '飜 ' + o.pay.base + '点（正は 4飜 12,000）');
+      if (o.result.han !== 4 || o.result.fu !== 40 || o.result.kiriage || o.pay.base !== 12000) bad.push('D：' + o.result.han + '飜' + o.result.fu + '符 ' + o.pay.base + '点（正は 4飜40符 12,000）');
     });
     run('D2', function () {
       var S = mk(T13), r;
-      X.discard(S, 0, '9m'); X.discard(S, 1, '2m'); X.discard(S, 0, '9m'); r = X.discard(S, 1, '3p');
+      X.discard(S, 0, '9m'); X.discard(S, 1, '2m'); X.discard(S, 0, '9m'); r = X.discard(S, 1, '7s');
       if (r.ron != null) bad.push('D2：★一発の 外の △ で ロンの 出番');
       if (!S.h.furiten[0]) bad.push('D2：見のがしても フリテンに ならない');
       var ck = X.myCheck(S, 0).text;
-      if (ck !== '待ち：3p △河底なら 満貫') bad.push('D2：17回の 間の 確かめ表示が「' + ck + '」');
+      if (ck !== '待ち：7s △河底なら 満貫') bad.push('D2：17回の 間の 確かめ表示が「' + ck + '」');
+    });
+    run('I1', function () {
+      var S = mk(C7A), r;
+      var ck = X.checkLine(C.toList(C7A), X.ctxOf(S, 0)).text;
+      if (ck !== '待ち：3p ×とどかない') bad.push('I1：★3飜の 七対子の 確かめ表示が「' + ck + '」（正は ×）');
+      X.discard(S, 0, '9m'); r = X.discard(S, 1, '3p');
+      if (r.ron != null) bad.push('I1：★4飜25符（一発つき 七対子）で ロンの 出番');
+      if (!S.h.furiten[0]) bad.push('I1：× を 見のがしても フリテンに ならない');
+    });
+    run('I2', function () {
+      var S = mk(C7B), r, o;
+      var ck = X.checkLine(C.toList(C7B), X.ctxOf(S, 0)).text;
+      if (ck !== '待ち：3p △一発か 河底なら 満貫') bad.push('I2：★4飜の 七対子の 確かめ表示が「' + ck + '」（正は △）');
+      X.discard(S, 0, '9m'); r = X.discard(S, 1, '3p');
+      if (r.ron !== 0) { bad.push('I2：★一発で 5飜の 七対子に ロンの 出番が 無い'); return; }
+      o = X.ron(S, 0);
+      if (o.result.han !== 5 || o.result.fu !== 25 || o.pay.base !== 12000) bad.push('I2：' + o.result.han + '飜' + o.result.fu + '符 ' + o.pay.base + '点（正は 5飜25符 12,000）');
     });
     run('E', function () {
       var S = mk(H13), r;
@@ -698,7 +718,7 @@
       if (S.match.kyoku !== 0 || S.match.honba !== 1) bad.push('G：親が 続かない');
     });
     /* ★ T334：ロンの 出番の 瞬間の 確かめ表示（★いま 出た 打目で 数える ―― トライ T333 ②）
-         H1 人＝親・3飜の 七対子（3筒）：子の 1打目で 出る → 「△一発なら 満貫」（★前は「△河底」）
+         H1 人＝親・3飜40符（7索 ★T362 で 七対子から 差しかえ）：子の 1打目で 出る → 「△一発なら 満貫」（★前は「△河底」）
          H2 人＝親・同じ 手：子の 17打目で 出る → 「△河底なら 満貫」（★前は ×）
          H3 人＝子・同じ 手：親の 2打目で 出る → 「△一発なら 満貫」（★前は ×）
          ★ ついでに ★巡目（★出番の 間は いま 出た 打目 ―― T333 ③ は 画面側の roundNo が 数える）*/
@@ -714,28 +734,28 @@
     var CCUT = ['1s', '4s', '4s', '2m', '2m', '2m', '6m', '6m', '6m', '7p', '7p', '7p', '5s', '5s', '5s', '8s'];
     run('H1', function () {
       var S = tri13(true), r;
-      X.discard(S, 0, '9m'); r = X.discard(S, 1, '3p');
+      X.discard(S, 0, '9m'); r = X.discard(S, 1, '7s');
       if (r.ron !== 0) { bad.push('H1：★一発の △ で ロンの 出番が 無い'); return; }
       var ck = X.myCheck(S, 0).text;
-      if (ck !== '待ち：3p △一発なら 満貫') bad.push('H1：★ロンの 出番の 確かめ表示が「' + ck + '」（正は △一発なら 満貫）');
+      if (ck !== '待ち：7s △一発なら 満貫') bad.push('H1：★ロンの 出番の 確かめ表示が「' + ck + '」（正は △一発なら 満貫）');
     });
     run('H2', function () {
       var S = tri13(true), r = null, k;
       for (k = 0; k < 16; k++) { X.discard(S, 0, HCUT[k]); r = X.discard(S, 1, CCUT[k]); if (r.ron != null) { bad.push('H2：' + (k + 1) + '打目で ★早い ロンの 出番'); return; } }
-      X.discard(S, 0, HCUT[16]); r = X.discard(S, 1, '3p');
+      X.discard(S, 0, HCUT[16]); r = X.discard(S, 1, '7s');
       if (r.ron !== 0) { bad.push('H2：★河底の △ で ロンの 出番が 無い'); return; }
       if (S.h.offer.no !== 17) bad.push('H2：打目が ' + S.h.offer.no);
       var ck = X.myCheck(S, 0).text;
-      if (ck !== '待ち：3p △河底なら 満貫') bad.push('H2：★河底の ロンの 出番の 確かめ表示が「' + ck + '」（正は △河底なら 満貫）');
+      if (ck !== '待ち：7s △河底なら 満貫') bad.push('H2：★河底の ロンの 出番の 確かめ表示が「' + ck + '」（正は △河底なら 満貫）');
       var o = X.ron(S, 0);
-      if (o.result.han !== 4) bad.push('H2：河底で ' + o.result.han + '飜');
+      if (o.result.han !== 4 || o.result.fu !== 40) bad.push('H2：河底で ' + o.result.han + '飜' + o.result.fu + '符');
     });
     run('H3', function () {
       var S = tri13(false), r;
-      X.discard(S, 1, '1s'); X.discard(S, 0, '9m'); r = X.discard(S, 1, '3p');
+      X.discard(S, 1, '1s'); X.discard(S, 0, '9m'); r = X.discard(S, 1, '7s');
       if (r.ron !== 0) { bad.push('H3：★子の 一発（親の 2打目）で ロンの 出番が 無い'); return; }
       var ck = X.myCheck(S, 0).text;
-      if (ck !== '待ち：3p △一発なら 満貫') bad.push('H3：★子の 一発の ロンの 出番の 確かめ表示が「' + ck + '」（正は △一発なら 満貫）');
+      if (ck !== '待ち：7s △一発なら 満貫') bad.push('H3：★子の 一発の ロンの 出番の 確かめ表示が「' + ck + '」（正は △一発なら 満貫）');
     });
     return bad;
   }
@@ -765,7 +785,9 @@
   var $ = function (id) { return document.getElementById(id); };
   var MJ = root.MJ;                                   // ★アトの 部品（../mahjong-tiles.js）
   var E = ENGINE;
-  var SAVE_KEY = 'bragekobo-17ho-v1';
+  /* ★T365：符あり（T362）で しまう 中身が 変わった（★result に fu・kiriage／★ロンの 出番の 決まり）ので 名前を v2 に 上げる。
+     ★前の 版（v1）の 中身は 読まない・見つけたら 消す（★読むと ×の 牌で ロンの ボタン・「undefined符」―― トライ T364 F1・F2）*/
+  var SAVE_KEY = 'bragekobo-17ho-v2', OLD_KEYS = ['bragekobo-17ho-v1'];
   var R = TUNE.RATIO;
 
   /* ★★ たての 線 ―― ★JS の 名前つき 数 だけ（★CSS に 同じ 数を 書かない・追記⑥ 決まり2）★★
@@ -841,6 +863,11 @@
   var RANK_NAME = { mangan: '満貫', haneman: '跳満', baiman: '倍満', sanbaiman: '三倍満', kazoe: '役満', yakuman: '役満', yakuman2: 'ダブル役満', yakuman3: 'トリプル役満' };
   /* ★T334：★4倍 から 上は「四倍役満」「五倍役満」…（★仕様書 §2-3 の 表の 字。★MJCore の 名前は「4倍役満」―― ★MJCore は 変えない）
      ★前は 4倍 以上が RANK_NAME に 無く、★試合の おわりの 記録で 位が 空に なって いた（トライ T333 ④）。 */
+  /* ★T362：局の 結果の 位の 1行 ――「4飜 30符 → 満貫（切り上げ）」（★役満は 位だけ）。★数えるのは MJCore（★ここは 字を 並べる だけ）*/
+  function rankLine(r) {
+    if (r.yakuman) return rankName(r.rank.id);
+    return '<span class="nw">' + r.totalHan + '飜 ' + r.fu + '符</span> → <span class="nw">' + rankName(r.rank.id) + (r.kiriage ? '（切り上げ）' : '') + '</span>';
+  }
   function rankName(id) {
     if (RANK_NAME[id]) return RANK_NAME[id];
     var m = /^yakuman(\d+)$/.exec(id || '');
@@ -859,6 +886,7 @@
   function clearSave() { if (store) try { store.removeItem(SAVE_KEY); } catch (e) {} }
   function loadSave() {
     if (!store) return null;
+    OLD_KEYS.forEach(function (k) { try { store.removeItem(k); } catch (e) {} });   // ★T365：前の 版の 中身は 読まずに 消す
     var s = null;
     try { s = JSON.parse(store.getItem(SAVE_KEY) || 'null'); } catch (e) { s = null; }
     if (!s) return null;
@@ -1121,7 +1149,9 @@
       t.hand = fit($('hand13'), S.h.h13[HUMAN], inner($('handCard')).w, 999,
         { cols: 13, cap: low ? TUNE.CAP_HAND_LOW : yoko ? Math.min(TUNE.CAP_HAND_YOKO, (H - 12) * 0.12 / R) : TUNE.CAP_HAND_TATE * kw });
       var oi = inner($('oppRow'));
-      $('oppRow').style.setProperty('--bw', Math.max(8, Math.min(16, (oi.w - 130) / 13 - 1)) + 'px');
+      /* ★T362：点の 字の はばを 測って 残りに 裏13枚（★ダブル役満 以上で「-126,000」の ように 桁が 増えても はみ出さない）*/
+      var osc = $('oppRow').querySelector('.sc'), oscw = osc ? osc.getBoundingClientRect().width : 0;
+      $('oppRow').style.setProperty('--bw', Math.max(8, Math.min(16, (oi.w - Math.max(130, oscw + 12)) / 13 - 1)) + 'px');
       void app.offsetWidth;
       var rb = box($('restBox'));
       /* ★幅 320 の たて：★たけは 気に しない（★上下に 動かす）―― 7列×3行で はば いっぱい */
@@ -1544,7 +1574,7 @@
         var hv = y.yakuman ? (y.yakuman === 2 ? 'ダブル役満' : '役満') : y.han + '飜';
         return '<li><span>' + y.name + '</span><i>' + hv + '</i></li>';
       }).join('') + '</ul>';
-      b += '<p class="rs-rank">' + (r.yakuman ? '' : r.totalHan + '飜　') + rankName(r.rank.id) + '</p>';
+      b += '<p class="rs-rank">' + rankLine(r) + '</p>';
       var pay = o.pay;
       b += '<p class="rs-pay">' + fmt(pay.base) + '点' + (pay.honba ? '　＋ ' + fmt(pay.honba) + '点（' + o.honba + '本場）' : '') + (pay.kyotaku ? '　＋ 供託 ' + fmt(pay.kyotaku) + '点' : '') + '</p>';
       say(line(me ? 'youRon' : 'cpuRon'));
@@ -1711,7 +1741,7 @@
      ------------------------------------------------------------
      ★ 画面には 1つも 出さない。★いま 開いて いる 画面・場面で 数える（★13画面で 回すのは 外の 道具 t332_03）。
      ★ 見るもの（★鳴いたら 番号から 始まる 1行）：
-       ① 決まり     … MJCore が ある・35,000点・4飜で 満貫・一発／河底の はんい・親 1.5倍・ドラが 回る
+       ① 決まり     … MJCore が ある・35,000点・★満貫の 線（5飜／4飜30符／3飜60符・七対子 4飜は 届かない ―― T362）・一発／河底の はんい・親 1.5倍・ドラが 回る・★ダブル役満
        ② 試合       … CPU どうしで n 試合（★本物の ENGINE の 手で）：止まらない・ロンは 満貫 以上・フリテン中の ロン 0・点の 合計 一定
                       ★T332：最後の 局の 流局で 終わる・最後で ない 局の 流局では 終わらない・同点＝引き分け（決まった 場面 F・F2・G も）
        ③ CPU の 目   … 人の 13枚・34枚を 入れかえても CPU に 見せる もの・切る 牌が 1文字も 変わらない（T-14）
@@ -1814,12 +1844,17 @@
     if (!C || !C.judge) b1.push('MJCore が 無い');
     else {
       if (C.RULES.startPoints !== 35000) b1.push('持ち点が ' + C.RULES.startPoints);
-      if (C.RULES.manganHan !== 4) b1.push('満貫が ' + C.RULES.manganHan + '飜');
+      if (C.RULES.manganHan !== 5 || C.RULES.kiriage4 !== 30 || C.RULES.kiriage3 !== 60) b1.push('満貫の 線が ' + C.RULES.manganHan + '飜・' + C.RULES.kiriage4 + '符・' + C.RULES.kiriage3 + '符');
       if (C.RULES.turns !== 17) b1.push('切る 回数が ' + C.RULES.turns);
       var rb = [C.ronBonus(true, 1).ippatsu, C.ronBonus(true, 2).ippatsu, C.ronBonus(true, 17).houtei, C.ronBonus(false, 2).ippatsu, C.ronBonus(false, 3).ippatsu, C.ronBonus(false, 17).houtei];
       if (rb.join() !== 'true,false,true,true,false,false') b1.push('一発・河底の はんいが ' + rb.join());
-      if (C.basePay(true, C.rankOf(4, 0)) !== 12000 || C.basePay(false, C.rankOf(6, 0)) !== 12000) b1.push('親 1.5倍・跳満 の 点');
-      if (C.rankOf(3, 0) !== null) b1.push('3飜で 満貫に なった');
+      if (C.basePay(true, C.rankOf(4, 0, 30)) !== 12000 || C.basePay(false, C.rankOf(6, 0, 25)) !== 12000) b1.push('親 1.5倍・跳満 の 点');
+      if (C.rankOf(3, 0, 50) !== null || C.rankOf(4, 0, 25) !== null) b1.push('3飜50符か 4飜25符で 満貫に なった');
+      if (!C.rankOf(3, 0, 60) || !C.isKiriage(3, 60) || !C.isKiriage(4, 30) || C.isKiriage(4, 40)) b1.push('切り上げ満貫が ちがう');
+      var j1 = C.judge('22m44m66m33p55p77s8s', '8s', { dealer: false, roundWind: '1z' });
+      if (!j1 || j1.mangan || j1.fu !== 25) b1.push('七対子 4飜が 満貫に なった（' + (j1 && j1.fu) + '符）');
+      var j2 = C.judge('19m19p19s1234567z', '1m', { dealer: false, roundWind: '1z' }), j3 = C.judge('222m555m444p666s8s', '8s', { dealer: false, roundWind: '1z' });
+      if (!j2 || j2.yakuman !== 2 || !j3 || j3.yakuman !== 2) b1.push('国士十三面・四暗刻単騎が ダブル役満で ない');
       if (C.doraFromIndicator('9m') !== '1m' || C.doraFromIndicator('4z') !== '1z' || C.doraFromIndicator('7z') !== '5z') b1.push('ドラが 回らない');
       var w1 = C.waits('23m234p234s567s99p').join();
       if (w1 !== '1m,4m') b1.push('待ちが ' + w1);
@@ -2189,6 +2224,12 @@
       else if (JSON.stringify(back) !== JSON.stringify(S)) b14.push('★読み直すと 中身が 変わる');
     } else if (!S && store) { var raw2 = null; try { raw2 = store.getItem(SAVE_KEY); } catch (e) {} if (raw2) b14.push('はじめの 画面 なのに 試合が しまって ある'); }
     else note['⑭ しまう'] = 'sessionStorage が 使えない';
+    /* ★T365：前の 版（v1）の 中身は 残さない・しまう 名前は 前の 版と ちがう（トライ T364 F1・F2）*/
+    if (OLD_KEYS.indexOf(SAVE_KEY) >= 0 || SAVE_KEY === 'bragekobo-17ho-v1') b14.push('★しまう 名前が 前の 版と 同じ（' + SAVE_KEY + '）');
+    if (store) OLD_KEYS.forEach(function (k) { var o = null; try { o = store.getItem(k); } catch (e) {} if (o) b14.push('★前の 版の 中身が 残って いる（' + k + '）'); });
+    /* ★T365：ロンの 出番は いまの 決まりで 満貫に 届く 牌 だけ（★届かない 出番が 残ると 押して 止まる ―― F1）*/
+    if (h && h.offer) { var ro14 = null; try { ro14 = ronResult(S, h.offer.p, h.offer.tile, h.offer.no); } catch (e) {} if (!ro14 || !ro14.mangan) b14.push('★ロンの 出番が 満貫に とどかない 牌（' + h.offer.tile + '）'); }
+    if (h && h.out && h.out.type === 'ron' && h.out.result && !h.out.result.yakuman && typeof h.out.result.fu !== 'number') b14.push('★ロンの 結果に 符が 無い');
     put('⑭', b14);
 
     /* ⑮ 2連打の 止め */
@@ -2310,12 +2351,40 @@
       S.match.history.forEach(function (rec, i) { if (rec.type === 'ron' && lis[i] && lis[i].textContent.trim().slice(-1) === 'ン') b21.push('★試合の 記録の ' + (i + 1) + '局目に 位が 無い'); });
     }
     if (resultKind === 'hand' && /[0-9]倍役満/.test($('resultBody').textContent)) b21.push('★局の 箱に「数字＋倍役満」（正は 漢数字）');
+    /* ★T362：局の 箱の 位の 1行 ＝ MJCore の 答えと 同じ（★飜・符・位・切り上げ）。役満は 位だけ */
+    if (resultKind === 'hand' && S && S.h && S.h.out && S.h.out.type === 'ron') {
+      var rr21 = S.h.out.result, rkEl = $('resultBody').querySelector('.rs-rank'), rkT = rkEl ? rkEl.textContent : '';
+      var want21 = rr21.yakuman ? rankName(rr21.rank.id) : rr21.totalHan + '飜 ' + rr21.fu + '符 → ' + rankName(rr21.rank.id) + (rr21.kiriage ? '（切り上げ）' : '');
+      if (rkT !== want21) b21.push('★局の 箱の 位が「' + rkT + '」（正は「' + want21 + '」）');
+      if (!rr21.yakuman && !(rr21.fu === 25 || (rr21.fu >= 30 && rr21.fu % 10 === 0))) b21.push('★符が ' + rr21.fu);
+      if (rkEl && vis(rkEl) && lineCount(rkEl) > 2) b21.push('★位の 1行が ' + lineCount(rkEl) + '行に 折れた');
+    }
     if (sc === 'make' && S) {
       var kv = null; $('makeInfo').querySelectorAll('[data-kyotaku]').forEach(function (e) { if (vis(e)) kv = e; });
       if (!kv) b21.push('★手作りの 帯に 供託が 無い');
     }
     var hdT = $('helpDialog').textContent;
-    ['◎満貫', '△一発', '△河底', 'とどかない', '親が ロンして トップ'].forEach(function (w) { if (hdT.indexOf(w) < 0) b21.push('遊び方に「' + w + '」が 無い'); });
+    ['◎満貫', '△一発', '△河底', 'とどかない', '親が ロンして トップ', '符', '切り上げ', '4飜30符', '3飜60符', 'ダブル役満', '四暗刻単騎', '国士無双十三面'].forEach(function (w) { if (hdT.indexOf(w) < 0) b21.push('遊び方に「' + w + '」が 無い'); });
+    /* ★T365：点の 表（トライ T364 F3）―― 満貫の 行に 4飜30符〜・3飜60符〜（切り上げ）・役満は 2倍〜5倍の 行（点は MJCore と 同じ）・表が 箱から はみ出さない */
+    var pt21 = document.querySelector('#helpDialog .pt-table');
+    if (!pt21) b21.push('★遊び方に 点の 表が 無い');
+    else {
+      var mr21 = pt21.querySelector('.pt-mangan'), mt21 = mr21 ? mr21.textContent : '';
+      ['満貫', '4飜30符', '3飜60符', '切り上げ', '8,000', '12,000'].forEach(function (w) { if (mt21.indexOf(w) < 0) b21.push('★点の 表の 満貫の 行に「' + w + '」が 無い'); });
+      var ym21 = pt21.querySelectorAll('.pt-ym');
+      if (ym21.length !== 4) b21.push('★点の 表の 2倍〜5倍の 行が ' + ym21.length + '行');
+      for (var yi = 0; yi < ym21.length; yi++) {
+        var nn = yi + 2, rk21 = C.rankOf(0, nn), cells21 = ym21[yi].cells;
+        var wantRow = [nn + '倍', rankName(rk21.id), fmt(C.basePay(false, rk21)), fmt(C.basePay(true, rk21))].join('|');
+        var gotRow = Array.prototype.map.call(cells21, function (c) { return c.textContent; }).join('|');
+        if (gotRow !== wantRow) b21.push('★点の 表の ' + nn + '倍の 行が「' + gotRow + '」（正は「' + wantRow + '」）');
+      }
+      if (vis(pt21)) {
+        var sec21 = pt21.parentElement.getBoundingClientRect(), tb21 = pt21.getBoundingClientRect();
+        if (tb21.right > sec21.right + 0.5 || tb21.left < sec21.left - 0.5 || pt21.scrollWidth > Math.ceil(tb21.width) + 1) b21.push('★点の 表が 箱から はみ出した（' + Math.round(tb21.width) + '＞' + Math.round(sec21.width) + '）');
+      }
+    }
+    ['符は 数えない', '1倍）', '満貫（4飜）'].forEach(function (w) { if (hdT.indexOf(w) >= 0) b21.push('★遊び方に 前の 決め「' + w + '」が 残って いる'); });   // ★T362
     put('㉑', b21);
 
     /* ㉒ 山の 折り方（★T335・★T338 社長「1」：★たての 手作りは ★どの 山でも 折るのは いちばん 多い 種類 だけ）
