@@ -975,12 +975,33 @@ dialog#helpDialog h2 { margin:0 0 6px; font-size:17px; font-weight:900; color:va
       ★ ★★×が 見えない こま ―― ★**40/53 → ★★★0/53**。
       ★ ★★送り 0 での ×の 場所は ★**13画面 とも 前と 1pxも 同じ**（★y が 全部 一致）。 */
 .close-dialog {
-  position:sticky; top:0;
+  position:sticky; top:0; z-index:2;   /* ★T366：あとから 塗られる 題の 帯（z-index:1）より 上に（★外すと ×が 帯の 下に もぐる・見張りの 丁）*/
   display:block; width:44px; height:44px; margin:0 0 -44px auto;
   transform:translate(8px, -8px);
   border:0; border-radius:50%;
   background:#f1f5f4; color:#7d8c99; font-size:18px; font-weight:900; cursor:pointer; font-family:inherit;
 }
+
+/* ★T366（2026-10-04・🎨アト）―― 題（h2）を「×の 帯」に しました
+   ★ T267 の 型（× だけ sticky）は、★送ると ×の 丸が 右はしの 字に かかりました
+     ★（★麻雀17歩 320px の 点の 表で「12,000」「親」・T364 F5／T365）。★5本 同じ 型で 同じ ことが 起きます。
+   ★ 直し方：★題を sticky の 白い 帯に して ×の 下に 敷く。★中身は 帯の 下に もぐる ので、★×は 字に かからない。
+     ★ 帯の たけ 52px ＝ 上 8px ＋ × 44px（★×の 場所・大きさは T267 の まま 1pxも 変えて いない）。
+     ★ top は -16px（★器の 上ばり 16px ぶん。★sticky は 上ばりの 内がわが 基準 ―― T267 の わな）。
+     ★ margin-top は -60px（★× の margin-bottom -44px と 重なって 1つに なる ―― ★-60 ＝ -(× 44 ＋ 上ばり 16)。
+       ★ -16px と 書くと -44 に のまれて 帯が 16px 下から 始まり、★送り0 だけ 題と × が ずれる【★実測】）。
+     ★ z-index：帯 1・× 2（★帯は あとから 塗られる ので、× に 2 が 無いと 帯の 下に もぐる）。
+     ★ この本だけ 題は 左よせ（★前から）。★`dialog#helpDialog h2` より 強く する ため `#helpDialog` を 付けた。
+   ★ 代金：★送って いる あいだ、箱の 上 52px は 題で ふさがる（★この本の 568×272 で 読める たけ 約234→182px）。
+     ★ 題の 字が 小さい（17px）ので、中身の はじまりは 前より 約30px 下がる。★いちばん 上でも いちばん 下でも ★帯の 下に 残る 字は 0。
+   ★ 見張り：verify の「㊲ あそびかたの × が 字に かからない（T366）」。 */
+#helpDialog .close-dialog + h2 {
+  position:sticky; top:-16px; z-index:1;
+  box-sizing:border-box; min-height:52px; margin:-60px -16px 6px; padding:8px 60px 0 16px;
+  line-height:44px; background:var(--white);
+  box-shadow:0 3px 0 rgba(196,58,115,.10);
+}
+#helpDialog { scroll-padding-top:58px; }
 
 /* ── ★測る ときは 動きを 止める（★会社で 4回 かかった わな）── */
 body.measuring *, body.measuring *::before, body.measuring *::after {

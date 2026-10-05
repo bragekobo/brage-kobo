@@ -6361,6 +6361,89 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
     note['㉟-2 ★★いちばん 下で ×と 分かった！の 両方'] = t35.bottom;
     note['㉟ ★★わざと 壊すと 鳴くか'] = t35.kill;
 
+    /* ㊲ あそびかたの 箱：× が 字に かからない（★T366・🎨アト）
+       ★ × は sticky の まま。★題（h2）を 白い 帯に して ×の 下に 敷き、★中身は 帯の 下に もぐる。
+       ★ 数え方：箱を 12px ずつ いちばん 下まで 送り、★×の 丸の 中で「×が 無ければ 見える 字」を 4px ごとに 数える
+         ★（★字の たけ 13px＋× 44px ＝ 1回 かかると 57px 以上 送る あいだ 続く ので、12px 送りで 見のがさない。★細かく 測る 道具は T366_計測どうぐ_アト の t366_probe.cjs ＝ 8px 送り・2px ごと）
+         ★（★字の 場所は 送り0で 1回 測り、送った ぶんを 引く。★帯の 中の 字だけ 毎回 測る）。
+         ★ あわせて：★いちばん 上で 帯の 下に かくれて 二度と 見えない 字／★× が 帯の 下に もぐって いないか／★× は 44px 以上。
+       ★ わざと 壊す（★使い捨ての <style> 1枚・貼り紙は 使わない）：
+         ★ 甲＝帯を 流れに 戻す／乙＝帯を すける 色に／丙＝帯を 低く／丁＝× の z-index を 外す ―― ★どれも 鳴る こと。
+         ★ 送れる はばが 帯の たけ（52px）より 小さい 画面では 甲〜丙は 試せない（★中身が ×の 下まで 来ない ことが ある・★ラビット 1280×800 は 13px）。
+       ★ 閉じた 箱は 開いて 数え、★送り位置と 開け閉めを 元に 戻す。 */
+    var bX = [], infoX = '';
+    (function () {
+      var dlg = document.getElementById('helpDialog'), xb = dlg && dlg.querySelector('.close-dialog'), band = xb && xb.nextElementSibling;
+      if (!dlg || !xb || !band) { bX.push('★あそびかたの 箱・×・題の 帯の どれかが 無い'); return; }
+      var was = dlg.open, keep = dlg.scrollTop, sabo = null;
+      function kowasu(css) { if (!sabo) { sabo = document.createElement('style'); document.head.appendChild(sabo); } sabo.textContent = css; void dlg.offsetHeight; }
+      function modosu() { if (sabo) { if (sabo.parentNode) sabo.parentNode.removeChild(sabo); sabo = null; void dlg.offsetHeight; } }
+      function rects(n) { var rg = document.createRange(); rg.selectNodeContents(n); return Array.prototype.filter.call(rg.getClientRects(), function (q) { return q.width > 0.5 && q.height > 0.5; }).map(function (q) { return { l: q.left, r: q.right, t: q.top, b: q.bottom }; }); }
+      function kazoeru() {
+        var max = Math.max(0, dlg.scrollHeight - dlg.clientHeight), tw = document.createTreeWalker(dlg, NodeFilter.SHOW_TEXT, null), t, ns = [];
+        dlg.scrollTop = 0; void dlg.offsetHeight;
+        while ((t = tw.nextNode())) if (t.nodeValue.trim() && !xb.contains(t)) ns.push({ n: t, live: band.contains(t), q: band.contains(t) ? null : rects(t) });
+        var cs = getComputedStyle(band), stick = cs.position === 'sticky', bg = cs.backgroundColor;
+        var see = !stick || bg === 'transparent' || /,\s*0(\.\d+)?\)$/.test(bg);
+        var r = { pts: 0, worst: 0, at: 0, who: {}, lost: 0, under: 0, max: max, small: '' };
+        for (var s = 0; ; s = Math.min(s + 12, max)) {
+          dlg.scrollTop = s; void dlg.offsetHeight;
+          var real = dlg.scrollTop, xr = xb.getBoundingClientRect(), cx = (xr.left + xr.right) / 2, cy = (xr.top + xr.bottom) / 2, rr = Math.min(xr.width, xr.height) / 2, here = 0;
+          if (xr.width < 43.5 || xr.height < 43.5) r.small = Math.round(xr.width) + '×' + Math.round(xr.height);
+          var c0 = document.elementFromPoint(cx, cy);
+          if (c0 && c0 !== xb && !xb.contains(c0)) r.under++;
+          for (var i = 0; i < ns.length; i++) {
+            var o = ns[i], pe = o.n.parentElement, qs = o.live ? rects(o.n) : o.q;
+            for (var j = 0; j < qs.length; j++) {
+              var q = qs[j], dy = o.live ? 0 : real;
+              var x1 = Math.max(q.l, xr.left), x2 = Math.min(q.r, xr.right), y1 = Math.max(q.t - dy, xr.top), y2 = Math.min(q.b - dy, xr.bottom);
+              if (x2 - x1 < 0.5 || y2 - y1 < 0.5) continue;
+              for (var y = y1 + 1; y < y2; y += 4) for (var x = x1 + 1; x < x2; x += 4) {
+                if ((x - cx) * (x - cx) + (y - cy) * (y - cy) > rr * rr) continue;
+                var st = document.elementsFromPoint(x, y), top = null;
+                for (var k = 0; k < st.length; k++) { if (st[k] !== xb && !xb.contains(st[k])) { top = st[k]; break; } }
+                if (top && (top === pe || pe.contains(top) || top.contains(pe) || (see && top === band))) { here++; r.who[o.n.nodeValue.trim().slice(0, 8)] = 1; }
+              }
+            }
+          }
+          r.pts += here; if (here > r.worst) { r.worst = here; r.at = real; }
+          if (s >= max) break;
+        }
+        dlg.scrollTop = 0; void dlg.offsetHeight;
+        if (stick) {
+          var bb = band.getBoundingClientRect().bottom, vt = dlg.getBoundingClientRect().top + dlg.clientTop;
+          ns.forEach(function (o) { if (o.live) return; o.q.forEach(function (q) { if (q.t < bb - 0.5 && q.b > vt + 0.5) r.lost++; }); });
+        }
+        return r;
+      }
+      try {
+        if (!was) { try { dlg.showModal(); } catch (e0) {} }
+        if (!dlg.open) { infoX = '★箱を 開けなかった（★数えて いない）'; return; }
+        var r = kazoeru();
+        if (r.small) bX.push('★× が ' + r.small + 'px（★44px の 床）');
+        if (r.pts) bX.push('★× が 字に かかった：約' + r.pts * 16 + 'px²（★いちばん 多い 送り ' + r.at + 'px・「' + Object.keys(r.who).slice(0, 3).join('」「') + '」）');
+        if (r.lost) bX.push('★題の 帯の 下に かくれて 二度と 見えない 字 ' + r.lost + 'か所');
+        if (r.under) bX.push('★× が 帯の 下に もぐった（' + r.under + 'こま）');
+        var kill = [], shiken = [['丁 ×の z-index を 外す', '#helpDialog .close-dialog { z-index:auto !important; }']];
+        if (r.max >= 52) shiken = [['甲 帯を 流れに 戻す', 'position:static !important;'], ['乙 帯を すける 色に', 'background:transparent !important;'], ['丙 帯を 低く', 'min-height:0 !important; padding-top:0 !important; line-height:1.2 !important;']]
+          .map(function (k) { return [k[0], '#helpDialog .close-dialog + * { ' + k[1] + ' }']; }).concat(shiken);
+        else kill.push('送れる はば ' + r.max + 'px ＜ 帯の たけ 52px ―― 甲〜丙は 試せない');
+        shiken.forEach(function (k) {
+          kowasu(k[1]); var rk = kazoeru(); modosu();
+          var nk = rk.pts + rk.lost + rk.under;
+          kill.push(k[0] + (nk ? ' 鳴る' : ' ★空うち'));
+          if (!nk) bX.push('★見張りが 空うち（' + k[0] + '）');
+        });
+        infoX = '送れる はば ' + r.max + 'px・× ' + Math.round(xb.getBoundingClientRect().width) + 'px・' + kill.join('／');
+      } finally {
+        modosu();
+        dlg.scrollTop = was ? keep : 0;
+        if (!was && dlg.open) dlg.close();
+      }
+    })();
+    for (var iX = 0; iX < bX.length; iX++) ng.push('㊲ ' + bX[iX]);
+    note['㊲ ★あそびかたの × が 字に かからない（T366）'] = bX.length ? ('★NG ' + bX.length) : ('OK（' + infoX + '）');
+
     /* ★ さわった ものを 戻す（★ハッピーの ひとこと・★1回だけの 知らせの ふだ）*/
     if (sayTimer) { clearTimeout(sayTimer); sayTimer = 0; }
     sayEl.textContent = kSayTxt;
