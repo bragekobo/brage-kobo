@@ -305,6 +305,27 @@
     root.scrollTo(wx, wy);
     return bad;
   }
+  /* ★★ T370（★T369 トライ K3）―― ★画面の 外に ある ものの 指の的を ★**すべらせて から** 測る ★★
+     ★ ★T368 で「ぜんぶ ✕ にする」「おすすめに もどす」を MUST44 に 上げましたが、★ルールを 開くと 2つは
+       ★★13画面 ぜんぶで y1300 より 下【★実測・PC でも 1461】。★下の measureOnce は 画面の 外を 飛ばす ので、
+       ★★★一度も 測れて いませんでした（★押し代を 消しても 鳴らない ―― ★見張って いる ふり）。
+     ★ ★→ ★unreachable() と 同じ やり方で ★まん中へ すべらせ、★その 場で 的を 測り、★すべりを 元に 戻す。
+       ★ ★すべらせても 外なら null（★それは 上の「届かない」が 鳴らす）。 */
+  function scrolledReach(el) {
+    var keeps = [], n = el;
+    while (n && n !== document.documentElement) {
+      if (n.scrollHeight > n.clientHeight + 1 || n.scrollWidth > n.clientWidth + 1) keeps.push([n, n.scrollTop, n.scrollLeft]);
+      n = n.parentElement;
+    }
+    var wx = root.scrollX, wy = root.scrollY, r = null;
+    try {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      if (!outOfView(el)) r = reach(el);
+    } catch (e) { r = null; }
+    keeps.forEach(function (k) { k[0].scrollTop = k[1]; k[0].scrollLeft = k[2]; });
+    root.scrollTo(wx, wy);
+    return r;
+  }
 
   /* ★★ 44px ―― ★2つに 分ける（★T177 の C：「割るなら 例外として 記録」）
      ★ MUST …… ★遊んで いる 最中に 何度も 押す ところ。★ここが 44pxを 割ったら **鳴らす**。
@@ -882,7 +903,7 @@
   }
 
   function measureOnce() {
-    var out = { over: 0, overWho: '', off: 0, offWho: [], small: 0, smallWho: [], rec: {},
+    var out = { over: 0, overWho: '', off: 0, offWho: [], small: 0, smallWho: [], rec: {}, bub: 0, bubWho: [], rank: 0, rankWho: [],
                 gameScrollY: false,
                 scrollX: document.documentElement.scrollWidth > innerWidth + 0.5,
                 scrollY: document.documentElement.scrollHeight > innerHeight + 0.5 };
@@ -911,11 +932,45 @@
          ★ ★まん中が 画面の 外なので 当たりは かならず 1×1px に なり、
            ★ ★★「はじめるボタンが 1×1px」と 4件 うそを 言いました。
          ★ ★★画面の 中に 入って いる ものだけ 測ります（★外なら 上の「届くか」が 見ます）。 */
-      if (outOfView(el)) continue;
-      var r = reach(el), nm = tapName(el);
+      /* ★★ T370（K3）：★MUST44 だけは ★すべらせて 測る（★上の scrolledReach）。★ほかは 前の まま 飛ばす。 */
+      var r, nm = tapName(el);
+      if (outOfView(el)) {
+        if (!isMust44(el)) continue;
+        r = scrolledReach(el);
+        if (!r) continue;
+      } else r = reach(el);
       if (!out.rec[nm] || r.w * r.h < out.rec[nm][0] * out.rec[nm][1]) out.rec[nm] = [r.w, r.h];
       if (isMust44(el) && (r.w < 44 || r.h < 44)) {
         out.small++; if (out.smallWho.length < 4) out.smallWho.push(nm + ' ' + r.w + '×' + r.h + 'px');
+      }
+    }
+    /* ★★ T370（★T369 トライ F3）― ★はじめの 画面の ハッピーの ふきだしが ★押す ところに 乗って いないか ★★
+       ★ ★はば 800〜821 で ふきだしが「ぜんぶ」の 右はしに 乗って いた（★812×375 で 310px²）。★まん中は 押せる ので
+         ★★上の 44px の 見張りでは 鳴らなかった（★まん中から 60px までしか 歩かない）。★→ ★箱どうしの 重なりで 見る。
+       ★ ★ふたが 開いて いる ときは 見ない（★ふきだしは ふたの うしろ）。 */
+    var bb = document.querySelector('.mascot .bubble');
+    if (bb && visible(bb) && !openDialog()) {
+      var bq = bb.getBoundingClientRect();
+      for (j = 0; j < l.length; j++) {
+        if (outOfView(l[j])) continue;
+        var tq = l[j].getBoundingClientRect();
+        var ow = Math.min(tq.right, bq.right) - Math.max(tq.left, bq.left), oh = Math.min(tq.bottom, bq.bottom) - Math.max(tq.top, bq.top);
+        if (ow > 0.5 && oh > 0.5) { out.bub++; if (out.bubWho.length < 4) out.bubWho.push(tapName(l[j]) + ' ' + Math.round(ow * oh) + 'px²'); }
+      }
+    }
+    /* ★★ T370（★T369 トライ K10）― 順位発表の 4行が ★すべらせずに 見えるか ★★
+       ★ ★568×272 で 4位の 行が 見え 13/32px ―― ★大貧民だと 自分の 行が すべらせないと 見えなかった。
+       ★ ★順位表（.ranking）の 切る ふち・ふた・画面 の いちばん 内側に ★4行 ぜんぶ 入って いるか。 */
+    var dr = openDialog();
+    if (dr && dr.id === 'resultDialog') {
+      var rk = dr.querySelector('.ranking');
+      if (rk && visible(rk)) {
+        var kq = rk.getBoundingClientRect(), dq = dr.getBoundingClientRect();
+        var lo = Math.max(kq.top, dq.top, 0), hi = Math.min(kq.bottom, dq.bottom, innerHeight);
+        [].forEach.call(rk.children, function (li, ix) {
+          var q3 = li.getBoundingClientRect();
+          if (q3.top < lo - 0.5 || q3.bottom > hi + 0.5) { out.rank++; if (out.rankWho.length < 4) out.rankWho.push((ix + 1) + '行目 ' + Math.round(q3.top) + '〜' + Math.round(q3.bottom) + '（見える ' + Math.round(lo) + '〜' + Math.round(hi) + '）'); }
+        });
       }
     }
     return out;
@@ -923,7 +978,7 @@
 
   function fitTest() {
     var rows = [], worst = 0, worstAt = '', rareWorst = 0, rareAt = '';
-    var offN = 0, offWho = {}, smallN = 0, smallWho = {}, sx = 0, gsy = 0, rec = {};
+    var offN = 0, offWho = {}, smallN = 0, smallWho = {}, sx = 0, gsy = 0, rec = {}, bubN = 0, bubWho = {}, rankN = 0, rankWho = {};
     var keep = snapshot();
     still(function () {
       withRandom(seedFixed || 20260831, function () {
@@ -933,7 +988,9 @@
           if (SCENES[i].rare) {
             if (m.over > rareWorst) { rareWorst = m.over; rareAt = SCENES[i].n + '：' + m.overWho; }
           } else if (m.over > worst) { worst = m.over; worstAt = SCENES[i].n + '：' + m.overWho; }
-          offN += m.off; smallN += m.small;
+          offN += m.off; smallN += m.small; bubN += m.bub;
+          m.bubWho.forEach(function (x) { bubWho[SCENES[i].n + '：' + x] = 1; });
+          rankN += m.rank; m.rankWho.forEach(function (x) { rankWho[x] = 1; });
           m.offWho.forEach(function (x) { offWho[x] = 1; });
           m.smallWho.forEach(function (x) { smallWho[x] = 1; });
           for (var k in m.rec) if (!rec[k] || m.rec[k][0] * m.rec[k][1] < rec[k][0] * rec[k][1]) rec[k] = m.rec[k];
@@ -962,6 +1019,10 @@
     };
     if (offN) out['届かなかったもの'] = Object.keys(offWho);
     if (smallN) out['44pxを割ったもの'] = Object.keys(smallWho);
+    out['★ハッピーのふきだしが押すところに乗った'] = bubN + '件';   /* ★T370（F3） */
+    if (bubN) out['ふきだしが乗ったもの'] = Object.keys(bubWho);
+    out['★順位発表で すべらせないと見えない行'] = rankN + '件';   /* ★T370（K10） */
+    if (rankN) out['見えない行'] = Object.keys(rankWho);
     if (root.console) console.log('[大富豪] fitTest', out);
     return out;
   }
@@ -1505,6 +1566,12 @@
       ft['★★押すところが届かない'] + '（' + (ft['届かなかったもの'] || []).join('・') + '）');
     if (parseInt(ft['★44pxを割った（いつも押すボタン）'], 10)) ng.push('★★★いつも押すボタンが 44pxを 割りました：' +
       ft['★44pxを割った（いつも押すボタン）'] + '（' + (ft['44pxを割ったもの'] || []).join('・') + '）');
+    /* ★T370（F3）― ハッピーの ふきだしが 押す ところに 乗った */
+    if (parseInt(ft['★ハッピーのふきだしが押すところに乗った'], 10)) ng.push('★★★ハッピーの ふきだしが 押す ところに 乗りました：' +
+      ft['★ハッピーのふきだしが押すところに乗った'] + '（' + (ft['ふきだしが乗ったもの'] || []).join('・') + '）');
+    /* ★T370（K10）― 順位発表の 行が すべらせないと 見えない */
+    if (parseInt(ft['★順位発表で すべらせないと見えない行'], 10)) ng.push('★★★順位発表の 行が すべらせないと 見えません：' +
+      ft['★順位発表で すべらせないと見えない行'] + '（' + (ft['見えない行'] || []).join('・') + '）');
     if (ft['横スクロールが出た場面']) ng.push('★★★横スクロールが ' + ft['横スクロールが出た場面'] + '場面で 出ました');
     /* ★★ T368 ― ★場面が 作れなかったら 鳴らす（★「別の形にする」の 場面が 黙って 消えると、★その ボタンを 見張って いる ふりに なる）*/
     var tsukurezu = (ft['中身'] || []).filter(function (r) { return String(r).indexOf('作れず') >= 0; });

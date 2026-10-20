@@ -343,8 +343,12 @@ button { font-family:inherit; cursor:pointer; }
 .happy-cat.is-jump { animation:happyJump .5s ease-in-out 6; }
 
 /* ── 勝ち／負け／引き分け の 画面 ───────────────────── */
+/* ★★ T370（★T369 トライ F2）：z-index 80 → 1000（★スパイダー T368 と 同じ 直し）★★
+   ★ わけ … ★札の z-index は place() で 最大 225。★取った 札の 列が 結果の 箱の 上に 乗って いた
+     【★実測・812×375：箱の 中 1540点中 64点が 札を 返す／568×272：取った 札が「ロボットの もの覚え」の 選ぶ箱を 横切る】。
+   ★ ハッピー（75）・札が 降る 演出（70）は 前から 箱の 下 ―― ★見え方は 札が 箱に 乗らなく なる だけ。 */
 .result-wrap {
-  position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+  position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
   padding:16px; background:rgba(70,60,82,.42);
 }
 .result-box {

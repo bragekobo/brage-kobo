@@ -323,8 +323,12 @@ button { font-family:inherit; cursor:pointer; }
 .fall-canvas { position:fixed; inset:0; z-index:70; touch-action:manipulation; }
 
 /* ── 勝ち／止まった ときの 画面 ───────────────────── */
+/* ★★ T370（★T369 トライ F2）：z-index 80 → 1000（★スパイダー T368 と 同じ 直し）★★
+   ★ わけ … ★札の z-index は place() で 最大 400、★えらんだ 札は 500。★それが 結果の 箱の 上に 乗って いた
+     【★実測・812×375：箱の 中 1144点中 20点が 札を 返す】。★えらんだ 札（500）よりも 上に する。
+   ★ ハッピー（75）・札が 降る 演出（70）は 前から 箱の 下 ―― ★見え方は 札が 箱に 乗らなく なる だけ。 */
 .result-wrap {
-  position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+  position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
   padding:16px; background:rgba(70,60,82,.42);
 }
 .result-box {

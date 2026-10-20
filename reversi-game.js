@@ -1186,10 +1186,14 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
           bad.push('★T368：' + namae(el) + ' の まん中が 押せない（★上に ' + (u ? namae(u) : '何か') + ' が かぶって いる）'); return;
         }
         var Lx = cx, Rx = cx, T = cy, B = cy;
-        for (j = 1; j <= 60; j++) { if (atta(el, cx - j, cy)) Lx = cx - j; else break; }
-        for (j = 1; j <= 60; j++) { if (atta(el, cx + j, cy)) Rx = cx + j; else break; }
-        for (j = 1; j <= 60; j++) { if (atta(el, cx, cy - j)) T = cy - j; else break; }
-        for (j = 1; j <= 60; j++) { if (atta(el, cx, cy + j)) B = cy + j; else break; }
+        /* ★★ T370（★T369 トライ K2）：★60px で 止めて いた ので、★押し代が それより 先まで のびて いても
+           ★★となり探しの 枠が 60px で 切れて 鳴らなかった【★実測 R2・6×6 568×272：「◀」の 押し代 500×300 で 盤 30/36 マスを 取っても OK】。
+           ★ → ★画面の はしまで 歩く（★atta は 画面の 外で false なので 必ず 止まる）。 */
+        var LIM = Math.max(vw, vh);
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx - j, cy)) Lx = cx - j; else break; }
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx + j, cy)) Rx = cx + j; else break; }
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx, cy - j)) T = cy - j; else break; }
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx, cy + j)) B = cy + j; else break; }
         if (Rx - Lx + 1 < 44 || B - T + 1 < 44) bad.push('★T368：' + namae(el) + ' の 指の的が ' + (Rx - Lx + 1) + '×' + (B - T + 1) + 'px（★44×44 以上の はず）');
         /* ｃ ★となりの 見た目の 中で ★こちらが 返る 点を あつめ、★押し代を 押せなく して のぞく */
         var kouho = [];
@@ -1326,6 +1330,23 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
     var t368 = t368Mato([['.back'], ['#levelTitle'], ['#levelResult', 'result']]);
     out['★T368 指の的 44px'] = t368['★NG'] ? t368['中身'] : ('OK（数えた ' + t368['数えた ところ'] + 'か所）');
     if (t368['★NG']) out['★NG'] = (out['★NG'] || 0) + t368['★NG'];
+    /* ★★ T370 ― 結果の 箱の ボタンが 箱で 切れて いないか（★T369 トライ K5）★★
+       ★ ★568×272 で「◀ ゲームを選ぶ」が 箱の 下で 切れ（y251〜289・箱の 下 256）、★まん中が 押せなかった。
+       ★ ★ほかの 見張りは「切れて いる ものは 数えない」ので 鳴らなかった。★箱を 出して ★3つの ふちを 見る（★元に 戻す）。 */
+    var kk = [], rw = $('resultWrap'), rb = $('resultBox'), modo = [];
+    if (rw.classList.contains('hidden')) { rw.classList.remove('hidden'); modo.push(function () { rw.classList.add('hidden'); }); }
+    var ani = rb.style.animation; rb.style.animation = 'none'; modo.push(function () { rb.style.animation = ani; });
+    try {
+      var bq = rb.getBoundingClientRect(), bcs = getComputedStyle(rb);
+      var bt = bq.top + (parseFloat(bcs.borderTopWidth) || 0), bb = bq.bottom - (parseFloat(bcs.borderBottomWidth) || 0);
+      ['levelResult', 'btnAgain', 'btnQuit'].forEach(function (id) {
+        var e = $(id); if (!e || !e.getClientRects().length) return;
+        var q = e.getBoundingClientRect();
+        if (q.top < bt - 0.5 || q.bottom > bb + 0.5 || q.bottom > window.innerHeight + 0.5) kk.push('#' + id + ' ' + Math.round(q.top) + '〜' + Math.round(q.bottom) + '（箱 ' + Math.round(bt) + '〜' + Math.round(bb) + '）');
+      });
+    } finally { for (var mi = modo.length - 1; mi >= 0; mi--) modo[mi](); }
+    out['★T370 結果の箱で 切れた ボタン'] = kk.length ? kk : 'OK（0）';
+    if (kk.length) out['★NG'] = (out['★NG'] || 0) + kk.length;
     console.log('[REVERSI] verify', out);
     return out;
   }

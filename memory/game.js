@@ -1570,10 +1570,14 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
           bad.push('★T368：' + namae(el) + ' の まん中が 押せない（★上に ' + (u ? namae(u) : '何か') + ' が かぶって いる）'); return;
         }
         var Lx = cx, Rx = cx, T = cy, B = cy;
-        for (j = 1; j <= 60; j++) { if (atta(el, cx - j, cy)) Lx = cx - j; else break; }
-        for (j = 1; j <= 60; j++) { if (atta(el, cx + j, cy)) Rx = cx + j; else break; }
-        for (j = 1; j <= 60; j++) { if (atta(el, cx, cy - j)) T = cy - j; else break; }
-        for (j = 1; j <= 60; j++) { if (atta(el, cx, cy + j)) B = cy + j; else break; }
+        /* ★★ T370（★T369 トライ K2）：★60px で 止めて いた ので、★押し代が それより 先まで のびて いても
+           ★★となり探しの 枠が 60px で 切れて 鳴らなかった【★実測 R2・6×6 568×272：「◀」の 押し代 500×300 で 盤 30/36 マスを 取っても OK】。
+           ★ → ★画面の はしまで 歩く（★atta は 画面の 外で false なので 必ず 止まる）。 */
+        var LIM = Math.max(vw, vh);
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx - j, cy)) Lx = cx - j; else break; }
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx + j, cy)) Rx = cx + j; else break; }
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx, cy - j)) T = cy - j; else break; }
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx, cy + j)) B = cy + j; else break; }
         if (Rx - Lx + 1 < 44 || B - T + 1 < 44) bad.push('★T368：' + namae(el) + ' の 指の的が ' + (Rx - Lx + 1) + '×' + (B - T + 1) + 'px（★44×44 以上の はず）');
         /* ｃ ★となりの 見た目の 中で ★こちらが 返る 点を あつめ、★押し代を 押せなく して のぞく */
         var kouho = [];
@@ -1690,6 +1694,13 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
     var t368 = t368Mato([['.back'], ['#levelTitle'], ['#levelResult', 'result']]);
     out['★T368 指の的 44px'] = t368['★NG'] ? t368['中身'] : ('OK（数えた ' + t368['数えた ところ'] + 'か所）');
     if (t368['★NG']) out['★NG'] = (out['★NG'] || 0) + t368['★NG'];
+    /* ★★ T370 ― 結果の 箱が 札より 上か（★T369 トライ F2）★★
+       ★ ★上の t368Mato は 札が 少ない 場面で しか 箱を 出さない ので、★取った 札（z 200＋）が 箱に 乗っても 鳴らせなかった。
+       ★ ★→ ★取った 札の 列の いちばん 上（★200＋25＝225）と、★いま 画面に ある 札の z の 大きい ほう より、★箱が 上か を 見る。 */
+    var kz = +getComputedStyle($('resultWrap')).zIndex || 0, fz = 225;
+    [].forEach.call(document.querySelectorAll('.card'), function (c) { fz = Math.max(fz, +c.style.zIndex || 0); });
+    out['★T370 結果の箱が 札より 上'] = kz > fz ? ('OK（箱 ' + kz + '・札 ' + fz + '）') : ('★NG 箱 ' + kz + ' ≦ 札 ' + fz);
+    if (!(kz > fz)) out['★NG'] = (out['★NG'] || 0) + 1;
     console.log('[MEMORY] verify', out);
     return out;
   }

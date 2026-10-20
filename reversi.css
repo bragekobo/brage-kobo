@@ -618,3 +618,15 @@ dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-da
   content:''; position:absolute; left:0; right:0;
   top:-12px; height:44px;
 }
+
+/* ★★ T370（★T369 トライ K5）― 568×272 の 結果の 箱で「◀ ゲームを選ぶ」が 箱の 下で 切れる ★★
+   ★ わけ【★実測】：★選ぶ箱が T368 で 6px 高く なり、★箱の 中身が 箱より **58px** 長く なった。
+     ★「◀ ゲームを選ぶ」は y251〜289・箱の 下 256 ―― ★まん中が 箱の 外で、★すべらせないと 押せない。
+   ★ 直しかた：★たて 300px 以下の よこ向き だけ、★「もう1回」「◀ ゲームを選ぶ」を **よこ 2つ ならび**に して、
+     ★箱の すきまを 少し つめる（★大富豪 T368 の 順位発表と 同じ 形・★字は 変えない）。★ほかの 画面は 1pxも 変えない。 */
+@media (orientation:landscape) and (max-height:300px) {
+  .result-wrap { padding-top:10px; padding-bottom:10px; }
+  .result-box { padding:14px 18px 14px; }
+  .result-buttons { flex-direction:row; align-items:center; }
+  .result-buttons > .dialog-ok { flex:1 1 0; min-width:0; }
+}

@@ -2214,10 +2214,14 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
           bad.push('★T368：' + namae(el) + ' の まん中が 押せない（★上に ' + (u ? namae(u) : '何か') + ' が かぶって いる）'); return;
         }
         var Lx = cx, Rx = cx, T = cy, B = cy;
-        for (j = 1; j <= 60; j++) { if (atta(el, cx - j, cy)) Lx = cx - j; else break; }
-        for (j = 1; j <= 60; j++) { if (atta(el, cx + j, cy)) Rx = cx + j; else break; }
-        for (j = 1; j <= 60; j++) { if (atta(el, cx, cy - j)) T = cy - j; else break; }
-        for (j = 1; j <= 60; j++) { if (atta(el, cx, cy + j)) B = cy + j; else break; }
+        /* ★★ T370（★T369 トライ K2）：★60px で 止めて いた ので、★押し代が それより 先まで のびて いても
+           ★★となり探しの 枠が 60px で 切れて 鳴らなかった【★実測 R2・6×6 568×272：「◀」の 押し代 500×300 で 盤 30/36 マスを 取っても OK】。
+           ★ → ★画面の はしまで 歩く（★atta は 画面の 外で false なので 必ず 止まる）。 */
+        var LIM = Math.max(vw, vh);
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx - j, cy)) Lx = cx - j; else break; }
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx + j, cy)) Rx = cx + j; else break; }
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx, cy - j)) T = cy - j; else break; }
+        for (j = 1; j <= LIM; j++) { if (atta(el, cx, cy + j)) B = cy + j; else break; }
         if (Rx - Lx + 1 < 44 || B - T + 1 < 44) bad.push('★T368：' + namae(el) + ' の 指の的が ' + (Rx - Lx + 1) + '×' + (B - T + 1) + 'px（★44×44 以上の はず）');
         /* ｃ ★となりの 見た目の 中で ★こちらが 返る 点を あつめ、★押し代を 押せなく して のぞく */
         var kouho = [];
