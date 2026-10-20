@@ -831,3 +831,41 @@ dialog#helpDialog h2 { margin:0 0 6px; font-size:17px; font-weight:900; color:va
 body.measuring *, body.measuring *::before, body.measuring *::after {
   transition:none !important; animation:none !important;
 }
+
+/* ============================================================
+   ★★★ T368 ― はじめの 画面：★「はじめる ▶」と ハッピーが 画面の 下に 出て いた（★verify ㉑㉒・本物）★★★
+   ------------------------------------------------------------
+   ★ 直す前【★T367 verify・★T368 で 測り直し】：
+     ★320×454 … ハッピーが 10px 下（★入れ物 393px／中身 405px）
+     ★568×320 … はじめる 27px 下・ハッピー 160px 下／★568×272 … はじめる 75px 下・ハッピー 208px 下
+     ★わけ：★よこ向きで ハッピーを よこに 置く 線（T213-2②）が **はば 600px 以上**。★568 は たてに 積んだ まま だった。
+   ★ 直しかた（★字は 1つも 消さない・押す ところの 44px は 触らない）：
+     ⑴ ★たて 470px 以下の たて向き（★320×454）… ★からっぽの すきまを 12px 集める（★ハッピーの 上 6→2・ふきだしの 下 8→4・はじめるの 上 12→8）
+     ⑵ ★たて 330px 以下・はば 560px 以上の よこ向き（★568×320・568×272）… ★ハッピーを 白い 箱の 右へ・★大見出し 44→32px・すきまを 詰める
+     ⑶ ★たて 300px 以下（★568×272）… ★さらに「はじめる ▶」を ○✕ の 2つの 箱の **上**へ（★見る 順だけ。★○✕ は すべらせれば 届く）
+   ★ 結果【★実測】：★320×454 ハッピーの 下 446（★入れ物 448）／★568×320 はじめる の 下 293・ハッピー 238（★入れ物 312）／
+       ★568×272 はじめる の 下 190・ハッピー 214（★入れ物 264）。
+   ★ たての 線を 3本 足した（★470・330・300）―― ★JS の matchMedia は `(max-height:430px)` の 1本だけ（★前から ある 線・★今回の 3本は JS に 出て こない）【★grep】。
+   ============================================================ */
+@media (orientation:portrait) and (max-height:470px) {
+  .mascot { margin-top:2px; }
+  .mascot .bubble { margin-bottom:4px; }
+  .start-button { margin-top:8px; }
+}
+@media (orientation:landscape) and (max-height:330px) and (min-width:560px) {
+  .title-screen { flex-direction:row; align-items:flex-start; justify-content:center; gap:10px; padding:2px 4px; }
+  .title-screen > :first-child { margin-top:0; }
+  .title-screen > :last-child  { margin-bottom:0; align-self:center; }
+  .start-card { flex:0 1 430px; width:auto; min-width:0; padding:6px 16px 6px; display:flex; flex-direction:column; }
+  .eyebrow { font-size:11.5px; }
+  .start-card h1 { font-size:32px; margin-top:0; text-shadow:0 3px #285e46, 0 5px #e3ffd7; }
+  .intro { margin:2px 0 6px; font-size:13.5px; }
+  .rule-fold { margin-top:5px; }
+  .start-button { margin-top:7px; min-height:50px; padding:6px 20px 6px; font-size:18px; }
+  .mascot { flex:0 0 112px; margin-top:0; }
+  .mascot .bubble { font-size:12px; padding:5px 9px; border-width:2px; margin-bottom:8px; }
+}
+@media (orientation:landscape) and (max-height:300px) and (min-width:560px) {
+  .start-card .start-button { order:-1; margin:2px 0 4px; }
+  .start-card .eyebrow, .start-card h1, .start-card .intro { order:-2; }
+}

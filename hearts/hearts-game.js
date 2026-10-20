@@ -783,7 +783,7 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
   /* ★★ T215（アト）：★見た目は hearts.css の `.pass-guide` へ 移しました。★ここは 空です。
      ★ ★場所（left/width/top）と 字の 大きさだけ、下の paintGuide が 入れます。 */
   var GUIDE_LOOK = { box: {}, arrow: {}, text: {} };
-  var guideLookDone = false, guideKey = '';
+  var guideLookDone = false, guideKey = '', guideTight = false;   /* ★ T368：つめた 帯（★paintGuide）*/
   function passOn() { return !!(g && !over && g.phase === 'pass' && g.passDir); }
   /* ★★ ここが「1か所」です ―― ★ハッピーも 場も この 1行から 字を もらいます */
   function passSay() { return (g && g.passDir) ? SAY.pass.replace('{先}', g.passLabel) : ''; }
@@ -946,20 +946,44 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
        ============================================================ */
     var key = geo.feltW + 'x' + room + '|' + guideText.textContent;
     if (key !== guideKey) {
-      var FMAX = 40, FMIN = 11, f, fitH = 0, fit2 = 0;
-      for (f = FMAX; f >= FMIN; f--) {
-        passGuide.style.fontSize = f + 'px';
-        if (passGuide.scrollHeight > room) continue;
-        if (!fitH) fitH = f;
-        if (guideText.getBoundingClientRect().height <= f * 1.35 * 2 + 2) { fit2 = f; break; }
+      var FMAX = 40, FMIN = 11;
+      var fitOne = function (rm) {
+        var f, fitH = 0, fit2 = 0;
+        for (f = FMAX; f >= FMIN; f--) {
+          passGuide.style.fontSize = f + 'px';
+          if (passGuide.scrollHeight > rm) continue;
+          if (!fitH) fitH = f;
+          if (guideText.getBoundingClientRect().height <= f * 1.35 * 2 + 2) { fit2 = f; break; }
+        }
+        return { use: fit2 || fitH || FMIN, lines: fit2 ? 2 : 3 };
+      };
+      passGuide.classList.remove('is-tight');
+      var r1 = fitOne(room), use = r1.use, lines = r1.lines, tight = false;
+      /* ============================================================
+         ★★ T368 ―― ★台が うんと 低い 画面（★568×272）だけの「つめた 帯」★★
+         ★ ★直す前【★T367 verify ㉔・568×272】：★案内に 使える たけが **22px** しか なく、★字が **11px**
+           ★（★読める 線 16px・★ふきだし 11.5px の 1.3倍 に 届かない）―― ★3回とも 鳴って いた。
+         ★ ★わけ：★案内は「台の わく（木4＋内よはく7＋みどり2）＋4px」の 内がわから 始まる。★台が 78px しか ない。
+         ★ ★直しかた：★ふつうの 帯で 16px に 届かない ときだけ、★★木の わくの すぐ 内がわ（★＋13px 上）から 始め、
+           ★ ★矢印を 1.6em → **1.5em**（★㉔ の「字の 1.5倍 以上」は 守る）。★→ ★568×272 で **16px**【★実測】。
+         ★ ★ほかの 画面は ★16px 以上 出て いる ので ★この 道を 通らない（★1pxも 変わらない）。
+         ============================================================ */
+      if (use < 16 && geo.feltBd < geo.feltInset) {
+        var top2 = geo.feltTop + geo.feltBd;
+        var room2 = Math.max(22, geo.passTop - top2 - 6);
+        passGuide.classList.add('is-tight');
+        var r2 = fitOne(room2);
+        if (r2.use > use) { use = r2.use; lines = r2.lines; tight = true; room = room2; }
+        else passGuide.classList.remove('is-tight');
       }
-      var use = fit2 || fitH || FMIN;
       passGuide.style.fontSize = use + 'px';
-      guideKey = key;
-      geo.guideFont = use; geo.guideRoom = room; geo.guideLines = fit2 ? 2 : 3;
+      guideKey = key; guideTight = tight;
+      geo.guideFont = use; geo.guideRoom = room; geo.guideLines = lines;
     } else {
+      if (guideTight) room = Math.max(22, geo.passTop - (geo.feltTop + geo.feltBd) - 6);
       geo.guideFont = parseFloat(passGuide.style.fontSize) || 0; geo.guideRoom = room;
     }
+    if (guideTight) passGuide.style.top = (geo.feltTop + geo.feltBd) + 'px';
   }
 
   /* ★ ハッピーの ひとこと（★出しっぱなしに しない）*/
@@ -5886,7 +5910,10 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
         '(max-height:420px),(max-height:479px)and(min-width:568px)':
           '★★T220-2（🎨アト）―― ★`.pass-guide` を よこ並びに する 線。★★33画面で 前後を 測り、★悪く なった 0・良く なった 3（926×428・932×430・883×430 とも ㉔ 3件→0件）。★★420 の 下がわ（375・390・414）は もとから よこ並び・★上がわ（428〜479 かつ はば568以上）が 今回 入った 側。★★はば 568 未満の たて置き（320×454）は わざと 外して います（★入れると 17→15px に 落ちて ㉔ が 3件 鳴る【実測】）',
         '(max-height:479px)':
-          '★★T220（🎨アト）―― ★`.rank-list` を 4列に する 線。★479 は 320×480（★決まった6画面）の 1px 下 ＝ ★実在の 画面の 上に 立って います。★1400通りで 前後を 測り、悪く なった 0【T220 実測】'
+          '★★T220（🎨アト）―― ★`.rank-list` を 4列に する 線。★479 は 320×480（★決まった6画面）の 1px 下 ＝ ★実在の 画面の 上に 立って います。★1400通りで 前後を 測り、悪く なった 0【T220 実測】',
+        /* ★★ T368（💻コーダ）―― ★はじめの 画面を よこに 並べる 線（★568×272 の ㉙）。★★書きかえたら また 鳴ります */
+        '(orientation:landscape)and(max-height:319px)and(min-width:470px)':
+          '★★T368（💻コーダ）―― ★はじめの 画面で ハッピーを 右へ・大見出しを 詰める だけ（★遊びの 面には 1行も かからない）。★★たての 線 319 の 両側：★568×272・568×315（下・入る ―― ㉙ 0）と 568×316（★下・入る 前は 24px 鳴って いた ので 線を 319 に）・568×320（上・入らない ―― ㉙ 0）を 測った【T368 実測】。★★はばの 線 470 の 両側：★480×272（上・入る ―― ㉙ 鳴る→0）と ★430 以下（★13画面に よこ向きの 430 は 無い・たて向きは orientation で 外れる）【T368 実測】'
       };
 
       r35.yurushi = 0; for (var y35 in YURUSHI35) if (Object.prototype.hasOwnProperty.call(YURUSHI35, y35)) r35.yurushi++;

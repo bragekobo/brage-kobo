@@ -80,6 +80,15 @@ button { font-family:inherit; cursor:pointer; }
   background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
   color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
 }
+/* ★★ T368 ―「◀」の 見えない 押し代（★フリーセル T118 の `.tool::after` の 型）★★
+   ★ T367 で 34.5×36（たて）／114×36（よこ）・13画面とも 44 割れ。★見た目は 1pxも 変えない。★的だけ 44×44 以上。
+   ★ 左は ふち（3px）の 外がわで 止める（★まん中ぞろえ だと はば320 で 画面の 左から 出て 42px）。★のびる 先は 帯の 地と 題の 字だけ。
+   ⚠️★ `position:relative; z-index:1` が 無いと あとの 兄弟が 押し代を 上書きする（T273 §4-1）。 */
+.back { position:relative; z-index:1; }
+.back::after {
+  content:''; position:absolute; left:-3px; top:50%;
+  width:max(calc(100% + 6px), 44px); height:44px; transform:translateY(-50%);
+}
 .back:hover { border-color:var(--pink); }
 .brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
 .brand-cat { width:30px; height:23px; flex:0 0 auto; }
@@ -168,7 +177,8 @@ button { font-family:inherit; cursor:pointer; }
 .title-screen .level-pick { margin:0; }
 .level-pick-name { font-size:13px; font-weight:900; color:#7a5205; white-space:nowrap; }
 .level-select {
-  max-width:100%; min-height:38px; padding:5px 10px;
+  /* ★T368：38→44px（★select は `::after` が 描かれない ので 見た目で 44。★箱が 6px 高く なるのは 社長OK・追記⑯ B） */
+  max-width:100%; min-height:44px; padding:5px 10px;
   background:var(--white); border:3px solid var(--gold); border-radius:999px;
   color:var(--ink); font-family:inherit; font-size:15px; font-weight:900; cursor:pointer;
 }
@@ -423,3 +433,11 @@ dialog h2 { margin:0 0 6px; font-size:22px; font-weight:900; color:var(--pink-da
   font-size:13.5px; font-weight:700; line-height:1.7; color:#6b5522;
 }
 .help-note b { color:var(--pink-dark); }
+
+/* ★★ T368 ―― ★よこ向きの ひくい 画面（★568×272・568×320）の はじめの 画面を 詰める ★★
+   ★ わけ【★実測】：★選ぶ箱を 44px に した（★＋6px・追記⑯ B）ら、★568×272 で「はじめる」が 白い 箱の 下で 切れて
+     ★指の的 121×43（★T368 測り直し）。★もとから 中身 163px／箱 132px で ★上下に はみ出して いた（★ひとことが 題に かぶる）。
+   ★ 直しかた：★からっぽの すきまと 内よはくだけ 詰める（★字・ボタンの 大きさは 変えない）。 */
+@media (orientation:landscape) and (max-height:340px) {
+  .title-screen { gap:6px; padding:6px 18px; }
+}

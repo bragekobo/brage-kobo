@@ -2165,6 +2165,94 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
     return { '★NG': bad.length, '中身': bad.length ? bad : 'OK', '数えた ところ': mita };
   }
 
+  /* ============================================================
+     ★★★ T368 ― 指の的 44px の 見張り（★コーダ・追記⑯）★★★
+     ------------------------------------------------------------
+     ★ T368 で ★「◀」に 見えない 押し代（`::after`）を 入れ、★選ぶ箱（select）を 44px に しました。
+     ★ ここは それが **生きて いるか**を 本物の 指（`elementFromPoint`）で 数えます：
+       ａ ★まん中が 押せる（★ほかの もの（札 など）が 上に かぶって いない）
+       ｂ ★指の的（★まん中から 1px ずつ）が ★たて よこ 44px 以上
+       ｃ ★押し代が ★となりの ボタン・札・マスの 見た目を 取って いない
+          （★押し代を 押せなく して のぞき、★その 点が となりを 返すか で 決める ―― ★箱の 下に かくれた 札は 数えない）
+     ⚠️★ 画面の 外や 箱の 下で **切れて いる** ものは ａ ｂ を 数えません（★すべらせれば 出る ―― T289 §4 と 同じ）。
+     ★ 結果の 箱は 出して 数え、★1つ 残らず 元に 戻します（★T144 §7-5）。
+     ============================================================ */
+  function t368Mato(LIST) {
+    var bad = [], mita = 0, vw = window.innerWidth, vh = window.innerHeight;
+    var TONARI = 'button, select, a[href], input, [role="button"], .card, .cell, .spot, [data-slot]';
+    function atta(el, x, y) { if (x < 0 || y < 0 || x >= vw || y >= vh) return false; var e = document.elementFromPoint(x, y); return !!e && (e === el || el.contains(e)); }
+    function kiru(el) {
+      var p = el.parentElement;
+      while (p && p !== document.documentElement) {
+        var cs = getComputedStyle(p);
+        if (cs.overflowY !== 'visible' || cs.overflowX !== 'visible') {
+          var pr = p.getBoundingClientRect();
+          return { t: pr.top + (parseFloat(cs.borderTopWidth) || 0), b: pr.bottom - (parseFloat(cs.borderBottomWidth) || 0) };
+        }
+        p = p.parentElement;
+      }
+      return null;
+    }
+    function namae(e) { return e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (e.classList.length ? '.' + e.classList[0] : ''); }
+    function kekkaWo() {
+      var back = [], rw = document.getElementById('resultWrap'), rb = document.getElementById('resultBox');
+      if (rw && rw.classList.contains('hidden')) { rw.classList.remove('hidden'); back.push(function () { rw.classList.add('hidden'); }); }
+      if (rb && rb.classList.contains('is-locked')) { rb.classList.remove('is-locked'); back.push(function () { rb.classList.add('is-locked'); }); }
+      if (rb) { var ani = rb.style.animation; rb.style.animation = 'none'; back.push(function () { rb.style.animation = ani; }); }
+      return function () { for (var k = back.length - 1; k >= 0; k--) back[k](); };
+    }
+    function mitoru(sel) {
+      [].forEach.call(document.querySelectorAll(sel), function (el) {
+        if (!el.getClientRects().length || getComputedStyle(el).visibility === 'hidden') return;
+        var r = el.getBoundingClientRect(), k = kiru(el);
+        if (r.top < 0 || r.bottom > vh || r.left < 0 || r.right > vw) return;
+        if (k && (r.top < k.t - 0.5 || r.bottom > k.b + 0.5)) return;
+        var cx = Math.round((r.left + r.right) / 2), cy = Math.round((r.top + r.bottom) / 2), j;
+        mita++;
+        if (!atta(el, cx, cy)) {
+          var u = document.elementFromPoint(cx, cy);
+          bad.push('★T368：' + namae(el) + ' の まん中が 押せない（★上に ' + (u ? namae(u) : '何か') + ' が かぶって いる）'); return;
+        }
+        var Lx = cx, Rx = cx, T = cy, B = cy;
+        for (j = 1; j <= 60; j++) { if (atta(el, cx - j, cy)) Lx = cx - j; else break; }
+        for (j = 1; j <= 60; j++) { if (atta(el, cx + j, cy)) Rx = cx + j; else break; }
+        for (j = 1; j <= 60; j++) { if (atta(el, cx, cy - j)) T = cy - j; else break; }
+        for (j = 1; j <= 60; j++) { if (atta(el, cx, cy + j)) B = cy + j; else break; }
+        if (Rx - Lx + 1 < 44 || B - T + 1 < 44) bad.push('★T368：' + namae(el) + ' の 指の的が ' + (Rx - Lx + 1) + '×' + (B - T + 1) + 'px（★44×44 以上の はず）');
+        /* ｃ ★となりの 見た目の 中で ★こちらが 返る 点を あつめ、★押し代を 押せなく して のぞく */
+        var kouho = [];
+        [].forEach.call(document.querySelectorAll(TONARI), function (o) {
+          if (o === el || el.contains(o) || o.contains(el)) return;
+          var q = o.getBoundingClientRect(); if (q.width < 2 || q.height < 2) return;
+          if (q.right < Lx - 2 || q.left > Rx + 2 || q.bottom < T - 2 || q.top > B + 2) return;
+          for (var x = Math.ceil(q.left) + 1; x < q.right - 1; x += 2) for (var y = Math.ceil(q.top) + 1; y < q.bottom - 1; y += 2) {
+            if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) continue;
+            if (atta(el, x, y)) kouho.push([o, x, y]);
+          }
+        });
+        if (!kouho.length) return;
+        var stl = document.createElement('style');
+        stl.textContent = '*::after,*::before{pointer-events:none!important}';
+        document.head.appendChild(stl);
+        try {
+          var dame = {};
+          for (var m = 0; m < kouho.length; m++) {
+            var o2 = kouho[m][0], e2 = document.elementFromPoint(kouho[m][1], kouho[m][2]);
+            if (e2 && (e2 === o2 || o2.contains(e2)) && !dame[namae(o2)]) {
+              dame[namae(o2)] = 1;
+              bad.push('★T368：' + namae(el) + ' の 押し代が となりの ' + namae(o2) + ' の 見た目を 取った（' + kouho[m][1] + ',' + kouho[m][2] + '）');
+            }
+          }
+        } finally { stl.remove(); }
+      });
+    }
+    for (var i = 0; i < LIST.length; i++) {
+      var shimau = LIST[i][1] === 'result' ? kekkaWo() : null;
+      try { mitoru(LIST[i][0]); } finally { if (shimau) shimau(); }
+    }
+    return { '★NG': bad.length, '中身': bad.length ? bad : 'OK', '数えた ところ': mita };
+  }
+
   function verify(n) {
     n = n || 20;
     var ok = 0, ng = [], t0 = Date.now();
@@ -2189,6 +2277,10 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
     var t291 = oshishiro();
     out['★T291 見えない 押し代（44px）'] = t291['★NG'] ? t291['中身'] : ('OK（数えた ' + t291['数えた ところ'] + 'か所）');
     if (t291['★NG']) out['★NG'] = (out['★NG'] || 0) + t291['★NG'];
+    /* ★ T368 ― 指の的 44px の 見張り（★上の `t368Mato()`） */
+    var t368 = t368Mato([['.back']]);
+    out['★T368 指の的 44px'] = t368['★NG'] ? t368['中身'] : ('OK（数えた ' + t368['数えた ところ'] + 'か所）');
+    if (t368['★NG']) out['★NG'] = (out['★NG'] || 0) + t368['★NG'];
     console.log('[FREECELL] verify', out);
     return out;
   }

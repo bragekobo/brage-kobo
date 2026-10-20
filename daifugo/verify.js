@@ -264,6 +264,7 @@
                 '#ruleAllOff,#ruleReset,.rule-fold summary,.mini-btn,' +
                 '#hand [data-key],.alt-button,.play-button,.pass-button,' +
                 '.topbar .quit-btn,' +                        /* ★T277：上の帯の「↻ やめる」*/
+                '.topbar .back,' +                            /* ★T368：上の帯の「◀ ゲームを選ぶ」（★いままで 見て いなかった）*/
                 '.dialog-ok,.dialog-sub,.close-dialog';
   function openDialog() {
     var d = document.querySelectorAll('dialog[open]');
@@ -318,8 +319,17 @@
        ★ ★★上の帯の いちばん 右へ 引っこして ★**47×44／104×44px** に なりました【★実測 13画面】。
        ★ ★★★だから .quit-btn は ★REC（記録するだけ）では なく **MUST（鳴らす）**に 上げます。
        ★ ★手札の札（320幅）41px はば ―― ★T119・T120 で 社長が 通した 形 */
+  /* ★★★ T368 ― ★記録するだけ だった 44px 割れを ★**鳴らす** 側へ（★追記⑯・トライ T367 §4-2）★★★
+     ★ ★T367 で トライが 見つけた 穴：★⑦-2 に「？ 遊び方 74×30」「閉じる 83×38」が 毎回 書かれて いる のに 鳴かない
+       ★（★9月の 学び②「見つけたら 鳴らすまで」）。
+     ★ ★T368 で ★上の 帯を 44px に・★閉じる／決まりの 2つ／別の形 に 見えない 押し代を 入れ、
+       ★★13画面 ぜんぶで 44 を こえた【★実測】ので、★ここからは ★**割れたら 鳴らします**。
+     ★ ★★記録 だけに 残すのは ★手札の 札（★盤 そのもの・追記⑬⑭⑮）だけ。
+     ★ ★`.mini-btn`（ルール ▾）は 画面に 出て いない（★T114 で 見た目を 消した）ので 入れない。 */
   var MUST44 = ['.play-button', '.pass-button', '.alt-button', '.start-button', '#presetRow .preset', '#againBtn',
-                '.topbar .quit-btn'];   /* ★T277：遊んで いる 間 ずっと 出て いる ので MUST */
+                '.topbar .quit-btn',   /* ★T277：遊んで いる 間 ずっと 出て いる ので MUST */
+                '.howto', '.topbar .back', '#ruleAllOff', '#ruleReset', '.rule-fold summary', '#ruleList label.rule-row',
+                '.dialog-ok', '.dialog-sub', '.close-dialog'];   /* ★T368 */
   function isMust44(el) {
     for (var i = 0; i < MUST44.length; i++) if (el.matches && el.matches(MUST44[i])) return true;
     return false;
@@ -729,6 +739,10 @@
     { n: '★★バッジ全部（革命＋縛り＋逆まわり＋都落ち）', f: function () { play(14, 2); flags(true); } },
     { n: '★バッジ全部・強さは元どおり', f: function () { play(14, 2); flags(false); } },
     { n: '★7渡しで えらんでいる最中', f: function () { play(14, 1); pending(); } },
+    /* ★★ T368 ―「🃏 別の形にする」が 出て いる 場面（★トライ T367 §4-2：★いままで 一度も 作って いなかった）。
+       ★ ★階段 ON で ♠5・♠6・ジョーカー を えらぶ ＝ ★「♠4〜6」か「♠5〜7」の 2つ。
+       ★ ★★出なかったら ★作れず に して ★verify で 鳴らす（★見張って いる ふりを しない）。 */
+    { n: '★「別の形にする」が出ている（ジョーカーの階段）', f: function () { altScene(); } },
     { n: '★順位発表', f: function () { play(3, 1); result(); } },
     { n: '★あそびかた', f: function () { play(11, 1); dlg('helpDialog'); } },
     { n: '★ルール一覧', f: function () { DF.preset('all'); play(11, 1); dlg('rulesDialog'); } }
@@ -772,6 +786,38 @@
     S.revolution = true; S.jackBack = !odd; S.revDir = true;
     S.lock = ['spades', 'hearts']; S.crown = 0;
     DF.render();
+  }
+  function altInView() {
+    var bad = [], keep = snapshot();
+    try {
+      still(function () {
+        try { altScene(); } catch (e) { bad.push('★★★「別の形にする」の 場面が 作れません（' + e.message + '）'); return; }
+        var wx = root.scrollX, wy = root.scrollY;
+        root.scrollTo(0, 0);
+        ['altBtn', 'playBtn', 'passBtn'].forEach(function (id) {
+          var b = $(id);
+          if (!b || !visible(b)) { bad.push('★★★「別の形にする」の 場面で #' + id + ' が 出て いません'); return; }
+          if (outOfView(b)) {
+            var q = b.getBoundingClientRect();
+            bad.push('★★★「別の形にする」が 出ると #' + id + ' が 画面の 外（下端 y=' + Math.round(q.bottom) + '／画面 ' + innerHeight + '）');
+            return;
+          }
+          var r = reach(b);
+          if (r.w < 44 || r.h < 44) bad.push('★★★「別の形にする」の 場面で #' + id + ' の 指の的が ' + r.w + '×' + r.h + 'px');
+        });
+        root.scrollTo(wx, wy);
+      });
+    } finally { restore(keep); }
+    return bad;
+  }
+  function altScene() {
+    DF.preset('all');
+    play(14, 0);
+    DF.hand(0, ['spades-5', 'spades-6', 'joker-1', 'hearts-9', 'clubs-10', 'diamonds-J', 'spades-Q',
+                'hearts-K', 'clubs-A', 'diamonds-2', 'spades-3', 'hearts-4', 'clubs-7', 'diamonds-8']);
+    DF.turn(0);
+    DF.sel(['spades-5', 'spades-6', 'joker-1']);
+    if (!$('altBtn') || $('altBtn').classList.contains('hidden')) throw new Error('「別の形にする」が 出ません');
   }
   function pending() {
     S.pending = { type: 'give', n: 2, player: S.players[0], human: true };
@@ -1460,6 +1506,15 @@
     if (parseInt(ft['★44pxを割った（いつも押すボタン）'], 10)) ng.push('★★★いつも押すボタンが 44pxを 割りました：' +
       ft['★44pxを割った（いつも押すボタン）'] + '（' + (ft['44pxを割ったもの'] || []).join('・') + '）');
     if (ft['横スクロールが出た場面']) ng.push('★★★横スクロールが ' + ft['横スクロールが出た場面'] + '場面で 出ました');
+    /* ★★ T368 ― ★場面が 作れなかったら 鳴らす（★「別の形にする」の 場面が 黙って 消えると、★その ボタンを 見張って いる ふりに なる）*/
+    var tsukurezu = (ft['中身'] || []).filter(function (r) { return String(r).indexOf('作れず') >= 0; });
+    if (tsukurezu.length) ng.push('★★★見張りの 場面が 作れません：' + tsukurezu.join('・'));
+    /* ★★ T368 ―「別の形にする」が 出た とき、★「出す」「パス」「別の形」が ★すべらせずに 画面の 中に あるか ★★
+       ★ ★568×272 で「別の形」の ぶん「出す」の 下が 309px（★画面 272）に なって いた【★T368 実測・本物】。
+       ★ ★本物の 試合（②-2）では 札を えらんだ 瞬間を 測らない ので、★ここで 場面を 作って 見る。 */
+    var altNG = altInView();
+    for (var ia = 0; ia < altNG.length; ia++) ng.push(altNG[ia]);
+    note['⑦-3 【共】★「別の形にする」が出た時の ボタン（T368）'] = altNG.length ? altNG.join('／') : 'OK（出す・パス・別の形 ぜんぶ 画面の 中・44px）';
     /* ★★ はみ出しの px は **鳴らしません**【★私の 失敗⑨】。
        ★ ★★場面を 作って いるのは 私 なので、★私が きびしく すれば 鳴り、ゆるく すれば 鳴りません
          ★ ―― ★★それは ものさしでは ありません。★★鳴らすのは ②-2（本物の 試合の 1手ごと）です。

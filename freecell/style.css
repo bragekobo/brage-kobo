@@ -70,6 +70,17 @@ button { font-family:inherit; cursor:pointer; }
   background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
   color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
 }
+/* ★★ T368 ―「◀」の 見えない 押し代（★T118 の `.tool::after` の 型）★★
+   ★ わけ … ★T367 で 数えたら **34.5×36**（はば320〜520 は ◀ だけ）・**114×36**（よこ向き）。13画面とも 44 割れ。
+   ★ 直しかた … ★**見た目は 1pxも 変えない。★的だけ 44×44 以上。**★箱は 伸びません（★`::after` は 絶対位置）。
+   ★ 左は ふち（border 3px）の 外がわに そろえて 止める ―― ★まん中ぞろえ だと はば320 で 画面の 左はしから 出て 42px に 減る。
+     ★→ ★のびる 先は 右（★題の 字 ＝ 押しても 何も 起きない）と 上下（★帯の 地）だけ。★盤には 1pxも 乗りません。
+   ⚠️★ `position:relative; z-index:1` は 飾りでは ない（T273 §4-1）。★無いと あとの 兄弟が 押し代を 上書きする。 */
+.back { position:relative; z-index:1; }
+.back::after {
+  content:''; position:absolute; left:-3px; top:50%;
+  width:max(calc(100% + 6px), 44px); height:44px; transform:translateY(-50%);
+}
 .back:hover { border-color:var(--pink); }
 .brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
 .brand-cat { width:30px; height:23px; flex:0 0 auto; }

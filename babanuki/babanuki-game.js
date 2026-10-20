@@ -1231,7 +1231,36 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
        ⑫  ★言っては いけない 言葉が 無い・★画面に 数字が 無い
        ⑬  ★手札の 枠が 14枚 まで 入る（★式で 決まる 上限）
      ============================================================ */
+  /* ============================================================
+     ★★★ T368 ―― ★はじめの 画面で 呼ばれた ときの verify ★★★
+     ------------------------------------------------------------
+     ★ 直す前【★T367 実測・13画面とも】：★はじめの 画面で verify を 呼ぶと ★2件 鳴いた ――
+       ★「マウスを 乗せても 1枚も 光らなかった」「14枚 ならべると よこに 119px はみ出す」。
+       ★★どちらも ★まだ 配って いない（★札が 0枚・器が かくれて はば 60px）ための ★うそ鳴き。
+     ★ 直しかた：★配る 前に 呼ばれたら、★本物の「はじめる」（start）で 1回 配って から 測り、
+       ★★はじめの 画面へ 戻す（★この 本には「やめる」が 無い ので ★配る 前の 形へ 手で 戻す：
+         ★札を 片づけ・時計を 止め・光りと 指を 消し・画面を 入れかえ・g を 空に）。★localStorage は 使って いない【★grep】。
+     ★ ★→ ★はじめの 画面でも 遊びの 面と ★同じ 見張りが ぜんぶ 走る（★「測らない」で 逃げない）。
+     ============================================================ */
   function verify(n) {
+    if (g || !playScreen.classList.contains('hidden')) return verifyHontai(n);
+    var k = { over: over, busy: busy, held: held, press: press, pressKind: pressKind, stepLog: stepLog, lastPlan: lastPlan };
+    start();
+    var out;
+    try { out = verifyHontai(n); }
+    finally {
+      dropCards(); edgeOff();
+      fingerEl.classList.remove('is-on');
+      resultWrap.classList.add('hidden');
+      playScreen.classList.add('hidden');
+      titleScreen.classList.remove('hidden');
+      g = null;
+      over = k.over; busy = k.busy; held = k.held; press = k.press; pressKind = k.pressKind; stepLog = k.stepLog; lastPlan = k.lastPlan;
+    }
+    out['★T368 はじめの 画面から 呼ばれた'] = '★本物の「はじめる」で 1回 配って 測り、★配る 前の はじめの 画面へ 戻した';
+    return out;
+  }
+  function verifyHontai(n) {
     n = n || 500;
     var ng = [], t0 = Date.now(), note = {};
 

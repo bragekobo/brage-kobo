@@ -3872,7 +3872,33 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
     return out;
   }
 
+  /* ============================================================
+     ★★★ T368 ―― ★はじめの 画面で 呼ばれた ときの verify ★★★
+     ------------------------------------------------------------
+     ★ 直す前【★T367 実測・13画面とも】：★はじめの 画面で verify を 呼ぶと
+       ★`Cannot set properties of null (setting 'cur')` で こけた（★㉕ が 配る 前の 盤を さわった）。
+     ★ 直しかた：★配る 前に 呼ばれたら、★本物の「はじめる」（start(false)）で 1回 配って から 測り、
+       ★★本物の「やめる」（backToTitle）で はじめの 画面へ 戻す。
+       ★ ★start(false) は しまって ある 続き（localStorage）を 消す ので、★しまって ある もの・match も 元に もどし、
+         ★「つづきから」の 出る／出ない も 元どおりに 書き直す（refreshResume）。
+     ============================================================ */
   function verify(n) {
+    if (g) return verifyHontai(n);
+    var keepLS = {}, keepMatch = match;
+    try { for (var i0 = 0; i0 < localStorage.length; i0++) { var k0 = localStorage.key(i0); keepLS[k0] = localStorage.getItem(k0); } } catch (e) {}
+    start(false);
+    var out;
+    try { out = verifyHontai(n); }
+    finally {
+      backToTitle();
+      match = keepMatch;
+      try { localStorage.clear(); for (var k1 in keepLS) localStorage.setItem(k1, keepLS[k1]); } catch (e) {}
+      refreshResume();
+    }
+    out['★T368 はじめの 画面から 呼ばれた'] = '★本物の「はじめる」で 1回 配って 測り、★本物の「やめる」で はじめの 画面へ 戻した（★しまって ある 続きも 元どおり）';
+    return out;
+  }
+  function verifyHontai(n) {
     n = n || 600;
     var ng = [], t0 = Date.now(), note = {};
     var L = C.LEVELS, i, k;

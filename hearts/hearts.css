@@ -678,6 +678,10 @@ body {
   .pass-guide { flex-direction:row; gap:.4em; padding:2px 14px; }
   .pass-guide-arrow { font-size:1.6em; }
 }
+/* ★ T368：★台が うんと 低い 画面（★568×272）だけの「つめた 帯」（★JS の paintGuide が `is-tight` を 付ける）。
+   ★ 矢印 1.6em → 1.5em（★㉔「字の 1.5倍 以上」は ちょうど 守る）・★上下の 内よはく 2px → 1px。 */
+.pass-guide.is-tight { padding-top:1px; padding-bottom:1px; }
+.pass-guide.is-tight .pass-guide-arrow { font-size:1.5em; }
 
 /* ============================================================
    ★★★ T218 ―― ★ハートブレイクの 知らせ（🎨アト）★★★
@@ -1049,4 +1053,30 @@ dialog#helpDialog h2 { margin:0 0 6px; font-size:17px; font-weight:900; color:va
 /* ── ★測る ときは 動きを 止める（★会社で 4回 かかった わな）── */
 body.measuring *, body.measuring *::before, body.measuring *::after {
   transition:none !important; animation:none !important;
+}
+
+/* ============================================================
+   ★★ T368 ― 568×272 の はじめの 画面：★「はじめる」「つづきから」に 指で 動かしても 届かない（★verify ㉙・本物）★★
+   ------------------------------------------------------------
+   ★ 直す前【★実測】：★はじめの 画面の 入れ物 206px に 中身 500px ―― ★動かせる のこり 294px は 入れ物の 1倍 を こえ、
+     ★「はじめる」は 下に 68px・「つづきから」は 126px 出て いた（★㉙ の 決まり：のこりは 入れ物の 1倍 まで）。
+   ★ 直しかた：★たて 319px 以下・はば 470px 以上の よこ向き だけ、★ハッピーを 白い 箱の 右へ（★大富豪 A-2 と 同じ 形）・★大見出しと すきまを 詰める。
+     ★線の わけ【★実測】：★直す前は 568×301〜319 でも ㉙ が 鳴って いた（★568×316 で 下に 24px）。★320 からは 鳴らない ―― ★だから 319（★320 の 1px 下）。
+     ★はばは 480×272 も 同じ 病気（★直す前 ㉙ 鳴る）なので 470 から。
+     ★→ ★中身 276px（★のこり 70px）・★「はじめる」は すべらせずに 見える（★下 262px／入れ物の 下 264px）【★実測】。
+     ★字は 1つも 消して いない。★13画面の うち かかるのは 568×272 だけ。
+   ============================================================ */
+@media (orientation:landscape) and (max-height:319px) and (min-width:470px) {
+  .title-screen { flex-direction:row; align-items:flex-start; justify-content:center; gap:10px; }
+  .title-screen > :first-child { margin-top:0; }
+  .title-screen > :last-child { margin-bottom:0; align-self:center; }
+  .start-card { flex:0 1 430px; min-width:0; padding:8px 16px 10px; }
+  .eyebrow { font-size:12.5px; }
+  .start-card h1 { font-size:34px; margin:0; text-shadow:0 3px #9E2A47, 0 5px #FFE0E8; }
+  .intro { margin:2px 0 6px; font-size:13.5px; }
+  .level-pick { padding:3px 10px; }
+  .start-button { margin-top:8px; min-height:50px; padding:6px 20px 6px; font-size:18px; }
+  .sub-button { margin-top:6px; }
+  .mascot { flex:0 0 112px; margin-top:0; }
+  .mascot .bubble { font-size:12px; padding:5px 9px; border-width:2px; }
 }

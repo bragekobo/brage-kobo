@@ -72,6 +72,15 @@ button { font-family:inherit; cursor:pointer; }
   background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
   color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
 }
+/* ★★ T368 ―「◀」の 見えない 押し代（★フリーセル T118 の `.tool::after` の 型）★★
+   ★ T367 で 34.5×36（たて）／114×36（よこ）・13画面とも 44 割れ。★見た目は 1pxも 変えない。★的だけ 44×44 以上。
+   ★ 左は ふち（3px）の 外がわで 止める（★まん中ぞろえ だと はば320 で 画面の 左から 出て 42px）。★のびる 先は 帯の 地と 題の 字だけ。
+   ⚠️★ `position:relative; z-index:1` が 無いと あとの 兄弟が 押し代を 上書きする（T273 §4-1）。 */
+.back { position:relative; z-index:1; }
+.back::after {
+  content:''; position:absolute; left:-3px; top:50%;
+  width:max(calc(100% + 6px), 44px); height:44px; transform:translateY(-50%);
+}
 .back:hover { border-color:var(--pink); }
 .brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
 .brand-cat { width:30px; height:23px; flex:0 0 auto; }

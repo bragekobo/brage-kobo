@@ -2384,3 +2384,169 @@ body {
 /* ★ 帯の たかさは 決め打ちに できない（★上の とおり）ので、★ここは いちばん 高い 56px で 見ます。
    ★ ★多めに 空ける ぶんには「下に もぐる」ことが 起きません。 */
 html { scroll-padding-top:calc(var(--bar-over) + 56px + 4px); }
+
+/* ============================================================
+   ★★★ T368 ― 上の帯を 44px に（★追記⑯ C・社長「全部★」）★★★
+   ------------------------------------------------------------
+   ★ わけ … ★「◀ ゲームを選ぶ」「？ 遊び方」が 13画面とも 44 割れ【★T367 実測】：
+       ★ 30px（★たて向きの ひくい 画面・よこ向きの ひくい 画面）／★42px（390×844・375×812・PC）。
+     ★ 見えない 押し代では 直せない ―― ★遊びの 面では 押し代が ★ハッピー・順位の 旗・手札の 上はしに 乗る（★T367 C1・C2）。
+   ★ 直しかた … ★社長の お決め：★**上の 帯を 14px 広げて、見た目で 44px**。
+     ★代金：★場と 手札が 14px 下がる（★低い 画面は 下の かたまりで 受ける）。
+   ★ 「↻ やめる」の margin-bottom（★T277「44 − .back の 高さ」）は ★.back が 44 に なったので **0**。
+     ★★0 に しないと やめるだけ 7px 下に ずれる（★帯の 中で まん中ぞろえ の ため）。
+   ============================================================ */
+.back, .howto { min-height:44px; }
+/* ★ 帯も 44px 以上（★390×844・375×812 は 帯 40px だった ―― ★ボタンが 上下 2px はみ出し、
+     ★帯が 画面に くっつくと「◀」の 上が −1px（★T297 の 見張りが 鳴いた【★実測】）。★ここは 帯が 4px 伸びる） */
+.topbar { min-height:44px; }
+@media (max-width:650px) {
+  .back, .howto { min-height:44px; }
+  .quit-btn { margin-bottom:0; }
+}
+@media (orientation:portrait) and (max-width:650px) and (max-height:700px) {
+  .topbar { height:44px; flex:0 0 auto; }
+  .back, .howto { min-height:44px; }
+  .quit-btn { margin-bottom:0; }
+}
+@media (orientation:landscape) and (max-height:560px) and (min-width:560px) {
+  .topbar { height:44px; flex:0 0 auto; }
+  .back, .howto { min-height:44px; }
+  .quit-btn { margin-bottom:0; }
+}
+
+/* ============================================================
+   ★★★ T368 ― よこ向きの ひくい 画面で「出す」「パス」と 手札を 画面の 中へ（★追記⑯ 4・C の 代金）★★★
+   ------------------------------------------------------------
+   ★ 直す前【★T367 verify・本物の 試合 80手番】：★自分の 番なのに「出す」「パス」が 画面の 外 ――
+       ★667×375 4回・568×320 10回・568×272 47回（★手札の まん中も 10回）。
+     ★上の 帯を 44px に した ぶん（★＋14px）、★このままだと もっと 出ます。
+   ★ わけ：★よこ 568px では 手札の 列が 6枚しか 入らず、★14枚で 3だん（★手札の 箱 299px）。
+       ★そこへ 上の 1行（★ものさし 60px 予約）＋帯 44px ＝ ★272px にも 320px にも 入りません。
+
+   ★ 直しかた（★3つ）
+   ⑴ ★手札が 15枚 以上（★3だんに なる とき）だけ、★だんを 22px ずつ 重ねる（★よこ向きの ひくい 画面 ぜんぶ）。
+       ★上の だんの 札は ★上 45px（★はば 44px）が 見えて いて、★そこを 押せば その 札が 返る ―― ★44×45px。
+       ★14枚 までは ★1pxも 変わりません（★`:has()` で 15枚目が いる ときだけ）。
+   ⑵ ★たて 340px 以下（★568×320・568×272）だけ、★右の 柱（手札と ボタン）を ★帯の すぐ 下から 下まで 通す。
+       ★ものさし は 左の 柱の いちばん 上へ（★2行に 折る ―― ★こまの 字の 大きさは 変えない）。
+       ★右の 柱を 62% → 66% に して ★1だん 7枚（★14枚が 2だんで 入る）。
+       ★左の 柱は ★ロボットの 伏せ札を 出さない（★名前と ◯枚は 出す ―― ★たて向きの 320 と 同じ 考え）・
+         ★場の みどりは ★1枚ぶんより 小さく なって よい（★場の 札は 読む だけで 押さない）。
+   ⑶ ★たて 300px 以下（★568×272）で 手札が 15枚 以上の ときだけ、★手札の 札を 36px に（★1だん 9枚 ×2だん で 18枚）。
+       ★★たて 272px に 3だんは どう 重ねても 入らない（★上 45px を 見せると 1だん 足りない）。
+         ★★札の 44px 割れは「盤 そのもの」（★追記⑬⑭⑮）―― ★たて向き 320 の 41px と 同じ 扱い。
+
+   ★ 結果【★実測・場面 3／17枚／18枚／バッジ全部】：
+       ★568×272 … 手札の 箱の 下 ≦ 270・出す／パス の 下 ≦ 263（★画面 272）
+       ★568×320 … ≦ 297・≦ 290（★画面 320）／★667×375 … ≦ 363・≦ 351（★画面 375）
+   ★ たての 線は ★340px と 300px を 足した（★追記⑥ 決まり2）―― ★JS（game.js・verify.js）に matchMedia は 0本【★grep】。
+   ============================================================ */
+@media (orientation:landscape) and (max-height:560px) and (min-width:560px) {
+  .hand:has(> [data-key]:nth-child(15)) {
+    display:grid; justify-content:center;
+    grid-template-columns:repeat(auto-fill, var(--hand-card-w, var(--card-w)));
+    grid-auto-rows:calc(var(--hand-card-w, var(--card-w)) * 635 / 419 - 22px);
+    padding-bottom:22px;
+  }
+}
+@media (orientation:landscape) and (max-height:340px) and (min-width:560px) {
+  .game-screen { grid-template-columns:minmax(0,34fr) minmax(0,66fr); grid-template-rows:auto auto auto minmax(0,1fr); }
+  .flag-row    { grid-area:1/1/2/2; padding:0 0 3px; }
+  .status-line { grid-area:2/1; padding:0 0 3px; }
+  .players     { grid-area:3/1; padding:0 0 3px; }
+  .table-wrap  { grid-area:4/1; padding:5px 6px 4px; }
+  /* ★「◯枚」の ふだが 帯（やめる）に かぶらない ように 7px 空ける */
+  .hand-area   { grid-area:1/2/5/3; margin-top:7px; padding:4px 6px 4px; align-self:start; }
+  .flag-row .flag-order { max-width:none; margin-right:0; flex-wrap:wrap; row-gap:2px; column-gap:1px; padding:3px 5px; }
+  .flag-row .ord-strip  { display:contents; }
+  .status-line .cat-wrap { width:36px; }
+  .talk .banner p { font-size:11.5px; }
+  .cpu-cards { display:none; }
+  .cpu { padding:2px 1px 2px; }
+  .cpu-name { font-size:11px; } .cpu-name small { font-size:10px; }
+  .table-wrap .field { min-height:40px; }
+  .hand    { padding-top:8px; column-gap:3px; row-gap:4px; }
+  .actions { margin-top:4px; }
+}
+@media (orientation:landscape) and (max-height:300px) and (min-width:560px) {
+  .hand:has(> [data-key]:nth-child(15)) { --hand-card-w:36px; column-gap:1px; grid-auto-rows:auto; padding-bottom:0; }
+}
+
+/* ============================================================
+   ★★ T368 ― 見えない 押し代（★追記⑯ A・★フリーセル T118 の `.tool::after` の 型）★★
+   ------------------------------------------------------------
+   ★ 直す前【★T367 実測・13画面】：
+       ★「ぜんぶ ✕ にする」「おすすめに もどす」… 131〜252×**42**px
+       ★「🃏 別の形にする」… 133.6×**38**px（★T367 は 強制表示で 9画面）
+       ★「決まり一覧」の 箱の「閉じる」… 82.3×**37**px（★押し代 なし）
+   ★ 直しかた … ★**見た目は 1pxも 変えない。★的だけ たて 44px**（★よこは 広げない）。
+       ★のびる 先：★決まりの 2つ … 上下 1px ずつ・★白い 箱の 地だけ（★となりの ボタンとは よこに 8px）
+                   ★別の形 … 上下 3px ずつ・★手札の 箱の 地（★上の 手札とは 8px・下の「出す」とは 10px）
+                   ★閉じる … 上下 3.5px ずつ・★箱の 地だけ（★T291 の「分かった！」と 同じ 形）
+   ⚠️★ `z-index:0` は T289 §3-② の 型（★丸かどの 色が ずれない ため）。
+   ============================================================ */
+.rule-buttons button, .alt-button, #rulesDialog .dialog-ok { position:relative; z-index:0; }
+.rule-buttons button::after, .alt-button::after, #rulesDialog .dialog-ok::after {
+  content:''; position:absolute; left:0; right:0;
+  top:50%; height:44px; transform:translateY(-50%);
+}
+
+/* ============================================================
+   ★★ T368 ― よこ向きの はじめの 画面：★ハッピーが「ぜんぶ」の まん中に 乗って いた（★本物）★★
+   ------------------------------------------------------------
+   ★ 見つけた もの：★verify の「`.preset` 1×1px」（★667×375・568×320・568×272）。
+     ★T367 は「見張りの うそ鳴き の 疑い」でしたが、★★本物でした【★実測・直す 前の 写しでも 同じ】：
+       ★667×375 … ★ハッピーの ふきだし x498〜651 が「ぜんぶ」x421〜579 の **まん中（x500）**に 乗る
+         ★→ ★まん中を 押すと ふきだしが 返り、★★「ぜんぶ」が 選べない。★見た目も 右半分が かくれる。
+     ★わけ：★A-2 で ハッピーを「白い 箱の 右の 空き」に 立たせた（★812px で 126px 空く）。
+       ★★はば 800px 未満では その 空きが 無い（★667px で 43px）。
+   ★ 直しかた … ★はば 800px 未満だけ、★白い 箱を ハッピーの ぶん（★122px）細く して 左に 寄せる。
+       ★ハッピーの 絵・ふきだし・名札は 1pxも 変えない（★T368 実測：3つの「どれで遊ぶ？」・始める ぜんぶ まん中が 押せる）。
+   ============================================================ */
+@media (orientation:landscape) and (max-height:560px) and (min-width:560px) and (max-width:799px) {
+  .start-card { width:min(560px, calc(100% - 122px)); justify-self:start; }
+}
+
+/* ★★ T368 ― はじめの 画面の「ゲームを始める」を 帯の ＋14px の ぶん 戻す ★★
+   ★ 帯を 44px に した ぶん、★はじめの 画面の 中身が 14px 下がる【★実測】：
+     ★320×480 … 始める の 下 467 → 481px（★画面 480 ―― ★1px 外に 出た）／★568×320 … 327 → 339px（★前から 7px 外）
+   ★ からっぽの 余白だけを 集めて 戻す（★字・ボタンの 大きさは 変えない）。 */
+@media (orientation:portrait) and (max-width:650px) and (max-height:700px) {
+  .start-screen { padding-top:4px; }
+}
+@media (orientation:landscape) and (max-height:340px) and (min-width:560px) {
+  .start-card { padding:7px 16px 8px; }
+  .intro { margin:0 0 5px; }
+  .preset-block { padding:6px; }
+  .rule-fold { margin-top:6px; }
+  .start-button { margin-top:7px; }
+}
+
+/* ★★ T368 ―「🃏 別の形にする」が 出ると「出す」が 画面の 外へ（★568×272 だけ・本物）★★
+   ★ 見つけた もの：★verify に「別の形にする」が 出る 場面を 足したら【★T368 実測】、
+     ★568×272 で ★別の形（38px＋上 8px）の ぶん「出す」の 下が **309px**（★画面 272）。★ほかの 12画面は 中に 入る。
+   ★ 直しかた：★たて 300px 以下で 別の形が 出て いる ときだけ、★別の形を「出す」「パス」の **左に 並べる**（★同じ 行）。
+     ★たては 1pxも 増えない。★別の形は 見た目 52px（★押し代 なしで 44 を こえる）。★14枚 までも 15枚 からも 同じ。 */
+@media (orientation:landscape) and (max-height:300px) and (min-width:560px) {
+  .hand-area:has(> .alt-button:not(.hidden)) { display:grid; grid-template-columns:minmax(0,92px) minmax(0,1fr); column-gap:6px; }
+  .hand-area:has(> .alt-button:not(.hidden)) > .hand { grid-column:1 / 3; }
+  .hand-area:has(> .alt-button:not(.hidden)) > .alt-button {
+    grid-column:1; align-self:end; margin:0; min-height:52px; padding:0 6px;
+    white-space:normal; line-height:1.2; font-size:11.5px;
+  }
+  .hand-area:has(> .alt-button:not(.hidden)) > .actions { grid-column:2; }
+}
+
+/* ★★ T368 ― 568×272 の 順位発表：★「設定を変える」の 的が たて 36px（★verify T291 ⑦）★★
+   ★ わけ【★実測】：★ふたの 中身 273px・ふた 248px ―― ★25px あふれて、★「設定を変える」が ふたの 下ふちで 切れ、
+     ★★見えない 押し代（★下へ 9px）が ふたの 外に 出て 消えて いた。
+     ★あふれの もとは ★「次のゲームへ」「ゲームを選ぶ」が **たてに 2つ**（★106px）。
+   ★ 直しかた：★たて 300px 以下だけ ★よこ 2つ ならびに（★たて向き 320 の T187 B と 同じ 形・字は 消さない）。
+     ★→ ★中身 248px＝ふた 248px（★あふれ 0）・設定を変える 121×45・次のゲームへ 112×46【★実測】。
+     ★「これまでの成績」も 2行 見える ように なった（★前は 0px に つぶれて いた）。 */
+@media (orientation:landscape) and (max-height:300px) and (min-width:560px) {
+  .result-actions { grid-template-columns:1fr 1fr; gap:8px; }
+  .result-actions .dialog-ok { font-size:13px; padding:10px 4px 8px; }
+  .result-actions .dialog-ok small { font-size:9.5px; }
+}

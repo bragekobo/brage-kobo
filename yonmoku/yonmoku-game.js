@@ -278,21 +278,43 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
          ・★盤・帯・字・ハッピー・コマの 位置は ★1pxも 動かさない（★絶対配置・場所を 取らない）
          ・★板は 色も 字も 無い（★見た目は 0）。★⑭が「コマの まん中が 盤の 操作に 届くか」と
            「★板が ◀ などを 横取り していないか」の 両方を 毎回 測る */
-    if (grabEl) {
-      if (f.side) {
+    geo.side = !!f.side;
+    placeGrab();
+
+    for (var p = 0; p < G.N; p++) if (pieceEl[p]) placeAt(pieceEl[p], p);
+    setFlier(held, true);
+    setLanding(held);   // ★ T131：画面の 大きさが 変わっても、光りは 同じ 穴の 上に 乗り直す
+  }
+
+  /* ★★ T368 ―― ★見えない 板（.grab-pad）を 置く（★layout から と、★「↻ やめる」が 出た 瞬間 syncQuit から 呼ぶ）。
+     ★ ★「↻ やめる」は layout の あとで 出る ので、★layout の 中だけで 置くと ★やめるを 見ずに 板を 広げて いた【★実測】。 */
+  function placeGrab() {
+    if (!grabEl) return;
+    var hr = holdEl.getBoundingClientRect();
+    {
+      if (geo.side) {
         var fmr = frameEl.getBoundingClientRect();
-        grabEl.style.left   = (fmr.left - hr.left) + 'px';
-        grabEl.style.width  = fmr.width + 'px';
+        /* ★★ T368 ―― ★板の 左右を「↻ やめる」「◀」「？ 遊び方」から 8px（⑭の GRAB_MIN）はなす ★★
+           ★ ★直す前【★T367 verify・568×320】：★板の 左（x140）と「↻ やめる」の 右（x138.2）が **1.8px**。
+             ★ ★盤わくの はば いっぱいに 板を 広げて いた ため（★568×320 は 盤が 帯の ボタンの すぐ 右）。
+           ★ ★板を 削るのは ★帯の ボタンと たてが 重なる ときだけ。★1列目の コマの まん中（★x158）は 板の 中に 残る
+             ★（★⑭ が 毎回 7列 ぜんぶ さして 確かめます）。★見た目は 0（★板は 色も 字も 無い）。 */
+        var padL = fmr.left, padR = fmr.right, padTopV = hr.top + geo.restY;
+        [$('btnQuitGame'), document.querySelector('.topbar .back'), $('btnHowto')].forEach(function (bt) {
+          if (!bt || !bt.getClientRects().length) return;
+          var q = bt.getBoundingClientRect();
+          if (q.bottom <= padTopV || q.top >= fmr.top) return;            /* ★ たてが 重ならない */
+          if (q.right <= fmr.left + fmr.width / 2) padL = Math.max(padL, q.right + 8);
+          else if (q.left >= fmr.left + fmr.width / 2) padR = Math.min(padR, q.left - 8);
+        });
+        grabEl.style.left   = (padL - hr.left) + 'px';
+        grabEl.style.width  = Math.max(0, padR - padL) + 'px';
         grabEl.style.top    = geo.restY + 'px';
         grabEl.style.height = Math.max(0, geo.frameY - geo.restY) + 'px';
       } else {
         grabEl.style.left = grabEl.style.width = grabEl.style.top = grabEl.style.height = '';
       }
     }
-
-    for (var p = 0; p < G.N; p++) if (pieceEl[p]) placeAt(pieceEl[p], p);
-    setFlier(held, true);
-    setLanding(held);   // ★ T131：画面の 大きさが 変わっても、光りは 同じ 穴の 上に 乗り直す
   }
 
   /* ============================================================
@@ -616,6 +638,7 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
     q.classList.toggle('hidden', !on);
     var pad = document.querySelector('.topbar-pad');
     if (pad) pad.classList.toggle('hidden', !!on);
+    if (on && geo && geo.side) placeGrab();   /* ★ T368：やめるが 出たので 板を 置き直す（★見た目は 0）*/
   }
 
   /* ============================================================

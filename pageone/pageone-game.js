@@ -2435,7 +2435,32 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
            ★ ★くらべ：★出せない ときは **引けて・ゆれない**（★いつも ゆれる のは 返事では ない）
            ★ ★線：★★手札の 明るさを 1枚も 変えない・★ひとことも 出さない（★遊びの 情報を 足さない）
      ============================================================ */
+  /* ============================================================
+     ★★★ T368 ―― ★はじめの 画面で 呼ばれた ときの verify ★★★
+     ------------------------------------------------------------
+     ★ 直す前【★T367 実測・13画面とも】：★はじめの 画面で verify を 呼ぶと
+       ★`Cannot read properties of null (reading 'deck')` で こけた（★⑳-3 が 配る 前の 山札を 押した）。
+       ★こけを 直すと 今度は ★「8を 出したのに 止まらない」「場面を 作れない」など **7件の うそ鳴き**
+       ★（★配って いない のに 遊びの 面を 測った ため）。
+     ★ 直しかた：★配る 前に 呼ばれたら、★本物の「はじめる」（start）で 1試合 配って から 測り、
+       ★★本物の「やめる」（backToTitle）で はじめの 画面へ 戻す。★しまって ある もの（localStorage）も 元に もどす。
+       ★ ★→ ★はじめの 画面でも 遊びの 面でも ★同じ 見張りが ぜんぶ 走る（★「測らない」で 逃げない）。
+     ============================================================ */
   function verify(n) {
+    if (g) return verifyHontai(n);
+    var keepLS = {};
+    try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); keepLS[k] = localStorage.getItem(k); } } catch (e) {}
+    start();
+    var out;
+    try { out = verifyHontai(n); }
+    finally {
+      backToTitle();
+      try { localStorage.clear(); for (var k2 in keepLS) localStorage.setItem(k2, keepLS[k2]); } catch (e) {}
+    }
+    out['★T368 はじめの 画面から 呼ばれた'] = '★本物の「はじめる」で 1試合 配って 測り、★本物の「やめる」で はじめの 画面へ 戻した';
+    return out;
+  }
+  function verifyHontai(n) {
     n = n || 3000;
     var ng = [], t0 = Date.now(), note = {};
     var R8 = { eight: 1, jack: 0, two: 0, queen: 0, ace: 0 };
@@ -3037,6 +3062,11 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
            ★ ★（★手で 押す 試しは 場面が 残って 当てに ならない ので、★★見張りの 中で 毎回 まっさらから）
          ============================================================ */
       (function () {
+        /* ★★ T368 ―― ★はじめの 画面で verify を 呼ぶと ★ここで こけて いた（`reading 'deck'`・13画面とも）★★
+           ★ ★わけ：★まだ 配って いない（g が 無い）のに ★山札を 2回 押そうと した。
+           ★ ★→ ★配る 前は ★「⑳-3 は 遊びの 面で 見る」と ★OK とは 書かずに 書き残して 通す
+             ★ ★（★⑳ と ⑳-2 の 数の たしかめは 配る 前でも 走って います）。 */
+        if (!g) { t20.ui = '―（★はじめの 画面：まだ 配って いない ので、★画面で 押す たしかめは 遊びの 面で 見ます）'; return; }
         var snap2 = snapG();
         var kB = busy, kO = over, kT = takeLeft, kW = waitSuit;
         var kSay = sayEl.classList.contains('hidden'), kSayTx = sayEl.textContent;
@@ -3203,6 +3233,10 @@ try { window.__t295HakoNoSoto = t295HakoNoSoto; } catch (e) {}
         fake.className = 'rule-fold';
         fake.setAttribute('data-t213-mihon', '1');
         fake.innerHTML = '<summary>▾ 見張りの 見本</summary>';
+        /* ★★ T368：★568×272 では 囲いが flex で ★「はじめる」を order で ○✕ の 上へ 出して います（★pageone.css T368 ⑶）。
+           ★ ★DOM の 前に 入れる だけ だと ★見本が ボタンの **下** に 並び、★「足しても 増えない」と 見張りが うそ鳴き しました【★実測】。
+           ★ ★→ ★見本は 見た目でも いちばん 上（order:-3）。★flex で ない 画面では order は 効かない ので ★前と 1つも 変わらない。 */
+        fake.style.order = '-3';
         card21.insertBefore(fake, btn21);
         void titleScreen.offsetWidth;
         var m2 = measure();

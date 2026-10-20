@@ -179,7 +179,8 @@ button { font-family:inherit; cursor:pointer; }
 }
 .speed-pick-name { font-size:13px; font-weight:900; color:#7a5205; white-space:nowrap; }
 .speed-select {
-  max-width:100%; min-height:38px; padding:5px 10px;
+  /* ★T368：38→44px（★select は `::after` が 描かれない ので 見た目で 44。★箱が 6px 高く なるのは 社長OK・追記⑯ B） */
+  max-width:100%; min-height:44px; padding:5px 10px;
   background:var(--white); border:3px solid var(--gold); border-radius:999px;
   color:var(--ink); font-family:inherit; font-size:15px; font-weight:900; cursor:pointer;
 }

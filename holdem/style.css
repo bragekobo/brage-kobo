@@ -1343,6 +1343,20 @@ body.is-setup .stage-chip { display:none !important; }
   .setup-bubble  { font-size:11.5px; padding:4px 10px; }
   .setup-cat     { width:52px; height:39px; }
 }
+/* ★★ T368 ―「何ハンド 遊ぶ？」が はば 660px 以下の 横向きで となりと 重なって いた（★追記⑯ B）★★
+   ★ わけ … ★5つの ボタンは 見た目 44px（min-width）なのに、★列の はばが 33.6px しか なく（★568×320・568×272）
+     ★★となりと **4.4px 重なって** 指の的が 39〜40px に なって いた【★T367 実測】。★640×360 でも 41.9px の 列で 重なる 計算。
+   ★ 直しかた … ★左の 字の 列を 細く して ★右の 箱に はばを 回す（★.85:1.15 → .52:1）・★箱の すきまを 少し 詰める。
+     ★→ ★列 44.9px・すきま 3px・★重なり 0【★実測】。★箱の 高さは 1pxも 変わらない（★214.1px の まま・下 269px）。
+     ★左の 字は 折れ方が 変わらない（★名前・説明・ヒントの 行数 同じ【★実測 568×320／640×360】）。
+   ★ たての 線は 足して いない（★はばの 線 660px を 1本 だけ。★JS の matchMedia は この 線を 使って いない）。 */
+@media (min-width:561px) and (max-width:660px) and (max-height:480px) {
+  .setup-card  { padding:10px 10px; column-gap:8px; grid-template-columns:minmax(0,.52fr) minmax(0,1fr); }
+  .setup-block { padding:6px 6px 8px; }
+  .hands-row   { gap:3px; }
+  /* ★「トラン｜プ！」と 言葉の まん中で 折れない ように（★分かち書きの すきまで 折る・字は 11.5px） */
+  .setup-eyebrow { font-size:11.5px; word-break:keep-all; }
+}
 
 /* ── ★ 何ハンドめ（★コインの ふだの 右・同じ 行）──────── */
 .act-info { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 6px; }

@@ -68,6 +68,15 @@ button { font-family:inherit; cursor:pointer; }
   background:var(--white); border:3px solid var(--pink-soft); border-radius:999px;
   color:var(--pink-dark); font-weight:900; font-size:13px; text-decoration:none; white-space:nowrap;
 }
+/* ★★ T368 ―「◀」の 見えない 押し代（★フリーセル T118 の `.tool::after` の 型）★★
+   ★ T367 で 34.5×36（たて）／114×36（よこ）・13画面とも 44 割れ。★見た目は 1pxも 変えない。★的だけ 44×44 以上。
+   ★ 左は ふち（3px）の 外がわで 止める（★まん中ぞろえ だと はば320 で 画面の 左から 出て 42px）。★のびる 先は 帯の 地と 題の 字だけ。
+   ⚠️★ `position:relative; z-index:1` が 無いと あとの 兄弟が 押し代を 上書きする（T273 §4-1）。 */
+.back { position:relative; z-index:1; }
+.back::after {
+  content:''; position:absolute; left:-3px; top:50%;
+  width:max(calc(100% + 6px), 44px); height:44px; transform:translateY(-50%);
+}
 .back:hover { border-color:var(--pink); }
 .brand { flex:1 1 auto; display:flex; align-items:center; justify-content:center; gap:6px; min-width:0; }
 .brand-cat { width:30px; height:23px; flex:0 0 auto; }
@@ -186,7 +195,8 @@ button { font-family:inherit; cursor:pointer; }
 .result-box .level-pick { margin:0 auto 14px; }
 .level-pick-name { font-size:13px; font-weight:900; color:#7a5205; white-space:nowrap; }
 .level-select {
-  max-width:100%; min-height:38px; padding:5px 10px;
+  /* ★T368：38→44px（★select は `::after` が 描かれない ので 見た目で 44。★箱が 6px 高く なるのは 社長OK・追記⑯ B） */
+  max-width:100%; min-height:44px; padding:5px 10px;
   background:var(--white); border:3px solid var(--gold); border-radius:999px;
   color:var(--ink); font-family:inherit; font-size:15px; font-weight:900; cursor:pointer;
 }
@@ -369,8 +379,13 @@ button { font-family:inherit; cursor:pointer; }
 .fall-canvas { position:fixed; inset:0; z-index:70; touch-action:manipulation; }
 
 /* ── 勝ち／止まった ときの 画面 ───────────────────── */
+/* ★★ T368：z-index 80 → 1000 ★★
+   ★ わけ … ★札の z-index は 置いた 順に 1枚ずつ 増える（★place() の z++・104枚）。★81枚目から 先の 札が
+     ★★「止まった」の 箱の 上に 乗って いた【★実測・812×375：むずかしさ の 選ぶ箱の まん中に 札が 4本 かぶり、的が はば 12px】。
+     ★568×320・568×272 の 見張りの「押し代が となりの 見た目を 取った」も ★本当は この 札だった（★押し代の せいでは ない）。
+   ★ つかんだ 札（900＋）よりも 上に する。★箱が 出て いる あいだは 札を つかめない ので、★ほかの 見え方は 変わらない。 */
 .result-wrap {
-  position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+  position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
   padding:16px; background:rgba(70,60,82,.42);
 }
 .result-box {
